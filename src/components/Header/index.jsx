@@ -40,6 +40,7 @@ const DesktopNav = styled.nav`
   display: flex;
   gap: 1.25rem;
   align-items: center;
+  
 
   @media (max-width: 840px) {
     display: none;
@@ -47,7 +48,7 @@ const DesktopNav = styled.nav`
 `;
 
 const NavLink = styled(Link)`
-  color: ${({ $isdark }) => ($isdark ? "#e6eefc" : "#0f172a")};
+  color: ${({ $isdark }) => ($isdark ? "#f3f6fb" : "#071230")};
   text-decoration: none;
   padding: 8px 12px;
   border-radius: 10px;
@@ -215,7 +216,6 @@ export default function Header() {
   const [open, setOpen] = useState(false);
   const panelRef = useRef(null);
 
-  // Bloquer scroll quand menu ouvert
   useEffect(() => {
     if (open) {
       const prev = document.body.style.overflow;
@@ -285,11 +285,11 @@ export default function Header() {
         </MobileHeader>
 
         <MobileContent>
-          <MobileItem to="/" onClick={() => setOpen(false)}>{t("home")}</MobileItem>
-          <MobileItem to="/collections" onClick={() => setOpen(false)}>{t("collections")}</MobileItem>
-          <MobileItem to="/nouveautes" onClick={() => setOpen(false)}>{t("new")}</MobileItem>
-          <MobileItem to="/promotions" onClick={() => setOpen(false)}>{t("deals")}</MobileItem>
-          <MobileItem to="/a-propos" onClick={() => setOpen(false)}>{t("about")}</MobileItem>
+          <MobileItem to="/" onClick={() => setOpen(false)} $isdark={$isdark}>{t("home")}</MobileItem>
+          <MobileItem to="/collections" onClick={() => setOpen(false)} $isdark={$isdark}>{t("collections")}</MobileItem>
+          <MobileItem to="/nouveautes" onClick={() => setOpen(false)} $isdark={$isdark}>{t("new")}</MobileItem>
+          <MobileItem to="/promotions" onClick={() => setOpen(false)} $isdark={$isdark}>{t("deals")}</MobileItem>
+          <MobileItem to="/a-propos" onClick={() => setOpen(false)} $isdark={$isdark}>{t("about")}</MobileItem>
 
           <div style={{ height: 1, background: $isdark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.04)", margin: "8px 0 4px" }} />
 
