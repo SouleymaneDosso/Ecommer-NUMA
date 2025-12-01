@@ -6,6 +6,7 @@ import Header from "./components/Header";
 import GlobalStyle from "./GlobaleStyle";
 import { ToggleTheme} from "./Utils/Context";
 import Footer from "./components/Footer";
+import Erreur from "./components/Erreur";
 import "./i18n"; 
 
 
@@ -17,6 +18,7 @@ createRoot(document.getElementById("root")).render(
           <Header />
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="*" element={<Erreur />} />
           </Routes>
           <Footer />
       </ToggleTheme>

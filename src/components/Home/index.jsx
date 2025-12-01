@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import styled from "styled-components";
-import { produits } from "../../data/produits"; // pour l'instant local, remplaçable par fetch API
+import { produits } from "../../data/produits";
 import { Link } from "react-router-dom";
 import { FiChevronRight } from "react-icons/fi";
+import { useTranslation } from "react-i18next";
 
 /* ---------------------- STYLES ---------------------- */
-
 const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
@@ -30,6 +30,19 @@ const HeroSlide = styled.div`
   background-position: center;
   transition: opacity 1s ease-in-out;
   opacity: ${({ active }) => (active ? 1 : 0)};
+`;
+
+const HeroSkeleton = styled.div`
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #e0e0e0 0%, #f8f8f8 50%, #e0e0e0 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+
+  @keyframes shimmer {
+    from { background-position: -200% 0; }
+    to   { background-position: 200% 0; }
+  }
 `;
 
 const HeroText = styled.div`
@@ -89,7 +102,8 @@ const PromoBanner = styled.div`
 const Categories = styled.div`
   display: flex;
   justify-content: space-around;
-  padding: 20px;
+  flex-wrap: wrap;
+  gap: 16px;
 `;
 
 const CategoryCard = styled(Link)`
@@ -98,7 +112,7 @@ const CategoryCard = styled(Link)`
   text-align: center;
 
   img {
-    width: 140px;
+    width: 130px;
     height: 140px;
     border-radius: 16px;
     object-fit: cover;
@@ -139,6 +153,19 @@ const Slide = styled.div`
   background-size: cover;
   background-position: center;
   flex-shrink: 0;
+`;
+
+const SlideSkeleton = styled.div`
+  width: 420px;
+  height: 100%;
+  background: linear-gradient(90deg, #e0e0e0 0%, #f8f8f8 50%, #e0e0e0 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+
+  @keyframes shimmer {
+    from { background-position: -200% 0; }
+    to   { background-position: 200% 0; }
+  }
 `;
 
 const SectionTitle = styled.h2`
@@ -184,7 +211,7 @@ const CardHorizontal = styled(Link)`
   }
 `;
 
-/* SKELETON */
+/* SKELETON CARD */
 const SkeletonCard = styled.div`
   min-width: 220px;
   height: 320px;
@@ -219,6 +246,7 @@ const Card = styled(Link)`
     width: 100%;
     height: 260px;
     object-fit: cover;
+    display: block;
   }
 
   p {
@@ -228,10 +256,15 @@ const Card = styled(Link)`
 `;
 
 /* ---------------------- COMPONENT ---------------------- */
-
 export default function Home() {
+
+  const { t } = useTranslation();
+
   const [visibleCount, setVisibleCount] = useState(6);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [imagesLoaded, setImagesLoaded] = useState(false);
+
+  const loadMoreRef = useRef();
 
   /* HERO AUTOPLAY */
   const heroImages = [
@@ -240,6 +273,19 @@ export default function Home() {
     "/image7.jpg","/image8.jpg","/image9.jpg"
   ];
   const [activeSlide, setActiveSlide] = useState(0);
+
+  /* Pré-chargement Hero */
+  useEffect(() => {
+    let loaded = 0;
+    heroImages.forEach(src => {
+      const img = new Image();
+      img.src = src;
+      img.onload = () => {
+        loaded++;
+        if (loaded === heroImages.length) setImagesLoaded(true);
+      };
+    });
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -250,77 +296,92 @@ export default function Home() {
 
   /* INFINITE SCROLL */
   useEffect(() => {
-    function handleScroll() {
-      const bottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 300;
-      if (bottom && !loadingMore) {
-        setLoadingMore(true);
+    if (!loadMoreRef.current) return;
 
-        setTimeout(() => {
-          setVisibleCount(prev => Math.min(prev + 3, produits.length)); // jamais dépasser total
-          setLoadingMore(false);
-        }, 600);
-      }
-    }
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [loadingMore]);
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && visibleCount < produits.length) {
+          setLoadingMore(true);
+          setTimeout(() => {
+            setVisibleCount(prev => Math.min(prev + 4, produits.length));
+            setLoadingMore(false);
+          }, 600);
+        }
+      },
+      { root: null, rootMargin: "300px", threshold: 0 }
+    );
+
+    observer.observe(loadMoreRef.current);
+
+    return () => observer.disconnect();
+  }, [visibleCount]);
 
   /* SLIDER CONTINU */
-  const allSliderImages = [...heroImages]; 
-  const sliderDouble = [...allSliderImages, ...allSliderImages];
+  const sliderDouble = [...heroImages, ...heroImages];
 
   const nouveautes = produits.filter(p => p.badge === "new");
   const visibleProducts = produits.slice(0, visibleCount);
+
 
   return (
     <Wrapper>
 
       {/* HERO CARROUSEL */}
       <Hero>
-        {heroImages.map((img,i) => (
-          <HeroSlide key={i} active={i===activeSlide} style={{ backgroundImage: `url('${img}')` }}/>
-        ))}
+        {imagesLoaded ? (
+          heroImages.map((img,i) => (
+            <HeroSlide key={i} active={i===activeSlide} style={{ backgroundImage: `url('${img}')` }}/>
+          ))
+        ) : (
+          <HeroSkeleton />
+        )}
         <HeroText>
-          <h1>Nouvelle Collection 2025</h1>
-          <p>Découvrez les tendances homme / femme.</p>
+          <h1>{t("heroTitle")}</h1>
+          <p>{t("heroSubtitle")}</p>
           <HeroButton to="/collections">
-            Explorer <FiChevronRight/>
+            {t("heroButton")} <FiChevronRight/>
           </HeroButton>
         </HeroText>
       </Hero>
 
       {/* BANNIERE PROMO */}
       <PromoBanner>
-        🔥 -30% SUR TOUTE LA COLLECTION HIVER — CODE : HIVER30 🔥
+        {t("promoBanner")}
       </PromoBanner>
 
       {/* CATEGORIES */}
       <Categories>
         <CategoryCard to="/categorie/homme">
           <img src="/image1.jpg" alt="Homme"/>
-          <p>Homme</p>
+          <p>{t("categoryMen")}</p>
         </CategoryCard>
+
         <CategoryCard to="/categorie/femme">
           <img src="/image2.jpg" alt="Femme"/>
-          <p>Femme</p>
+          <p>{t("categoryWomen")}</p>
         </CategoryCard>
+
         <CategoryCard to="/categorie/enfant">
           <img src="/image3.jpg" alt="Enfant"/>
-          <p>Enfant</p>
+          <p>{t("categoryKids")}</p>
         </CategoryCard>
       </Categories>
 
       {/* SLIDER CONTINU */}
       <SliderContainer>
-        <SlideRow>
-          {sliderDouble.map((img,i) => (
-            <Slide key={i} style={{ backgroundImage: `url('${img}')` }}/>
-          ))}
-        </SlideRow>
+        {imagesLoaded ? (
+          <SlideRow>
+            {sliderDouble.map((img,i) => (
+              <Slide key={i} style={{ backgroundImage: `url('${img}')` }}/>
+            ))}
+          </SlideRow>
+        ) : (
+          <SlideSkeleton />
+        )}
       </SliderContainer>
 
       {/* NOUVEAUTES */}
-      <SectionTitle>Nouveautés</SectionTitle>
+      <SectionTitle>{t("newArrivals")}</SectionTitle>
       <HorizontalScroll>
         {nouveautes.map(p => (
           <CardHorizontal key={p.id} to={`/produit/${p.id}`}>
@@ -331,7 +392,7 @@ export default function Home() {
       </HorizontalScroll>
 
       {/* PRODUITS + INFINITE SCROLL */}
-      <SectionTitle>Pour vous</SectionTitle>
+      <SectionTitle>{t("forYou")}</SectionTitle>
       <ProductGrid>
         {visibleProducts.map(p => (
           <Card key={p.id} to={`/produit/${p.id}`}>
@@ -346,6 +407,8 @@ export default function Home() {
         }
       </ProductGrid>
 
+      {/* Ref pour déclencher le load */}
+      <div ref={loadMoreRef} />
     </Wrapper>
   );
 }

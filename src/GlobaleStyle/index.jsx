@@ -12,6 +12,10 @@ const StyledGlobalStyle = createGlobalStyle`
     font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   }
 
+  html, body {
+  overflow-x: hidden;
+}
+
   html {
     scroll-behavior: smooth;
   }
