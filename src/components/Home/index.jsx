@@ -1,44 +1,44 @@
+import { useEffect, useState } from "react";
 import styled from "styled-components";
-import { produits } from "../../data/produits";
+import { produits } from "../../data/produits"; // pour l'instant local, remplaçable par fetch API
 import { Link } from "react-router-dom";
 import { FiChevronRight } from "react-icons/fi";
 
-/* ---------------------------------------------- */
-/*  STYLES                                         */
-/* ---------------------------------------------- */
+/* ---------------------- STYLES ---------------------- */
 
 const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
   gap: 80px;
-  padding-bottom: 80px;
+  padding-bottom: 100px;
 `;
 
-/* HERO */
+/* HERO CARROUSEL */
 const Hero = styled.div`
-  height: 70vh;
   width: 100%;
-  background-image: url("/hero.jpg"); /* mets une image dans public/hero.jpg */
+  height: 75vh;
+  position: relative;
+  overflow: hidden;
+`;
+
+const HeroSlide = styled.div`
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0;
   background-size: cover;
   background-position: center;
-  position: relative;
-
-  display: flex;
-  align-items: center;
-  padding-left: 60px;
-  color: #fff;
-
-  &::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg, rgba(0,0,0,0.65), rgba(0,0,0,0));
-  }
+  transition: opacity 1s ease-in-out;
+  opacity: ${({ active }) => (active ? 1 : 0)};
 `;
 
 const HeroText = styled.div`
-  position: relative;
-  z-index: 2;
+  position: absolute;
+  top: 50%;
+  left: 60px;
+  transform: translateY(-50%);
+  color: white;
+  z-index: 3;
 
   h1 {
     font-size: 3.5rem;
@@ -68,7 +68,52 @@ const HeroButton = styled(Link)`
   }
 `;
 
-/* SLIDER */
+/* BANNIERE PROMO */
+const PromoBanner = styled.div`
+  padding: 18px;
+  background: linear-gradient(90deg, #ff4e4e, #ff7d36);
+  text-align: center;
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: white;
+  animation: bannerMove 10s linear infinite;
+
+  @keyframes bannerMove {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+  }
+`;
+
+/* CATEGORIES */
+const Categories = styled.div`
+  display: flex;
+  justify-content: space-around;
+  padding: 20px;
+`;
+
+const CategoryCard = styled(Link)`
+  text-decoration: none;
+  color: #000;
+  text-align: center;
+
+  img {
+    width: 140px;
+    height: 140px;
+    border-radius: 16px;
+    object-fit: cover;
+    transition: 0.3s;
+    &:hover { transform: scale(1.05); }
+  }
+
+  p {
+    margin-top: 10px;
+    font-size: 1.2rem;
+    font-weight: bold;
+  }
+`;
+
+/* SLIDER CONTINU */
 const SliderContainer = styled.div`
   width: 100%;
   height: 380px;
@@ -79,39 +124,91 @@ const SliderContainer = styled.div`
 const SlideRow = styled.div`
   display: flex;
   height: 100%;
-  width: 400%;
-  animation: scroll 14s linear infinite;
+  animation: slideinfinite 28s linear infinite;
+  width: max-content;
 
-  @keyframes scroll {
-    0% { transform: translateX(0); }
-    25% { transform: translateX(-100%); }
-    50% { transform: translateX(-200%); }
-    75% { transform: translateX(-300%); }
-    100% { transform: translateX(0%); }
+  @keyframes slideinfinite {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
   }
 `;
 
 const Slide = styled.div`
-  flex: 1;
+  width: 420px;
+  height: 100%;
   background-size: cover;
   background-position: center;
+  flex-shrink: 0;
 `;
 
-/* Nouveautés */
 const SectionTitle = styled.h2`
   font-size: 2rem;
   margin-left: 20px;
 `;
 
+/* NOUVEAUTES SCROLL HORIZONTAL */
 const HorizontalScroll = styled.div`
   display: flex;
   overflow-x: auto;
   gap: 16px;
+  padding: 20px 20px 10px;
+  scroll-snap-type: x mandatory;
+
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #aaa;
+    border-radius: 10px;
+  }
+`;
+
+const CardHorizontal = styled(Link)`
+  min-width: 220px;
+  border-radius: 12px;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  background: ${({ theme }) => theme.card};
+  scroll-snap-align: start;
+
+  img {
+    width: 100%;
+    height: 260px;
+    object-fit: cover;
+  }
+
+  p {
+    padding: 8px;
+    font-weight: 600;
+  }
+`;
+
+/* SKELETON */
+const SkeletonCard = styled.div`
+  min-width: 220px;
+  height: 320px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #e0e0e0 0%, #f8f8f8 50%, #e0e0e0 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+
+  @keyframes shimmer {
+    from { background-position: -200% 0; }
+    to   { background-position: 200% 0; }
+  }
+`;
+
+/* GRID PRODUITS */
+const ProductGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill,minmax(260px,1fr));
+  gap: 24px;
   padding: 20px;
 `;
 
 const Card = styled(Link)`
-  min-width: 220px;
+  display: block;
   border-radius: 12px;
   overflow: hidden;
   text-decoration: none;
@@ -130,147 +227,124 @@ const Card = styled(Link)`
   }
 `;
 
-/* Lifestyle sections */
-const Lifestyle = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  padding: 40px;
-  gap: 40px;
-
-  img {
-    width: 100%;
-    border-radius: 16px;
-  }
-
-  @media (max-width: 840px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const LifestyleText = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-
-  h3 {
-    font-size: 2rem;
-  }
-
-  p {
-    margin-top: 10px;
-    opacity: 0.8;
-  }
-`;
-
-const DiscoverBtn = styled(Link)`
-  margin-top: 20px;
-  width: fit-content;
-  padding: 10px 20px;
-  border-radius: 12px;
-  background: black;
-  color: white;
-  text-decoration: none;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-
-  &:hover {
-    transform: translateX(6px);
-  }
-`;
-
-/* Promotions */
-const Promo = styled.div`
-  padding: 20px 40px;
-
-  display: grid;
-  grid-template-columns: repeat(auto-fill,minmax(260px,1fr));
-  gap: 24px;
-
-  img {
-    width: 100%;
-    border-radius: 12px;
-  }
-`;
-
-
-/* ---------------------------------------------- */
-/*  PAGE ACCUEIL                                    */
-/* ---------------------------------------------- */
+/* ---------------------- COMPONENT ---------------------- */
 
 export default function Home() {
+  const [visibleCount, setVisibleCount] = useState(6);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  /* HERO AUTOPLAY */
+  const heroImages = [
+    "/image1.jpg","/image2.jpg","/image3.jpg",
+    "/image4.jpg","/image5.jpg","/image6.jpg",
+    "/image7.jpg","/image8.jpg","/image9.jpg"
+  ];
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveSlide(s => (s + 1) % heroImages.length);
+    }, 3500);
+    return () => clearInterval(interval);
+  }, []);
+
+  /* INFINITE SCROLL */
+  useEffect(() => {
+    function handleScroll() {
+      const bottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 300;
+      if (bottom && !loadingMore) {
+        setLoadingMore(true);
+
+        setTimeout(() => {
+          setVisibleCount(prev => Math.min(prev + 3, produits.length)); // jamais dépasser total
+          setLoadingMore(false);
+        }, 600);
+      }
+    }
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [loadingMore]);
+
+  /* SLIDER CONTINU */
+  const allSliderImages = [...heroImages]; 
+  const sliderDouble = [...allSliderImages, ...allSliderImages];
 
   const nouveautes = produits.filter(p => p.badge === "new");
-  const promos = produits.filter(p => p.badge === "promo");
+  const visibleProducts = produits.slice(0, visibleCount);
 
   return (
     <Wrapper>
 
-      {/* HERO */}
+      {/* HERO CARROUSEL */}
       <Hero>
+        {heroImages.map((img,i) => (
+          <HeroSlide key={i} active={i===activeSlide} style={{ backgroundImage: `url('${img}')` }}/>
+        ))}
         <HeroText>
           <h1>Nouvelle Collection 2025</h1>
-          <p>Découvrez les dernières tendances homme & femme.</p>
+          <p>Découvrez les tendances homme / femme.</p>
           <HeroButton to="/collections">
             Explorer <FiChevronRight/>
           </HeroButton>
         </HeroText>
       </Hero>
 
-      {/* CARROUSEL AUTOMATIQUE */}
+      {/* BANNIERE PROMO */}
+      <PromoBanner>
+        🔥 -30% SUR TOUTE LA COLLECTION HIVER — CODE : HIVER30 🔥
+      </PromoBanner>
+
+      {/* CATEGORIES */}
+      <Categories>
+        <CategoryCard to="/categorie/homme">
+          <img src="/image1.jpg" alt="Homme"/>
+          <p>Homme</p>
+        </CategoryCard>
+        <CategoryCard to="/categorie/femme">
+          <img src="/image2.jpg" alt="Femme"/>
+          <p>Femme</p>
+        </CategoryCard>
+        <CategoryCard to="/categorie/enfant">
+          <img src="/image3.jpg" alt="Enfant"/>
+          <p>Enfant</p>
+        </CategoryCard>
+      </Categories>
+
+      {/* SLIDER CONTINU */}
       <SliderContainer>
         <SlideRow>
-          <Slide style={{ backgroundImage: "url('/image1.jpg')" }} />
-          <Slide style={{ backgroundImage: "url('/image2.jpg')" }} />
-          <Slide style={{ backgroundImage: "url('/image3.jpg')" }} />
-          <Slide style={{ backgroundImage: "url('/image4.jpg')" }} />
-          <Slide style={{ backgroundImage: "url('/image5.jpg')" }} />
-          <Slide style={{ backgroundImage: "url('/image6.jpg')" }} />
-          <Slide style={{ backgroundImage: "url('/image7.jpg')" }} />
+          {sliderDouble.map((img,i) => (
+            <Slide key={i} style={{ backgroundImage: `url('${img}')` }}/>
+          ))}
         </SlideRow>
       </SliderContainer>
 
       {/* NOUVEAUTES */}
       <SectionTitle>Nouveautés</SectionTitle>
       <HorizontalScroll>
-        {nouveautes.map((p) => (
-          <Card key={p.id} to={`/produit/${p.id}`}>
-            <img src={p.image} alt={p.title} />
+        {nouveautes.map(p => (
+          <CardHorizontal key={p.id} to={`/produit/${p.id}`}>
+            <img src={p.image} alt={p.title} loading="lazy"/>
             <p>{p.title} – {p.price}€</p>
-          </Card>
+          </CardHorizontal>
         ))}
       </HorizontalScroll>
 
-      {/* LIFESTYLE SECTIONS */}
-      <Lifestyle>
-        <img src="/image2.jpg" alt="fashion" />
-        <LifestyleText>
-          <h3>Style minimaliste</h3>
-          <p>Des pièces intemporelles pour exprimer votre identité.</p>
-          <DiscoverBtn to="/collections">Découvrir</DiscoverBtn>
-        </LifestyleText>
-      </Lifestyle>
-
-      <Lifestyle>
-        <LifestyleText>
-          <h3>Élégance moderne</h3>
-          <p>La mode pensée pour sublimer chaque silhouette.</p>
-          <DiscoverBtn to="/collections">Explorer</DiscoverBtn>
-        </LifestyleText>
-        <img src="/image1.jpg" alt="style" />
-      </Lifestyle>
-
-      {/* PROMOTIONS */}
-      <SectionTitle>Promotions</SectionTitle>
-      <Promo>
-        {promos.map((p) => (
+      {/* PRODUITS + INFINITE SCROLL */}
+      <SectionTitle>Pour vous</SectionTitle>
+      <ProductGrid>
+        {visibleProducts.map(p => (
           <Card key={p.id} to={`/produit/${p.id}`}>
-            <img src={p.image} alt={p.title} />
+            <img src={p.image} alt={p.title} loading="lazy"/>
             <p>{p.title} – {p.price}€</p>
           </Card>
         ))}
-      </Promo>
+        {loadingMore &&
+          Array(Math.min(3, produits.length - visibleCount))
+            .fill(0)
+            .map((_,i) => <SkeletonCard key={`sk-${i}`}/>)
+        }
+      </ProductGrid>
 
     </Wrapper>
   );
