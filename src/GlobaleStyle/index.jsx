@@ -3,7 +3,8 @@ import { ThemeContext } from "../Utils/Context";
 import { useContext } from "react";
 
 const StyledGlobalStyle = createGlobalStyle`
-  * {
+  /* Reset et typographie */
+  *, *::before, *::after {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -12,27 +13,23 @@ const StyledGlobalStyle = createGlobalStyle`
     font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   }
 
-  html, body {
-  overflow-x: hidden;
-}
-
   html {
     scroll-behavior: smooth;
+    overflow-x: hidden;
   }
 
   body {
+    overflow-x: hidden;
+    min-height: 100vh;
     background: ${({ $isDark }) =>
       $isDark
         ? "linear-gradient(145deg, #0F172A, #1E293B 60%, #334155)"
         : "linear-gradient(145deg, #ffffff, #f5f5f7 60%, #e8eaed)"};
-    
     color: ${({ $isDark }) => ($isDark ? "#f8fafc" : "#1f2937")};
     transition: background 0.45s ease, color 0.35s ease;
-    overflow-x: hidden;
 
-    /* Effet doux */
+    /* Effet doux de flou */
     backdrop-filter: blur(10px);
-    min-height: 100vh;
 
     /* Animation d'apparition */
     animation: fadeInPage 0.6s ease forwards;
@@ -49,13 +46,13 @@ const StyledGlobalStyle = createGlobalStyle`
     }
   }
 
-  /* Sélection du texte stylée */
+  /* Sélection du texte */
   ::selection {
     background: ${({ $isDark }) => ($isDark ? "#3b82f6" : "#2563eb")};
     color: white;
   }
 
-  /* Scrollbar personnalisée (super moderne) */
+  /* Scrollbar moderne */
   ::-webkit-scrollbar {
     width: 8px;
   }
@@ -72,8 +69,10 @@ const StyledGlobalStyle = createGlobalStyle`
 function GlobalStyle() {
   const { theme } = useContext(ThemeContext);
 
-  return <StyledGlobalStyle $isDark={theme === "light"} />;
+  // Ici $isDark = true si le thème est 'dark'
+  const isDarkMode = theme === "light";
+
+  return <StyledGlobalStyle $isDark={isDarkMode} />;
 }
 
 export default GlobalStyle;
-

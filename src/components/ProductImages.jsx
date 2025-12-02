@@ -73,9 +73,30 @@ const Arrow = styled.div`
 const ArrowLeft = styled(Arrow)`left: 20px;`;
 const ArrowRight = styled(Arrow)`right: 20px;`;
 
+// --- NEW: Dots ---
+const DotsWrapper = styled.div`
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const Dot = styled.div`
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: ${({ active }) => (active ? "#000" : "#ccc")};
+  transition: 0.2s;
+`;
+
 export default function ProductImages({ images }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const wrapperRef = useRef();
 
   const openFullscreen = (index) => {
     setCurrentIndex(index);
@@ -94,6 +115,14 @@ export default function ProductImages({ images }) {
     setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
   };
 
+  const handleScroll = () => {
+    const el = wrapperRef.current;
+    if (!el) return;
+    const height = el.clientHeight;
+    const index = Math.round(el.scrollTop / height);
+    setCurrentIndex(index);
+  };
+
   // Swipe support for mobile fullscreen
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
@@ -109,7 +138,7 @@ export default function ProductImages({ images }) {
 
   return (
     <Wrapper>
-      <ImagesWrapper>
+      <ImagesWrapper ref={wrapperRef} onScroll={handleScroll}>
         {images.map((img, i) => (
           <ImageSlide key={i}>
             <ProductImage
@@ -120,6 +149,13 @@ export default function ProductImages({ images }) {
           </ImageSlide>
         ))}
       </ImagesWrapper>
+
+      {/* --- Dots */}
+      <DotsWrapper>
+        {images.map((_, i) => (
+          <Dot key={i} active={i === currentIndex} />
+        ))}
+      </DotsWrapper>
 
       {isFullscreen && (
         <FullscreenOverlay
@@ -136,4 +172,3 @@ export default function ProductImages({ images }) {
     </Wrapper>
   );
 }
-

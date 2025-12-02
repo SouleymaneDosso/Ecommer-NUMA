@@ -351,17 +351,17 @@ export default function Home() {
 
       {/* CATEGORIES */}
       <Categories>
-        <CategoryCard to="/categorie/homme">
+        <CategoryCard to="/homme">
           <img src="/image1.jpg" alt="Homme"/>
           <p>{t("categoryMen")}</p>
         </CategoryCard>
 
-        <CategoryCard to="/categorie/femme">
+        <CategoryCard to="/femme">
           <img src="/image2.jpg" alt="Femme"/>
           <p>{t("categoryWomen")}</p>
         </CategoryCard>
 
-        <CategoryCard to="/categorie/enfant">
+        <CategoryCard to="/enfant">
           <img src="/image3.jpg" alt="Enfant"/>
           <p>{t("categoryKids")}</p>
         </CategoryCard>

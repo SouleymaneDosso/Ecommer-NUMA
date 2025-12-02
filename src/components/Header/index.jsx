@@ -1,31 +1,58 @@
 import { Link } from "react-router-dom";
-import styled from "styled-components";
-import { FiShoppingBag, FiUser, FiSun, FiMoon, FiX, FiHeart } from "react-icons/fi";
-import { useContext, useState, useEffect, useRef } from "react";
+import styled, { keyframes } from "styled-components";
+import {
+  FiShoppingBag,
+  FiUser,
+  FiSun,
+  FiMoon,
+  FiX,
+  FiHeart,
+} from "react-icons/fi";
+import { useContext, useState, useEffect } from "react";
 import { ThemeContext } from "../../Utils/Context";
 import { useTranslation } from "react-i18next";
 
+const HEADER_HEIGHT = 70; // hauteur réduite
+
+/* ===== ANIMATIONS ===== */
+const fadeIn = keyframes`
+  from { opacity: 0 }
+  to { opacity: 1 }
+`;
+const fadeOut = keyframes`
+  from { opacity: 1 }
+  to { opacity: 0 }
+`;
+
+/* ===== STYLES ===== */
 const HeaderWrapper = styled.header`
-  position: sticky;
+  --header-h: ${HEADER_HEIGHT}px;
+  position: fixed;
   top: 0;
-  z-index: 80;
+  left: 0;
+  width: 100%;
+  height: var(--header-h);
+  z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 1.6rem;
-  gap: 1rem;
+  padding: 0 1rem;
+  gap: 0.5rem;
   background: ${({ $isdark }) =>
     $isdark
-      ? "linear-gradient(180deg, rgba(8,10,20,0.85), rgba(15,23,42,0.75))"
-      : "linear-gradient(180deg, rgba(255,255,255,0.85), rgba(248,250,255,0.75))"};
+      ? "linear-gradient(180deg, rgba(6,8,14,0.85), rgba(12,18,30,0.85))"
+      : "linear-gradient(180deg, rgba(255,255,255,0.92), rgba(248,250,255,0.92))"};
   border-bottom: 1px solid
-    ${({ $isdark }) =>
-      $isdark ? "rgba(255,255,255,0.1)" : "rgba(16,24,40,0.1)"};
-  backdrop-filter: blur(12px) saturate(120%);
-  -webkit-backdrop-filter: blur(12px) saturate(120%);
+    ${({ $isdark }) => ($isdark ? "rgba(255,255,255,0.04)" : "rgba(16,24,40,0.06)")};
+  backdrop-filter: blur(10px) saturate(120%);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
   box-shadow: ${({ $isdark }) =>
-    $isdark ? "0 5px 25px rgba(2,6,23,0.65)" : "0 6px 29px rgba(15,23,42,0.15)"};
-  transition: all 0.35s ease;
+    $isdark ? "0 6px 28px rgba(0,0,0,0.6)" : "0 6px 28px rgba(15,23,42,0.08)"};
+`;
+
+const HeaderSpacer = styled.div`
+  height: ${HEADER_HEIGHT}px;
+  width: 100%;
 `;
 
 const Logo = styled(Link)`
@@ -38,9 +65,8 @@ const Logo = styled(Link)`
 
 const DesktopNav = styled.nav`
   display: flex;
-  gap: 1.25rem;
+  gap: 1rem;
   align-items: center;
-  
 
   @media (max-width: 840px) {
     display: none;
@@ -48,46 +74,45 @@ const DesktopNav = styled.nav`
 `;
 
 const NavLink = styled(Link)`
-  color: ${({ $isdark }) => ($isdark ? "#f3f6fb" : "#071230")};
+  color: ${({ $isdark }) => ($isdark ? "#e6eefc" : "#071230")};
   text-decoration: none;
-  padding: 8px 12px;
-  border-radius: 10px;
+  padding: 6px 10px;
+  border-radius: 8px;
   font-weight: 500;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  transition: transform 200ms ease, background 200ms ease, opacity 160ms ease;
-
+  gap: 6px;
+  transition: transform 160ms ease, background 160ms ease, color 160ms ease;
   &:hover {
-    transform: translateY(-3px);
-    opacity: 0.95;
+    transform: translateY(-2px);
     background: ${({ $isdark }) =>
-      $isdark ? "rgba(255,255,255,0.05)" : "rgba(15,23,42,0.05)"};
+      $isdark ? "rgba(255,255,255,0.03)" : "rgba(15,23,42,0.03)"};
   }
 `;
 
 const Actions = styled.div`
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
+  position: relative;
 `;
 
-const ThemeButton = styled.button`
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
+const IconButton = styled.button`
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border-radius: 8px;
   border: none;
   cursor: pointer;
   background: ${({ $isdark }) =>
-    $isdark ? "rgba(255,255,255,0.05)" : "rgba(15,23,42,0.05)"};
+    $isdark ? "rgba(255,255,255,0.03)" : "rgba(15,23,42,0.03)"};
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#0f172a")};
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: transform 200ms ease, background 200ms ease, color 0.35s ease;
-
+  transition: transform 150ms ease, background 150ms ease;
   &:hover {
-    transform: scale(1.08);
+    transform: scale(1.05);
   }
 `;
 
@@ -96,28 +121,28 @@ const BurgerButton = styled.button`
   @media (max-width: 840px) {
     display: inline-flex;
   }
-
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   padding: 6px;
-  border-radius: 10px;
+  border-radius: 8px;
   border: none;
   background: transparent;
   cursor: pointer;
-  align-items: center;
-  justify-content: center;
   position: relative;
+  z-index: 10001;
 
   div.bar {
     width: 22px;
     height: 2px;
-    background: ${({ $isdark }) => ($isdark ? "#f8fafc" : "#0f172a")};
+    background: ${({ $isdark }) => ($isdark ? "#fff" : "#071230")};
     border-radius: 2px;
-    transition: transform 300ms ease, opacity 200ms ease, top 300ms ease;
     position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    transition: all 260ms ease;
   }
   div.bar.top {
-    top: ${({ $open }) => ($open ? "21px" : "14px")};
+    top: ${({ $open }) => ($open ? "19px" : "12px")};
     transform: ${({ $open }) => ($open ? "rotate(45deg)" : "none")};
   }
   div.bar.mid {
@@ -125,74 +150,8 @@ const BurgerButton = styled.button`
     opacity: ${({ $open }) => ($open ? 0 : 1)};
   }
   div.bar.bot {
-    top: ${({ $open }) => ($open ? "21px" : "28px")};
+    top: ${({ $open }) => ($open ? "19px" : "30px")};
     transform: ${({ $open }) => ($open ? "rotate(-45deg)" : "none")};
-  }
-`;
-
-const MobilePanel = styled.aside`
-  position: fixed;
-  right: 0;
-  top: 0;
-  height: 100vh;
-  width: ${({ $open }) => ($open ? "320px" : "0")};
-  max-width: 360px;
-  overflow: hidden;
-  background: ${({ $isdark }) => ($isdark ? "#0D192B" : "#f4f4f4")};
-  box-shadow: -12px 0 30px rgba(2,6,23,0.35);
-  transition: width 360ms cubic-bezier(0.2, 0.9, 0.2, 1), transform 360ms ease, background 0.35s ease;
-  transform: translateX(${({ $open }) => ($open ? "0" : "6px")});
-  border-left: 1px solid ${({ $isdark }) => ($isdark ? "rgba(255,255,255,0.03)" : "rgba(10,10,10,0.04)")};
-  z-index: 120;
-  display: flex;
-  flex-direction: column;
-`;
-
-const MobileHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 24px;
-  border-bottom: 1px solid ${({ $isdark }) => ($isdark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)")};
-`;
-
-const MobileTitle = styled.div`
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: ${({ $isdark }) => ($isdark ? "#f3f6fb" : "#071230")};
-`;
-
-const CloseButton = styled.button`
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: ${({ $isdark }) => ($isdark ? "#fff" : "#0f172a")};
-  font-size: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-
-const MobileContent = styled.div`
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-`;
-
-const MobileItem = styled(Link)`
-  text-decoration: none;
-  color: ${({ $isdark }) => ($isdark ? "#f3f6fb" : "#071230")};
-  font-size: 1.15rem;
-  font-weight: 600;
-  padding: 12px 8px;
-  border-radius: 8px;
-  display: flex;
-  gap: 12px;
-  align-items: center;
-
-  &:hover {
-    background: ${({ $isdark }) => ($isdark ? "rgba(255,255,255,0.02)" : "rgba(2,6,23,0.03)")};
   }
 `;
 
@@ -200,75 +159,155 @@ const Overlay = styled.div`
   display: ${({ $open }) => ($open ? "block" : "none")};
   position: fixed;
   inset: 0;
-  background: rgba(2,6,23, ${({ $open }) => ($open ? 0.35 : 0)});
-  z-index: 110;
-  transition: background 240ms ease;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 1000;
+  animation: ${({ $open }) => ($open ? fadeIn : fadeOut)} 260ms ease forwards;
 `;
 
+const MobilePanel = styled.aside`
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: min(360px, 100vw);
+  max-width: 70%;
+  transform: translateX(${({ $open }) => ($open ? "0" : "100%")});
+  transition: transform 260ms cubic-bezier(0.25, 0.9, 0.2, 1);
+  background: ${({ $isdark }) => ($isdark ? "#071124" : "#fff")};
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  box-shadow: ${({ $open }) =>
+    $open ? "-12px 0 30px rgba(0,0,0,0.24)" : "none"};
+`;
+
+const MobileHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid
+    ${({ $isdark }) => ($isdark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.06)")};
+`;
+
+const MobileTitle = styled.div`
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#071230")};
+`;
+
+const CloseButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#071230")};
+  font-size: 22px;
+  z-index: 1002;
+`;
+
+const MobileContent = styled.div`
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+const MobileItem = styled(Link)`
+  padding: 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#071230")};
+  font-weight: 600;
+  &:hover {
+    background: ${({ $isdark }) =>
+      $isdark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.03)"};
+  }
+`;
+
+/* ===== COMPONENT ===== */
 export default function Header() {
   const { theme, themeToglle, ToggleTheme } = useContext(ThemeContext || {});
   const toggleTheme = themeToglle ?? ToggleTheme ?? (() => {});
   const $isdark = theme === "light";
 
   const { t, i18n } = useTranslation();
-  const toggleLangue = () => i18n.changeLanguage(i18n.language === "fr" ? "en" : "fr");
+  const toggleLangue = () =>
+    i18n.changeLanguage(i18n.language === "fr" ? "en" : "fr");
 
   const [open, setOpen] = useState(false);
-  const panelRef = useRef(null);
 
+  // Scroll lock
   useEffect(() => {
     if (open) {
-      const prev = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      return () => { document.body.style.overflow = prev; };
+      const scrollY = window.scrollY || window.pageYOffset;
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.left = "0";
+      document.body.style.right = "0";
+    } else {
+      const top = document.body.style.top;
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      if (top) window.scrollTo(0, -parseInt(top, 10));
     }
   }, [open]);
 
-
+  // Close on escape
   useEffect(() => {
-    function handleClickOutside(e) {
-      if (!panelRef.current?.contains(e.target)) setOpen(false);
-    }
-    function handleEscape(e) {
+    function onKey(e) {
       if (e.key === "Escape") setOpen(false);
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("touchstart", handleClickOutside);
-    document.addEventListener("keydown", handleEscape);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("touchstart", handleClickOutside);
-      document.removeEventListener("keydown", handleEscape);
-    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
   }, []);
 
   return (
     <>
       <HeaderWrapper $isdark={$isdark}>
-        <Logo to="/" $isdark={$isdark}>NUMA</Logo>
+        <Logo to="/" $isdark={$isdark}>
+          NUMA
+        </Logo>
 
         <DesktopNav>
-          <NavLink to="/collections" $isdark={$isdark}>{t("collections")}</NavLink>
-          <NavLink to="/nouveautes" $isdark={$isdark}>{t("new")}</NavLink>
-          <NavLink to="/promotions" $isdark={$isdark}>{t("deals")}</NavLink>
-          <NavLink to="/a-propos" $isdark={$isdark}>{t("about")}</NavLink>
+          <NavLink to="/collections" $isdark={$isdark}>
+            {t("collections")}
+          </NavLink>
+          <NavLink to="/nouveautes" $isdark={$isdark}>
+            {t("new")}
+          </NavLink>
+          <NavLink to="/promotions" $isdark={$isdark}>
+            {t("deals")}
+          </NavLink>
+          <NavLink to="/a-propos" $isdark={$isdark}>
+            {t("about")}
+          </NavLink>
         </DesktopNav>
 
         <Actions>
-          <ThemeButton onClick={toggleTheme} $isdark={$isdark}>
-            { $isdark ? <FiMoon size={20} /> : <FiSun size={20} /> }
-          </ThemeButton>
-
-          <ThemeButton onClick={toggleLangue} $isdark={$isdark}>
+          <IconButton onClick={toggleTheme} $isdark={$isdark}>
+            {$isdark ? <FiMoon size={18} /> : <FiSun size={18} />}
+          </IconButton>
+          <IconButton onClick={toggleLangue} $isdark={$isdark}>
             {i18n.language === "fr" ? "FR" : "EN"}
-          </ThemeButton>
+          </IconButton>
+          <NavLink to="/compte" $isdark={$isdark}>
+            <FiUser />
+          </NavLink>
+          <NavLink to="/panier" $isdark={$isdark}>
+            <FiShoppingBag />
+          </NavLink>
+          <NavLink to="/favoris" $isdark={$isdark}>
+            <FiHeart />
+          </NavLink>
 
-          <NavLink to="/compte" $isdark={$isdark}><FiUser /></NavLink>
-          <NavLink to="/panier" $isdark={$isdark}><FiShoppingBag /></NavLink>
-          <NavLink to="/favoris" $isdark={$isdark}><FiHeart /></NavLink>
-
-          <BurgerButton onClick={() => setOpen(!open)} $open={open} $isdark={$isdark}>
+          <BurgerButton
+            onClick={() => setOpen(prev => !prev)}
+            $open={open}
+            $isdark={$isdark}
+            aria-expanded={open}
+          >
             <div className="bar top" />
             <div className="bar mid" />
             <div className="bar bot" />
@@ -276,28 +315,45 @@ export default function Header() {
         </Actions>
       </HeaderWrapper>
 
+      <HeaderSpacer />
+
       <Overlay $open={open} onClick={() => setOpen(false)} />
 
-      <MobilePanel $open={open} $isdark={$isdark} ref={panelRef}>
+      <MobilePanel $open={open} $isdark={$isdark}>
         <MobileHeader $isdark={$isdark}>
           <MobileTitle $isdark={$isdark}>NUMA</MobileTitle>
-          <CloseButton $isdark={$isdark} onClick={() => setOpen(false)}><FiX /></CloseButton>
+          <CloseButton $isdark={$isdark} onClick={() => setOpen(false)}>
+            <FiX />
+          </CloseButton>
         </MobileHeader>
 
         <MobileContent>
-          <MobileItem to="/" onClick={() => setOpen(false)} $isdark={$isdark}>{t("home")}</MobileItem>
-          <MobileItem to="/collections" onClick={() => setOpen(false)} $isdark={$isdark}>{t("collections")}</MobileItem>
-          <MobileItem to="/nouveautes" onClick={() => setOpen(false)} $isdark={$isdark}>{t("new")}</MobileItem>
-          <MobileItem to="/promotions" onClick={() => setOpen(false)} $isdark={$isdark}>{t("deals")}</MobileItem>
-          <MobileItem to="/a-propos" onClick={() => setOpen(false)} $isdark={$isdark}>{t("about")}</MobileItem>
+          <MobileItem to="/" onClick={() => setOpen(false)} $isdark={$isdark}>
+            {t("home")}
+          </MobileItem>
+          <MobileItem to="/collections" onClick={() => setOpen(false)} $isdark={$isdark}>
+            {t("collections")}
+          </MobileItem>
+          <MobileItem to="/nouveautes" onClick={() => setOpen(false)} $isdark={$isdark}>
+            {t("new")}
+          </MobileItem>
+          <MobileItem to="/promotions" onClick={() => setOpen(false)} $isdark={$isdark}>
+            {t("deals")}
+          </MobileItem>
+          <MobileItem to="/a-propos" onClick={() => setOpen(false)} $isdark={$isdark}>
+            {t("about")}
+          </MobileItem>
 
           <div style={{ height: 1, background: $isdark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.04)", margin: "8px 0 4px" }} />
 
-          <MobileItem to="/compte" onClick={() => setOpen(false)}><FiUser /> {t("account")}</MobileItem>
-          <MobileItem to="/panier" onClick={() => setOpen(false)}><FiShoppingBag /> {t("cart")}</MobileItem>
+          <MobileItem to="/compte" onClick={() => setOpen(false)}>
+            <FiUser /> {t("account")}
+          </MobileItem>
+          <MobileItem to="/panier" onClick={() => setOpen(false)}>
+            <FiShoppingBag /> {t("cart")}
+          </MobileItem>
         </MobileContent>
       </MobilePanel>
     </>
   );
 }
-
