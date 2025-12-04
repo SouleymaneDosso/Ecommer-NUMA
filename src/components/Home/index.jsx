@@ -385,8 +385,8 @@ export default function Home() {
       <HorizontalScroll>
         {nouveautes.map(p => (
           <CardHorizontal key={p.id} to={`/produit/${p.id}`}>
-            <img src={p.image} alt={p.title} loading="lazy"/>
-            <p>{p.title} – {p.price}€</p>
+            <img src={p.image} alt={p.titre} loading="lazy"/>
+            <p>{p.titre} – {p.price}€</p>
           </CardHorizontal>
         ))}
       </HorizontalScroll>
@@ -396,8 +396,8 @@ export default function Home() {
       <ProductGrid>
         {visibleProducts.map(p => (
           <Card key={p.id} to={`/produit/${p.id}`}>
-            <img src={p.image} alt={p.title} loading="lazy"/>
-            <p>{p.title} – {p.price}€</p>
+            <img src={p.image} alt={p.titre} loading="lazy"/>
+            <p>{p.titre} – {p.price}€</p>
           </Card>
         ))}
         {loadingMore &&

@@ -66,7 +66,7 @@ const Arrow = styled.div`
   user-select: none;
   z-index: 10000;
   &:hover {
-    color: #ddd;
+    color: black;
   }
 `;
 

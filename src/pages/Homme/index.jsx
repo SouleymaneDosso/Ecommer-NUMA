@@ -5,6 +5,8 @@ import { produits } from "../../data/produits";
 import { FiHeart } from "react-icons/fi";
 import { Link } from "react-router-dom";
 
+
+
 /* ===== STYLES ===== */
 const PageWrapper = styled.main`
   padding: 2rem 4%;
@@ -218,7 +220,7 @@ function Homme() {
             onClick={() => setFilter(f.value)}
           >
             {f.label}
-          </FilterButton>
+        </FilterButton>
         ))}
       </FiltersWrapper>
 

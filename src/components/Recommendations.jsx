@@ -3,7 +3,8 @@ import { produits } from "../data/produits";
 
 const Wrapper = styled.div`
   margin-top: 2rem;
-  display: flex;
+  display: grid;
+  grid-template-columns : repeat(auto-fit, minmax(90px, 1fr));
   gap: 1rem;
   flex-wrap: wrap;
 `;

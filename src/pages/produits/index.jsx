@@ -24,8 +24,7 @@
 //   return () => window.removeEventListener("scroll", handleScroll);
 // }, [visibleCount]);
 
-
-import { useState, useEffect} from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import styled from "styled-components";
 import { FiArrowLeft } from "react-icons/fi";
@@ -36,8 +35,7 @@ import Recommendations from "../../components/Recommendations";
 import FavoriteButton from "../../components/FavoriteButton";
 import ProductImages from "../../components/ProductImages";
 import AddToCartBar from "../../components/AddToCartBar";
-import  VariationsSelector from "../../components/VariationsSelector";
-
+import VariationsSelector from "../../components/VariationsSelector";
 
 // ---------- STYLES ----------
 const PageWrapper = styled.main`
@@ -59,7 +57,7 @@ const BackLink = styled.button`
   border-radius: 8px;
   cursor: pointer;
   transition: 0.2s;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 
   &:hover {
     background: ${({ theme }) => theme.primary};
@@ -105,7 +103,6 @@ const StockInfo = styled.p`
   font-weight: 500;
 `;
 
-
 const Arrow = styled.button`
   position: absolute;
   top: 50%;
@@ -119,23 +116,23 @@ const Arrow = styled.button`
   user-select: none;
 `;
 
-
-
-
 // ---------- PAGE PRODUCT ----------
 export default function Produit() {
   const { id } = useParams();
   const produit = produits.find((p) => p.id === parseInt(id));
   if (!produit) return <p>Produit introuvable</p>;
 
-  const [selectedSize, setSelectedSize] = useState(produit.tailles?.[0] || null);
+  const [selectedSize, setSelectedSize] = useState(
+    produit.tailles?.[0] || null
+  );
   const [selectedColor, setSelectedColor] = useState(null);
   const [quantity, setQuantity] = useState(1);
 
-  const imagesToShow = produit.images?.length > 0 ? produit.images : [produit.image];
+  const imagesToShow =
+    produit.images?.length > 0 ? produit.images : [produit.image];
 
   // Couleurs disponibles pour la taille sélectionnée
-  const availableColors = produit.couleurs.filter(c => {
+  const availableColors = produit.couleurs.filter((c) => {
     const key = `${selectedSize}_${c}`;
     return produit.stockParVariation?.[key] > 0;
   });
@@ -147,7 +144,7 @@ export default function Produit() {
   }, [selectedSize, availableColors]);
 
   const key = selectedColor ? `${selectedSize}_${selectedColor}` : null;
-  const stockDisponible = key ? produit.stockParVariation?.[key] ?? 0 : 0;
+  const stockDisponible = key ? (produit.stockParVariation?.[key] ?? 0) : 0;
 
   useEffect(() => setQuantity(1), [selectedSize, selectedColor]);
 
@@ -184,7 +181,10 @@ export default function Produit() {
           <AddToCartBar
             quantity={quantity}
             setQuantity={setQuantity}
-            stock={stockDisponible}
+            selectedSize={selectedSize}
+            selectedColor={selectedColor}
+            stockParVariation={produit.stockParVariation}
+            produit={produit}
           />
 
           <FavoriteButton />

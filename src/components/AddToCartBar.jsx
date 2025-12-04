@@ -1,4 +1,6 @@
 import styled from "styled-components";
+import { useContext } from "react";
+import { PanierContext } from "../Utils/Context";
 
 const ActionWrapper = styled.div`
   display: flex;
@@ -27,7 +29,7 @@ const AddButton = styled.button`
   border-radius: 8px;
   border: none;
   background: ${({ theme }) => theme.primary};
-  color: white;
+  color: black;
   font-weight: 600;
   cursor: pointer;
   transition: 0.2s ease;
@@ -43,15 +45,19 @@ const StockInfo = styled.span`
 `;
 
 export default function AddToCartBar({
-  quantity,
+   quantity,
   setQuantity,
   selectedSize,
   selectedColor,
   stockParVariation,
+  produit,
 }) {
   // Calcul du stock disponible pour la combinaison sélectionnée
-  const key = selectedSize && selectedColor ? `${selectedSize}_${selectedColor}` : null;
-  const stockDisponible = key ? stockParVariation?.[key] ?? 0 : 0;
+  const key =
+    selectedSize && selectedColor ? `${selectedSize}_${selectedColor}` : null;
+  const stockDisponible = key ? (stockParVariation?.[key] ?? 0) : 0;
+
+  const { ajouterPanier } = useContext(PanierContext);
 
   return (
     <ActionWrapper>
@@ -69,7 +75,20 @@ export default function AddToCartBar({
           }}
           disabled={!selectedSize || !selectedColor || stockDisponible === 0}
         />
-        <AddButton disabled={!selectedSize || !selectedColor || stockDisponible === 0}>
+        <AddButton
+          disabled={!selectedSize || !selectedColor || stockDisponible === 0}
+          onClick={() =>
+            ajouterPanier({
+              id: produit.id,
+              nom: produit.nom,
+              prix: produit.prix,
+              image: produit.image,
+              quantite: quantity,
+              taille: selectedSize,
+              couleur: selectedColor,
+            })
+          }
+        >
           Ajouter au panier
         </AddButton>
       </Row>
