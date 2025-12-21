@@ -70,40 +70,81 @@ export const PanierContext = createContext();
 export const Panier = ({ children }) => {
   const [ajouter, setAjouter] = useState(() => {
     try {
-      const tableau = localStorage.getItem("Panier");
-      return tableau ? JSON.parse(tableau) : [];
+      const saved = localStorage.getItem("Panier");
+      return saved ? JSON.parse(saved) : [];
     } catch (err) {
-      console.error("Le panier n'existe pas", err);
+      console.error("Erreur lecture panier:", err);
       return [];
     }
   });
 
-  // Ajouter produit avec gestion de quantité
+  // 🔹 Ajouter un produit au panier avec variations et quantité
   const ajouterPanier = (element) => {
     setAjouter((prev) => {
-      const existe = prev.find((item) => item.id === element.id);
+      const existe = prev.find(
+        (item) =>
+          item.id === element.id &&
+          item.taille === element.taille &&
+          item.couleur === element.couleur
+      );
+
       if (existe) {
+        // On augmente la quantité
         return prev.map((item) =>
-          item.id === element.id
-            ? { ...item, quantite: item.quantite + 1 }
+          item === existe
+            ? { ...item, quantite: item.quantite + element.quantite }
             : item
         );
       }
-      return [...prev, { ...element, quantite: 1 }];
+
+      // Nouveau produit
+      return [...prev, element];
     });
   };
 
-  // Supprimer produit par id
-  const supprimer = (id) => {
-    setAjouter((prev) => prev.filter((item) => item.id !== id));
+  // 🔹 Supprimer un produit spécifique (taille/couleur comprise)
+  const supprimer = (element) => {
+    setAjouter((prev) =>
+      prev.filter(
+        (item) =>
+          !(
+            item.id === element.id &&
+            item.taille === element.taille &&
+            item.couleur === element.couleur
+          )
+      )
+    );
   };
 
-  // Vider tout le panier
-  const toutSupprimer = () => {
-    setAjouter([]);
+  // 🔹 Vider tout le panier
+  const toutSupprimer = () => setAjouter([]);
+
+  // 🔹 Augmenter / diminuer la quantité d’un produit
+  const augmenter = (element) => {
+    setAjouter((prev) =>
+      prev.map((item) =>
+        item.id === element.id &&
+        item.taille === element.taille &&
+        item.couleur === element.couleur
+          ? { ...item, quantite: item.quantite + 1 }
+          : item
+      )
+    );
   };
 
-  // Sauvegarder le panier dans localStorage
+  const diminuer = (element) => {
+    setAjouter((prev) =>
+      prev.map((item) =>
+        item.id === element.id &&
+        item.taille === element.taille &&
+        item.couleur === element.couleur
+          ? { ...item, quantite: item.quantite > 1 ? item.quantite - 1 : 1 }
+          : item
+      )
+    );
+  };
+
+  // 🔹 Sauvegarde automatique dans localStorage
   useEffect(() => {
     try {
       localStorage.setItem("Panier", JSON.stringify(ajouter));
@@ -114,7 +155,14 @@ export const Panier = ({ children }) => {
 
   return (
     <PanierContext.Provider
-      value={{ ajouter, ajouterPanier, supprimer, toutSupprimer }}
+      value={{
+        ajouter,
+        ajouterPanier,
+        supprimer,
+        toutSupprimer,
+        augmenter,
+        diminuer,
+      }}
     >
       {children}
     </PanierContext.Provider>

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import styled from "styled-components";
 
 const SelectorWrapper = styled.div`
@@ -21,61 +22,67 @@ const OptionButton = styled.button`
   padding: 6px 14px;
   border-radius: 20px;
   border: 1px solid
-    ${({ theme, active, disabled }) => {
+    ${({ theme, $active, disabled }) => {
       if (disabled) return "#ccc";
-      return active ? theme.primary : theme.border;
+      return $active ? theme.primary : theme.border;
     }};
-  background: ${({ active, theme, disabled }) => {
+  background: ${({ $active, theme, disabled }) => {
     if (disabled) return "#f5f5f5";
-    return active ? theme.primary : theme.bg;
+    return $active ? theme.primary : theme.bg;
   }};
-  color: ${({ active, theme, disabled }) => {
+  color: ${({ $active, theme, disabled }) => {
     if (disabled) return "#999";
-    return active ? "white" : theme.text;
+    return $active ? "white" : theme.text;
   }};
   cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
   font-weight: 500;
   transition: 0.2s;
 
   &:hover {
-    background: ${({ theme, disabled }) => (disabled ? "#f5f5f5" : theme.primary)};
+    background: ${({ theme, disabled }) =>
+      disabled ? "#f5f5f5" : theme.primary};
     color: ${({ disabled }) => (disabled ? "#999" : "white")};
   }
 `;
 
 export default function VariationsSelector({
-  tailles,
-  couleurs,
+  tailles = [],
+  couleurs = [],
   selectedSize,
   setSelectedSize,
   selectedColor,
   setSelectedColor,
-  stockParVariation
+  stockParVariation = {},
 }) {
-  // Vérifie si une combinaison taille-couleur a du stock
+  // ✅ stock = stockParVariation[size][color]
   const isAvailable = (size, color) => {
-    if (!stockParVariation) return true;
-    const key = `${size}_${color}`;
-    return stockParVariation[key] > 0;
+    return stockParVariation?.[size]?.[color] > 0;
   };
 
-  // Vérifie si au moins une couleur est disponible pour une taille
   const sizeAvailable = (size) => {
     return couleurs.some((c) => isAvailable(size, c));
   };
 
-  // Vérifie si au moins une taille est disponible pour une couleur
   const colorAvailable = (color) => {
     return tailles.some((t) => isAvailable(t, color));
   };
 
-  // Ajuste la sélection si elle devient indisponible
-  if (selectedSize && !sizeAvailable(selectedSize)) setSelectedSize(null);
-  if (selectedColor && !colorAvailable(selectedColor)) setSelectedColor(null);
+  // ✅ AJUSTEMENT DE LA SÉLECTION (DANS useEffect)
+  useEffect(() => {
+    if (selectedSize && !sizeAvailable(selectedSize)) {
+      setSelectedSize(null);
+    }
+  }, [selectedSize, couleurs]);
+
+  useEffect(() => {
+    if (selectedColor && !colorAvailable(selectedColor)) {
+      setSelectedColor(null);
+    }
+  }, [selectedColor, tailles]);
 
   return (
     <SelectorWrapper>
-      {tailles?.length > 0 && (
+      {tailles.length > 0 && (
         <div>
           <Label>Taille :</Label>
           <OptionsRow>
@@ -84,7 +91,7 @@ export default function VariationsSelector({
               return (
                 <OptionButton
                   key={t}
-                  active={selectedSize === t}
+                  $active={selectedSize === t}
                   disabled={!available}
                   onClick={() => available && setSelectedSize(t)}
                 >
@@ -96,16 +103,19 @@ export default function VariationsSelector({
         </div>
       )}
 
-      {couleurs?.length > 0 && (
+      {couleurs.length > 0 && (
         <div>
           <Label>Couleur :</Label>
           <OptionsRow>
             {couleurs.map((c) => {
-              const available = selectedSize ? isAvailable(selectedSize, c) : colorAvailable(c);
+              const available = selectedSize
+                ? isAvailable(selectedSize, c)
+                : colorAvailable(c);
+
               return (
                 <OptionButton
                   key={c}
-                  active={selectedColor === c}
+                  $active={selectedColor === c}
                   disabled={!available}
                   onClick={() => available && setSelectedColor(c)}
                 >
@@ -119,5 +129,3 @@ export default function VariationsSelector({
     </SelectorWrapper>
   );
 }
-
-

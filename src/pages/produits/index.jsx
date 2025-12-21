@@ -1,41 +1,13 @@
-// useEffect(() => {
-//   let isFetching = false;
-
-//   function handleScroll() {
-//     if (isFetching) return;
-
-//     const bottom =
-//       window.innerHeight + window.scrollY >=
-//       document.documentElement.scrollHeight - 300;
-
-//     if (bottom && visibleCount < produits.length) {
-//       isFetching = true;
-//       setLoadingMore(true);
-
-//       setTimeout(() => {
-//         setVisibleCount(prev => Math.min(prev + 4, produits.length));
-//         setLoadingMore(false);
-//         isFetching = false;
-//       }, 600);
-//     }
-//   }
-
-//   window.addEventListener("scroll", handleScroll);
-//   return () => window.removeEventListener("scroll", handleScroll);
-// }, [visibleCount]);
-
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import styled from "styled-components";
 import { FiArrowLeft } from "react-icons/fi";
-import { produits } from "../../data/produits";
 
-import Comments from "../../components/Comments";
-import Recommendations from "../../components/Recommendations";
-import FavoriteButton from "../../components/FavoriteButton";
-import ProductImages from "../../components/ProductImages";
-import AddToCartBar from "../../components/AddToCartBar";
 import VariationsSelector from "../../components/VariationsSelector";
+import AddToCartBar from "../../components/AddToCartBar";
+import Comments from "../../components/Comments";
+import ProductImages from "../../components/ProductImages";
+import Recommendations from "../../components/Recommendations"; // <-- ajouté
 
 // ---------- STYLES ----------
 const PageWrapper = styled.main`
@@ -51,25 +23,17 @@ const BackLink = styled.button`
   gap: 0.5rem;
   border: none;
   background: ${({ theme }) => theme.bgLight || "#f5f5f5"};
-  color: ${({ theme }) => theme.primary};
+  color: ${({ theme }) => theme.primary || "#007bff"};
   font-weight: 600;
   padding: 8px 14px;
   border-radius: 8px;
   cursor: pointer;
-  transition: 0.2s;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-
-  &:hover {
-    background: ${({ theme }) => theme.primary};
-    color: white;
-  }
 `;
 
 const ProductWrapper = styled.div`
   display: flex;
   gap: 2rem;
   flex-wrap: wrap;
-  position: relative;
 `;
 
 const ProductDetails = styled.div`
@@ -88,65 +52,64 @@ const ProductTitle = styled.h1`
 const ProductPrice = styled.span`
   font-size: 1.4rem;
   font-weight: 700;
-  color: ${({ theme }) => theme.primary};
 `;
 
 const Description = styled.p`
   font-size: 1rem;
-  line-height: 1.5;
-  color: ${({ theme }) => theme.text};
 `;
 
 const StockInfo = styled.p`
   font-size: 0.9rem;
-  color: ${({ theme }) => theme.text};
   font-weight: 500;
 `;
 
-const Arrow = styled.button`
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 2rem;
-  background: none;
-  border: none;
+const Badge = styled.span`
+  background: ${({ type }) =>
+    type === "new" ? "#10b981" : type === "promo" ? "#f59e0b" : "transparent"};
   color: white;
-  cursor: pointer;
-  z-index: 10000;
-  user-select: none;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  align-self: flex-start;
 `;
 
-// ---------- PAGE PRODUCT ----------
+// ---------- PAGE PRODUIT ----------
 export default function Produit() {
   const { id } = useParams();
-  const produit = produits.find((p) => p.id === parseInt(id));
-  if (!produit) return <p>Produit introuvable</p>;
 
-  const [selectedSize, setSelectedSize] = useState(
-    produit.tailles?.[0] || null
-  );
+  const [produit, setProduit] = useState(null);
+  const [selectedSize, setSelectedSize] = useState(null);
   const [selectedColor, setSelectedColor] = useState(null);
   const [quantity, setQuantity] = useState(1);
 
-  const imagesToShow =
-    produit.images?.length > 0 ? produit.images : [produit.image];
-
-  // Couleurs disponibles pour la taille sélectionnée
-  const availableColors = produit.couleurs.filter((c) => {
-    const key = `${selectedSize}_${c}`;
-    return produit.stockParVariation?.[key] > 0;
-  });
-
+  // fetch produit
   useEffect(() => {
-    if (!availableColors.includes(selectedColor)) {
-      setSelectedColor(availableColors[0] || null);
+    async function fetchProduit() {
+      try {
+        const res = await fetch(`http://localhost:3000/api/produits/${id}`);
+        if (!res.ok) throw new Error("Erreur fetch produit");
+        const data = await res.json();
+        setProduit(data);
+
+        setSelectedSize(data.tailles?.[0] || null);
+      } catch (err) {
+        console.error(err);
+      }
     }
-  }, [selectedSize, availableColors]);
+    fetchProduit();
+  }, [id]);
 
-  const key = selectedColor ? `${selectedSize}_${selectedColor}` : null;
-  const stockDisponible = key ? (produit.stockParVariation?.[key] ?? 0) : 0;
+  if (!produit) return <p>Chargement du produit...</p>;
 
-  useEffect(() => setQuantity(1), [selectedSize, selectedColor]);
+  const stockDisponible =
+    selectedSize && selectedColor
+      ? produit.stockParVariation?.[selectedSize]?.[selectedColor] ?? 0
+      : 0;
+
+  const availableColors = produit.couleurs.filter(
+    (c) => selectedSize && produit.stockParVariation?.[selectedSize]?.[c] > 0
+  );
 
   return (
     <PageWrapper>
@@ -156,11 +119,19 @@ export default function Produit() {
       </BackLink>
 
       <ProductWrapper>
-        <ProductImages images={imagesToShow} />
+        <ProductImages images={produit.imageUrl || []} />
 
         <ProductDetails>
-          <ProductTitle>{produit.titre}</ProductTitle>
-          <ProductPrice>{produit.prix} €</ProductPrice>
+          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+            <ProductTitle>{produit.title}</ProductTitle>
+            {(produit.badge || produit.isNew) && (
+              <Badge type={produit.badge || (produit.isNew ? "new" : null)}>
+                {produit.badge || (produit.isNew ? "Nouveau" : "")}
+              </Badge>
+            )}
+          </div>
+
+          <ProductPrice>{produit.price} FCFA</ProductPrice>
           <Description>{produit.description}</Description>
 
           <VariationsSelector
@@ -170,12 +141,13 @@ export default function Produit() {
             setSelectedSize={setSelectedSize}
             selectedColor={selectedColor}
             setSelectedColor={setSelectedColor}
+            stockParVariation={produit.stockParVariation}
           />
 
           <StockInfo>
-            {stockDisponible > 0
+            {selectedSize && selectedColor
               ? `Stock disponible : ${stockDisponible}`
-              : "Rupture de stock pour cette combinaison"}
+              : "Sélectionnez taille et couleur"}
           </StockInfo>
 
           <AddToCartBar
@@ -187,9 +159,14 @@ export default function Produit() {
             produit={produit}
           />
 
-          <FavoriteButton />
-          <Comments commentaires={produit.commentaires} />
-          <Recommendations currentId={produit.id} />
+          <Comments
+            commentaires={produit.commentaires}
+            produitId={produit._id}
+            userId={localStorage.getItem("userId")}
+          />
+
+          {/* -------------------- RECOMMANDATIONS -------------------- */}
+          <Recommendations currentId={produit._id} />
         </ProductDetails>
       </ProductWrapper>
     </PageWrapper>

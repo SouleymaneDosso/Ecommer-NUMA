@@ -14,6 +14,11 @@ import Enfant from "./pages/Enfant";
 import PagePanier from "./components/panier";
 import Produit from "./pages/produits";
 import Erreur from "./components/Erreur";
+import AdminLogin from './pages/AdminLogin'
+import AdminDashboard from './pages/AdminDashboard'
+import AdminLayout from "./pages/AdminLayout";
+import AdminProducts from "./pages/AdminProducts"
+import Compte from "./pages/compteutilisateur"
 import "./i18n"; 
 
 
@@ -32,6 +37,12 @@ createRoot(document.getElementById("root")).render(
             <Route path="/favoris" element={<Favorie />} />
             <Route path="/produit/:id" element={<Produit />} />
             <Route path="/panier" element={<PagePanier />} />
+            <Route path="/compte" element={<Compte />} />
+            <Route path="/admin" element={<AdminLogin />} />
+            <Route path="/admin" element={<AdminLayout />}>
+            <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="products" element={<AdminProducts />} />
+            </Route>
             <Route path="*" element={<Erreur />} />
           </Routes>
           <Footer />

@@ -30,6 +30,7 @@ const ProductImage = styled.img`
   object-fit: cover;
   cursor: pointer;
   transition: transform 0.3s ease;
+
   &:hover {
     transform: scale(1.05);
   }
@@ -37,11 +38,8 @@ const ProductImage = styled.img`
 
 const FullscreenOverlay = styled.div`
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0,0,0,0.9);
+  inset: 0;
+  background: rgba(0, 0, 0, 0.9);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -53,7 +51,6 @@ const FullscreenImage = styled.img`
   max-height: 90%;
   object-fit: contain;
   border-radius: 8px;
-  transition: transform 0.4s ease;
 `;
 
 const Arrow = styled.div`
@@ -65,15 +62,19 @@ const Arrow = styled.div`
   cursor: pointer;
   user-select: none;
   z-index: 10000;
+
   &:hover {
     color: black;
   }
 `;
 
-const ArrowLeft = styled(Arrow)`left: 20px;`;
-const ArrowRight = styled(Arrow)`right: 20px;`;
+const ArrowLeft = styled(Arrow)`
+  left: 20px;
+`;
+const ArrowRight = styled(Arrow)`
+  right: 20px;
+`;
 
-// --- NEW: Dots ---
 const DotsWrapper = styled.div`
   position: absolute;
   top: 50%;
@@ -89,14 +90,16 @@ const Dot = styled.div`
   height: 10px;
   border-radius: 50%;
   background: ${({ active }) => (active ? "#000" : "#ccc")};
-  transition: 0.2s;
 `;
 
-export default function ProductImages({ images }) {
+// 🔐 IMPORTANT : images = [] par défaut
+export default function ProductImages({ images = [] }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  const wrapperRef = useRef();
+  const wrapperRef = useRef(null);
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
 
   const openFullscreen = (index) => {
     setCurrentIndex(index);
@@ -107,34 +110,44 @@ export default function ProductImages({ images }) {
 
   const prevImage = (e) => {
     e?.stopPropagation();
-    setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+    if (!images.length) return;
+    setCurrentIndex((prev) =>
+      prev === 0 ? images.length - 1 : prev - 1
+    );
   };
 
   const nextImage = (e) => {
     e?.stopPropagation();
-    setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+    if (!images.length) return;
+    setCurrentIndex((prev) =>
+      prev === images.length - 1 ? 0 : prev + 1
+    );
   };
 
   const handleScroll = () => {
-    const el = wrapperRef.current;
-    if (!el) return;
-    const height = el.clientHeight;
-    const index = Math.round(el.scrollTop / height);
+    if (!wrapperRef.current || !images.length) return;
+    const height = wrapperRef.current.clientHeight;
+    const index = Math.round(wrapperRef.current.scrollTop / height);
     setCurrentIndex(index);
   };
 
-  // Swipe support for mobile fullscreen
-  const touchStartX = useRef(0);
-  const touchEndX = useRef(0);
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
 
-  const handleTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; };
-  const handleTouchMove = (e) => { touchEndX.current = e.touches[0].clientX; };
+  const handleTouchMove = (e) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+
   const handleTouchEnd = (e) => {
     e.stopPropagation();
     const delta = touchStartX.current - touchEndX.current;
     if (delta > 50) nextImage();
-    else if (delta < -50) prevImage();
+    if (delta < -50) prevImage();
   };
+
+  // 🛑 sécurité absolue
+  if (!images.length) return null;
 
   return (
     <Wrapper>
@@ -150,14 +163,13 @@ export default function ProductImages({ images }) {
         ))}
       </ImagesWrapper>
 
-      {/* --- Dots */}
       <DotsWrapper>
         {images.map((_, i) => (
           <Dot key={i} active={i === currentIndex} />
         ))}
       </DotsWrapper>
 
-      {isFullscreen && (
+      {isFullscreen && images[currentIndex] && (
         <FullscreenOverlay
           onClick={closeFullscreen}
           onTouchStart={handleTouchStart}
@@ -165,7 +177,7 @@ export default function ProductImages({ images }) {
           onTouchEnd={handleTouchEnd}
         >
           <ArrowLeft onClick={prevImage}>&larr;</ArrowLeft>
-          <FullscreenImage key={currentIndex} src={images[currentIndex]} />
+          <FullscreenImage src={images[currentIndex]} />
           <ArrowRight onClick={nextImage}>&rarr;</ArrowRight>
         </FullscreenOverlay>
       )}

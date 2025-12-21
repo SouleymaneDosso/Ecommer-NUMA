@@ -1,13 +1,49 @@
-// src/pages/Homme.jsx
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import styled from "styled-components";
-import { produits } from "../../data/produits";
 import { FiHeart } from "react-icons/fi";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
+/* ===== MODAL ===== */
+const ModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: ${({ visible }) => (visible ? "flex" : "none")};
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+`;
 
+const ModalContent = styled.div`
+  background: #fff;
+  padding: 2rem;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+`;
 
-/* ===== STYLES ===== */
+const ModalTitle = styled.h2`
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+`;
+
+const ModalText = styled.p`
+  margin-bottom: 1.5rem;
+`;
+
+const ModalButton = styled.button`
+  padding: 10px 20px;
+  background: ${({ primary }) => (primary ? "#2563eb" : "#ef4444")};
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  margin: 0 0.5rem;
+  cursor: pointer;
+  font-weight: 600;
+`;
+
+/* ===== PAGE ===== */
 const PageWrapper = styled.main`
   padding: 2rem 4%;
   display: flex;
@@ -18,81 +54,39 @@ const PageWrapper = styled.main`
 const PageTitle = styled.h1`
   font-size: 2rem;
   font-weight: 700;
-  color: ${({ theme }) => theme.text};
 `;
 
-const FiltersWrapper = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-`;
-
-const FilterButton = styled.button`
-  padding: 6px 14px;
-  border-radius: 20px;
-  border: 1px solid ${({ theme }) => theme.border};
-  background: ${({ active, theme }) => (active ? theme.primary : theme.bg)};
-  color: ${({ active, theme }) => (active ? "white" : theme.text)};
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.25s ease;
-
-  &:hover {
-    background: ${({ theme }) => theme.primary};
-    color: white;
-  }
-`;
-
-/* ===== GRID PRODUITS  ===== */
 const Grid = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, 1fr); /* desktop */
-  gap: 1rem; /* resserrer l'espace entre les images */
-
-  @media (max-width: 1024px) {
-    grid-template-columns: repeat(3, 1fr); /* tablette : 3 colonnes */
-  }
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
 
   @media (max-width: 768px) {
-    grid-template-columns: repeat(2, 1fr); /* mobile : 2 colonnes */
+    grid-template-columns: repeat(2, 1fr);
   }
 `;
 
 const ProductCard = styled.div`
   position: relative;
-  display: flex;
-  flex-direction: column;
   border-radius: 5px;
   overflow: hidden;
-  background: ${({ theme }) => theme.bg};
+  background: ${({ theme }) => theme.bg || "#fff"};
   box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 28px rgba(0,0,0,0.12);
-  }
 `;
 
 const ProductImageWrapper = styled.div`
   position: relative;
   width: 100%;
-  padding-top: 100%; // carré
+  padding-top: 100%;
   overflow: hidden;
 `;
 
 const ProductImage = styled.img`
   position: absolute;
-  top: 0;
-  left: 0;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.35s ease;
-
-  ${ProductCard}:hover & {
-    transform: scale(1.05);
-  }
 `;
 
 const Badge = styled.div`
@@ -104,28 +98,22 @@ const Badge = styled.div`
   font-size: 0.75rem;
   font-weight: 700;
   color: white;
-  background-color: ${({ type }) =>
-    type === "new" ? "#2563eb" : type === "promo" ? "#ef4444" : "#000"};
+  background-color: ${({ type }) => (type === "new" ? "#2563eb" : "#ef4444")};
   text-transform: uppercase;
 `;
 
 const CardContent = styled.div`
   padding: 12px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
 `;
 
 const ProductTitle = styled.h2`
   font-size: 1rem;
   font-weight: 600;
-  color: ${({ theme }) => theme.text};
 `;
 
 const ProductPrice = styled.span`
   font-size: 0.95rem;
   font-weight: 700;
-  color: ${({ theme }) => theme.text};
 `;
 
 const ActionWrapper = styled.div`
@@ -138,115 +126,133 @@ const ViewButton = styled(Link)`
   position: absolute;
   bottom: 12px;
   left: 50%;
-  transform: translateX(-50%) translateY(12px);
+  transform: translateX(-50%);
   padding: 6px 12px;
   border-radius: 8px;
   text-decoration: none;
   font-weight: 600;
   font-size: 0.85rem;
-  background: ${({ theme }) => theme.primary};
+  background: ${({ theme }) => theme.primary || "#007bff"};
   color: white;
-  opacity: 0;
+  opacity: ${({ visible }) => (visible ? 1 : 0)};
+  pointer-events: ${({ visible }) => (visible ? "auto" : "none")};
   transition: all 0.3s ease;
-
-  ${ProductCard}:hover & {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
 `;
 
 const FavoriteButton = styled.button`
   border: none;
   background: transparent;
   cursor: pointer;
-  color: ${({ theme }) => theme.text};
   font-size: 1.2rem;
-  transition: transform 0.2s ease;
-
-  &:hover {
-    transform: scale(1.2);
-    color: #ef4444;
-  }
+  color: ${({ favorite }) => (favorite ? "#ef4444" : "#000")};
 `;
 
-/* ===== CAROUSEL ===== */
-const ProductImageCarousel = ({ images, titre }) => {
-  const [index, setIndex] = useState(0);
-
-  useEffect(() => {
-    if (images.length <= 1) return;
-    const interval = setInterval(() => {
-      setIndex((prev) => (prev + 1) % images.length);
-    }, 2500);
-    return () => clearInterval(interval);
-  }, [images]);
-
-  return <ProductImage src={images[index]} alt={titre} />;
-};
-
-/* ===== COMPONENT PRINCIPAL ===== */
 function Homme() {
-  const [filter, setFilter] = useState("tous");
+  const [products, setProducts] = useState([]);
+  const [favorites, setFavorites] = useState([]);
+  const [activeCardId, setActiveCardId] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const navigate = useNavigate();
+  const token = localStorage.getItem("token");
 
-  const produitsHomme = useMemo(() => {
-    let filtered = produits.filter((p) => p.genre === "homme");
-    if (filter === "haut") filtered = filtered.filter((p) => p.categorie === "haut");
-    if (filter === "bas") filtered = filtered.filter((p) => p.categorie === "bas");
-    if (filter === "chaussure") filtered = filtered.filter((p) => p.categorie === "chaussure");
-    if (filter === "promo") filtered = filtered.filter((p) => p.badge === "promo");
-    if (filter === "new") filtered = filtered.filter((p) => p.badge === "new");
-    return filtered;
-  }, [filter]);
+  // 🔹 Charger les produits
+  useEffect(() => {
+    fetch("http://localhost:3000/api/produits")
+      .then(res => res.json())
+      .then(setProducts)
+      .catch(console.error);
+  }, []);
 
-  const filters = [
-    { label: "Tous", value: "tous" },
-    { label: "Hauts", value: "haut" },
-    { label: "Bas", value: "bas" },
-    { label: "Chaussures", value: "chaussure" },
-    { label: "Promo", value: "promo" },
-    { label: "Nouveaux", value: "new" },
-  ];
+  // 🔹 Charger les favoris de l'utilisateur
+  useEffect(() => {
+    if (!token) return;
+    fetch("http://localhost:3000/api/favorites", {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(data => setFavorites(data.map(f => f.productId._id)))
+      .catch(console.error);
+  }, [token]);
+
+  // 🔹 Ajouter/Retirer favori via backend
+  const toggleFavorite = async (productId) => {
+    if (!token) {
+      setShowModal(true);
+      return;
+    }
+
+    try {
+      const res = await fetch("http://localhost:3000/api/favorites/toggle", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ productId })
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        if (data.active) {
+          setFavorites(prev => [...prev, productId]);
+        } else {
+          setFavorites(prev => prev.filter(f => f !== productId));
+        }
+      }
+    } catch (err) {
+      console.error("Erreur favoris :", err);
+    }
+  };
 
   return (
-    <PageWrapper>
-      <PageTitle>Collection Homme</PageTitle>
+    <>
+      {/* Modal */}
+      <ModalOverlay visible={showModal}>
+        <ModalContent>
+          <ModalTitle>Connectez-vous</ModalTitle>
+          <ModalText>Vous devez vous connecter pour ajouter ce produit à vos favoris.</ModalText>
+          <div>
+            <ModalButton primary onClick={() => navigate("/connexion")}>
+              Se connecter / S'inscrire
+            </ModalButton>
+            <ModalButton onClick={() => setShowModal(false)}>Annuler</ModalButton>
+          </div>
+        </ModalContent>
+      </ModalOverlay>
 
-      {/* FILTRES */}
-      <FiltersWrapper>
-        {filters.map((f) => (
-          <FilterButton
-            key={f.value}
-            active={filter === f.value}
-            onClick={() => setFilter(f.value)}
-          >
-            {f.label}
-        </FilterButton>
-        ))}
-      </FiltersWrapper>
+      <PageWrapper onClick={() => setActiveCardId(null)}>
+        <PageTitle>Collection Homme</PageTitle>
+        <Grid>
+          {products.filter(p => p.genre === "homme").map(p => {
+            const isActive = activeCardId === p._id;
+            const isFav = favorites.includes(p._id);
 
-      {/* GRID PRODUITS */}
-      <Grid>
-        {produitsHomme.map((produit) => (
-          <ProductCard key={produit.id}>
-            <ProductImageWrapper>
-              <ProductImageCarousel images={produit.images || [produit.image]} titre={produit.titre} />
-              {produit.badge && <Badge type={produit.badge}>{produit.badge}</Badge>}
-              <ViewButton to={`/produit/${produit.id}`}>Voir produit</ViewButton>
-            </ProductImageWrapper>
+            return (
+              <ProductCard
+                key={p._id}
+                onClick={(e) => { e.stopPropagation(); setActiveCardId(isActive ? null : p._id); }}
+              >
+                <ProductImageWrapper>
+                  <ProductImage src={p.imageUrl[0]} alt={p.title} />
+                  {p.badge && <Badge type={p.badge}>{p.badge}</Badge>}
+                  {isActive && <ViewButton to={`/produit/${p._id}`} visible={true}>Voir produit</ViewButton>}
+                </ProductImageWrapper>
 
-            <CardContent>
-              <ProductTitle>{produit.titre}</ProductTitle>
-              <ActionWrapper>
-                <ProductPrice>{produit.prix} €</ProductPrice>
-                <FavoriteButton aria-label="Ajouter aux favoris">
-                  <FiHeart />
-                </FavoriteButton>
-              </ActionWrapper>
-            </CardContent>
-          </ProductCard>
-        ))}
-      </Grid>
-    </PageWrapper>
+                <CardContent>
+                  <ProductTitle>{p.title}</ProductTitle>
+                  <ActionWrapper>
+                    <ProductPrice>{p.price} FCFA</ProductPrice>
+                    <FavoriteButton favorite={isFav} onClick={(e) => { e.stopPropagation(); toggleFavorite(p._id); }}>
+                      <FiHeart />
+                    </FavoriteButton>
+                  </ActionWrapper>
+                </CardContent>
+              </ProductCard>
+            );
+          })}
+        </Grid>
+      </PageWrapper>
+    </>
   );
 }
 
