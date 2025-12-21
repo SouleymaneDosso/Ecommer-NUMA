@@ -4,6 +4,8 @@ import styled from "styled-components";
 import { FiHeart } from "react-icons/fi";
 import { FaHeart } from "react-icons/fa";
 import { Link } from "react-router-dom";
+import {API_URL } from "../../render"
+
 /* ===== STYLES ===== */
 const PageWrapper = styled.main`
   padding: 2rem 4%;
@@ -116,7 +118,7 @@ export default function Favorie() {
   const fetchFavorites = async () => {
     if (!token) return;
     try {
-      const res = await fetch("http://localhost:3000/api/favorites", {
+      const res = await fetch(`{API_URL }/api/favorites`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -136,7 +138,7 @@ export default function Favorie() {
     if (!token) return alert("Connecte-toi pour ajouter un favori");
 
     try {
-      const res = await fetch("http://localhost:3000/api/favorites/toggle", {
+      const res = await fetch(`${API_URL }/api/favorites/toggle`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

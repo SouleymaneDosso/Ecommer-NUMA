@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import styled from "styled-components";
 import Modal from "react-modal";
-
+import {API_URL } from "../../render"
 Modal.setAppElement("#root");
 
 /* ================= STYLES ================= */
@@ -205,7 +205,7 @@ function AdminProducts() {
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch("http://localhost:3000/api/produits");
+      const res = await fetch(`${API_URL }/api/produits`);
       const data = await res.json();
       setProducts(data || []);
     } catch (err) {
@@ -290,8 +290,8 @@ function AdminProducts() {
       data.append("existingImages", JSON.stringify(existingImages));
 
       const url = editingProduct
-        ? `http://localhost:3000/api/produits/${editingProduct._id}`
-        : "http://localhost:3000/api/produits";
+        ? `${API_URL }/api/produits/${editingProduct._id}`
+        : `${API_URL }/api/produits`;
 
       const res = await fetch(url, {
         method: editingProduct ? "PUT" : "POST",
@@ -315,7 +315,7 @@ function AdminProducts() {
     if (!window.confirm("Supprimer ce produit ?")) return;
     setDeletingId(id);
 
-    await fetch(`http://localhost:3000/api/produits/${id}`, {
+    await fetch(`${API_URL }/api/produits/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });

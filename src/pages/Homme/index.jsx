@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import styled from "styled-components";
 import { FiHeart } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
-
+import {API_URL } from "../../render"
 /* ===== MODAL ===== */
 const ModalOverlay = styled.div`
   position: fixed;
@@ -157,7 +157,7 @@ function Homme() {
 
   // 🔹 Charger les produits
   useEffect(() => {
-    fetch("http://localhost:3000/api/produits")
+    fetch(`${API_URL }/api/produits`)
       .then(res => res.json())
       .then(setProducts)
       .catch(console.error);
@@ -166,7 +166,7 @@ function Homme() {
   // 🔹 Charger les favoris de l'utilisateur
   useEffect(() => {
     if (!token) return;
-    fetch("http://localhost:3000/api/favorites", {
+    fetch(`${API_URL }/api/favorites`, {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(res => res.json())
@@ -182,7 +182,7 @@ function Homme() {
     }
 
     try {
-      const res = await fetch("http://localhost:3000/api/favorites/toggle", {
+      const res = await fetch(`${API_URL }/api/favorites/toggle`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

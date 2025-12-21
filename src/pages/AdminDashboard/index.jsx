@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import styled from "styled-components";
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartTooltip, ResponsiveContainer } from "recharts";
 import Modal from "react-modal";
-
+import {API_URL } from "../../render"
 Modal.setAppElement("#root");
 
 /* ===== Styles ===== */
@@ -193,7 +193,7 @@ function TableauDeBord() {
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch("http://localhost:3000/api/produits");
+      const res = await fetch(`${API_URL }/api/produits`);
       const data = await res.json();
       setProducts(data || []);
     } catch (err) {

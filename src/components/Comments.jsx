@@ -1,6 +1,6 @@
 import styled from "styled-components";
 import { useState } from "react";
-
+import {API_URL } from "../render"
 const Wrapper = styled.div`
   margin-top: 2rem;
 `;
@@ -72,7 +72,7 @@ export default function Comments({ commentaires, produitId, userId }) {
     setLoading(true);
     try {
       const res = await fetch(
-        `http://localhost:3000/api/produits/${produitId}/commentaires`,
+        `${API_URL }/api/produits/${produitId}/commentaires`,
         {
           method: "POST",
           headers: { 

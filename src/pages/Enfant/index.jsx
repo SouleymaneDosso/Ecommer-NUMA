@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import styled from "styled-components";
 import { FiHeart } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
-
+import {API_URL } from "../../render"
 /* ===== MODAL ===== */
 const ModalOverlay = styled.div`
   position: fixed;
@@ -91,7 +91,7 @@ function Enfant() {
 
   // 🔹 Charger produits
   useEffect(() => {
-    fetch("http://localhost:3000/api/produits")
+    fetch(`${API_URL }/api/produits`)
       .then(res => res.json())
       .then(data => setProducts(data.filter(p => p.genre === "enfant")))
       .catch(console.error);
@@ -100,7 +100,7 @@ function Enfant() {
   // 🔹 Charger favoris depuis backend
   useEffect(() => {
     if (!token) return;
-    fetch("http://localhost:3000/api/favorites", { headers: { Authorization: `Bearer ${token}` } })
+    fetch(`${API_URL }/api/favorites`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => res.json())
       .then(data => setFavorites(data.map(f => f.productId._id)))
       .catch(console.error);
@@ -110,7 +110,7 @@ function Enfant() {
   const toggleFavorite = async (id) => {
     if (!token) { setShowModal(true); return; }
     try {
-      const res = await fetch("http://localhost:3000/api/favorites/toggle", {
+      const res = await fetch(`${API_URL}/api/favorites/toggle`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ productId: id })

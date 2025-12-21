@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import styled from "styled-components";
-
+import {API_URL } from "../render"
 // ---------- STYLES ----------
 const RecommendationsWrapper = styled.div`
   margin-top: 2rem;
@@ -81,7 +81,7 @@ export default function Recommendations({ currentId }) {
     async function fetchRecommendations() {
       try {
         const res = await fetch(
-          `http://localhost:3000/api/produits/recommandations/${currentId}`
+          `${API_URL }/api/produits/recommandations/${currentId}`
         );
         if (!res.ok) throw new Error("Erreur fetch recommandations");
         const data = await res.json();

@@ -2,7 +2,7 @@
 import { useState } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
-
+import {API_URL } from "../../render"
 /* ===== STYLES ===== */
 const PageWrapper = styled.main`
   max-width: 400px;
@@ -73,8 +73,8 @@ function Compte() {
     setError("");
 
     const url = isLogin
-      ? "http://localhost:3000/api/admin/login"
-      : "http://localhost:3000/api/admin/create";
+      ? `${API_URL }/api/admin/login`
+      : `${API_URL }/api/admin/create`;
 
     const body = JSON.stringify({ username, password });
 

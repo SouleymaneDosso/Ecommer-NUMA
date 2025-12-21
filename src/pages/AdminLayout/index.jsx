@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate, Outlet, useLocation } from "react-router-dom";
 import styled from "styled-components";
-
 const LayoutContainer = styled.div`
   display: flex;
   min-height: 100vh;
