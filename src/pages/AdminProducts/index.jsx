@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import styled from "styled-components";
 import Modal from "react-modal";
-import {API_URL } from "../../render"
+import { API_URL } from "../../render";
 Modal.setAppElement("#root");
 
 /* ================= STYLES ================= */
@@ -25,12 +25,12 @@ const Title = styled.h2`
   font-size: 32px;
 `;
 
-
 const Button = styled.button.withConfig({
-  shouldForwardProp: (prop) => prop !== "bg" && prop !== "outline"
+  shouldForwardProp: (prop) => prop !== "bg" && prop !== "outline",
 })`
   padding: 10px 16px;
-  background: ${({ bg, outline }) => outline ? "transparent" : bg || "#007bff"};
+  background: ${({ bg, outline }) =>
+    outline ? "transparent" : bg || "#007bff"};
   color: ${({ outline }) => (outline ? "#2c3e50" : "white")};
   font-weight: bold;
   border: ${({ outline }) => (outline ? "1px solid #ccc" : "none")};
@@ -47,7 +47,7 @@ const Button = styled.button.withConfig({
 const TableContainer = styled.div`
   background: #fff;
   border-radius: 12px;
-  box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
   padding: 20px;
 `;
 
@@ -76,13 +76,13 @@ const ProductImagesWrapper = styled.div`
 `;
 
 const ProductImage = styled.img.withConfig({
-  shouldForwardProp: (prop) => prop !== "isMain"
+  shouldForwardProp: (prop) => prop !== "isMain",
 })`
   width: 60px;
   height: 60px;
   object-fit: cover;
   border-radius: 8px;
-  border: ${({ isMain }) => isMain ? "3px solid #007bff" : "1px solid #ccc"};
+  border: ${({ isMain }) => (isMain ? "3px solid #007bff" : "1px solid #ccc")};
   cursor: pointer;
 `;
 
@@ -205,7 +205,7 @@ function AdminProducts() {
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch(`${API_URL }/api/produits`);
+      const res = await fetch(`${API_URL}/api/produits`);
       const data = await res.json();
       setProducts(data || []);
     } catch (err) {
@@ -277,7 +277,7 @@ function AdminProducts() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage("");
-
+    console.log("ADMIN TOKEN =", token);
     if (!formData.genre || !formData.categorie) {
       return setErrorMessage("Genre et catégorie obligatoires");
     }
@@ -286,27 +286,39 @@ function AdminProducts() {
       const data = new FormData();
       data.append("produits", JSON.stringify(formData));
 
-      imageFiles.forEach((img) => data.append("image", img));
+      imageFiles.forEach((img) => {
+        console.log("Image envoyée :", img);
+        data.append("image", img);
+      });
+
       data.append("existingImages", JSON.stringify(existingImages));
 
       const url = editingProduct
-        ? `${API_URL }/api/produits/${editingProduct._id}`
-        : `${API_URL }/api/produits`;
+        ? `${API_URL}/api/produits/${editingProduct._id}`
+        : `${API_URL}/api/produits`;
+
+      console.log("URL :", url);
 
       const res = await fetch(url, {
         method: editingProduct ? "PUT" : "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          // ⚠️ NE PAS mettre Content-Type avec FormData
+        },
         body: data,
       });
 
+      const responseText = await res.text(); // 🔥 clé du debug
+      console.log("Réponse serveur brute :", responseText);
+
       if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.message || "Erreur serveur");
+        throw new Error(responseText || "Erreur serveur");
       }
 
       setModalOpen(false);
       fetchProducts();
     } catch (err) {
+      console.error("Erreur upload produit :", err);
       setErrorMessage(err.message);
     }
   };
@@ -315,7 +327,7 @@ function AdminProducts() {
     if (!window.confirm("Supprimer ce produit ?")) return;
     setDeletingId(id);
 
-    await fetch(`${API_URL }/api/produits/${id}`, {
+    await fetch(`${API_URL}/api/produits/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -386,18 +398,28 @@ function AdminProducts() {
                 <Td>{(p.tailles || []).join(", ")}</Td>
                 <Td>{(p.couleurs || []).join(", ")}</Td>
                 <Td>
-                  {Object.entries(p.stockParVariation || {}).map(([size, colors]) =>
-                    Object.entries(colors).map(([color, stock]) => (
-                      <div key={`${size}-${color}`} style={{ marginBottom: "3px" }}>
-                        {size}-{color}: {stock}
-                      </div>
-                    ))
+                  {Object.entries(p.stockParVariation || {}).map(
+                    ([size, colors]) =>
+                      Object.entries(colors).map(([color, stock]) => (
+                        <div
+                          key={`${size}-${color}`}
+                          style={{ marginBottom: "3px" }}
+                        >
+                          {size}-{color}: {stock}
+                        </div>
+                      ))
                   )}
                 </Td>
                 <Td>{(p.commentaires || []).length}</Td>
                 <Td style={{ display: "flex", gap: "8px" }}>
-                  <Button bg="#f39c12" onClick={() => openModal(p)}>Modifier</Button>
-                  <Button bg="#e74c3c" disabled={deletingId === p._id} onClick={() => handleDelete(p._id)}>
+                  <Button bg="#f39c12" onClick={() => openModal(p)}>
+                    Modifier
+                  </Button>
+                  <Button
+                    bg="#e74c3c"
+                    disabled={deletingId === p._id}
+                    onClick={() => handleDelete(p._id)}
+                  >
                     {deletingId === p._id ? "..." : "Supprimer"}
                   </Button>
                 </Td>
@@ -431,19 +453,41 @@ function AdminProducts() {
               <SectionTitle>Informations générales</SectionTitle>
               <Field>
                 <Label>Titre</Label>
-                <Input value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })}/>
+                <Input
+                  value={formData.title}
+                  onChange={(e) =>
+                    setFormData({ ...formData, title: e.target.value })
+                  }
+                />
               </Field>
               <Field>
                 <Label>Description</Label>
-                <Input value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })}/>
+                <Input
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
+                />
               </Field>
               <Field>
                 <Label>Prix (FCFA)</Label>
-                <Input type="number" value={formData.price} onChange={(e) => setFormData({ ...formData, price: e.target.value })}/>
+                <Input
+                  type="number"
+                  value={formData.price}
+                  onChange={(e) =>
+                    setFormData({ ...formData, price: e.target.value })
+                  }
+                />
               </Field>
               <Field>
                 <Label>Stock</Label>
-                <Input type="number" value={formData.stock} onChange={(e) => setFormData({ ...formData, stock: e.target.value })}/>
+                <Input
+                  type="number"
+                  value={formData.stock}
+                  onChange={(e) =>
+                    setFormData({ ...formData, stock: e.target.value })
+                  }
+                />
               </Field>
             </Section>
 
@@ -452,7 +496,12 @@ function AdminProducts() {
               <SectionTitle>Organisation</SectionTitle>
               <Field>
                 <Label>Genre</Label>
-                <Select value={formData.genre} onChange={(e) => setFormData({ ...formData, genre: e.target.value })}>
+                <Select
+                  value={formData.genre}
+                  onChange={(e) =>
+                    setFormData({ ...formData, genre: e.target.value })
+                  }
+                >
                   <option value="">—</option>
                   <option value="homme">Homme</option>
                   <option value="femme">Femme</option>
@@ -461,7 +510,12 @@ function AdminProducts() {
               </Field>
               <Field>
                 <Label>Catégorie</Label>
-                <Select value={formData.categorie} onChange={(e) => setFormData({ ...formData, categorie: e.target.value })}>
+                <Select
+                  value={formData.categorie}
+                  onChange={(e) =>
+                    setFormData({ ...formData, categorie: e.target.value })
+                  }
+                >
                   <option value="haut">Haut</option>
                   <option value="bas">Bas</option>
                   <option value="robe">Robe</option>
@@ -476,14 +530,26 @@ function AdminProducts() {
               <SectionTitle>Options</SectionTitle>
               <Field>
                 <Label>Badge</Label>
-                <Select value={formData.badge} onChange={(e) => setFormData({ ...formData, badge: e.target.value })}>
+                <Select
+                  value={formData.badge}
+                  onChange={(e) =>
+                    setFormData({ ...formData, badge: e.target.value })
+                  }
+                >
                   <option value="">—</option>
                   <option value="new">New</option>
                   <option value="promo">Promo</option>
                 </Select>
               </Field>
               <label>
-                <input type="checkbox" checked={formData.hero} onChange={(e) => setFormData({ ...formData, hero: e.target.checked })}/> Afficher en Hero
+                <input
+                  type="checkbox"
+                  checked={formData.hero}
+                  onChange={(e) =>
+                    setFormData({ ...formData, hero: e.target.checked })
+                  }
+                />{" "}
+                Afficher en Hero
               </label>
             </Section>
 
@@ -492,11 +558,27 @@ function AdminProducts() {
               <SectionTitle>Variations et Stock par variation</SectionTitle>
               <Field>
                 <Label>Tailles (séparées par une virgule)</Label>
-                <Input value={formData.tailles.join(", ")} onChange={(e) => setFormData({ ...formData, tailles: e.target.value.split(",").map(s => s.trim()) })}/>
+                <Input
+                  value={formData.tailles.join(", ")}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      tailles: e.target.value.split(",").map((s) => s.trim()),
+                    })
+                  }
+                />
               </Field>
               <Field>
                 <Label>Couleurs (séparées par une virgule)</Label>
-                <Input value={formData.couleurs.join(", ")} onChange={(e) => setFormData({ ...formData, couleurs: e.target.value.split(",").map(s => s.trim()) })}/>
+                <Input
+                  value={formData.couleurs.join(", ")}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      couleurs: e.target.value.split(",").map((s) => s.trim()),
+                    })
+                  }
+                />
               </Field>
 
               <Field>
@@ -505,16 +587,31 @@ function AdminProducts() {
                   <thead>
                     <tr>
                       <VariationTh>Taille</VariationTh>
-                      {formData.couleurs.map(c => <VariationTh key={c}>{c}</VariationTh>)}
+                      {formData.couleurs.map((c) => (
+                        <VariationTh key={c}>{c}</VariationTh>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {formData.tailles.map(size => (
+                    {formData.tailles.map((size) => (
                       <tr key={size}>
                         <VariationTd>{size}</VariationTd>
-                        {formData.couleurs.map(color => (
+                        {formData.couleurs.map((color) => (
                           <VariationTd key={color}>
-                            <Input type="number" min={0} value={formData.stockParVariation?.[size]?.[color] || 0} onChange={(e) => handleVariationChange(size, color, e.target.value)}/>
+                            <Input
+                              type="number"
+                              min={0}
+                              value={
+                                formData.stockParVariation?.[size]?.[color] || 0
+                              }
+                              onChange={(e) =>
+                                handleVariationChange(
+                                  size,
+                                  color,
+                                  e.target.value
+                                )
+                              }
+                            />
                           </VariationTd>
                         ))}
                       </tr>
@@ -527,13 +624,22 @@ function AdminProducts() {
             {/* --- Images --- */}
             <Section>
               <SectionTitle>Images</SectionTitle>
-              <Input type="file" multiple onChange={(e) => setImageFiles([...e.target.files])} required={!editingProduct && existingImages.length === 0}/>
+              <Input
+                type="file"
+                multiple
+                onChange={(e) => setImageFiles([...e.target.files])}
+                required={!editingProduct && existingImages.length === 0}
+              />
               {existingImages.length > 0 && (
                 <ProductImagesWrapper>
                   {existingImages.map((img, i) => (
                     <div key={i} style={{ position: "relative" }}>
                       <ProductImage src={img} isMain={i === mainImageIndex} />
-                      <ImageRemoveButton onClick={() => handleRemoveExistingImage(i)}>×</ImageRemoveButton>
+                      <ImageRemoveButton
+                        onClick={() => handleRemoveExistingImage(i)}
+                      >
+                        ×
+                      </ImageRemoveButton>
                     </div>
                   ))}
                 </ProductImagesWrapper>
@@ -541,15 +647,24 @@ function AdminProducts() {
               {imageFiles.length > 0 && (
                 <ProductImagesWrapper>
                   {imageFiles.map((file, i) => (
-                    <ProductImage key={i} src={URL.createObjectURL(file)} isMain={i === mainImageIndex} onClick={() => setMainImageIndex(i)} />
+                    <ProductImage
+                      key={i}
+                      src={URL.createObjectURL(file)}
+                      isMain={i === mainImageIndex}
+                      onClick={() => setMainImageIndex(i)}
+                    />
                   ))}
                 </ProductImagesWrapper>
               )}
             </Section>
 
             <Footer>
-              <Button outline type="button" onClick={() => setModalOpen(false)}>Annuler</Button>
-              <Button type="submit">{editingProduct ? "Enregistrer" : "Ajouter"}</Button>
+              <Button outline type="button" onClick={() => setModalOpen(false)}>
+                Annuler
+              </Button>
+              <Button type="submit">
+                {editingProduct ? "Enregistrer" : "Ajouter"}
+              </Button>
             </Footer>
           </ModalContent>
         </form>

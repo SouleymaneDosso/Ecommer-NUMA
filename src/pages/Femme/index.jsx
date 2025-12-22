@@ -1,14 +1,16 @@
 import { useState, useMemo, useEffect } from "react";
 import styled from "styled-components";
 import { FiHeart } from "react-icons/fi";
+import { FaHeart } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
-import {API_URL } from "../../render"
+import { API_URL } from "../../render";
+
 /* ===== MODAL ===== */
 const ModalOverlay = styled.div`
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
-  display: ${({ visible }) => (visible ? "flex" : "none")};
+  display: ${({ $visible }) => ($visible ? "flex" : "none")};
   justify-content: center;
   align-items: center;
   z-index: 1000;
@@ -34,7 +36,7 @@ const ModalText = styled.p`
 
 const ModalButton = styled.button`
   padding: 10px 20px;
-  background: ${({ primary }) => (primary ? "#2563eb" : "#ef4444")};
+  background: ${({ $primary }) => ($primary ? "#2563eb" : "#ef4444")};
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -66,8 +68,8 @@ const FilterButton = styled.button`
   padding: 6px 14px;
   border-radius: 20px;
   border: 1px solid ${({ theme }) => theme.border};
-  background: ${({ active, theme }) => (active ? theme.primary : theme.bg)};
-  color: ${({ active, theme }) => (active ? "white" : theme.text)};
+  background: ${({ $active, theme }) => ($active ? theme.primary : theme.bg)};
+  color: ${({ $active, theme }) => ($active ? "white" : theme.text)};
   cursor: pointer;
   font-weight: 500;
 `;
@@ -76,6 +78,7 @@ const Grid = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
+
   @media (max-width: 768px) {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -149,8 +152,8 @@ const ViewButton = styled(Link)`
   font-size: 0.85rem;
   background: ${({ theme }) => theme.primary || "#007bff"};
   color: white;
-  opacity: ${({ visible }) => (visible ? 1 : 0)};
-  pointer-events: ${({ visible }) => (visible ? "auto" : "none")};
+  opacity: ${({ $visible }) => ($visible ? 1 : 0)};
+  pointer-events: ${({ $visible }) => ($visible ? "auto" : "none")};
   transition: all 0.3s ease;
 `;
 
@@ -159,30 +162,53 @@ const FavoriteButton = styled.button`
   background: transparent;
   cursor: pointer;
   font-size: 1.2rem;
-  color: ${({ favorite }) => (favorite ? "#ef4444" : "#000")};
+  color: ${({ $favorite }) => ($favorite ? "#ef4444" : "#000")};
+  transition: transform 0.2s;
+  &:active {
+    transform: scale(1.2);
+  }
 `;
 
+/* ===== COMPONENT ===== */
 function Femme() {
   const [products, setProducts] = useState([]);
   const [filter, setFilter] = useState("tous");
   const [favorites, setFavorites] = useState([]);
   const [activeView, setActiveView] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [imageIndexes, setImageIndexes] = useState({});
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
 
-  // 🔹 Charger produits
+  // Charger produits
   useEffect(() => {
-    fetch(`${API_URL }/api/produits`)
+    fetch(`${API_URL}/api/produits`)
       .then((res) => res.json())
       .then((data) => setProducts(data.filter((p) => p.genre === "femme")))
       .catch(console.error);
   }, []);
 
-  // 🔹 Charger favoris depuis backend
+  // Carousel images automatique
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setImageIndexes((prev) => {
+        const updated = { ...prev };
+        products.forEach((p) => {
+          if (!p.imageUrl || p.imageUrl.length <= 1) return;
+          const current = prev[p._id] || 0;
+          updated[p._id] = (current + 1) % p.imageUrl.length;
+        });
+        return updated;
+      });
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [products]);
+
+  // Charger favoris
   useEffect(() => {
     if (!token) return;
-    fetch(`${API_URL }/api/favorites`, {
+    fetch(`${API_URL}/api/favorites`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -190,14 +216,14 @@ function Femme() {
       .catch(console.error);
   }, [token]);
 
-  // 🔹 Toggle favori backend
+  // Toggle favori
   const toggleFavorite = async (id) => {
     if (!token) {
       setShowModal(true);
       return;
     }
     try {
-      const res = await fetch(`${API_URL }/api/favorites/toggle`, {
+      const res = await fetch(`${API_URL}/api/favorites/toggle`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -235,14 +261,14 @@ function Femme() {
 
   return (
     <>
-      <ModalOverlay visible={showModal}>
+      <ModalOverlay $visible={showModal}>
         <ModalContent>
           <ModalTitle>Connectez-vous</ModalTitle>
           <ModalText>
             Vous devez vous connecter pour ajouter ce produit à vos favoris.
           </ModalText>
           <div>
-            <ModalButton primary onClick={() => navigate("/connexion")}>
+            <ModalButton $primary onClick={() => navigate("/compte")}>
               Se connecter / S'inscrire
             </ModalButton>
             <ModalButton onClick={() => setShowModal(false)}>
@@ -259,7 +285,7 @@ function Femme() {
           {filters.map((f) => (
             <FilterButton
               key={f.value}
-              active={filter === f.value}
+              $active={filter === f.value}
               onClick={() => setFilter(f.value)}
             >
               {f.label}
@@ -268,45 +294,51 @@ function Femme() {
         </FiltersWrapper>
 
         <Grid>
-          {filteredProducts.map((p) => {
-            const isFav = favorites.includes(p._id);
-            return (
-              <ProductCard
-                key={p._id}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setActiveView(p._id);
-                }}
-              >
-                <ProductImageWrapper>
-                  <ProductImage src={p.imageUrl[0]} alt={p.title} />
-                  {p.badge && <Badge type={p.badge}>{p.badge}</Badge>}
-                  <ViewButton
-                    to={`/produit/${p._id}`}
-                    visible={activeView === p._id}
-                  >
-                    Voir produit
-                  </ViewButton>
-                </ProductImageWrapper>
-
-                <CardContent>
-                  <ProductTitle>{p.title}</ProductTitle>
-                  <ActionWrapper>
-                    <ProductPrice>{p.price} FCFA</ProductPrice>
-                    <FavoriteButton
-                      favorite={isFav}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleFavorite(p._id);
-                      }}
+          {filteredProducts
+            .filter((p) => p && p._id) // ← ignore les produits invalides
+            .map((p) => {
+              const isFav = favorites.includes(p._id);
+              const currentImageIndex = imageIndexes[p._id] || 0;
+              return (
+                <ProductCard
+                  key={p._id}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveView(p._id);
+                  }}
+                >
+                  <ProductImageWrapper>
+                    <ProductImage
+                      src={p.imageUrl?.[currentImageIndex]}
+                      alt={p.title}
+                    />
+                    {p.badge && <Badge type={p.badge}>{p.badge}</Badge>}
+                    <ViewButton
+                      to={`/produit/${p._id}`}
+                      $visible={activeView === p._id}
                     >
-                      <FiHeart />
-                    </FavoriteButton>
-                  </ActionWrapper>
-                </CardContent>
-              </ProductCard>
-            );
-          })}
+                      Voir produit
+                    </ViewButton>
+                  </ProductImageWrapper>
+
+                  <CardContent>
+                    <ProductTitle>{p.title}</ProductTitle>
+                    <ActionWrapper>
+                      <ProductPrice>{p.price} FCFA</ProductPrice>
+                      <FavoriteButton
+                        $favorite={isFav}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleFavorite(p._id);
+                        }}
+                      >
+                        {isFav ? <FaHeart /> : <FiHeart />}
+                      </FavoriteButton>
+                    </ActionWrapper>
+                  </CardContent>
+                </ProductCard>
+              );
+            })}
         </Grid>
       </PageWrapper>
     </>

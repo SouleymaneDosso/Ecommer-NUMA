@@ -234,7 +234,7 @@ export default function Home() {
         <HeroText>
           <h1>{t("heroTitle")}</h1>
           <p>{t("heroSubtitle")}</p>
-          <HeroButton to="/collections">
+          <HeroButton to="/collection">
             {t("heroButton")} <FiChevronRight />
           </HeroButton>
         </HeroText>

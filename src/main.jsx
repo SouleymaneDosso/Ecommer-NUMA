@@ -19,6 +19,7 @@ import AdminDashboard from './pages/AdminDashboard'
 import AdminLayout from "./pages/AdminLayout";
 import AdminProducts from "./pages/AdminProducts"
 import Compte from "./pages/compteutilisateur"
+import Collection from "./pages/Collection"
 import "./i18n"; 
 
 
@@ -34,6 +35,7 @@ createRoot(document.getElementById("root")).render(
             <Route path="/homme" element={<Homme />} />
             <Route path="/femme" element={<Femme />} />
             <Route path="/enfant" element={<Enfant />} />
+            <Route path="/collection" element={<Collection />} />
             <Route path="/favoris" element={<Favorie />} />
             <Route path="/produit/:id" element={<Produit />} />
             <Route path="/panier" element={<PagePanier />} />

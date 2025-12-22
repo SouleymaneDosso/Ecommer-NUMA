@@ -4,7 +4,7 @@ import styled from "styled-components";
 import { FiHeart } from "react-icons/fi";
 import { FaHeart } from "react-icons/fa";
 import { Link } from "react-router-dom";
-import {API_URL } from "../../render"
+import { API_URL } from "../../render";
 
 /* ===== STYLES ===== */
 const PageWrapper = styled.main`
@@ -118,11 +118,16 @@ export default function Favorie() {
   const fetchFavorites = async () => {
     if (!token) return;
     try {
-      const res = await fetch(`{API_URL }/api/favorites`, {
+      const res = await fetch(`${API_URL}/api/favorites`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      setFavorites(data.map((f) => f.productId).filter((p) => p));
+      // Filtrer les produits null ou invalides
+      setFavorites(
+        data
+          .map((f) => f.productId)
+          .filter((p) => p && p._id)
+      );
     } catch (err) {
       console.error("Erreur fetch favorites:", err);
       setFavorites([]);
@@ -138,7 +143,7 @@ export default function Favorie() {
     if (!token) return alert("Connecte-toi pour ajouter un favori");
 
     try {
-      const res = await fetch(`${API_URL }/api/favorites/toggle`, {
+      const res = await fetch(`${API_URL}/api/favorites/toggle`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -150,14 +155,11 @@ export default function Favorie() {
       const data = await res.json();
 
       setFavorites((prev) => {
-        // Vérifie si le produit existe toujours côté backend
         const exists = prev.find((f) => f._id === product._id);
 
         if (data.active) {
-          // Ajouter le produit complet si ce n'est pas déjà dans la liste
           return exists ? prev : [...prev, product];
         } else {
-          // Retirer le produit des favoris
           return prev.filter((f) => f._id !== product._id);
         }
       });
@@ -172,40 +174,35 @@ export default function Favorie() {
       {favorites.length === 0 && <p>Aucun favori.</p>}
 
       <Grid>
-        {favorites.map((product) => (
-          <ProductCard key={product._id}>
-            <ProductImageWrapper>
-              <ProductImage
-                src={
-                  Array.isArray(product.imageUrl)
-                    ? product.imageUrl[0]
-                    : product.imageUrl
-                }
-                alt={product.title}
-              />
-              {product.badge && (
-                <Badge type={product.badge}>{product.badge}</Badge>
-              )}
-            </ProductImageWrapper>
+        {favorites.map(
+          (product) =>
+            product?._id && (
+              <ProductCard key={product._id}>
+                <ProductImageWrapper>
+                  <ProductImage
+                    src={Array.isArray(product.imageUrl) ? product.imageUrl[0] : product.imageUrl}
+                    alt={product.title}
+                  />
+                  {product.badge && <Badge type={product.badge}>{product.badge}</Badge>}
+                </ProductImageWrapper>
 
-            <CardContent>
-              <ProductTitle>{product.title}</ProductTitle>
-              <ActionWrapper>
-                <ProductPrice>{product.price} FCFA</ProductPrice>
-                <FavoriteButton onClick={() => toggleFavorite(product)}>
-                  {favorites.some((f) => f._id === product._id) ? (
-                    <FaHeart color="#ef4444" />
-                  ) : (
-                    <FiHeart />
-                  )}
-                </FavoriteButton>
-              </ActionWrapper>
-              <ViewButton to={`/produit/${product._id}`}>
-                Voir produit
-              </ViewButton>
-            </CardContent>
-          </ProductCard>
-        ))}
+                <CardContent>
+                  <ProductTitle>{product.title}</ProductTitle>
+                  <ActionWrapper>
+                    <ProductPrice>{product.price} FCFA</ProductPrice>
+                    <FavoriteButton onClick={() => toggleFavorite(product)}>
+                      {favorites.some((f) => f._id === product._id) ? (
+                        <FaHeart color="#ef4444" />
+                      ) : (
+                        <FiHeart />
+                      )}
+                    </FavoriteButton>
+                  </ActionWrapper>
+                  <ViewButton to={`/produit/${product._id}`}>Voir produit</ViewButton>
+                </CardContent>
+              </ProductCard>
+            )
+        )}
       </Grid>
     </PageWrapper>
   );
