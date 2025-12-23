@@ -290,8 +290,14 @@ function AdminProducts() {
         console.log("Image envoyée :", img);
         data.append("image", img);
       });
+      let reorderedExistingImages = [...existingImages];
 
-      data.append("existingImages", JSON.stringify(existingImages));
+      if (mainImageIndex > 0) {
+        const [mainImage] = reorderedExistingImages.splice(mainImageIndex, 1);
+        reorderedExistingImages.unshift(mainImage);
+      }
+
+      data.append("existingImages", JSON.stringify(reorderedExistingImages));
 
       const url = editingProduct
         ? `${API_URL}/api/produits/${editingProduct._id}`
@@ -385,7 +391,7 @@ function AdminProducts() {
                 <Td>
                   <ProductImagesWrapper>
                     {p.imageUrl?.map((img, i) => (
-                      <ProductImage key={i} src={img} isMain={i === 0} />
+                      <ProductImage key={i} src={img.url} isMain={i === 0} />
                     ))}
                   </ProductImagesWrapper>
                 </Td>
@@ -634,7 +640,10 @@ function AdminProducts() {
                 <ProductImagesWrapper>
                   {existingImages.map((img, i) => (
                     <div key={i} style={{ position: "relative" }}>
-                      <ProductImage src={img} isMain={i === mainImageIndex} />
+                      <ProductImage
+                        src={img.url}
+                        isMain={i === mainImageIndex}
+                      />
                       <ImageRemoveButton
                         onClick={() => handleRemoveExistingImage(i)}
                       >
@@ -668,7 +677,7 @@ function AdminProducts() {
             </Footer>
           </ModalContent>
         </form>
-      </Modal>
+      </Modal> 
     </Container>
   );
 }
