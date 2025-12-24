@@ -1,7 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import styled from "styled-components";
 import Modal from "react-modal";
-import { API_URL } from "../../render";
 Modal.setAppElement("#root");
 
 /* ===== Styles ===== */
@@ -120,7 +119,7 @@ function AdminOrdersPro() {
 
   const fetchOrders = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/admin/commandes`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/commandes`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -161,7 +160,7 @@ function AdminOrdersPro() {
   /* ===== Actions ===== */
   const handleStatusChange = async (orderId, newStatus) => {
     try {
-      const res = await fetch(`${API_URL}/api/admin/commande/${orderId}/status`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/commande/${orderId}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ statut: newStatus })
@@ -179,7 +178,7 @@ function AdminOrdersPro() {
 
   const handleSendEmail = async (order) => {
     try {
-      const res = await fetch(`${API_URL}/api/admin/commande/${order._id}/send-email`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/commande/${order._id}/send-email`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -194,7 +193,7 @@ function AdminOrdersPro() {
   const handleDeleteOrder = async (orderId) => {
     if (!window.confirm("Voulez-vous vraiment supprimer cette commande ?")) return;
     try {
-      const res = await fetch(`${API_URL}/api/admin/commande/${orderId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/commande/${orderId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       });

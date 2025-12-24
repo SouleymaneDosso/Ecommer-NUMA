@@ -8,7 +8,6 @@ import AddToCartBar from "../../components/AddToCartBar";
 import Comments from "../../components/Comments";
 import ProductImages from "../../components/ProductImages";
 import Recommendations from "../../components/Recommendations"; // <-- ajouté
-import {API_URL } from "../../render"
 // ---------- STYLES ----------
 const PageWrapper = styled.main`
   padding: 2rem 4%;
@@ -87,7 +86,7 @@ export default function Produit() {
   useEffect(() => {
     async function fetchProduit() {
       try {
-        const res = await fetch(`${API_URL }/api/produits/${id}`);
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits/${id}`);
         if (!res.ok) throw new Error("Erreur fetch produit");
         const data = await res.json();
         setProduit(data);

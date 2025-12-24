@@ -3,7 +3,7 @@ import styled from "styled-components";
 import { FiHeart } from "react-icons/fi";
 import { FaHeart } from "react-icons/fa"; // cœur plein
 import { Link, useNavigate } from "react-router-dom";
-import { API_URL } from "../../render";
+
 
 /* ===== MODAL ===== */
 const ModalOverlay = styled.div`
@@ -173,7 +173,7 @@ function Enfant() {
 
   // Charger produits
   useEffect(() => {
-    fetch(`${API_URL}/api/produits`)
+    fetch(`${import.meta.env.VITE_API_URL}/api/produits`)
       .then((res) => res.json())
       .then((data) => setProducts(data.filter((p) => p.genre === "enfant")))
       .catch(console.error);
@@ -199,7 +199,7 @@ function Enfant() {
   // Charger favoris
   useEffect(() => {
     if (!token) return;
-    fetch(`${API_URL}/api/favorites`, {
+    fetch(`${import.meta.env.VITE_API_URL}/api/favorites`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -214,7 +214,7 @@ function Enfant() {
       return;
     }
     try {
-      const res = await fetch(`${API_URL}/api/favorites/toggle`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/favorites/toggle`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

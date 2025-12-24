@@ -3,7 +3,6 @@ import styled from "styled-components";
 import { FiHeart } from "react-icons/fi";
 import { FaHeart } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
-import { API_URL } from "../../render";
 
 /* ===== MODAL ===== */
 const ModalOverlay = styled.div`
@@ -165,11 +164,12 @@ function Homme() {
 
   // Charger les produits
   useEffect(() => {
-    fetch(`${API_URL}/api/produits`)
+    fetch(`${import.meta.env.VITE_API_URL}/api/produits`)
       .then((res) => res.json())
       .then(setProducts)
       .catch(console.error);
   }, []);
+  console.log("API URL =", import.meta.env.VITE_API_URL);
 
   // Carousel automatique
   useEffect(() => {
@@ -190,7 +190,7 @@ function Homme() {
   // Charger les favoris
   useEffect(() => {
     if (!token) return;
-    fetch(`${API_URL}/api/favorites`, {
+    fetch(`${import.meta.env.VITE_API_URL}/api/favorites`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -206,7 +206,7 @@ function Homme() {
     }
 
     try {
-      const res = await fetch(`${API_URL}/api/favorites/toggle`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/favorites/toggle`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

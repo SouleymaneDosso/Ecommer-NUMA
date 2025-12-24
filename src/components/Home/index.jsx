@@ -3,7 +3,7 @@ import styled from "styled-components";
 import { Link } from "react-router-dom";
 import { FiChevronRight } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
-import {API_URL } from "../../render"
+
 /* ---------------------- STYLES ---------------------- */
 const Wrapper = styled.div`
   display: flex;
@@ -177,7 +177,7 @@ export default function Home() {
 
   /* FETCH */
   useEffect(() => {
-    fetch(`${API_URL }/api/produits`)
+    fetch(`${import.meta.env.VITE_API_URL}/api/produits`)
       .then(res => res.json())
       .then(data => {
         setHeroProducts(data.filter(p => p.hero));

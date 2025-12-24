@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import styled from "styled-components";
 import Modal from "react-modal";
-import { API_URL } from "../../render";
 Modal.setAppElement("#root");
 
 /* ================= STYLES ================= */
@@ -205,8 +204,9 @@ function AdminProducts() {
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/produits`);
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits`);
       const data = await res.json();
+      console.log(data);
       setProducts(data || []);
     } catch (err) {
       console.error("Erreur récupération produits", err);
@@ -277,7 +277,7 @@ function AdminProducts() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage("");
-    console.log("ADMIN TOKEN =", token);
+    console.log("Existing Images envoyées :", existingImages);
     if (!formData.genre || !formData.categorie) {
       return setErrorMessage("Genre et catégorie obligatoires");
     }
@@ -286,45 +286,27 @@ function AdminProducts() {
       const data = new FormData();
       data.append("produits", JSON.stringify(formData));
 
-      imageFiles.forEach((img) => {
-        console.log("Image envoyée :", img);
-        data.append("image", img);
-      });
-      let reorderedExistingImages = [...existingImages];
-
-      if (mainImageIndex > 0) {
-        const [mainImage] = reorderedExistingImages.splice(mainImageIndex, 1);
-        reorderedExistingImages.unshift(mainImage);
-      }
-
-      data.append("existingImages", JSON.stringify(reorderedExistingImages));
+      imageFiles.forEach((img) => data.append("image", img));
+      data.append("existingImages", JSON.stringify(existingImages));
 
       const url = editingProduct
-        ? `${API_URL}/api/produits/${editingProduct._id}`
-        : `${API_URL}/api/produits`;
-
-      console.log("URL :", url);
+        ? `${import.meta.env.VITE_API_URL}/api/produits/${editingProduct._id}`
+        : `${import.meta.env.VITE_API_URL}/api/produits`;
 
       const res = await fetch(url, {
         method: editingProduct ? "PUT" : "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          // ⚠️ NE PAS mettre Content-Type avec FormData
-        },
+        headers: { Authorization: `Bearer ${token}` },
         body: data,
       });
 
-      const responseText = await res.text(); // 🔥 clé du debug
-      console.log("Réponse serveur brute :", responseText);
-
       if (!res.ok) {
-        throw new Error(responseText || "Erreur serveur");
+        const errData = await res.json();
+        throw new Error(errData.message || "Erreur serveur");
       }
 
       setModalOpen(false);
       fetchProducts();
     } catch (err) {
-      console.error("Erreur upload produit :", err);
       setErrorMessage(err.message);
     }
   };
@@ -333,7 +315,7 @@ function AdminProducts() {
     if (!window.confirm("Supprimer ce produit ?")) return;
     setDeletingId(id);
 
-    await fetch(`${API_URL}/api/produits/${id}`, {
+    await fetch(`${import.meta.env.VITE_API_URL}/api/produits/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -408,7 +390,7 @@ function AdminProducts() {
                     ([size, colors]) =>
                       Object.entries(colors).map(([color, stock]) => (
                         <div
-                          key={`${size}-${color}`}
+                          key={`${p._id}-${size}-${color}`}
                           style={{ marginBottom: "3px" }}
                         >
                           {size}-{color}: {stock}
@@ -677,7 +659,7 @@ function AdminProducts() {
             </Footer>
           </ModalContent>
         </form>
-      </Modal> 
+      </Modal>
     </Container>
   );
 }

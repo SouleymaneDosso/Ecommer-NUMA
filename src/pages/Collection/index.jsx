@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
-import { API_URL } from "../../render";
+
 
 /* ===== STYLES ===== */
 const PageWrapper = styled.main`
@@ -107,7 +107,7 @@ function Collection() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch(`${API_URL}/api/produits`)
+    fetch(`${import.meta.env.VITE_API_URL}/api/produits`)
       .then(res => res.json())
       .then(data => {
         const categories = ["enfant", "femme", "homme"];

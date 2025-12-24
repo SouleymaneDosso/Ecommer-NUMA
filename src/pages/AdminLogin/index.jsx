@@ -1,6 +1,5 @@
 import { useState } from "react";
 import styled from "styled-components";
-import {API_URL } from "../../render"
 
 const Container = styled.div`
   display: flex;
@@ -69,7 +68,7 @@ function AdminLogin() {
     e.preventDefault();
 
     try {
-      const res = await fetch(`${API_URL }/api/admin/login`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),

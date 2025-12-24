@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import styled, { keyframes } from "styled-components";
 import { useNavigate } from "react-router-dom";
-import { API_URL } from "../../render";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 
 /* ===== LOADER ===== */
@@ -132,7 +131,7 @@ export default function CompteClient() {
     if (!token) return;
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/compte`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/compte`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -162,7 +161,7 @@ export default function CompteClient() {
         ? { username, password }
         : { username, email, password };
 
-      const res = await fetch(`${API_URL}/api/user/${endpoint}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/user/${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -194,7 +193,7 @@ export default function CompteClient() {
     if (!forgotEmail) return;
     setForgotMessage("");
     try {
-      const res = await fetch(`${API_URL}/api/user/forgot-password`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/user/forgot-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: forgotEmail }),
@@ -211,7 +210,7 @@ export default function CompteClient() {
     if (!resetToken || !newPassword) return;
     setResetMessage("");
     try {
-      const res = await fetch(`${API_URL}/api/user/reset-password`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/user/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token: resetToken, password: newPassword }),
