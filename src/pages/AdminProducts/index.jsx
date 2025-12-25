@@ -1,18 +1,21 @@
 import { useState, useEffect } from "react";
 import styled from "styled-components";
 
+// ===============================
+// STYLES
+// ===============================
 const Container = styled.div`
   padding: 40px;
-  max-width: 1000px;
+  max-width: 1200px;
   margin: 0 auto;
   min-height: 100vh;
   background: #f9fafb;
 `;
 
 const Title = styled.h1`
-  font-size: 28px;
+  font-size: 32px;
   font-weight: bold;
-  margin-bottom: 20px;
+  margin-bottom: 30px;
   color: #2c3e50;
 `;
 
@@ -21,8 +24,9 @@ const Form = styled.form`
   flex-direction: column;
   gap: 15px;
   background: #fff;
-  padding: 20px;
-  border-radius: 10px;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 `;
 
 const Input = styled.input`
@@ -45,6 +49,7 @@ const Button = styled.button`
   border-radius: 6px;
   font-weight: bold;
   cursor: pointer;
+  transition: 0.2s;
 
   &:hover {
     background: #0056b3;
@@ -52,7 +57,7 @@ const Button = styled.button`
 `;
 
 const ProductList = styled.div`
-  margin-top: 30px;
+  margin-top: 40px;
 `;
 
 const ProductItem = styled.div`
@@ -75,7 +80,10 @@ const ImagePreview = styled.img`
   cursor: pointer;
 `;
 
-function AdminProduits() {
+// ===============================
+// COMPOSANT
+// ===============================
+function AdminProducts() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
@@ -91,7 +99,11 @@ function AdminProduits() {
 
   const token = localStorage.getItem("adminToken");
 
+  // ===============================
+  // FETCH PRODUITS EXISTANTS
+  // ===============================
   useEffect(() => {
+    console.log(token);
     fetchProducts();
   }, []);
 
@@ -105,12 +117,18 @@ function AdminProduits() {
     }
   };
 
+  // ===============================
+  // GESTION IMAGES
+  // ===============================
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
     setImages(files);
     setMainImageIndex(0);
   };
 
+  // ===============================
+  // GESTION STOCK
+  // ===============================
   const handleStockChange = (color, size, value) => {
     setStock((prev) => ({
       ...prev,
@@ -118,6 +136,9 @@ function AdminProduits() {
     }));
   };
 
+  // ===============================
+  // AJOUT PRODUIT
+  // ===============================
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -126,12 +147,11 @@ function AdminProduits() {
       return;
     }
 
-    // Construire stockParVariation
-    const stockParVariation = {};
+    const stockObj = {};
     colors.forEach((color) => {
-      stockParVariation[color] = {};
+      stockObj[color] = {};
       sizes.forEach((size) => {
-        stockParVariation[color][size] = stock[`${color}_${size}`] || 0;
+        stockObj[color][size] = stock[`${color}_${size}`] || 0;
       });
     });
 
@@ -139,17 +159,15 @@ function AdminProduits() {
     formData.append("title", title);
     formData.append("description", description);
     formData.append("price", price);
-    formData.append("colors", JSON.stringify(colors));
-    formData.append("sizes", JSON.stringify(sizes));
-    formData.append("stockParVariation", JSON.stringify(stockParVariation));
+    formData.append("couleurs", JSON.stringify(colors));
+    formData.append("tailles", JSON.stringify(sizes));
+    formData.append("stockParVariation", JSON.stringify(stockObj));
     formData.append("genre", genre);
     formData.append("categorie", categorie);
-    formData.append("badge", badge || "");
+    formData.append("badge", badge);
+    formData.append("mainImageIndex", mainImageIndex);
 
-    // Ajouter images
-    images.forEach((img) => {
-      formData.append("images", img);
-    });
+    images.forEach((img) => formData.append("images", img));
 
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits`, {
@@ -183,6 +201,9 @@ function AdminProduits() {
     }
   };
 
+  // ===============================
+  // RENDER
+  // ===============================
   return (
     <Container>
       <Title>Admin Produits</Title>
@@ -207,15 +228,16 @@ function AdminProduits() {
           onChange={(e) => setPrice(e.target.value)}
         />
 
-        {/* Choix genre */}
         <Select value={genre} onChange={(e) => setGenre(e.target.value)}>
           <option value="homme">Homme</option>
           <option value="femme">Femme</option>
           <option value="enfant">Enfant</option>
         </Select>
 
-        {/* Choix catégorie */}
-        <Select value={categorie} onChange={(e) => setCategorie(e.target.value)}>
+        <Select
+          value={categorie}
+          onChange={(e) => setCategorie(e.target.value)}
+        >
           <option value="haut">Haut</option>
           <option value="bas">Bas</option>
           <option value="robe">Robe</option>
@@ -223,30 +245,32 @@ function AdminProduits() {
           <option value="tout">Tout</option>
         </Select>
 
-        {/* Badge */}
-        <Select value={badge || ""} onChange={(e) => setBadge(e.target.value || null)}>
+        <Select
+          value={badge || ""}
+          onChange={(e) => setBadge(e.target.value || null)}
+        >
           <option value="">Aucun</option>
           <option value="new">New</option>
           <option value="promo">Promo</option>
         </Select>
 
-        {/* Couleurs */}
         <Input
           type="text"
           placeholder="Couleurs (séparées par ,)"
           value={colors.join(",")}
-          onChange={(e) => setColors(e.target.value.split(",").map((c) => c.trim()))}
+          onChange={(e) =>
+            setColors(e.target.value.split(",").map((c) => c.trim()))
+          }
         />
-
-        {/* Tailles */}
         <Input
           type="text"
           placeholder="Tailles (séparées par ,)"
           value={sizes.join(",")}
-          onChange={(e) => setSizes(e.target.value.split(",").map((s) => s.trim()))}
+          onChange={(e) =>
+            setSizes(e.target.value.split(",").map((s) => s.trim()))
+          }
         />
 
-        {/* Stock par couleur/taille */}
         {colors.length > 0 && sizes.length > 0 && (
           <div>
             {colors.map((color) => (
@@ -258,7 +282,9 @@ function AdminProduits() {
                     type="number"
                     placeholder={`${color} / ${size}`}
                     value={stock[`${color}_${size}`] || ""}
-                    onChange={(e) => handleStockChange(color, size, e.target.value)}
+                    onChange={(e) =>
+                      handleStockChange(color, size, e.target.value)
+                    }
                     style={{ width: "80px", marginRight: "5px" }}
                   />
                 ))}
@@ -267,7 +293,6 @@ function AdminProduits() {
           </div>
         )}
 
-        {/* Upload images */}
         <Input
           type="file"
           multiple
@@ -275,7 +300,6 @@ function AdminProduits() {
           onChange={handleImageChange}
         />
 
-        {/* Preview + sélectionner image principale */}
         <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
           {images.map((img, idx) => (
             <ImagePreview
@@ -297,10 +321,13 @@ function AdminProduits() {
             <Button
               onClick={async () => {
                 if (!window.confirm("Supprimer ce produit ?")) return;
-                await fetch(`${import.meta.env.VITE_API_URL}/api/produits/${p._id}`, {
-                  method: "DELETE",
-                  headers: { Authorization: `Bearer ${token}` },
-                });
+                await fetch(
+                  `${import.meta.env.VITE_API_URL}/api/produits/${p._id}`,
+                  {
+                    method: "DELETE",
+                    headers: { Authorization: `Bearer ${token}` },
+                  }
+                );
                 setProducts(products.filter((prod) => prod._id !== p._id));
               }}
               style={{ background: "#e74c3c" }}
@@ -314,4 +341,4 @@ function AdminProduits() {
   );
 }
 
-export default AdminProduits;
+export default AdminProducts ;

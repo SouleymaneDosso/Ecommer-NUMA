@@ -1,5 +1,6 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import styled from "styled-components";
+import { LoaderWrapper, Loader } from "../Utils/Rotate"; // importer ton rotate
 
 const Wrapper = styled.div`
   max-width: 600px;
@@ -68,12 +69,8 @@ const Arrow = styled.div`
   }
 `;
 
-const ArrowLeft = styled(Arrow)`
-  left: 20px;
-`;
-const ArrowRight = styled(Arrow)`
-  right: 20px;
-`;
+const ArrowLeft = styled(Arrow)`left: 20px;`;
+const ArrowRight = styled(Arrow)`right: 20px;`;
 
 const DotsWrapper = styled.div`
   position: absolute;
@@ -92,14 +89,24 @@ const Dot = styled.div`
   background: ${({ active }) => (active ? "#000" : "#ccc")};
 `;
 
-// 🔐 IMPORTANT : images = [] par défaut
 export default function ProductImages({ images = [] }) {
+  const [urls, setUrls] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const wrapperRef = useRef(null);
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
+
+  // transformer le tableau d'objets en URLs
+  useEffect(() => {
+    if (images.length) {
+      const imgs = images.map((img) => img.url);
+      setUrls(imgs);
+    }
+    setLoading(false);
+  }, [images]);
 
   const openFullscreen = (index) => {
     setCurrentIndex(index);
@@ -110,22 +117,18 @@ export default function ProductImages({ images = [] }) {
 
   const prevImage = (e) => {
     e?.stopPropagation();
-    if (!images.length) return;
-    setCurrentIndex((prev) =>
-      prev === 0 ? images.length - 1 : prev - 1
-    );
+    if (!urls.length) return;
+    setCurrentIndex((prev) => (prev === 0 ? urls.length - 1 : prev - 1));
   };
 
   const nextImage = (e) => {
     e?.stopPropagation();
-    if (!images.length) return;
-    setCurrentIndex((prev) =>
-      prev === images.length - 1 ? 0 : prev + 1
-    );
+    if (!urls.length) return;
+    setCurrentIndex((prev) => (prev === urls.length - 1 ? 0 : prev + 1));
   };
 
   const handleScroll = () => {
-    if (!wrapperRef.current || !images.length) return;
+    if (!wrapperRef.current || !urls.length) return;
     const height = wrapperRef.current.clientHeight;
     const index = Math.round(wrapperRef.current.scrollTop / height);
     setCurrentIndex(index);
@@ -146,16 +149,24 @@ export default function ProductImages({ images = [] }) {
     if (delta < -50) prevImage();
   };
 
-  // 🛑 sécurité absolue
-  if (!images.length) return null;
+  // 🔄 Afficher le loader tant que les images ne sont pas prêtes
+  if (loading) {
+    return (
+      <LoaderWrapper>
+        <Loader />
+      </LoaderWrapper>
+    );
+  }
+
+  if (!urls.length) return null;
 
   return (
     <Wrapper>
       <ImagesWrapper ref={wrapperRef} onScroll={handleScroll}>
-        {images.map((img, i) => (
+        {urls.map((url, i) => (
           <ImageSlide key={i}>
             <ProductImage
-              src={img}
+              src={url}
               alt={`Produit ${i + 1}`}
               onClick={() => openFullscreen(i)}
             />
@@ -164,12 +175,12 @@ export default function ProductImages({ images = [] }) {
       </ImagesWrapper>
 
       <DotsWrapper>
-        {images.map((_, i) => (
+        {urls.map((_, i) => (
           <Dot key={i} active={i === currentIndex} />
         ))}
       </DotsWrapper>
 
-      {isFullscreen && images[currentIndex] && (
+      {isFullscreen && urls[currentIndex] && (
         <FullscreenOverlay
           onClick={closeFullscreen}
           onTouchStart={handleTouchStart}
@@ -177,7 +188,7 @@ export default function ProductImages({ images = [] }) {
           onTouchEnd={handleTouchEnd}
         >
           <ArrowLeft onClick={prevImage}>&larr;</ArrowLeft>
-          <FullscreenImage src={images[currentIndex]} />
+          <FullscreenImage src={urls[currentIndex]} />
           <ArrowRight onClick={nextImage}>&rarr;</ArrowRight>
         </FullscreenOverlay>
       )}

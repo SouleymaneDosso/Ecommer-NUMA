@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 import { Link } from "react-router-dom";
 import { FiChevronRight } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
@@ -31,7 +31,7 @@ const HeroSlide = styled.div`
 const HeroOverlay = styled.div`
   position: absolute;
   inset: 0;
-  background: rgba(0,0,0,0.35);
+  background: rgba(0, 0, 0, 0.35);
 `;
 
 const HeroText = styled.div`
@@ -43,8 +43,14 @@ const HeroText = styled.div`
   z-index: 3;
   max-width: 500px;
 
-  h1 { font-size: 3rem; margin: 0; }
-  p { margin-top: 12px; font-size: 1.2rem; }
+  h1 {
+    font-size: 3rem;
+    margin: 0;
+  }
+  p {
+    margin-top: 12px;
+    font-size: 1.2rem;
+  }
 `;
 
 const HeroButton = styled(Link)`
@@ -88,10 +94,12 @@ const CategoryCard = styled(Link)`
     border-radius: 16px;
   }
 
-  p { margin-top: 12px; font-weight: bold; }
+  p {
+    margin-top: 12px;
+    font-weight: bold;
+  }
 `;
 
-/* ===== SLIDER CONTINU ===== */
 const SliderContainer = styled.div`
   width: 100%;
   height: 380px;
@@ -106,8 +114,12 @@ const SlideRow = styled.div`
   animation-duration: ${({ $duration }) => $duration}s;
 
   @keyframes slide {
-    from { transform: translateX(0); }
-    to { transform: translateX(-50%); }
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
   }
 `;
 
@@ -143,12 +155,15 @@ const CardHorizontal = styled(Link)`
     border-radius: 12px;
   }
 
-  p { text-align: center; font-weight: 600; }
+  p {
+    text-align: center;
+    font-weight: 600;
+  }
 `;
 
 const ProductGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px,1fr));
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 24px;
   padding: 20px;
 `;
@@ -164,7 +179,25 @@ const Card = styled(Link)`
     border-radius: 12px;
   }
 
-  p { font-weight: 600; padding: 6px; }
+  p {
+    font-weight: 600;
+    padding: 6px;
+  }
+`;
+
+/* ---------------------- LOADER SKELETON ---------------------- */
+const SkeletonGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 24px;
+  padding: 20px;
+`;
+
+const SkeletonCard = styled.div`
+  width: 100%;
+  height: 260px;
+  background: #e0e0e0;
+  border-radius: 12px;
 `;
 
 /* ---------------------- COMPONENT ---------------------- */
@@ -178,58 +211,96 @@ export default function Home() {
   /* FETCH */
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/api/produits`)
-      .then(res => res.json())
-      .then(data => {
-        setHeroProducts(data.filter(p => p.hero));
-        setProducts(data.filter(p => !p.hero));
+      .then((res) => res.json())
+      .then((data) => {
+        const valid = data.filter((p) => p.images?.length);
+        setHeroProducts(valid.filter((p) => p.hero));
+        setProducts(valid.filter((p) => !p.hero));
       });
   }, []);
 
-  /* PRELOAD HERO IMAGES (pas lazy) */
+  /* Helper pour image principale */
+  const getMainImage = (p) =>
+    p.images?.find((img) => img.isMain)?.url ||
+    p.images?.[0]?.url ||
+    "/placeholder.jpg";
+
+  /* PRELOAD TOUTES LES IMAGES AVEC PROMISE.ALL */
   useEffect(() => {
-    if (!heroProducts.length) return;
-    let loaded = 0;
-    heroProducts.forEach(p => {
-      const img = new Image();
-      img.src = p.imageUrl[0];
-      img.onload = () => {
-        loaded++;
-        if (loaded === heroProducts.length) setImagesLoaded(true);
-      };
-    });
-  }, [heroProducts]);
+    const allImages = [
+      ...heroProducts,
+      ...products.filter((p) => p.isNew),
+      ...products,
+    ].flatMap((p) => p.images?.map((img) => img.url) || []);
+
+    if (!allImages.length) {
+      setImagesLoaded(true);
+      return;
+    }
+
+    const promises = allImages.map(
+      (src) =>
+        new Promise((resolve) => {
+          const img = new Image();
+          img.src = src;
+          img.onload = resolve;
+          img.onerror = resolve;
+        })
+    );
+
+    Promise.all(promises).then(() => setImagesLoaded(true));
+  }, [heroProducts, products]);
 
   /* HERO AUTOPLAY */
   useEffect(() => {
     if (!heroProducts.length) return;
     const interval = setInterval(
-      () => setActiveSlide(s => (s + 1) % heroProducts.length),
+      () => setActiveSlide((s) => (s + 1) % heroProducts.length),
       3500
     );
     return () => clearInterval(interval);
   }, [heroProducts]);
 
   /* SLIDER SPEED RESPONSIVE */
-  const sliderDuration = useMemo(
-    () => (window.innerWidth < 768 ? 18 : 30),
-    []
-  );
+  const sliderDuration = useMemo(() => (window.innerWidth < 768 ? 18 : 30), []);
 
   const sliderDouble = [...heroProducts, ...heroProducts];
-  const nouveautes = products.filter(p => p.isNew);
+  const nouveautes = products.filter((p) => p.isNew);
+
+  if (!imagesLoaded)
+    return (
+      <>
+        {/* Skeleton loader pour Hero */}
+        <Hero>
+          <HeroSlide $active={true} style={{ backgroundColor: "#e0e0e0" }} />
+          <HeroOverlay />
+        </Hero>
+
+        {/* Skeleton loader pour Nouveautés */}
+        <SectionTitle>{t("newArrivals")}</SectionTitle>
+        <HorizontalScroll>
+          {[...Array(4)].map((_, i) => <SkeletonCard key={i} />)}
+        </HorizontalScroll>
+
+        {/* Skeleton loader pour Produits */}
+        <SectionTitle>{t("forYou")}</SectionTitle>
+        <SkeletonGrid>
+          {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
+        </SkeletonGrid>
+      </>
+    );
 
   return (
     <Wrapper>
       {/* HERO */}
       <Hero>
-        {imagesLoaded &&
-          heroProducts.map((p, i) => (
-            <HeroSlide
-              key={p._id}
-              $active={i === activeSlide}
-              style={{ backgroundImage: `url('${p.imageUrl[0]}')` }}
-            />
-          ))}
+        {heroProducts.map((p, i) => (
+          <HeroSlide
+            key={p._id}
+            $active={i === activeSlide}
+            style={{ backgroundImage: `url('${getMainImage(p)}')` }}
+          />
+        ))}
         <HeroOverlay />
         <HeroText>
           <h1>{t("heroTitle")}</h1>
@@ -244,9 +315,18 @@ export default function Home() {
 
       {/* CATEGORIES */}
       <Categories>
-        <CategoryCard to="/homme"><img src="/image1.jpg" loading="lazy" /><p>{t("categoryMen")}</p></CategoryCard>
-        <CategoryCard to="/femme"><img src="/image2.jpg" loading="lazy" /><p>{t("categoryWomen")}</p></CategoryCard>
-        <CategoryCard to="/enfant"><img src="/image3.jpg" loading="lazy" /><p>{t("categoryKids")}</p></CategoryCard>
+        <CategoryCard to="/homme">
+          <img src="/image1.jpg" loading="lazy" />
+          <p>{t("categoryMen")}</p>
+        </CategoryCard>
+        <CategoryCard to="/femme">
+          <img src="/image2.jpg" loading="lazy" />
+          <p>{t("categoryWomen")}</p>
+        </CategoryCard>
+        <CategoryCard to="/enfant">
+          <img src="/image3.jpg" loading="lazy" />
+          <p>{t("categoryKids")}</p>
+        </CategoryCard>
       </Categories>
 
       {/* SLIDER CONTINU */}
@@ -255,7 +335,7 @@ export default function Home() {
           {sliderDouble.map((p, i) => (
             <Slide
               key={`${p._id}-${i}`}
-              style={{ backgroundImage: `url('${p.imageUrl[0]}')` }}
+              style={{ backgroundImage: `url('${getMainImage(p)}')` }}
             />
           ))}
         </SlideRow>
@@ -264,10 +344,12 @@ export default function Home() {
       {/* NOUVEAUTÉS */}
       <SectionTitle>{t("newArrivals")}</SectionTitle>
       <HorizontalScroll>
-        {nouveautes.map(p => (
+        {nouveautes.map((p) => (
           <CardHorizontal key={p._id} to={`/produit/${p._id}`}>
-            <img src={p.imageUrl[0]} loading="lazy" decoding="async" />
-            <p>{p.title} – {p.price} FCFA</p>
+            <img src={getMainImage(p)} loading="lazy" decoding="async" />
+            <p>
+              {p.title} – {p.price} FCFA
+            </p>
           </CardHorizontal>
         ))}
       </HorizontalScroll>
@@ -275,10 +357,12 @@ export default function Home() {
       {/* PRODUITS */}
       <SectionTitle>{t("forYou")}</SectionTitle>
       <ProductGrid>
-        {products.map(p => (
+        {products.map((p) => (
           <Card key={p._id} to={`/produit/${p._id}`}>
-            <img src={p.imageUrl[0]} loading="lazy" decoding="async" />
-            <p>{p.title} – {p.price} FCFA</p>
+            <img src={getMainImage(p)} loading="lazy" decoding="async" />
+            <p>
+              {p.title} – {p.price} FCFA
+            </p>
           </Card>
         ))}
       </ProductGrid>

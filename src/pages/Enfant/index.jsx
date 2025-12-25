@@ -1,73 +1,21 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import styled from "styled-components";
 import { FiHeart } from "react-icons/fi";
-import { FaHeart } from "react-icons/fa"; // cœur plein
+import { FaHeart } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
+import { LoaderWrapper, Loader } from "../../Utils/Rotate"; // loader Rotate
 
-
-/* ===== MODAL ===== */
-const ModalOverlay = styled.div`
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: ${({ $visible }) => ($visible ? "flex" : "none")};
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-`;
-
-const ModalContent = styled.div`
-  background: #fff;
-  padding: 2rem;
-  border-radius: 12px;
-  width: 90%;
-  max-width: 400px;
-  text-align: center;
-`;
-
-const ModalTitle = styled.h2`
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
-`;
-const ModalText = styled.p`
-  margin-bottom: 1.5rem;
-`;
-const ModalButton = styled.button`
-  padding: 10px 20px;
-  background: ${({ $primary }) => ($primary ? "#2563eb" : "#ef4444")};
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  margin: 0 0.5rem;
-  cursor: pointer;
-  font-weight: 600;
-`;
-
-/* ===== PAGE ===== */
+/* ===== STYLES ===== */
 const PageWrapper = styled.main`
   padding: 2rem 4%;
   display: flex;
   flex-direction: column;
   gap: 2rem;
 `;
+
 const PageTitle = styled.h1`
   font-size: 2rem;
   font-weight: 700;
-`;
-const FiltersWrapper = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-`;
-
-const FilterButton = styled.button`
-  padding: 6px 14px;
-  border-radius: 20px;
-  border: 1px solid ${({ theme }) => theme.border};
-  background: ${({ $active, theme }) => ($active ? theme.primary : theme.bg)};
-  color: ${({ $active, theme }) => ($active ? "white" : theme.text)};
-  cursor: pointer;
-  font-weight: 500;
 `;
 
 const Grid = styled.div`
@@ -83,7 +31,7 @@ const ProductCard = styled.div`
   position: relative;
   border-radius: 5px;
   overflow: hidden;
-  background: ${({ theme }) => theme.bg || "#fff"};
+  background: #fff;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 `;
 
@@ -93,6 +41,7 @@ const ProductImageWrapper = styled.div`
   padding-top: 100%;
   overflow: hidden;
 `;
+
 const ProductImage = styled.img`
   position: absolute;
   inset: 0;
@@ -117,14 +66,17 @@ const Badge = styled.div`
 const CardContent = styled.div`
   padding: 12px 14px;
 `;
+
 const ProductTitle = styled.h2`
   font-size: 1rem;
   font-weight: 600;
 `;
+
 const ProductPrice = styled.span`
   font-size: 0.95rem;
   font-weight: 700;
 `;
+
 const ActionWrapper = styled.div`
   display: flex;
   justify-content: space-between;
@@ -141,7 +93,7 @@ const ViewButton = styled(Link)`
   text-decoration: none;
   font-weight: 600;
   font-size: 0.85rem;
-  background: ${({ theme }) => theme.primary || "#007bff"};
+  background: #007bff;
   color: white;
   opacity: ${({ $visible }) => ($visible ? 1 : 0)};
   pointer-events: ${({ $visible }) => ($visible ? "auto" : "none")};
@@ -161,21 +113,41 @@ const FavoriteButton = styled.button`
 `;
 
 /* ===== COMPONENT ===== */
-function Enfant() {
+export default function Enfant() {
   const [products, setProducts] = useState([]);
-  const [filter, setFilter] = useState("tous");
   const [favorites, setFavorites] = useState([]);
-  const [activeView, setActiveView] = useState(null);
-  const [showModal, setShowModal] = useState(false);
+  const [activeCardId, setActiveCardId] = useState(null);
   const [imageIndexes, setImageIndexes] = useState({});
-  const token = localStorage.getItem("token");
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const token = localStorage.getItem("token");
 
-  // Charger produits
+  // Helper pour image principale
+  const getMainImage = (p) =>
+    p.images?.find((img) => img.isMain)?.url || p.images?.[0]?.url || "/placeholder.jpg";
+
+  // Charger les produits
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/api/produits`)
       .then((res) => res.json())
-      .then((data) => setProducts(data.filter((p) => p.genre === "enfant")))
+      .then((data) => {
+        const valid = data.filter((p) => p.images?.length && p.genre === "enfant");
+        setProducts(valid);
+
+        // Preload images
+        const promises = valid.flatMap((p) =>
+          p.images.map(
+            (img) =>
+              new Promise((res) => {
+                const i = new Image();
+                i.src = img.url;
+                i.onload = res;
+                i.onerror = res;
+              })
+          )
+        );
+        Promise.all(promises).then(() => setLoading(false));
+      })
       .catch(console.error);
   }, []);
 
@@ -185,14 +157,12 @@ function Enfant() {
       setImageIndexes((prev) => {
         const updated = { ...prev };
         products.forEach((p) => {
-          if (!p.imageUrl || p.imageUrl.length <= 1) return;
           const current = prev[p._id] || 0;
-          updated[p._id] = (current + 1) % p.imageUrl.length;
+          updated[p._id] = (current + 1) % (p.images?.length || 1);
         });
         return updated;
       });
     }, 3000);
-
     return () => clearInterval(interval);
   }, [products]);
 
@@ -210,7 +180,7 @@ function Enfant() {
   // Toggle favori
   const toggleFavorite = async (id) => {
     if (!token) {
-      setShowModal(true);
+      navigate("/compte");
       return;
     }
     try {
@@ -232,108 +202,61 @@ function Enfant() {
     }
   };
 
-  const filteredProducts = useMemo(() => {
-    let data = products;
-    if (filter !== "tous")
-      data = data.filter((p) => p.categorie === filter || p.badge === filter);
-    return data;
-  }, [filter, products]);
-
-  const filters = [
-    { label: "Tous", value: "tous" },
-    { label: "Hauts", value: "haut" },
-    { label: "Bas", value: "bas" },
-    { label: "Robes", value: "robe" },
-    { label: "Chaussures", value: "chaussure" },
-    { label: "Promo", value: "promo" },
-    { label: "Nouveaux", value: "new" },
-  ];
+  if (loading)
+    return (
+      <LoaderWrapper>
+        <Loader />
+      </LoaderWrapper>
+    );
 
   return (
-    <>
-      <ModalOverlay $visible={showModal}>
-        <ModalContent>
-          <ModalTitle>Connectez-vous</ModalTitle>
-          <ModalText>
-            Vous devez vous connecter pour ajouter ce produit à vos favoris.
-          </ModalText>
-          <div>
-            <ModalButton $primary onClick={() => navigate("/compte")}>
-              Se connecter / S'inscrire
-            </ModalButton>
-            <ModalButton onClick={() => setShowModal(false)}>
-              Annuler
-            </ModalButton>
-          </div>
-        </ModalContent>
-      </ModalOverlay>
+    <PageWrapper onClick={() => setActiveCardId(null)}>
+      <PageTitle>Collection Enfant</PageTitle>
+      <Grid>
+        {products.map((p) => {
+          const isActive = activeCardId === p._id;
+          const isFav = favorites.includes(p._id);
 
-      <PageWrapper onClick={() => setActiveView(null)}>
-        <PageTitle>Collection Enfant</PageTitle>
-
-        <FiltersWrapper>
-          {filters.map((f) => (
-            <FilterButton
-              key={f.value}
-              $active={filter === f.value}
-              onClick={() => setFilter(f.value)}
+          return (
+            <ProductCard
+              key={p._id}
+              onClick={(e) => {
+                e.stopPropagation();
+                setActiveCardId(isActive ? null : p._id);
+              }}
             >
-              {f.label}
-            </FilterButton>
-          ))}
-        </FiltersWrapper>
+              <ProductImageWrapper>
+                <ProductImage
+                  src={p.images?.[imageIndexes[p._id] || 0]?.url || getMainImage(p)}
+                  alt={p.title}
+                />
+                {p.badge && <Badge type={p.badge}>{p.badge}</Badge>}
+                {isActive && (
+                  <ViewButton to={`/produit/${p._id}`} $visible={true}>
+                    Voir produit
+                  </ViewButton>
+                )}
+              </ProductImageWrapper>
 
-        <Grid>
-          {filteredProducts
-            .filter((p) => p && p._id) // ← ignore les produits invalides
-            .map((p) => {
-              const isFav = favorites.includes(p._id);
-              const currentImageIndex = imageIndexes[p._id] || 0;
-
-              return (
-                <ProductCard
-                  key={p._id}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setActiveView(p._id);
-                  }}
-                >
-                  <ProductImageWrapper>
-                    <ProductImage
-                      src={p.imageUrl[currentImageIndex]}
-                      alt={p.title}
-                    />
-                    {p.badge && <Badge type={p.badge}>{p.badge}</Badge>}
-                    <ViewButton
-                      to={`/produit/${p._id}`}
-                      $visible={activeView === p._id}
-                    >
-                      Voir produit
-                    </ViewButton>
-                  </ProductImageWrapper>
-
-                  <CardContent>
-                    <ProductTitle>{p.title}</ProductTitle>
-                    <ActionWrapper>
-                      <ProductPrice>{p.price} FCFA</ProductPrice>
-                      <FavoriteButton
-                        $favorite={isFav}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleFavorite(p._id);
-                        }}
-                      >
-                        {isFav ? <FaHeart /> : <FiHeart />}
-                      </FavoriteButton>
-                    </ActionWrapper>
-                  </CardContent>
-                </ProductCard>
-              );
-            })}
-        </Grid>
-      </PageWrapper>
-    </>
+              <CardContent>
+                <ProductTitle>{p.title}</ProductTitle>
+                <ActionWrapper>
+                  <ProductPrice>{p.price} FCFA</ProductPrice>
+                  <FavoriteButton
+                    $favorite={isFav}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleFavorite(p._id);
+                    }}
+                  >
+                    {isFav ? <FaHeart /> : <FiHeart />}
+                  </FavoriteButton>
+                </ActionWrapper>
+              </CardContent>
+            </ProductCard>
+          );
+        })}
+      </Grid>
+    </PageWrapper>
   );
 }
-
-export default Enfant;

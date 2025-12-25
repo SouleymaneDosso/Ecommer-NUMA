@@ -86,7 +86,9 @@ export default function Produit() {
   useEffect(() => {
     async function fetchProduit() {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits/${id}`);
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/produits/${id}`
+        );
         if (!res.ok) throw new Error("Erreur fetch produit");
         const data = await res.json();
         setProduit(data);
@@ -103,7 +105,7 @@ export default function Produit() {
 
   const stockDisponible =
     selectedSize && selectedColor
-      ? produit.stockParVariation?.[selectedSize]?.[selectedColor] ?? 0
+      ? (produit.stockParVariation?.[selectedSize]?.[selectedColor] ?? 0)
       : 0;
 
   const availableColors = produit.couleurs.filter(
@@ -118,7 +120,11 @@ export default function Produit() {
       </BackLink>
 
       <ProductWrapper>
-        <ProductImages images={produit.imageUrl || []} />
+        <ProductImages
+          images={
+            produit.images
+          }
+        />
 
         <ProductDetails>
           <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
