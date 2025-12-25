@@ -62,11 +62,17 @@ const ProductList = styled.div`
 
 const ProductItem = styled.div`
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 8px;
   padding: 12px;
   background: #fff;
   border-radius: 6px;
-  margin-bottom: 10px;
+  margin-bottom: 20px;
+`;
+
+const ProductHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
   align-items: center;
 `;
 
@@ -80,9 +86,19 @@ const ImagePreview = styled.img`
   cursor: pointer;
 `;
 
-// ===============================
-// COMPOSANT
-// ===============================
+const CommentsContainer = styled.div`
+  background: #f1f1f1;
+  padding: 10px;
+  border-radius: 6px;
+`;
+
+const CommentItem = styled.div`
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  border-bottom: 1px solid #ccc;
+`;
+
 function AdminProducts() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -103,13 +119,14 @@ function AdminProducts() {
   // FETCH PRODUITS EXISTANTS
   // ===============================
   useEffect(() => {
-    console.log(token);
     fetchProducts();
   }, []);
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits`);
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const data = await res.json();
       setProducts(data || []);
     } catch (err) {
@@ -141,7 +158,6 @@ function AdminProducts() {
   // ===============================
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!title || !description || !price || images.length === 0) {
       alert("Tous les champs sont obligatoires !");
       return;
@@ -175,14 +191,13 @@ function AdminProducts() {
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
-
       const data = await res.json();
       if (!res.ok) {
         alert(data.message || "Erreur lors de l'ajout");
         return;
       }
-
       alert("Produit ajouté !");
+      // reset form
       setTitle("");
       setDescription("");
       setPrice("");
@@ -195,6 +210,71 @@ function AdminProducts() {
       setCategorie("haut");
       setBadge(null);
       fetchProducts();
+    } catch (err) {
+      console.error(err);
+      alert("Erreur serveur");
+    }
+  };
+
+  // ===============================
+  // SUPPRESSION PRODUIT
+  // ===============================
+  const handleDeleteProduct = async (id) => {
+  if (!window.confirm("Supprimer ce produit ?")) return;
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (res.status === 200 || res.status === 204) {
+      setProducts(prev => prev.filter(p => p._id !== id));
+      alert("Produit supprimé !");
+    } else {
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        data = {};
+      }
+      alert(data.message || "Erreur suppression produit");
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Erreur serveur");
+  }
+};
+
+
+  // ===============================
+  // SUPPRESSION COMMENTAIRE
+  // ===============================
+  const handleDeleteComment = async (produitId, commentaireId) => {
+    if (!window.confirm("Supprimer ce commentaire ?")) return;
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/produits/${produitId}/commentaires/${commentaireId}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.message || "Erreur suppression commentaire");
+        return;
+      }
+      // mettre à jour la liste des commentaires côté frontend
+      setProducts((prev) =>
+        prev.map((p) =>
+          p._id === produitId
+            ? {
+                ...p,
+                commentaires: p.commentaires.filter((c) => c._id !== commentaireId),
+              }
+            : p
+        )
+      );
     } catch (err) {
       console.error(err);
       alert("Erreur serveur");
@@ -227,28 +307,19 @@ function AdminProducts() {
           value={price}
           onChange={(e) => setPrice(e.target.value)}
         />
-
         <Select value={genre} onChange={(e) => setGenre(e.target.value)}>
           <option value="homme">Homme</option>
           <option value="femme">Femme</option>
           <option value="enfant">Enfant</option>
         </Select>
-
-        <Select
-          value={categorie}
-          onChange={(e) => setCategorie(e.target.value)}
-        >
+        <Select value={categorie} onChange={(e) => setCategorie(e.target.value)}>
           <option value="haut">Haut</option>
           <option value="bas">Bas</option>
           <option value="robe">Robe</option>
           <option value="chaussure">Chaussure</option>
           <option value="tout">Tout</option>
         </Select>
-
-        <Select
-          value={badge || ""}
-          onChange={(e) => setBadge(e.target.value || null)}
-        >
+        <Select value={badge || ""} onChange={(e) => setBadge(e.target.value || null)}>
           <option value="">Aucun</option>
           <option value="new">New</option>
           <option value="promo">Promo</option>
@@ -317,23 +388,36 @@ function AdminProducts() {
       <ProductList>
         {products.map((p) => (
           <ProductItem key={p._id}>
-            <div>{p.title}</div>
-            <Button
-              onClick={async () => {
-                if (!window.confirm("Supprimer ce produit ?")) return;
-                await fetch(
-                  `${import.meta.env.VITE_API_URL}/api/produits/${p._id}`,
-                  {
-                    method: "DELETE",
-                    headers: { Authorization: `Bearer ${token}` },
-                  }
-                );
-                setProducts(products.filter((prod) => prod._id !== p._id));
-              }}
-              style={{ background: "#e74c3c" }}
-            >
-              Supprimer
-            </Button>
+            <ProductHeader>
+              <div>{p.title}</div>
+              <Button
+                onClick={() => handleDeleteProduct(p._id)}
+                style={{ background: "#e74c3c" }}
+              >
+                Supprimer
+              </Button>
+            </ProductHeader>
+
+            {p.images && p.images.length > 0 && (
+              <ImagePreview src={p.images.find((i) => i.isMain)?.url || p.images[0].url} isMain />
+            )}
+
+            {p.commentaires && p.commentaires.length > 0 && (
+              <CommentsContainer>
+                <strong>Commentaires :</strong>
+                {p.commentaires.map((c) => (
+                  <CommentItem key={c._id}>
+                    <span>{c.user}: {c.message} ({c.rating}/5)</span>
+                    <Button
+                      onClick={() => handleDeleteComment(p._id, c._id)}
+                      style={{ background: "#e74c3c", padding: "2px 6px", fontSize: "12px" }}
+                    >
+                      Supprimer
+                    </Button>
+                  </CommentItem>
+                ))}
+              </CommentsContainer>
+            )}
           </ProductItem>
         ))}
       </ProductList>
@@ -341,4 +425,4 @@ function AdminProducts() {
   );
 }
 
-export default AdminProducts ;
+export default AdminProducts;

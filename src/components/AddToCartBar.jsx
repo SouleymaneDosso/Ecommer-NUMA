@@ -85,7 +85,7 @@ export default function AddToCartBar({
       id: produit._id,
       nom: produit.title,
       prix: produit.price,
-      image: produit.imageUrl?.[0] || "",
+      images: produit.images[0]?.url,
       quantite: quantity,
       taille: selectedSize,
       couleur: selectedColor,

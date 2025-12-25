@@ -27,12 +27,14 @@ const RecommendationItem = styled.div`
   border-radius: 12px;
   overflow: hidden;
   background: white;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
   cursor: pointer;
 
   &:hover {
     transform: translateY(-4px);
-    box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
   }
 `;
 
@@ -68,7 +70,7 @@ const Title = styled.h4`
 const Price = styled.span`
   font-size: 0.95rem;
   font-weight: 700;
-  color: #f59e0b; 
+  color: #f59e0b;
 `;
 
 // ---------- COMPONENT ----------
@@ -103,7 +105,7 @@ export default function Recommendations({ currentId }) {
         {produits.map((p) => (
           <RecommendationItem key={p._id}>
             <ImageWrapper>
-              <Image src={p.imageUrl[0]} alt={p.title} />
+              <Image src={p.images[0]?.url} alt={p.title} />
             </ImageWrapper>
             <Info>
               <Title>{p.title}</Title>
