@@ -5,6 +5,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import GlobalStyle from "./GlobaleStyle";
 import { ToggleTheme } from "./Utils/Context";
 import { Panier } from "./Utils/Context";
+import ScrollToTop from "./components/ScrollToTop";
 
 import Header from "./components/Header";
 import Footer from "./components/Footer";
@@ -32,6 +33,7 @@ import "./i18n";
 const PublicLayout = ({ children }) => {
   return (
     <>
+     <ScrollToTop />
       <Header />
       <main>{children}</main>
       <Footer />

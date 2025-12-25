@@ -3,6 +3,7 @@ import styled, { keyframes } from "styled-components";
 import { Link } from "react-router-dom";
 import { FiChevronRight } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
+import { LoaderWrapper, Loader } from "../../Utils/Rotate";
 
 /* ---------------------- STYLES ---------------------- */
 const Wrapper = styled.div`
@@ -185,23 +186,13 @@ const Card = styled(Link)`
   }
 `;
 
-/* ---------------------- LOADER SKELETON ---------------------- */
-const SkeletonGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 24px;
-  padding: 20px;
-`;
-
-const SkeletonCard = styled.div`
-  width: 100%;
-  height: 260px;
-  background: #e0e0e0;
-  border-radius: 12px;
-`;
 
 /* ---------------------- COMPONENT ---------------------- */
 export default function Home() {
+  useEffect(() => {
+  window.scrollTo(0, 0);
+}, []);
+
   const { t } = useTranslation();
   const [heroProducts, setHeroProducts] = useState([]);
   const [products, setProducts] = useState([]);
@@ -267,28 +258,13 @@ export default function Home() {
   const sliderDouble = [...heroProducts, ...heroProducts];
   const nouveautes = products.filter((p) => p.isNew);
 
-  if (!imagesLoaded)
-    return (
-      <>
-        {/* Skeleton loader pour Hero */}
-        <Hero>
-          <HeroSlide $active={true} style={{ backgroundColor: "#e0e0e0" }} />
-          <HeroOverlay />
-        </Hero>
-
-        {/* Skeleton loader pour Nouveautés */}
-        <SectionTitle>{t("newArrivals")}</SectionTitle>
-        <HorizontalScroll>
-          {[...Array(4)].map((_, i) => <SkeletonCard key={i} />)}
-        </HorizontalScroll>
-
-        {/* Skeleton loader pour Produits */}
-        <SectionTitle>{t("forYou")}</SectionTitle>
-        <SkeletonGrid>
-          {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
-        </SkeletonGrid>
-      </>
-    );
+if (!imagesLoaded) {
+  return (
+    <LoaderWrapper>
+      <Loader />
+    </LoaderWrapper>
+  );
+}
 
   return (
     <Wrapper>
