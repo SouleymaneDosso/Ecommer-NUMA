@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import styled from "styled-components";
-import { LoaderWrapper, Loader } from "../Utils/Rotate"; // importer ton rotate
+import { LoaderWrapper, Loader } from "../Utils/Rotate";
+
+// ---------- STYLES (INCHANGÉS) ----------
 
 const Wrapper = styled.div`
   max-width: 600px;
@@ -39,20 +41,28 @@ const ProductImage = styled.img`
 
 const FullscreenOverlay = styled.div`
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100dvh; /* 🔥 clé du fix */
   background: rgba(0, 0, 0, 0.9);
+
   display: flex;
   justify-content: center;
   align-items: center;
+
   z-index: 9999;
+  overscroll-behavior: contain;
 `;
 
 const FullscreenImage = styled.img`
   max-width: 90%;
-  max-height: 90%;
+- max-height: 100%;
++ max-height: 90%;
   object-fit: contain;
   border-radius: 8px;
 `;
+
 
 const Arrow = styled.div`
   position: absolute;
@@ -63,14 +73,14 @@ const Arrow = styled.div`
   cursor: pointer;
   user-select: none;
   z-index: 10000;
-
-  &:hover {
-    color: black;
-  }
 `;
 
-const ArrowLeft = styled(Arrow)`left: 20px;`;
-const ArrowRight = styled(Arrow)`right: 20px;`;
+const ArrowLeft = styled(Arrow)`
+  left: 20px;
+`;
+const ArrowRight = styled(Arrow)`
+  right: 20px;
+`;
 
 const DotsWrapper = styled.div`
   position: absolute;
@@ -89,6 +99,8 @@ const Dot = styled.div`
   background: ${({ active }) => (active ? "#000" : "#ccc")};
 `;
 
+// ---------- COMPONENT ----------
+
 export default function ProductImages({ images = [] }) {
   const [urls, setUrls] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -99,11 +111,10 @@ export default function ProductImages({ images = [] }) {
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
 
-  // transformer le tableau d'objets en URLs
+  // 🔁 backend images -> urls
   useEffect(() => {
     if (images.length) {
-      const imgs = images.map((img) => img.url);
-      setUrls(imgs);
+      setUrls(images.map((img) => img.url));
     }
     setLoading(false);
   }, [images]);
@@ -113,35 +124,38 @@ export default function ProductImages({ images = [] }) {
     setIsFullscreen(true);
   };
 
+  useEffect(() => {
+    if (isFullscreen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isFullscreen]);
+
   const closeFullscreen = () => setIsFullscreen(false);
 
   const prevImage = (e) => {
     e?.stopPropagation();
-    if (!urls.length) return;
     setCurrentIndex((prev) => (prev === 0 ? urls.length - 1 : prev - 1));
   };
 
   const nextImage = (e) => {
     e?.stopPropagation();
-    if (!urls.length) return;
     setCurrentIndex((prev) => (prev === urls.length - 1 ? 0 : prev + 1));
   };
 
   const handleScroll = () => {
-    if (!wrapperRef.current || !urls.length) return;
+    if (!wrapperRef.current) return;
     const height = wrapperRef.current.clientHeight;
-    const index = Math.round(wrapperRef.current.scrollTop / height);
-    setCurrentIndex(index);
+    setCurrentIndex(Math.round(wrapperRef.current.scrollTop / height));
   };
 
-  const handleTouchStart = (e) => {
-    touchStartX.current = e.touches[0].clientX;
-  };
-
-  const handleTouchMove = (e) => {
-    touchEndX.current = e.touches[0].clientX;
-  };
-
+  const handleTouchStart = (e) => (touchStartX.current = e.touches[0].clientX);
+  const handleTouchMove = (e) => (touchEndX.current = e.touches[0].clientX);
   const handleTouchEnd = (e) => {
     e.stopPropagation();
     const delta = touchStartX.current - touchEndX.current;
@@ -149,7 +163,7 @@ export default function ProductImages({ images = [] }) {
     if (delta < -50) prevImage();
   };
 
-  // 🔄 Afficher le loader tant que les images ne sont pas prêtes
+  // 🔄 ROTATE pendant le chargement
   if (loading) {
     return (
       <LoaderWrapper>
