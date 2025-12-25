@@ -1,137 +1,28 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import styled from "styled-components";
-import Modal from "react-modal";
-Modal.setAppElement("#root");
 
-/* ================= STYLES ================= */
 const Container = styled.div`
   padding: 40px;
-  max-width: 1400px;
+  max-width: 1000px;
   margin: 0 auto;
   min-height: 100vh;
-  background: #f5f7fa;
-`;
-
-const Header = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 25px;
-`;
-
-const Title = styled.h2`
-  color: #2c3e50;
-  font-size: 32px;
-`;
-
-const Button = styled.button.withConfig({
-  shouldForwardProp: (prop) => prop !== "bg" && prop !== "outline",
-})`
-  padding: 10px 16px;
-  background: ${({ bg, outline }) =>
-    outline ? "transparent" : bg || "#007bff"};
-  color: ${({ outline }) => (outline ? "#2c3e50" : "white")};
-  font-weight: bold;
-  border: ${({ outline }) => (outline ? "1px solid #ccc" : "none")};
-  border-radius: 6px;
-  cursor: pointer;
-  margin-right: ${({ marginRight }) => marginRight || "8px"};
-  transition: 0.2s all;
-  opacity: ${({ disabled }) => (disabled ? 0.6 : 1)};
-  &:hover {
-    opacity: ${({ disabled }) => (disabled ? 0.6 : 0.85)};
-  }
-`;
-
-const TableContainer = styled.div`
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
-  padding: 20px;
-`;
-
-const Table = styled.table`
-  width: 100%;
-  border-collapse: collapse;
-`;
-
-const Th = styled.th`
-  padding: 14px;
-  background: #ecf0f1;
-  border-bottom: 1px solid #ddd;
-  text-align: left;
-`;
-
-const Td = styled.td`
-  padding: 12px;
-  border-bottom: 1px solid #ddd;
-  vertical-align: middle;
-`;
-
-const ProductImagesWrapper = styled.div`
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-`;
-
-const ProductImage = styled.img.withConfig({
-  shouldForwardProp: (prop) => prop !== "isMain",
-})`
-  width: 60px;
-  height: 60px;
-  object-fit: cover;
-  border-radius: 8px;
-  border: ${({ isMain }) => (isMain ? "3px solid #007bff" : "1px solid #ccc")};
-  cursor: pointer;
-`;
-
-const ImageRemoveButton = styled.button`
-  position: relative;
-  top: -10px;
-  right: 5px;
-  background: red;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  font-size: 12px;
-  cursor: pointer;
-`;
-
-const ErrorMessage = styled.div`
-  color: red;
-  margin-bottom: 12px;
-  font-weight: 500;
-`;
-
-const ModalContent = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-`;
-
-const Section = styled.div`
   background: #f9fafb;
-  padding: 15px;
-  border-radius: 10px;
 `;
 
-const SectionTitle = styled.h4`
-  margin-bottom: 10px;
-  color: #34495e;
+const Title = styled.h1`
+  font-size: 28px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  color: #2c3e50;
 `;
 
-const Field = styled.div`
+const Form = styled.form`
   display: flex;
   flex-direction: column;
-  margin-bottom: 10px;
-`;
-
-const Label = styled.label`
-  font-size: 14px;
-  margin-bottom: 4px;
-  font-weight: 500;
+  gap: 15px;
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
 `;
 
 const Input = styled.input`
@@ -146,522 +37,281 @@ const Select = styled.select`
   border: 1px solid #ccc;
 `;
 
-const Footer = styled.div`
+const Button = styled.button`
+  padding: 12px;
+  background: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+
+  &:hover {
+    background: #0056b3;
+  }
+`;
+
+const ProductList = styled.div`
+  margin-top: 30px;
+`;
+
+const ProductItem = styled.div`
   display: flex;
-  justify-content: flex-end;
-  gap: 15px;
-  border-top: 1px solid #eee;
-  padding-top: 15px;
+  justify-content: space-between;
+  padding: 12px;
+  background: #fff;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  align-items: center;
 `;
 
-const VariationTable = styled.table`
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
+const ImagePreview = styled.img`
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 6px;
+  margin-right: 10px;
+  border: ${(props) => (props.isMain ? "2px solid #007bff" : "1px solid #ccc")};
+  cursor: pointer;
 `;
 
-const VariationTh = styled.th`
-  border: 1px solid #ddd;
-  padding: 8px;
-  background: #ecf0f1;
-`;
-
-const VariationTd = styled.td`
-  border: 1px solid #ddd;
-  padding: 6px;
-  text-align: center;
-`;
-
-/* ================= COMPONENT ================= */
-
-function AdminProducts() {
-  const [products, setProducts] = useState([]);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState(null);
-  const [imageFiles, setImageFiles] = useState([]);
-  const [existingImages, setExistingImages] = useState([]);
+function AdminProduits() {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [price, setPrice] = useState("");
+  const [colors, setColors] = useState([]);
+  const [sizes, setSizes] = useState([]);
+  const [stock, setStock] = useState({});
+  const [images, setImages] = useState([]);
   const [mainImageIndex, setMainImageIndex] = useState(0);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [deletingId, setDeletingId] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
-
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    price: "",
-    stock: "",
-    hero: false,
-    badge: "",
-    genre: "",
-    categorie: "haut",
-    tailles: [],
-    couleurs: [],
-    stockParVariation: {},
-    commentaires: [],
-  });
+  const [products, setProducts] = useState([]);
+  const [genre, setGenre] = useState("homme");
+  const [categorie, setCategorie] = useState("haut");
+  const [badge, setBadge] = useState(null);
 
   const token = localStorage.getItem("adminToken");
-
-  const fetchProducts = async () => {
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits`);
-      const data = await res.json();
-      console.log(data);
-      setProducts(data || []);
-    } catch (err) {
-      console.error("Erreur récupération produits", err);
-      setProducts([]);
-    }
-  };
 
   useEffect(() => {
     fetchProducts();
   }, []);
 
-  const openModal = (product = null) => {
-    setEditingProduct(product);
-    setErrorMessage("");
-    setImageFiles([]);
-    setExistingImages([]);
-
-    if (product) {
-      setFormData({
-        title: product.title,
-        description: product.description,
-        price: product.price,
-        stock: product.stock,
-        hero: product.hero || false,
-        badge: product.badge || "",
-        genre: product.genre || "",
-        categorie: product.categorie || "haut",
-        tailles: product.tailles || [],
-        couleurs: product.couleurs || [],
-        stockParVariation: product.stockParVariation || {},
-        commentaires: product.commentaires || [],
-      });
-      setExistingImages(product.imageUrl || []);
-    } else {
-      setFormData({
-        title: "",
-        description: "",
-        price: "",
-        stock: "",
-        hero: false,
-        badge: "",
-        genre: "",
-        categorie: "haut",
-        tailles: [],
-        couleurs: [],
-        stockParVariation: {},
-        commentaires: [],
-      });
+  const fetchProducts = async () => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits`);
+      const data = await res.json();
+      setProducts(data || []);
+    } catch (err) {
+      console.error(err);
     }
+  };
 
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+    setImages(files);
     setMainImageIndex(0);
-    setModalOpen(true);
   };
 
-  const handleRemoveExistingImage = (index) => {
-    const updated = [...existingImages];
-    updated.splice(index, 1);
-    setExistingImages(updated);
-  };
-
-  const handleVariationChange = (size, color, value) => {
-    const updated = { ...formData.stockParVariation };
-    if (!updated[size]) updated[size] = {};
-    updated[size][color] = Number(value);
-    setFormData({ ...formData, stockParVariation: updated });
+  const handleStockChange = (color, size, value) => {
+    setStock((prev) => ({
+      ...prev,
+      [`${color}_${size}`]: parseInt(value) || 0,
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrorMessage("");
-    console.log("Existing Images envoyées :", existingImages);
-    if (!formData.genre || !formData.categorie) {
-      return setErrorMessage("Genre et catégorie obligatoires");
+
+    if (!title || !description || !price || images.length === 0) {
+      alert("Tous les champs sont obligatoires !");
+      return;
     }
 
-    try {
-      const data = new FormData();
-      data.append("produits", JSON.stringify(formData));
-
-      imageFiles.forEach((img) => data.append("image", img));
-      data.append("existingImages", JSON.stringify(existingImages));
-
-      const url = editingProduct
-        ? `${import.meta.env.VITE_API_URL}/api/produits/${editingProduct._id}`
-        : `${import.meta.env.VITE_API_URL}/api/produits`;
-
-      const res = await fetch(url, {
-        method: editingProduct ? "PUT" : "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: data,
+    // Construire stockParVariation
+    const stockParVariation = {};
+    colors.forEach((color) => {
+      stockParVariation[color] = {};
+      sizes.forEach((size) => {
+        stockParVariation[color][size] = stock[`${color}_${size}`] || 0;
       });
-
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.message || "Erreur serveur");
-      }
-
-      setModalOpen(false);
-      fetchProducts();
-    } catch (err) {
-      setErrorMessage(err.message);
-    }
-  };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm("Supprimer ce produit ?")) return;
-    setDeletingId(id);
-
-    await fetch(`${import.meta.env.VITE_API_URL}/api/produits/${id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
     });
 
-    setProducts(products.filter((p) => p._id !== id));
-    setDeletingId(null);
-  };
+    const formData = new FormData();
+    formData.append("title", title);
+    formData.append("description", description);
+    formData.append("price", price);
+    formData.append("colors", JSON.stringify(colors));
+    formData.append("sizes", JSON.stringify(sizes));
+    formData.append("stockParVariation", JSON.stringify(stockParVariation));
+    formData.append("genre", genre);
+    formData.append("categorie", categorie);
+    formData.append("badge", badge || "");
 
-  const filteredProducts = products.filter(
-    (p) =>
-      p.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.categorie?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+    // Ajouter images
+    images.forEach((img) => {
+      formData.append("images", img);
+    });
 
-  const handleLogout = () => {
-    localStorage.removeItem("adminToken");
-    window.location.reload();
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.message || "Erreur lors de l'ajout");
+        return;
+      }
+
+      alert("Produit ajouté !");
+      setTitle("");
+      setDescription("");
+      setPrice("");
+      setColors([]);
+      setSizes([]);
+      setStock({});
+      setImages([]);
+      setMainImageIndex(0);
+      setGenre("homme");
+      setCategorie("haut");
+      setBadge(null);
+      fetchProducts();
+    } catch (err) {
+      console.error(err);
+      alert("Erreur serveur");
+    }
   };
 
   return (
     <Container>
-      <Header>
-        <Title>Gestion des produits</Title>
-      </Header>
+      <Title>Admin Produits</Title>
 
-      <div style={{ marginBottom: "20px", display: "flex", gap: "10px" }}>
-        <Button onClick={() => openModal()}>+ Ajouter</Button>
+      <Form onSubmit={handleSubmit}>
         <Input
           type="text"
-          placeholder="Rechercher..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Titre"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
         />
-      </div>
+        <Input
+          type="text"
+          placeholder="Description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
+        <Input
+          type="number"
+          placeholder="Prix"
+          value={price}
+          onChange={(e) => setPrice(e.target.value)}
+        />
 
-      <TableContainer>
-        <Table>
-          <thead>
-            <tr>
-              <Th>Images</Th>
-              <Th>Nom</Th>
-              <Th>Prix</Th>
-              <Th>Stock</Th>
-              <Th>Hero</Th>
-              <Th>Tailles</Th>
-              <Th>Couleurs</Th>
-              <Th>Stock par variation</Th>
-              <Th>Commentaires</Th>
-              <Th>Actions</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredProducts.map((p) => (
-              <tr key={p._id}>
-                <Td>
-                  <ProductImagesWrapper>
-                    {p.imageUrl?.map((img, i) => (
-                      <ProductImage key={i} src={img.url} isMain={i === 0} />
-                    ))}
-                  </ProductImagesWrapper>
-                </Td>
-                <Td>{p.title}</Td>
-                <Td>{p.price} FCFA</Td>
-                <Td>{p.stock}</Td>
-                <Td>
-                  <input type="checkbox" checked={!!p.hero} readOnly />
-                </Td>
-                <Td>{(p.tailles || []).join(", ")}</Td>
-                <Td>{(p.couleurs || []).join(", ")}</Td>
-                <Td>
-                  {Object.entries(p.stockParVariation || {}).map(
-                    ([size, colors]) =>
-                      Object.entries(colors).map(([color, stock]) => (
-                        <div
-                          key={`${p._id}-${size}-${color}`}
-                          style={{ marginBottom: "3px" }}
-                        >
-                          {size}-{color}: {stock}
-                        </div>
-                      ))
-                  )}
-                </Td>
-                <Td>{(p.commentaires || []).length}</Td>
-                <Td style={{ display: "flex", gap: "8px" }}>
-                  <Button bg="#f39c12" onClick={() => openModal(p)}>
-                    Modifier
-                  </Button>
-                  <Button
-                    bg="#e74c3c"
-                    disabled={deletingId === p._id}
-                    onClick={() => handleDelete(p._id)}
-                  >
-                    {deletingId === p._id ? "..." : "Supprimer"}
-                  </Button>
-                </Td>
-              </tr>
+        {/* Choix genre */}
+        <Select value={genre} onChange={(e) => setGenre(e.target.value)}>
+          <option value="homme">Homme</option>
+          <option value="femme">Femme</option>
+          <option value="enfant">Enfant</option>
+        </Select>
+
+        {/* Choix catégorie */}
+        <Select value={categorie} onChange={(e) => setCategorie(e.target.value)}>
+          <option value="haut">Haut</option>
+          <option value="bas">Bas</option>
+          <option value="robe">Robe</option>
+          <option value="chaussure">Chaussure</option>
+          <option value="tout">Tout</option>
+        </Select>
+
+        {/* Badge */}
+        <Select value={badge || ""} onChange={(e) => setBadge(e.target.value || null)}>
+          <option value="">Aucun</option>
+          <option value="new">New</option>
+          <option value="promo">Promo</option>
+        </Select>
+
+        {/* Couleurs */}
+        <Input
+          type="text"
+          placeholder="Couleurs (séparées par ,)"
+          value={colors.join(",")}
+          onChange={(e) => setColors(e.target.value.split(",").map((c) => c.trim()))}
+        />
+
+        {/* Tailles */}
+        <Input
+          type="text"
+          placeholder="Tailles (séparées par ,)"
+          value={sizes.join(",")}
+          onChange={(e) => setSizes(e.target.value.split(",").map((s) => s.trim()))}
+        />
+
+        {/* Stock par couleur/taille */}
+        {colors.length > 0 && sizes.length > 0 && (
+          <div>
+            {colors.map((color) => (
+              <div key={color}>
+                <strong>{color}</strong>
+                {sizes.map((size) => (
+                  <Input
+                    key={`${color}_${size}`}
+                    type="number"
+                    placeholder={`${color} / ${size}`}
+                    value={stock[`${color}_${size}`] || ""}
+                    onChange={(e) => handleStockChange(color, size, e.target.value)}
+                    style={{ width: "80px", marginRight: "5px" }}
+                  />
+                ))}
+              </div>
             ))}
-          </tbody>
-        </Table>
-      </TableContainer>
+          </div>
+        )}
 
-      <Modal
-        isOpen={modalOpen}
-        onRequestClose={() => setModalOpen(false)}
-        style={{
-          content: {
-            maxWidth: "700px",
-            margin: "auto",
-            borderRadius: "14px",
-            padding: "25px",
-            maxHeight: "85vh",
-            overflow: "auto",
-          },
-        }}
-      >
-        <h2>{editingProduct ? "Modifier le produit" : "Ajouter un produit"}</h2>
-        {errorMessage && <ErrorMessage>{errorMessage}</ErrorMessage>}
+        {/* Upload images */}
+        <Input
+          type="file"
+          multiple
+          accept="image/*"
+          onChange={handleImageChange}
+        />
 
-        <form onSubmit={handleSubmit}>
-          <ModalContent>
-            {/* --- Informations générales --- */}
-            <Section>
-              <SectionTitle>Informations générales</SectionTitle>
-              <Field>
-                <Label>Titre</Label>
-                <Input
-                  value={formData.title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
-                />
-              </Field>
-              <Field>
-                <Label>Description</Label>
-                <Input
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                />
-              </Field>
-              <Field>
-                <Label>Prix (FCFA)</Label>
-                <Input
-                  type="number"
-                  value={formData.price}
-                  onChange={(e) =>
-                    setFormData({ ...formData, price: e.target.value })
-                  }
-                />
-              </Field>
-              <Field>
-                <Label>Stock</Label>
-                <Input
-                  type="number"
-                  value={formData.stock}
-                  onChange={(e) =>
-                    setFormData({ ...formData, stock: e.target.value })
-                  }
-                />
-              </Field>
-            </Section>
+        {/* Preview + sélectionner image principale */}
+        <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
+          {images.map((img, idx) => (
+            <ImagePreview
+              key={idx}
+              src={URL.createObjectURL(img)}
+              isMain={idx === mainImageIndex}
+              onClick={() => setMainImageIndex(idx)}
+            />
+          ))}
+        </div>
 
-            {/* --- Organisation --- */}
-            <Section>
-              <SectionTitle>Organisation</SectionTitle>
-              <Field>
-                <Label>Genre</Label>
-                <Select
-                  value={formData.genre}
-                  onChange={(e) =>
-                    setFormData({ ...formData, genre: e.target.value })
-                  }
-                >
-                  <option value="">—</option>
-                  <option value="homme">Homme</option>
-                  <option value="femme">Femme</option>
-                  <option value="enfant">Enfant</option>
-                </Select>
-              </Field>
-              <Field>
-                <Label>Catégorie</Label>
-                <Select
-                  value={formData.categorie}
-                  onChange={(e) =>
-                    setFormData({ ...formData, categorie: e.target.value })
-                  }
-                >
-                  <option value="haut">Haut</option>
-                  <option value="bas">Bas</option>
-                  <option value="robe">Robe</option>
-                  <option value="chaussure">Chaussure</option>
-                  <option value="tout">Tout</option>
-                </Select>
-              </Field>
-            </Section>
+        <Button type="submit">Ajouter Produit</Button>
+      </Form>
 
-            {/* --- Options --- */}
-            <Section>
-              <SectionTitle>Options</SectionTitle>
-              <Field>
-                <Label>Badge</Label>
-                <Select
-                  value={formData.badge}
-                  onChange={(e) =>
-                    setFormData({ ...formData, badge: e.target.value })
-                  }
-                >
-                  <option value="">—</option>
-                  <option value="new">New</option>
-                  <option value="promo">Promo</option>
-                </Select>
-              </Field>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={formData.hero}
-                  onChange={(e) =>
-                    setFormData({ ...formData, hero: e.target.checked })
-                  }
-                />{" "}
-                Afficher en Hero
-              </label>
-            </Section>
-
-            {/* --- Variations & Stock --- */}
-            <Section>
-              <SectionTitle>Variations et Stock par variation</SectionTitle>
-              <Field>
-                <Label>Tailles (séparées par une virgule)</Label>
-                <Input
-                  value={formData.tailles.join(", ")}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      tailles: e.target.value.split(",").map((s) => s.trim()),
-                    })
-                  }
-                />
-              </Field>
-              <Field>
-                <Label>Couleurs (séparées par une virgule)</Label>
-                <Input
-                  value={formData.couleurs.join(", ")}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      couleurs: e.target.value.split(",").map((s) => s.trim()),
-                    })
-                  }
-                />
-              </Field>
-
-              <Field>
-                <Label>Stock par variation</Label>
-                <VariationTable>
-                  <thead>
-                    <tr>
-                      <VariationTh>Taille</VariationTh>
-                      {formData.couleurs.map((c) => (
-                        <VariationTh key={c}>{c}</VariationTh>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {formData.tailles.map((size) => (
-                      <tr key={size}>
-                        <VariationTd>{size}</VariationTd>
-                        {formData.couleurs.map((color) => (
-                          <VariationTd key={color}>
-                            <Input
-                              type="number"
-                              min={0}
-                              value={
-                                formData.stockParVariation?.[size]?.[color] || 0
-                              }
-                              onChange={(e) =>
-                                handleVariationChange(
-                                  size,
-                                  color,
-                                  e.target.value
-                                )
-                              }
-                            />
-                          </VariationTd>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </VariationTable>
-              </Field>
-            </Section>
-
-            {/* --- Images --- */}
-            <Section>
-              <SectionTitle>Images</SectionTitle>
-              <Input
-                type="file"
-                multiple
-                onChange={(e) => setImageFiles([...e.target.files])}
-                required={!editingProduct && existingImages.length === 0}
-              />
-              {existingImages.length > 0 && (
-                <ProductImagesWrapper>
-                  {existingImages.map((img, i) => (
-                    <div key={i} style={{ position: "relative" }}>
-                      <ProductImage
-                        src={img.url}
-                        isMain={i === mainImageIndex}
-                      />
-                      <ImageRemoveButton
-                        onClick={() => handleRemoveExistingImage(i)}
-                      >
-                        ×
-                      </ImageRemoveButton>
-                    </div>
-                  ))}
-                </ProductImagesWrapper>
-              )}
-              {imageFiles.length > 0 && (
-                <ProductImagesWrapper>
-                  {imageFiles.map((file, i) => (
-                    <ProductImage
-                      key={i}
-                      src={URL.createObjectURL(file)}
-                      isMain={i === mainImageIndex}
-                      onClick={() => setMainImageIndex(i)}
-                    />
-                  ))}
-                </ProductImagesWrapper>
-              )}
-            </Section>
-
-            <Footer>
-              <Button outline type="button" onClick={() => setModalOpen(false)}>
-                Annuler
-              </Button>
-              <Button type="submit">
-                {editingProduct ? "Enregistrer" : "Ajouter"}
-              </Button>
-            </Footer>
-          </ModalContent>
-        </form>
-      </Modal>
+      <ProductList>
+        {products.map((p) => (
+          <ProductItem key={p._id}>
+            <div>{p.title}</div>
+            <Button
+              onClick={async () => {
+                if (!window.confirm("Supprimer ce produit ?")) return;
+                await fetch(`${import.meta.env.VITE_API_URL}/api/produits/${p._id}`, {
+                  method: "DELETE",
+                  headers: { Authorization: `Bearer ${token}` },
+                });
+                setProducts(products.filter((prod) => prod._id !== p._id));
+              }}
+              style={{ background: "#e74c3c" }}
+            >
+              Supprimer
+            </Button>
+          </ProductItem>
+        ))}
+      </ProductList>
     </Container>
   );
 }
 
-export default AdminProducts;
+export default AdminProduits;
