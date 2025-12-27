@@ -70,11 +70,11 @@ const SizeButton = styled.button`
   font-weight: 600;
 `;
 
-const QuantityInput = styled.input`
-  width: 70px;
+const QuantitySelect = styled.select`
+  width: 80px;
   padding: 8px;
-  border: 1px solid #ccc;
   border-radius: 6px;
+  border: 1px solid #ccc;
   font-size: 1rem;
 `;
 
@@ -135,25 +135,48 @@ export default function AddToCartBar({
     });
   };
 
+  // Fonction pour transformer le nom couleur en code hex
+  const parseColor = (colorName) =>
+    colorMap[colorName.toLowerCase()] || colorName.toLowerCase();
+
+  // Liste des couleurs disponibles selon la taille sélectionnée
+  const availableColors = selectedSize
+    ? produit.couleurs.filter(
+        (c) => (stockParVariation?.[c]?.[selectedSize] ?? 0) > 0
+      )
+    : produit.couleurs;
+
   return (
     <ActionWrapper>
       {/* COULEURS */}
       <Label>Couleur</Label>
       <Row>
-        {produit.couleurs.map((color) => (
-          <ColorCircle
+        {availableColors.map((color) => (
+          <div
             key={color}
-            color={colorMap[color.toLowerCase()] || color.toLowerCase()}
-            title={color} // tooltip
-            active={selectedColor === color}
-            disabled={produit.tailles.every(
-              (size) => (stockParVariation?.[color]?.[size] ?? 0) === 0
-            )}
-            onClick={() => {
-              setSelectedColor(color);
-              setSelectedSize(null); // reset taille
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "4px",
             }}
-          />
+          >
+            <ColorCircle
+              color={parseColor(color)}
+              title={color}
+              active={selectedColor === color}
+              disabled={produit.tailles.every(
+                (size) => (stockParVariation?.[color]?.[size] ?? 0) === 0
+              )}
+              onClick={() => {
+                setSelectedColor(color);
+                setSelectedSize(null); // reset taille
+              }}
+            />
+            <span style={{ fontSize: "0.75rem", textTransform: "capitalize" }}>
+              {color}
+            </span>
+          </div>
         ))}
       </Row>
 
@@ -175,21 +198,23 @@ export default function AddToCartBar({
         })}
       </Row>
 
-      {/* QUANTITÉ + AJOUT */}
+      {/* QUANTITÉ */}
+      <Label>Quantité</Label>
       <Row>
-        <QuantityInput
-          type="number"
-          min={1}
-          max={stockDisponible}
+        <QuantitySelect
           value={quantity}
           disabled={disabled}
-          onChange={(e) => {
-            let q = Number(e.target.value) || 1;
-            if (q < 1) q = 1;
-            if (q > stockDisponible) q = stockDisponible;
-            setQuantity(q);
-          }}
-        />
+          onChange={(e) => setQuantity(Number(e.target.value))}
+        >
+          {Array.from({ length: stockDisponible }, (_, i) => i + 1).map(
+            (q) => (
+              <option key={q} value={q}>
+                {q}
+              </option>
+            )
+          )}
+        </QuantitySelect>
+
         <AddButton disabled={disabled} onClick={handleAddToCart}>
           {stockDisponible > 0 ? "Ajouter au panier" : "Rupture de stock"}
         </AddButton>
