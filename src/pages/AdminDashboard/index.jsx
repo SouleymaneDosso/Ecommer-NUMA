@@ -1,6 +1,13 @@
 import { useEffect, useState, useMemo } from "react";
 import styled from "styled-components";
-import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartTooltip, ResponsiveContainer } from "recharts";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip as RechartTooltip,
+  ResponsiveContainer,
+} from "recharts";
 import Modal from "react-modal";
 Modal.setAppElement("#root");
 
@@ -55,7 +62,7 @@ const StatCard = styled.div`
   background: #fff;
   padding: 15px 20px;
   border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   text-align: center;
   min-width: 120px;
   max-width: 180px;
@@ -80,7 +87,7 @@ const TableContainer = styled.div`
   min-width: 1400px;
   background: #fff;
   border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   padding: 20px;
 `;
 
@@ -202,12 +209,19 @@ function TableauDeBord() {
   };
 
   const filteredProducts = products
-    .filter(p =>
-      (p.title?.toLowerCase().includes(search.toLowerCase()) ||
-       p.userId?.toLowerCase().includes(search.toLowerCase()))
+    .filter(
+      (p) =>
+        p.title?.toLowerCase().includes(search.toLowerCase()) ||
+        p.userId?.toLowerCase().includes(search.toLowerCase())
     )
-    .filter(p => !filterGenre || (Array.isArray(p.genre) ? p.genre.includes(filterGenre) : p.genre === filterGenre))
-    .filter(p => !filterCategorie || p.categorie === filterCategorie);
+    .filter(
+      (p) =>
+        !filterGenre ||
+        (Array.isArray(p.genre)
+          ? p.genre.includes(filterGenre)
+          : p.genre === filterGenre)
+    )
+    .filter((p) => !filterCategorie || p.categorie === filterCategorie);
 
   const indexOfLast = currentPage * itemsPerPage;
   const indexOfFirst = indexOfLast - itemsPerPage;
@@ -216,18 +230,20 @@ function TableauDeBord() {
 
   const stats = useMemo(() => {
     const total = products.length;
-    const epuises = products.filter(p => p.stock <= 0).length;
-    const promos = products.filter(p => p.badge === "promo").length;
-    const nouveaux = products.filter(p => p.badge === "new").length;
+    const epuises = products.filter((p) => p.stock <= 0).length;
+    const promos = products.filter((p) => p.badge === "promo").length;
+    const nouveaux = products.filter((p) => p.badge === "new").length;
 
-    const byGenre = ["homme","femme","enfant"].map(g => ({
+    const byGenre = ["homme", "femme", "enfant"].map((g) => ({
       genre: g,
-      count: products.filter(p => Array.isArray(p.genre) ? p.genre.includes(g) : p.genre === g).length
+      count: products.filter((p) =>
+        Array.isArray(p.genre) ? p.genre.includes(g) : p.genre === g
+      ).length,
     }));
 
-    const byCategorie = ["haut","bas","tout"].map(c => ({
+    const byCategorie = ["haut", "bas", "tout"].map((c) => ({
       categorie: c,
-      count: products.filter(p => p.categorie === c).length
+      count: products.filter((p) => p.categorie === c).length,
     }));
 
     return { total, epuises, promos, nouveaux, byGenre, byCategorie };
@@ -262,13 +278,19 @@ function TableauDeBord() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <Select value={filterGenre} onChange={(e) => setFilterGenre(e.target.value)}>
+        <Select
+          value={filterGenre}
+          onChange={(e) => setFilterGenre(e.target.value)}
+        >
           <option value="">Tous les genres</option>
           <option value="homme">Homme</option>
           <option value="femme">Femme</option>
           <option value="enfant">Enfant</option>
         </Select>
-        <Select value={filterCategorie} onChange={(e) => setFilterCategorie(e.target.value)}>
+        <Select
+          value={filterCategorie}
+          onChange={(e) => setFilterCategorie(e.target.value)}
+        >
           <option value="">Toutes les catégories</option>
           <option value="haut">Haut</option>
           <option value="bas">Bas</option>
@@ -276,7 +298,15 @@ function TableauDeBord() {
         </Select>
       </Controls>
 
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "30px", marginBottom: "30px" }}>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "30px",
+          marginBottom: "30px",
+        }}
+      >
         <div style={{ width: "100%", maxWidth: "800px", height: 250 }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={stats.byGenre}>
@@ -315,18 +345,36 @@ function TableauDeBord() {
             </thead>
             <tbody>
               {currentProducts.map((p) => (
-                <tr key={p._id} onClick={() => { setModalProduct(p); setModalOpen(true); }}>
+                <tr
+                  key={p._id}
+                  onClick={() => {
+                    setModalProduct(p);
+                    setModalOpen(true);
+                  }}
+                >
                   <Td>
                     <ProductImagesWrapper>
-                      {Array.isArray(p.imageUrl) && p.imageUrl.length > 0
-                        ? p.imageUrl.map((img, idx) => <ProductImage key={idx} src={img} alt={p.title} />)
-                        : <ProductImage src="https://via.placeholder.com/60x40?text=No+Image" alt="Pas d'image" />}
+                      {Array.isArray(p.images) && p.images.length > 0 ? (
+                        p.images.map((img, idx) => (
+                          <ProductImage key={idx} src={img.url} alt={p.title} />
+                        ))
+                      ) : (
+                        <ProductImage
+                          src="https://via.placeholder.com/60x40?text=No+Image"
+                          alt="Pas d'image"
+                        />
+                      )}
                     </ProductImagesWrapper>
                   </Td>
                   <Td>{p.title || "—"}</Td>
                   <Td>{p.price ?? "—"} FCFA</Td>
-                  <Td style={{ color: p.stock <= 0 ? "#e74c3c" : "#2c3e50", fontWeight: p.stock <= 0 ? "bold" : "normal" }}>
-                    {p.stock <= 0 ? "Épuisé" : p.stock ?? "—"}
+                  <Td
+                    style={{
+                      color: p.stock <= 0 ? "#e74c3c" : "#2c3e50",
+                      fontWeight: p.stock <= 0 ? "bold" : "normal",
+                    }}
+                  >
+                    {p.stock <= 0 ? "Épuisé" : (p.stock ?? "—")}
                   </Td>
                   <Td>{p.userId || "—"}</Td>
                   <Td>{p.categorie || "—"}</Td>
@@ -371,8 +419,12 @@ function TableauDeBord() {
             <ModalSection>
               <ModalSectionTitle>Images</ModalSectionTitle>
               <ProductImagesWrapper>
-                {modalProduct.imageUrl?.map((img, idx) => (
-                  <ProductImage key={idx} src={img} alt={modalProduct.title} />
+                {modalProduct.images?.map((img, idx) => (
+                  <ProductImage
+                    key={idx}
+                    src={img.url}
+                    alt={modalProduct.title}
+                  />
                 ))}
               </ProductImagesWrapper>
             </ModalSection>
@@ -383,12 +435,23 @@ function TableauDeBord() {
             </ModalSection>
 
             <ModalSection>
-              <ModalSectionTitle>Commentaires ({modalProduct.commentaires?.length || 0})</ModalSectionTitle>
+              <ModalSectionTitle>
+                Commentaires ({modalProduct.commentaires?.length || 0})
+              </ModalSectionTitle>
               {modalProduct.commentaires?.length > 0 ? (
-                modalProduct.commentaires.map(c => (
-                  <div key={c._id} style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px", alignItems: "center" }}>
+                modalProduct.commentaires.map((c) => (
+                  <div
+                    key={c._id}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      marginBottom: "10px",
+                      alignItems: "center",
+                    }}
+                  >
                     <div>
-                      <strong>{c.user || "Anonyme"}</strong> : {c.message} — <span style={{ color: "#f59e0b" }}>{c.rating}★</span>
+                      <strong>{c.user || "Anonyme"}</strong> : {c.message} —{" "}
+                      <span style={{ color: "#f59e0b" }}>{c.rating}★</span>
                     </div>
                     <button
                       style={{
@@ -397,26 +460,37 @@ function TableauDeBord() {
                         border: "none",
                         padding: "5px 10px",
                         borderRadius: "6px",
-                        cursor: "pointer"
+                        cursor: "pointer",
                       }}
                       onClick={async () => {
                         try {
                           const token = localStorage.getItem("token");
-                          const res = await fetch(`http://localhost:3000/api/produits/${modalProduct._id}/commentaires/${c._id}`, {
-                            method: "DELETE",
-                            headers: { "Authorization": `Bearer ${token}` }
-                          });
-                          if (!res.ok) throw new Error("Erreur suppression commentaire");
+                          const res = await fetch(
+                            `http://localhost:3000/api/produits/${modalProduct._id}/commentaires/${c._id}`,
+                            {
+                              method: "DELETE",
+                              headers: { Authorization: `Bearer ${token}` },
+                            }
+                          );
+                          if (!res.ok)
+                            throw new Error("Erreur suppression commentaire");
 
-                          setModalProduct(prev => ({
+                          setModalProduct((prev) => ({
                             ...prev,
-                            commentaires: prev.commentaires.filter(comm => comm._id !== c._id)
+                            commentaires: prev.commentaires.filter(
+                              (comm) => comm._id !== c._id
+                            ),
                           }));
 
-                          setProducts(prev =>
-                            prev.map(p =>
+                          setProducts((prev) =>
+                            prev.map((p) =>
                               p._id === modalProduct._id
-                                ? { ...p, commentaires: p.commentaires.filter(comm => comm._id !== c._id) }
+                                ? {
+                                    ...p,
+                                    commentaires: p.commentaires.filter(
+                                      (comm) => comm._id !== c._id
+                                    ),
+                                  }
                                 : p
                             )
                           );

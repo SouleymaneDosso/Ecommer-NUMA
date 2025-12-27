@@ -2,12 +2,9 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import styled from "styled-components";
 import { FiArrowLeft } from "react-icons/fi";
-import { motion, AnimatePresence } from "framer-motion";
-
-import VariationsSelector from "../../components/VariationsSelector";
 import AddToCartBar from "../../components/AddToCartBar";
-import Comments from "../../components/Comments";
 import ProductImages from "../../components/ProductImages";
+import Comments from "../../components/Comments";
 import Recommendations from "../../components/Recommendations";
 import { LoaderWrapper, Loader } from "../../Utils/Rotate";
 
@@ -24,8 +21,8 @@ const BackLink = styled.button`
   align-items: center;
   gap: 0.5rem;
   border: none;
-  background: ${({ theme }) => theme.bgLight || "#f5f5f5"};
-  color: ${({ theme }) => theme.primary || "#007bff"};
+  background: #f5f5f5;
+  color: #007bff;
   font-weight: 600;
   padding: 8px 14px;
   border-radius: 8px;
@@ -60,11 +57,6 @@ const Description = styled.p`
   font-size: 1rem;
 `;
 
-const StockInfo = styled.p`
-  font-size: 0.9rem;
-  font-weight: 500;
-`;
-
 const Badge = styled.span`
   background: ${({ type }) =>
     type === "new" ? "#10b981" : type === "promo" ? "#f59e0b" : "transparent"};
@@ -76,26 +68,6 @@ const Badge = styled.span`
   align-self: flex-start;
 `;
 
-const ModalOverlay = styled(motion.div)`
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-`;
-
-const ModalBox = styled(motion.div)`
-  background: #fff;
-  padding: 2rem 3rem;
-  border-radius: 12px;
-  text-align: center;
-  font-weight: 600;
-  color: #111;
-  min-width: 280px;
-`;
-
 // ---------- PAGE PRODUIT ----------
 export default function Produit() {
   const { id } = useParams();
@@ -105,7 +77,6 @@ export default function Produit() {
   const [selectedColor, setSelectedColor] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [modalSuccess, setModalSuccess] = useState(false);
 
   // fetch produit
   useEffect(() => {
@@ -133,23 +104,18 @@ export default function Produit() {
     );
   }
 
-  if (!produit) return null; // produit non trouvé
+  if (!produit) return null;
 
+  // calcule stock disponible
   const stockDisponible =
-    selectedSize && selectedColor
-      ? produit.stockParVariation?.[selectedSize]?.[selectedColor] ?? 0
+    selectedColor && selectedSize
+      ? produit.stockParVariation?.[selectedColor]?.[selectedSize] ?? 0
       : 0;
 
-  const availableColors = produit.couleurs.filter(
-    (c) => selectedSize && produit.stockParVariation?.[selectedSize]?.[c] > 0
-  );
-
-  // Ajouter au panier (exemple modal)
-  const handleAddToCart = () => {
-    // Ici tu peux appeler ton backend/cart
-    setModalSuccess(true);
-    setTimeout(() => setModalSuccess(false), 2000);
-  };
+  // couleurs disponibles selon taille sélectionnée
+  const availableColors = selectedSize
+    ? produit.couleurs.filter(c => produit.stockParVariation?.[c]?.[selectedSize] > 0)
+    : produit.couleurs;
 
   return (
     <PageWrapper>
@@ -174,30 +140,14 @@ export default function Produit() {
           <ProductPrice>{produit.price} FCFA</ProductPrice>
           <Description>{produit.description}</Description>
 
-          <VariationsSelector
-            tailles={produit.tailles}
-            couleurs={availableColors}
-            selectedSize={selectedSize}
-            setSelectedSize={setSelectedSize}
+          <AddToCartBar
+            produit={produit}
             selectedColor={selectedColor}
             setSelectedColor={setSelectedColor}
-            stockParVariation={produit.stockParVariation}
-          />
-
-          <StockInfo>
-            {selectedSize && selectedColor
-              ? `Stock disponible : ${stockDisponible}`
-              : "Sélectionnez taille et couleur"}
-          </StockInfo>
-
-          <AddToCartBar
+            selectedSize={selectedSize}
+            setSelectedSize={setSelectedSize}
             quantity={quantity}
             setQuantity={setQuantity}
-            selectedSize={selectedSize}
-            selectedColor={selectedColor}
-            stockParVariation={produit.stockParVariation}
-            produit={produit}
-            onAddToCart={handleAddToCart} // <-- déclenche modal
           />
 
           <Comments
@@ -209,26 +159,6 @@ export default function Produit() {
           <Recommendations currentId={produit._id} />
         </ProductDetails>
       </ProductWrapper>
-
-      {/* ---------- MODAL SUCCÈS ---------- */}
-      <AnimatePresence>
-        {modalSuccess && (
-          <ModalOverlay
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <ModalBox
-              initial={{ scale: 0.7, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.7, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            >
-              Produit ajouté au panier !
-            </ModalBox>
-          </ModalOverlay>
-        )}
-      </AnimatePresence>
     </PageWrapper>
   );
 }

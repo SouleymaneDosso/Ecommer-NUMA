@@ -112,6 +112,7 @@ function AdminProducts() {
   const [genre, setGenre] = useState("homme");
   const [categorie, setCategorie] = useState("haut");
   const [badge, setBadge] = useState(null);
+  const [hero, setHero] = useState(false);
 
   const token = localStorage.getItem("adminToken");
 
@@ -149,7 +150,7 @@ function AdminProducts() {
   const handleStockChange = (color, size, value) => {
     setStock((prev) => ({
       ...prev,
-      [`${color}_${size}`]: parseInt(value) || 0,
+      [color]: { ...prev[color], [size]: parseInt(value) || 0 },
     }));
   };
 
@@ -167,7 +168,7 @@ function AdminProducts() {
     colors.forEach((color) => {
       stockObj[color] = {};
       sizes.forEach((size) => {
-        stockObj[color][size] = stock[`${color}_${size}`] || 0;
+        stockObj[color][size] = stock[color]?.[size] || 0;
       });
     });
 
@@ -181,6 +182,7 @@ function AdminProducts() {
     formData.append("genre", genre);
     formData.append("categorie", categorie);
     formData.append("badge", badge);
+    formData.append("hero", hero);
     formData.append("mainImageIndex", mainImageIndex);
 
     images.forEach((img) => formData.append("images", img));
@@ -209,6 +211,7 @@ function AdminProducts() {
       setGenre("homme");
       setCategorie("haut");
       setBadge(null);
+      setHero(false);
       fetchProducts();
     } catch (err) {
       console.error(err);
@@ -220,31 +223,28 @@ function AdminProducts() {
   // SUPPRESSION PRODUIT
   // ===============================
   const handleDeleteProduct = async (id) => {
-  if (!window.confirm("Supprimer ce produit ?")) return;
-  try {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits/${id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    if (!window.confirm("Supprimer ce produit ?")) return;
 
-    if (res.status === 200 || res.status === 204) {
-      setProducts(prev => prev.filter(p => p._id !== id));
-      alert("Produit supprimé !");
-    } else {
-      let data;
-      try {
-        data = await res.json();
-      } catch {
-        data = {};
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/produits/${id}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      const data = await res.json();
+      if (res.ok) {
+        setProducts((prev) => prev.filter((p) => p._id !== id));
+        alert(data.message || "Produit supprimé !");
+      } else {
+        alert(data.message || "Erreur suppression produit");
       }
-      alert(data.message || "Erreur suppression produit");
+    } catch (err) {
+      console.error(err);
+      alert("Erreur serveur");
     }
-  } catch (err) {
-    console.error(err);
-    alert("Erreur serveur");
-  }
-};
-
+  };
 
   // ===============================
   // SUPPRESSION COMMENTAIRE
@@ -264,13 +264,14 @@ function AdminProducts() {
         alert(data.message || "Erreur suppression commentaire");
         return;
       }
-      // mettre à jour la liste des commentaires côté frontend
       setProducts((prev) =>
         prev.map((p) =>
           p._id === produitId
             ? {
                 ...p,
-                commentaires: p.commentaires.filter((c) => c._id !== commentaireId),
+                commentaires: p.commentaires.filter(
+                  (c) => c._id !== commentaireId
+                ),
               }
             : p
         )
@@ -307,22 +308,39 @@ function AdminProducts() {
           value={price}
           onChange={(e) => setPrice(e.target.value)}
         />
+
         <Select value={genre} onChange={(e) => setGenre(e.target.value)}>
           <option value="homme">Homme</option>
           <option value="femme">Femme</option>
           <option value="enfant">Enfant</option>
         </Select>
-        <Select value={categorie} onChange={(e) => setCategorie(e.target.value)}>
+
+        <Select
+          value={categorie}
+          onChange={(e) => setCategorie(e.target.value)}
+        >
           <option value="haut">Haut</option>
           <option value="bas">Bas</option>
           <option value="robe">Robe</option>
           <option value="chaussure">Chaussure</option>
           <option value="tout">Tout</option>
         </Select>
-        <Select value={badge || ""} onChange={(e) => setBadge(e.target.value || null)}>
+
+        <Select
+          value={badge || ""}
+          onChange={(e) => setBadge(e.target.value || null)}
+        >
           <option value="">Aucun</option>
           <option value="new">New</option>
           <option value="promo">Promo</option>
+        </Select>
+
+        <Select
+          value={hero}
+          onChange={(e) => setHero(e.target.value === "true")}
+        >
+          <option value="false">Non Hero</option>
+          <option value="true">Hero</option>
         </Select>
 
         <Input
@@ -352,7 +370,7 @@ function AdminProducts() {
                     key={`${color}_${size}`}
                     type="number"
                     placeholder={`${color} / ${size}`}
-                    value={stock[`${color}_${size}`] || ""}
+                    value={stock[color]?.[size] || ""}
                     onChange={(e) =>
                       handleStockChange(color, size, e.target.value)
                     }
@@ -389,7 +407,9 @@ function AdminProducts() {
         {products.map((p) => (
           <ProductItem key={p._id}>
             <ProductHeader>
-              <div>{p.title}</div>
+              <div>
+                {p.title} {p.hero && "(Hero)"}
+              </div>
               <Button
                 onClick={() => handleDeleteProduct(p._id)}
                 style={{ background: "#e74c3c" }}
@@ -399,7 +419,10 @@ function AdminProducts() {
             </ProductHeader>
 
             {p.images && p.images.length > 0 && (
-              <ImagePreview src={p.images.find((i) => i.isMain)?.url || p.images[0].url} isMain />
+              <ImagePreview
+                src={p.images.find((i) => i.isMain)?.url || p.images[0].url}
+                isMain
+              />
             )}
 
             {p.commentaires && p.commentaires.length > 0 && (
@@ -407,10 +430,16 @@ function AdminProducts() {
                 <strong>Commentaires :</strong>
                 {p.commentaires.map((c) => (
                   <CommentItem key={c._id}>
-                    <span>{c.user}: {c.message} ({c.rating}/5)</span>
+                    <span>
+                      {c.user}: {c.message} ({c.rating}/5)
+                    </span>
                     <Button
                       onClick={() => handleDeleteComment(p._id, c._id)}
-                      style={{ background: "#e74c3c", padding: "2px 6px", fontSize: "12px" }}
+                      style={{
+                        background: "#e74c3c",
+                        padding: "2px 6px",
+                        fontSize: "12px",
+                      }}
                     >
                       Supprimer
                     </Button>
