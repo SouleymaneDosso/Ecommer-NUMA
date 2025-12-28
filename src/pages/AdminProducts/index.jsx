@@ -82,7 +82,7 @@ const ImagePreview = styled.img`
   object-fit: cover;
   border-radius: 6px;
   margin-right: 10px;
-  border: ${(props) => (props.isMain ? "2px solid #007bff" : "1px solid #ccc")};
+  border: ${(props) => (props.$isMain ? "2px solid #007bff" : "1px solid #ccc")};
   cursor: pointer;
 `;
 
@@ -494,7 +494,7 @@ function AdminProducts() {
             <div key={img.publicId} style={{ position: "relative" }}>
               <ImagePreview
                 src={img.url}
-                isMain={idx === mainImageIndex}
+                $isMain={idx === mainImageIndex}
                 onClick={() => setMainImageIndex(idx)}
               />
               <Button
@@ -526,7 +526,7 @@ function AdminProducts() {
             <div key={idx} style={{ position: "relative" }}>
               <ImagePreview
                 src={URL.createObjectURL(img)}
-                isMain={existingImages.length + idx === mainImageIndex}
+                $isMain={existingImages.length + idx === mainImageIndex}
                 onClick={() => setMainImageIndex(existingImages.length + idx)}
               />
               <Button
@@ -582,7 +582,7 @@ function AdminProducts() {
             {p.images && p.images.length > 0 && (
               <ImagePreview
                 src={p.images.find((i) => i.isMain)?.url || p.images[0].url}
-                isMain
+                $isMain
               />
             )}
 

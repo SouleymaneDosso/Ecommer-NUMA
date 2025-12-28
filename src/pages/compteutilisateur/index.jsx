@@ -32,7 +32,6 @@ const StatusBadge = styled.span` padding: 4px 8px; border-radius: 6px; font-weig
 
 export default function CompteClient() {
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
 
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
@@ -51,44 +50,55 @@ export default function CompteClient() {
   const [updateMessage, setUpdateMessage] = useState("");
 
   const [filterStatus, setFilterStatus] = useState("");
-
-  // Login attempts & modal
   const [loginAttempts, setLoginAttempts] = useState(0);
   const [showResetModal, setShowResetModal] = useState(false);
 
+  // ================= FETCH COMPTE =================
   const fetchCompte = async () => {
-    if (!token) return;
     setLoading(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/compte`, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/compte`, {
+        credentials: "include",
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Erreur serveur");
+
       setUser(data.user);
       setFavorites(data.favorites || []);
       setCommandes(data.commandes || []);
       setEditUsername(data.user.username);
       setEditEmail(data.user.email);
-    } catch (err) { setError(err.message); } finally { setLoading(false); }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => { if (token) fetchCompte(); }, [token]);
+  useEffect(() => { fetchCompte(); }, []);
 
+  // ================= LOGIN / SIGNUP =================
   const handleAuth = async (e) => {
     e.preventDefault();
-    setError(""); setLoading(true);
+    setError("");
+    setLoading(true);
+
     try {
       const endpoint = isLogin ? "login" : "signup";
       const body = isLogin ? { username, password } : { username, email, password };
+
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/user/${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include", // important pour cookie JWT
         body: JSON.stringify(body),
       });
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Erreur serveur");
 
       if (isLogin) {
-        localStorage.setItem("token", data.token);
+        // cookie JWT est déjà envoyé par le backend, plus besoin de localStorage
         fetchCompte();
         setLoginAttempts(0);
       } else {
@@ -105,36 +115,53 @@ export default function CompteClient() {
     } finally { setLoading(false); }
   };
 
-  const logout = () => { localStorage.removeItem("token"); setUser(null); navigate("/compte"); };
+  // ================= LOGOUT =================
+  const logout = async () => {
+    try {
+      await fetch(`${import.meta.env.VITE_API_URL}/api/user/logout`, { credentials: "include" });
+      setUser(null);
+      navigate("/compte");
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // ================= UPDATE PROFILE =================
   const handleUpdateProfile = async () => {
     if (!editUsername || !editEmail) return;
     setUpdateMessage("");
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/compte`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ username: editUsername, email: editEmail })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Erreur serveur");
       setUser(prev => ({ ...prev, username: editUsername, email: editEmail }));
       setUpdateMessage("Profil mis à jour ✅");
-    } catch (err) { setUpdateMessage(err.message); }
+    } catch (err) {
+      setUpdateMessage(err.message);
+    }
   };
+
+  // ================= REMOVE FAVORITE =================
   const removeFavorite = async (id) => {
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/favorites/${id}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` }
+        credentials: "include"
       });
       if (!res.ok) throw new Error("Erreur lors de la suppression");
       setFavorites(favs => favs.filter(f => f._id !== id));
     } catch (err) { alert(err.message); }
   };
 
+  // ================= RENDER =================
   if (loading) return <LoaderWrapper><Loader /></LoaderWrapper>;
 
-  if (!token || !user) {
+  if (!user) {
     return (
       <PageWrapper>
         <Title>{isLogin ? "Connexion" : "Inscription"}</Title>

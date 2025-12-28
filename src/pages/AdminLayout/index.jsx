@@ -32,7 +32,7 @@ const SidebarItem = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: ${(props) => (props.active ? "#34495e" : "transparent")};
+  background: ${(props) => (props.$active ? "#34495e" : "transparent")};
   transition: background 0.2s;
 
   &:hover {
@@ -118,28 +118,28 @@ function AdminLayout() {
         <Logo>Admin Panel</Logo>
 
         <SidebarItem
-          active={location.pathname.includes("dashboard")}
+          $active={location.pathname.includes("dashboard")}
           onClick={() => navigate("/admin/dashboard")}
         >
           Dashboard
         </SidebarItem>
 
         <SidebarItem
-          active={location.pathname.includes("products")}
+          $active={location.pathname.includes("products")}
           onClick={() => navigate("/admin/products")}
         >
           Produits
         </SidebarItem>
 
         <SidebarItem
-          active={location.pathname.includes("orders")}
+          $active={location.pathname.includes("orders")}
           onClick={() => navigate("/admin/orders")}
         >
           Commandes <Badge>12</Badge>
         </SidebarItem>
 
         <SidebarItem
-          active={location.pathname.includes("users")}
+          $active={location.pathname.includes("users")}
           onClick={() => navigate("/admin/users")}
         >
           Utilisateurs <Badge>5</Badge>

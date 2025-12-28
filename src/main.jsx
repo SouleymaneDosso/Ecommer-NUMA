@@ -21,8 +21,8 @@ import New from "./pages/new";
 import Promo from "./pages/promo";
 import Erreur from "./components/Erreur";
 
-import AdminLogin from './pages/AdminLogin';
-import AdminDashboard from './pages/AdminDashboard';
+import AdminLogin from "./pages/AdminLogin";
+import AdminDashboard from "./pages/AdminDashboard";
 import AdminLayout from "./pages/AdminLayout";
 import AdminProducts from "./pages/AdminProducts";
 import AdminOrdersPro from "./pages/AdminCommande";
@@ -35,7 +35,7 @@ import "./i18n";
 const PublicLayout = ({ children }) => {
   return (
     <>
-     <ScrollToTop />
+      <ScrollToTop />
       <Header />
       <main>{children}</main>
       <Footer />
@@ -51,22 +51,106 @@ createRoot(document.getElementById("root")).render(
           <GlobalStyle />
           <Routes>
             {/* Pages publiques */}
-            <Route path="/" element={<PublicLayout><Home /></PublicLayout>} />
-            <Route path="/homme" element={<PublicLayout><Homme /></PublicLayout>} />
-            <Route path="/femme" element={<PublicLayout><Femme /></PublicLayout>} />
-            <Route path="/enfant" element={<PublicLayout><Enfant /></PublicLayout>} />
-            <Route path="/collections" element={<PublicLayout><Collection /></PublicLayout>} />
-            <Route path="/new" element={<PublicLayout><New /></PublicLayout>} />
-            <Route path="/promo" element={<PublicLayout><Promo /></PublicLayout>} />
-            <Route path="/favoris" element={<PublicLayout><Favorie /></PublicLayout>} />
-            <Route path="/produit/:id" element={<PublicLayout><Produit /></PublicLayout>} />
-            <Route path="/panier" element={<PublicLayout><PagePanier /></PublicLayout>} />
-            <Route path="/compte" element={<PublicLayout><CompteClient /></PublicLayout>} />
-            <Route path="*" element={<PublicLayout><Erreur /></PublicLayout>} />
+            <Route
+              path="/"
+              element={
+                <PublicLayout>
+                  <Home />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/homme"
+              element={
+                <PublicLayout>
+                  <Homme />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/femme"
+              element={
+                <PublicLayout>
+                  <Femme />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/enfant"
+              element={
+                <PublicLayout>
+                  <Enfant />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/collections"
+              element={
+                <PublicLayout>
+                  <Collection />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/new"
+              element={
+                <PublicLayout>
+                  <New />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/promo"
+              element={
+                <PublicLayout>
+                  <Promo />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/favoris"
+              element={
+                <PublicLayout>
+                  <Favorie />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/produit/:id"
+              element={
+                <PublicLayout>
+                  <Produit />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/panier"
+              element={
+                <PublicLayout>
+                  <PagePanier />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/compte"
+              element={
+                <PublicLayout>
+                  <CompteClient />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="*"
+              element={
+                <PublicLayout>
+                  <Erreur />
+                </PublicLayout>
+              }
+            />
 
             {/* Pages admin sans Header et Footer */}
-            <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<AdminDashboard />} />
               <Route path="dashboard" element={<AdminDashboard />} />
               <Route path="products" element={<AdminProducts />} />
               <Route path="orders" element={<AdminOrdersPro />} />

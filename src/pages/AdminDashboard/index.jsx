@@ -1,13 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
 import styled from "styled-components";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip as RechartTooltip,
-  ResponsiveContainer,
-} from "recharts";
 import Modal from "react-modal";
 Modal.setAppElement("#root");
 
@@ -130,15 +122,6 @@ const ProductImage = styled.img`
   border: 1px solid #ddd;
 `;
 
-const SmallTag = styled.span`
-  display: inline-block;
-  background: #f0f0f0;
-  padding: 2px 6px;
-  margin: 2px 2px 2px 0;
-  border-radius: 4px;
-  font-size: 12px;
-`;
-
 const Pagination = styled.div`
   margin-top: 20px;
   display: flex;
@@ -149,8 +132,8 @@ const Pagination = styled.div`
 const PageButton = styled.button`
   padding: 6px 12px;
   border: 1px solid #007bff;
-  background: ${(props) => (props.active ? "#007bff" : "#fff")};
-  color: ${(props) => (props.active ? "#fff" : "#007bff")};
+  background: ${(props) => (props.$active ? "#007bff" : "#fff")};
+  color: ${(props) => (props.$active ? "#fff" : "#007bff")};
   border-radius: 5px;
   cursor: pointer;
   font-weight: bold;
@@ -253,6 +236,7 @@ function TableauDeBord() {
     <Container>
       <Title>Tableau de bord</Title>
 
+      {/* ===== Statistiques simples ===== */}
       <StatsContainer>
         <StatCard>
           <StatNumber>{stats.total}</StatNumber>
@@ -272,6 +256,28 @@ function TableauDeBord() {
         </StatCard>
       </StatsContainer>
 
+      {/* Breakdown par genre et catégorie */}
+      <div style={{ marginBottom: "30px" }}>
+        <h3>Produits par genre :</h3>
+        <ul>
+          {stats.byGenre.map((g) => (
+            <li key={g.genre}>
+              {g.genre}: {g.count}
+            </li>
+          ))}
+        </ul>
+
+        <h3>Produits par catégorie :</h3>
+        <ul>
+          {stats.byCategorie.map((c) => (
+            <li key={c.categorie}>
+              {c.categorie}: {c.count}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* ===== Contrôles de recherche et filtre ===== */}
       <Controls>
         <SearchInput
           placeholder="Rechercher par titre ou utilisateur..."
@@ -298,37 +304,7 @@ function TableauDeBord() {
         </Select>
       </Controls>
 
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: "30px",
-          marginBottom: "30px",
-        }}
-      >
-        <div style={{ width: "100%", maxWidth: "800px", height: 250 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={stats.byGenre}>
-              <XAxis dataKey="genre" />
-              <YAxis allowDecimals={false} />
-              <RechartTooltip />
-              <Bar dataKey="count" fill="#007bff" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-        <div style={{ width: "100%", maxWidth: "800px", height: 250 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={stats.byCategorie}>
-              <XAxis dataKey="categorie" />
-              <YAxis allowDecimals={false} />
-              <RechartTooltip />
-              <Bar dataKey="count" fill="#28a745" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
+      {/* ===== Tableau des produits ===== */}
       <TableWrapper>
         <TableContainer>
           <Table>
@@ -356,7 +332,11 @@ function TableauDeBord() {
                     <ProductImagesWrapper>
                       {Array.isArray(p.images) && p.images.length > 0 ? (
                         p.images.map((img, idx) => (
-                          <ProductImage key={idx} src={img.url} alt={p.title} />
+                          <ProductImage
+                            key={idx}
+                            src={img.url}
+                            alt={p.title}
+                          />
                         ))
                       ) : (
                         <ProductImage
@@ -374,7 +354,7 @@ function TableauDeBord() {
                       fontWeight: p.stock <= 0 ? "bold" : "normal",
                     }}
                   >
-                    {p.stock <= 0 ? "Épuisé" : (p.stock ?? "—")}
+                    {p.stock <= 0 ? "Épuisé" : p.stock ?? "—"}
                   </Td>
                   <Td>{p.userId || "—"}</Td>
                   <Td>{p.categorie || "—"}</Td>
@@ -386,11 +366,12 @@ function TableauDeBord() {
         </TableContainer>
       </TableWrapper>
 
+      {/* Pagination */}
       <Pagination>
         {Array.from({ length: totalPages }, (_, i) => (
           <PageButton
             key={i}
-            active={currentPage === i + 1}
+            $active={currentPage === i + 1}
             onClick={() => setCurrentPage(i + 1)}
           >
             {i + 1}
@@ -416,6 +397,7 @@ function TableauDeBord() {
         {modalProduct && (
           <ModalContent>
             <h2>{modalProduct.title}</h2>
+
             <ModalSection>
               <ModalSectionTitle>Images</ModalSectionTitle>
               <ProductImagesWrapper>
@@ -453,55 +435,6 @@ function TableauDeBord() {
                       <strong>{c.user || "Anonyme"}</strong> : {c.message} —{" "}
                       <span style={{ color: "#f59e0b" }}>{c.rating}★</span>
                     </div>
-                    <button
-                      style={{
-                        background: "#e74c3c",
-                        color: "#fff",
-                        border: "none",
-                        padding: "5px 10px",
-                        borderRadius: "6px",
-                        cursor: "pointer",
-                      }}
-                      onClick={async () => {
-                        try {
-                          const token = localStorage.getItem("token");
-                          const res = await fetch(
-                            `http://localhost:3000/api/produits/${modalProduct._id}/commentaires/${c._id}`,
-                            {
-                              method: "DELETE",
-                              headers: { Authorization: `Bearer ${token}` },
-                            }
-                          );
-                          if (!res.ok)
-                            throw new Error("Erreur suppression commentaire");
-
-                          setModalProduct((prev) => ({
-                            ...prev,
-                            commentaires: prev.commentaires.filter(
-                              (comm) => comm._id !== c._id
-                            ),
-                          }));
-
-                          setProducts((prev) =>
-                            prev.map((p) =>
-                              p._id === modalProduct._id
-                                ? {
-                                    ...p,
-                                    commentaires: p.commentaires.filter(
-                                      (comm) => comm._id !== c._id
-                                    ),
-                                  }
-                                : p
-                            )
-                          );
-                        } catch (err) {
-                          console.error(err);
-                          alert("Impossible de supprimer le commentaire");
-                        }
-                      }}
-                    >
-                      Supprimer
-                    </button>
                   </div>
                 ))
               ) : (
