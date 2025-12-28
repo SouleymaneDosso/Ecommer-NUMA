@@ -201,14 +201,8 @@ export default function Footer() {
         </Section>
       ))}
 
-      <FooterNav>
-        <NavItem to="/" $isdark={$isdark}><FiHome /> {t("home")}</NavItem>
-        <NavItem to="/categories" $isdark={$isdark}><FiGrid /> {t("collections")}</NavItem>
-        <NavItem to="/compte" $isdark={$isdark}><FiUser /> {t("account")}</NavItem>
-      </FooterNav>
-
       <BottomText $isdark={$isdark}>
-        &copy; {new Date().getFullYear()} NUMA. {t("fashion")} ∞
+        &copy; {new Date().getFullYear()} NUMA. {t("fashion")}
       </BottomText>
     </FooterWrapper>
   );

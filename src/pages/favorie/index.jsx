@@ -180,7 +180,7 @@ export default function Favorie() {
               <ProductCard key={product._id}>
                 <ProductImageWrapper>
                   <ProductImage
-                    src={Array.isArray(product.imageUrl) ? product.imageUrl[0] : product.imageUrl}
+                    src={Array.isArray(product.images[0]?.url) ? product.images[0]?.url : product.images[0]?.url}
                     alt={product.title}
                   />
                   {product.badge && <Badge type={product.badge}>{product.badge}</Badge>}
