@@ -2,108 +2,34 @@ import { useState, useEffect } from "react";
 import styled, { keyframes } from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { FiEye, FiEyeOff } from "react-icons/fi";
+import ResetPasswordModal from "./ResetPasswordModal";
 
 /* ===== LOADER ===== */
-const spin = keyframes`
-  to { transform: rotate(360deg); }
-`;
+const spin = keyframes` to { transform: rotate(360deg); } `;
 const LoaderWrapper = styled.div`
-  min-height: 50vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  min-height: 50vh; display: flex; justify-content: center; align-items: center;
 `;
 const Loader = styled.div`
-  width: 48px;
-  height: 48px;
-  border: 5px solid #ddd;
-  border-top-color: #007bff;
-  border-radius: 50%;
+  width: 48px; height: 48px;
+  border: 5px solid #ddd; border-top-color: #007bff; border-radius: 50%;
   animation: ${spin} 1s linear infinite;
 `;
 
 /* ===== STYLES ===== */
-const PageWrapper = styled.main`
-  max-width: 900px;
-  margin: 3rem auto;
-  padding: 2rem;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-`;
-const Section = styled.section`
-  background: #f9f9f9;
-  border-radius: 10px;
-  padding: 1.2rem;
-  margin-bottom: 2rem;
-`;
-const Title = styled.h2`
-  margin-bottom: 1rem;
-`;
-const InputGroup = styled.div`
-  position: relative;
-`;
-const Input = styled.input`
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-`;
-const EyeIcon = styled.span`
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  cursor: pointer;
-  color: #555;
-`;
-const Button = styled.button`
-  padding: 10px;
-  border-radius: 8px;
-  border: none;
-  background: #007bff;
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-`;
-const Error = styled.p`
-  color: #e11d48;
-  font-weight: 600;
-  margin-bottom: 1rem;
-`;
-const FlexRow = styled.div`
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-`;
-const ProductCard = styled.div`
-  display: flex;
-  gap: 1rem;
-  padding: 10px;
-  border-radius: 8px;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  align-items: center;
-`;
-const ProductImage = styled.img`
-  width: 70px;
-  height: 70px;
-  object-fit: cover;
-  border-radius: 8px;
-`;
-const StatusBadge = styled.span`
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-weight: 600;
-  color: white;
-  background-color: ${props =>
-    props.statut === "en cours" ? "#f59e0b" :
-    props.statut === "envoyé" ? "#3b82f6" :
-    props.statut === "livré" ? "#10b981" :
-    "#ef4444"};
-`;
+const PageWrapper = styled.main` max-width: 900px; margin: 3rem auto; padding: 2rem; background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); `;
+const Section = styled.section` background: #f9f9f9; border-radius: 10px; padding: 1.2rem; margin-bottom: 2rem; `;
+const Title = styled.h2` margin-bottom: 1rem; `;
+const InputGroup = styled.div` position: relative; `;
+const Input = styled.input` width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ccc; `;
+const EyeIcon = styled.span` position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #555; `;
+const Button = styled.button` padding: 10px; border-radius: 8px; border: none; background: #007bff; color: white; font-weight: 600; cursor: pointer; `;
+const Error = styled.p` color: #e11d48; font-weight: 600; margin-bottom: 1rem; `;
+const Success = styled.p` color: #10b981; font-weight: 600; margin-bottom: 1rem; `;
+const FlexRow = styled.div` display: flex; gap: 1rem; flex-wrap: wrap; `;
+const ProductCard = styled.div` display: flex; gap: 1rem; padding: 10px; border-radius: 8px; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.05); align-items: center; `;
+const ProductImage = styled.img` width: 70px; height: 70px; object-fit: cover; border-radius: 8px; `;
+const StatusBadge = styled.span` padding: 4px 8px; border-radius: 6px; font-weight: 600; color: white; background-color: ${props => props.statut === "en cours" ? "#f59e0b" : props.statut === "envoyé" ? "#3b82f6" : props.statut === "livré" ? "#10b981" : "#ef4444"}; `;
 
-/* ===== COMPONENT ===== */
 export default function CompteClient() {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
@@ -120,203 +46,135 @@ export default function CompteClient() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const [forgotEmail, setForgotEmail] = useState("");
-  const [forgotMessage, setForgotMessage] = useState("");
-  const [resetToken, setResetToken] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [resetMessage, setResetMessage] = useState("");
+  const [editUsername, setEditUsername] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [updateMessage, setUpdateMessage] = useState("");
 
-  /* ===== FETCH COMPTE ===== */
+  const [filterStatus, setFilterStatus] = useState("");
+
+  // Login attempts & modal
+  const [loginAttempts, setLoginAttempts] = useState(0);
+  const [showResetModal, setShowResetModal] = useState(false);
+
   const fetchCompte = async () => {
     if (!token) return;
     setLoading(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/compte`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/compte`, { headers: { Authorization: `Bearer ${token}` } });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Erreur serveur");
       setUser(data.user);
       setFavorites(data.favorites || []);
       setCommandes(data.commandes || []);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+      setEditUsername(data.user.username);
+      setEditEmail(data.user.email);
+    } catch (err) { setError(err.message); } finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    if (token) fetchCompte();
-  }, [token]);
+  useEffect(() => { if (token) fetchCompte(); }, [token]);
 
-  /* ===== AUTH ===== */
   const handleAuth = async (e) => {
     e.preventDefault();
-    setError("");
-    setLoading(true);
+    setError(""); setLoading(true);
     try {
       const endpoint = isLogin ? "login" : "signup";
-      const body = isLogin
-        ? { username, password }
-        : { username, email, password };
-
+      const body = isLogin ? { username, password } : { username, email, password };
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/user/${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Erreur serveur");
 
       if (isLogin) {
         localStorage.setItem("token", data.token);
         fetchCompte();
+        setLoginAttempts(0);
       } else {
         alert("Compte créé. Connecte-toi !");
         setIsLogin(true);
       }
 
-      setUsername("");
-      setEmail("");
-      setPassword("");
+      setUsername(""); setEmail(""); setPassword("");
     } catch (err) {
       setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+      if (isLogin) {
+        setLoginAttempts(prev => { const attempts = prev + 1; if (attempts >= 3) setShowResetModal(true); return attempts; });
+      }
+    } finally { setLoading(false); }
   };
 
-  /* ===== MOT DE PASSE OUBLIE ===== */
-  const handleForgotPassword = async () => {
-    if (!forgotEmail) return;
-    setForgotMessage("");
+  const logout = () => { localStorage.removeItem("token"); setUser(null); navigate("/compte"); };
+  const handleUpdateProfile = async () => {
+    if (!editUsername || !editEmail) return;
+    setUpdateMessage("");
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/user/forgot-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: forgotEmail }),
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/compte`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ username: editUsername, email: editEmail })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Erreur serveur");
-      setForgotMessage(data.message);
-    } catch (err) {
-      setForgotMessage(err.message);
-    }
+      setUser(prev => ({ ...prev, username: editUsername, email: editEmail }));
+      setUpdateMessage("Profil mis à jour ✅");
+    } catch (err) { setUpdateMessage(err.message); }
   };
-
-  const handleResetPassword = async () => {
-    if (!resetToken || !newPassword) return;
-    setResetMessage("");
+  const removeFavorite = async (id) => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/user/reset-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: resetToken, password: newPassword }),
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/favorites/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Erreur serveur");
-      setResetMessage(data.message);
-      setResetToken("");
-      setNewPassword("");
-    } catch (err) {
-      setResetMessage(err.message);
-    }
-  };
-
-  /* ===== LOGOUT ===== */
-  const logout = () => {
-    localStorage.removeItem("token");
-    setUser(null);
-    navigate("/compte");
+      if (!res.ok) throw new Error("Erreur lors de la suppression");
+      setFavorites(favs => favs.filter(f => f._id !== id));
+    } catch (err) { alert(err.message); }
   };
 
   if (loading) return <LoaderWrapper><Loader /></LoaderWrapper>;
 
-  /* ===== NOT CONNECTED ===== */
   if (!token || !user) {
     return (
       <PageWrapper>
         <Title>{isLogin ? "Connexion" : "Inscription"}</Title>
         {error && <Error>{error}</Error>}
-
         <form onSubmit={handleAuth} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-          <Input
-            placeholder="Nom d'utilisateur"
-            value={username}
-            onChange={e => setUsername(e.target.value)}
-            required
-          />
-          {!isLogin && (
-            <Input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              required
-            />
-          )}
+          <Input placeholder="Nom d'utilisateur" value={username} onChange={e => setUsername(e.target.value)} required />
+          {!isLogin && <Input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />}
           <InputGroup>
-            <Input
-              type={showPassword ? "text" : "password"}
-              placeholder="Mot de passe"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
-            />
-            <EyeIcon onClick={() => setShowPassword(!showPassword)}>
-              {showPassword ? <FiEyeOff /> : <FiEye />}
-            </EyeIcon>
+            <Input type={showPassword ? "text" : "password"} placeholder="Mot de passe" value={password} onChange={e => setPassword(e.target.value)} required />
+            <EyeIcon onClick={() => setShowPassword(!showPassword)}>{showPassword ? <FiEyeOff /> : <FiEye />}</EyeIcon>
           </InputGroup>
           <Button type="submit">{isLogin ? "Se connecter" : "Créer un compte"}</Button>
         </form>
 
-        {isLogin && (
-          <div style={{ marginTop: "1rem" }}>
-            <p>Mot de passe oublié ?</p>
-            <InputGroup>
-              <Input
-                type="email"
-                placeholder="Votre email"
-                value={forgotEmail}
-                onChange={e => setForgotEmail(e.target.value)}
-              />
-              <Button onClick={handleForgotPassword}>Envoyer email</Button>
-            </InputGroup>
-            {forgotMessage && <p style={{ color: "green" }}>{forgotMessage}</p>}
-          </div>
-        )}
-
         <p style={{ marginTop: "1rem", textAlign: "center" }}>
           {isLogin ? "Pas de compte ?" : "Déjà inscrit ?"}{" "}
-          <span
-            style={{ color: "#007bff", cursor: "pointer", fontWeight: 600 }}
-            onClick={() => { setIsLogin(!isLogin); setError(""); }}
-          >
+          <span style={{ color: "#007bff", cursor: "pointer", fontWeight: 600 }} onClick={() => { setIsLogin(!isLogin); setError(""); }}>
             {isLogin ? "Créer un compte" : "Se connecter"}
           </span>
         </p>
 
-        {/* ===== RESET PASSWORD FORM ===== */}
-        <Section>
-          <Title>Réinitialiser le mot de passe</Title>
-          <Input placeholder="Token reçu par email" value={resetToken} onChange={e => setResetToken(e.target.value)} />
-          <Input placeholder="Nouveau mot de passe" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
-          <Button onClick={handleResetPassword}>Réinitialiser</Button>
-          {resetMessage && <p style={{ color: "green" }}>{resetMessage}</p>}
-        </Section>
+        {showResetModal && <ResetPasswordModal onClose={() => setShowResetModal(false)} />}
       </PageWrapper>
     );
   }
 
-  /* ===== CONNECTED ===== */
+  const filteredCommandes = filterStatus ? commandes.filter(c => c.statut === filterStatus) : commandes;
+
   return (
     <PageWrapper>
       <Section>
         <Title>Bonjour {user.username}</Title>
         <p>Email : {user.email}</p>
-        <Button onClick={logout}>Se déconnecter</Button>
+        <InputGroup style={{ marginTop: "0.5rem" }}>
+          <Input value={editUsername} onChange={e => setEditUsername(e.target.value)} placeholder="Modifier username" />
+          <Input value={editEmail} onChange={e => setEditEmail(e.target.value)} placeholder="Modifier email" />
+          <Button onClick={handleUpdateProfile}>Mettre à jour</Button>
+          {updateMessage && <Success>{updateMessage}</Success>}
+        </InputGroup>
+        <Button onClick={logout} style={{ marginTop: "0.5rem", background: "#ef4444" }}>Se déconnecter</Button>
       </Section>
 
       <Section>
@@ -325,10 +183,11 @@ export default function CompteClient() {
           <FlexRow>
             {favorites.map(f => (
               <ProductCard key={f._id}>
-                <ProductImage src={f.productId?.imageUrl || "https://via.placeholder.com/70"} alt={f.productId?.title || "Produit"} />
+                <ProductImage src={f.productId?.images[0]?.url || "https://via.placeholder.com/70"} alt={f.productId?.title || "Produit"} />
                 <div>
                   <p>{f.productId?.title || "—"}</p>
-                  <p>{f.productId?.price || "—"} FCFA</p>
+                  <p>{f.productId?.price?.toLocaleString() || "—"} FCFA</p>
+                  <Button onClick={() => removeFavorite(f._id)}>Supprimer</Button>
                 </div>
               </ProductCard>
             ))}
@@ -338,14 +197,25 @@ export default function CompteClient() {
 
       <Section>
         <Title>Commandes</Title>
-        {commandes.length === 0 ? <p>Aucune commande</p> :
+        <div style={{ marginBottom: "1rem" }}>
+          <label>Filtrer par statut : </label>
+          <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+            <option value="">Tous</option>
+            <option value="en cours">En cours</option>
+            <option value="envoyé">Envoyé</option>
+            <option value="livré">Livré</option>
+            <option value="annulé">Annulé</option>
+          </select>
+        </div>
+
+        {filteredCommandes.length === 0 ? <p>Aucune commande</p> :
           <FlexRow>
-            {commandes.map(c => (
+            {filteredCommandes.map(c => (
               <ProductCard key={c._id}>
                 <div>
                   <p>ID: {c._id}</p>
                   <p>Statut: <StatusBadge statut={c.statut}>{c.statut}</StatusBadge></p>
-                  <p>Total: {c.total} FCFA</p>
+                  <p>Total: {c.total.toLocaleString()} FCFA</p>
                   <p>Date: {new Date(c.createdAt).toLocaleString()}</p>
                   <div>
                     Produits:

@@ -17,6 +17,8 @@ import Femme from "./pages/Femme";
 import Enfant from "./pages/Enfant";
 import PagePanier from "./components/panier";
 import Produit from "./pages/produits";
+import New from "./pages/new";
+import Promo from "./pages/promo";
 import Erreur from "./components/Erreur";
 
 import AdminLogin from './pages/AdminLogin';
@@ -53,7 +55,9 @@ createRoot(document.getElementById("root")).render(
             <Route path="/homme" element={<PublicLayout><Homme /></PublicLayout>} />
             <Route path="/femme" element={<PublicLayout><Femme /></PublicLayout>} />
             <Route path="/enfant" element={<PublicLayout><Enfant /></PublicLayout>} />
-            <Route path="/collection" element={<PublicLayout><Collection /></PublicLayout>} />
+            <Route path="/collections" element={<PublicLayout><Collection /></PublicLayout>} />
+            <Route path="/new" element={<PublicLayout><New /></PublicLayout>} />
+            <Route path="/promo" element={<PublicLayout><Promo /></PublicLayout>} />
             <Route path="/favoris" element={<PublicLayout><Favorie /></PublicLayout>} />
             <Route path="/produit/:id" element={<PublicLayout><Produit /></PublicLayout>} />
             <Route path="/panier" element={<PublicLayout><PagePanier /></PublicLayout>} />
@@ -61,7 +65,7 @@ createRoot(document.getElementById("root")).render(
             <Route path="*" element={<PublicLayout><Erreur /></PublicLayout>} />
 
             {/* Pages admin sans Header et Footer */}
-            <Route path="/admin" element={<AdminLogin />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin" element={<AdminLayout />}>
               <Route path="dashboard" element={<AdminDashboard />} />
               <Route path="products" element={<AdminProducts />} />

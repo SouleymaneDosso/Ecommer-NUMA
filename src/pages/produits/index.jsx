@@ -68,7 +68,7 @@ const Badge = styled.span`
   align-self: flex-start;
 `;
 
-// ---------- PAGE PRODUIT ----------
+// ---------- COMPONENT ----------
 export default function Produit() {
   const { id } = useParams();
 

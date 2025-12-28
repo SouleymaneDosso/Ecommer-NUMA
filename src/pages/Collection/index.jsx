@@ -1,167 +1,195 @@
 // src/pages/Collection.jsx
 import { useState, useEffect } from "react";
 import styled from "styled-components";
-import { useNavigate } from "react-router-dom";
+import { FiFilter, FiStar, FiClock } from "react-icons/fi";
+import { LoaderWrapper, Loader } from "../../Utils/Rotate";
 
-
-/* ===== STYLES ===== */
+// ---------- STYLES ----------
 const PageWrapper = styled.main`
+  max-width: 1400px;
+  margin: 0 auto;
   padding: 2rem 4%;
   display: flex;
+  gap: 2rem;
+  @media (max-width: 900px) {
+    flex-direction: column;
+  }
+`;
+
+const Sidebar = styled.aside`
+  width: 250px;
+  flex-shrink: 0;
+  display: flex;
   flex-direction: column;
+  gap: 1.5rem;
+  @media (max-width: 900px) {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+`;
+
+const FilterSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  @media (max-width: 900px) {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+`;
+
+const FilterButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid ${({ active }) => (active ? "#000" : "#ccc")};
+  background: ${({ active }) => (active ? "#000" : "#fff")};
+  color: ${({ active }) => (active ? "#fff" : "#000")};
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: 0.3s;
+  &:hover {
+    background: #000;
+    color: #fff;
+  }
+`;
+
+const Grid = styled.div`
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 2rem;
 `;
 
-const PageTitle = styled.h1`
-  font-size: 2.8rem;
-  font-weight: 700;
-  text-align: center;
-  letter-spacing: 1px;
-`;
-
-const StairWrapper = styled.div`
-  position: relative;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 400px;
-
-  @media (max-width: 768px) {
-    flex-direction: column;
-    gap: 20px;
-    min-height: auto;
-    align-items: center;
-  }
-`;
-
-const CollectionItem = styled.div`
-  position: absolute;
-  width: ${({ $width }) => $width || "35%"};
-  height: ${({ $height }) => $height || "300px"};
-  cursor: pointer;
-  top: ${({ $top }) => $top || "0"};
-  left: ${({ $left }) => $left || "0"};
-  z-index: ${({ $zIndex }) => $zIndex || 1};
+const ProductCard = styled.div`
+  background: #fff;
+  border-radius: 12px;
   overflow: hidden;
-  transition: transform 0.4s ease, z-index 0s 0.4s;
-
-  ${({ $isActive }) =>
-    $isActive &&
-    `
-    transform: scale(1.2) rotate(0deg);
-    z-index: 20;
-  `}
-
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  cursor: pointer;
+  transition: transform 0.3s, box-shadow 0.3s;
   &:hover {
-    transform: scale(1.05) rotate(0deg);
-    z-index: 10;
-    transition: transform 0.4s ease, z-index 0s;
-  }
-
-  @media (max-width: 768px) {
-    position: relative;
-    width: ${({ $mobileWidth }) => $mobileWidth || "70%"};
-    height: ${({ $mobileHeight }) => $mobileHeight || "140px"};
-    top: 0;
-    left: 0;
-    transform: rotate(0deg);
-    z-index: auto;
-
-    ${({ $isActive }) =>
-      $isActive &&
-      `
-      transform: scale(1.15);
-      z-index: 20;
-    `}
+    transform: translateY(-4px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
   }
 `;
 
-const CollectionImage = styled.img`
+const ProductImage = styled.img`
   width: 100%;
-  height: 100%;
+  height: 280px;
   object-fit: cover;
-  display: block;
 `;
 
-const Label = styled.div`
-  position: absolute;
-  bottom: 10px;
-  left: 10px;
-  color: white;
-  font-size: 2rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
-
-  @media (max-width: 768px) {
-    font-size: 1.2rem;
-  }
+const ProductInfo = styled.div`
+  padding: 1rem;
 `;
 
-/* ===== PAGE ===== */
-function Collection() {
-  const [images, setImages] = useState({});
-  const [activeItem, setActiveItem] = useState(null);
-  const navigate = useNavigate();
+const ProductName = styled.h3`
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+`;
+
+const ProductPrice = styled.span`
+  font-weight: 700;
+  font-size: 1rem;
+`;
+
+const Badge = styled.span`
+  display: inline-block;
+  padding: 2px 8px;
+  margin-bottom: 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: ${({ type }) =>
+    type === "new" ? "#10b981" : type === "promo" ? "#f59e0b" : "transparent"};
+  color: #fff;
+`;
+
+// ---------- COMPONENT ----------
+export default function Collection() {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // FILTRES
+  const [category, setCategory] = useState("Tous");
+  const [filterNew, setFilterNew] = useState(false);
+  const [filterPromo, setFilterPromo] = useState(false);
+
+  const categories = ["Tous", "Homme", "Femme", "Enfant"];
 
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL}/api/produits`)
-      .then(res => res.json())
-      .then(data => {
-        const categories = ["enfant", "femme", "homme"];
-        const imgs = {};
-        categories.forEach(cat => {
-          const prod = data.find(p => p.genre === cat && p.imageUrl?.length > 0);
-          if (prod) imgs[cat] = prod.imageUrl[0];
-        });
-        setImages(imgs);
-      })
-      .catch(console.error);
+    async function fetchProducts() {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits`);
+        const data = await res.json();
+        setProducts(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchProducts();
   }, []);
 
-  const sections = [
-    { genre: "enfant", label: "Enfant", $zIndex: 3, $top: "0", $left: "0", $width: "40%", $height: "350px", $rotate: "-3deg", $mobileHeight: "140px", $mobileWidth: "70%" },
-    { genre: "femme", label: "Femme", $zIndex: 2, $top: "50px", $left: "30%", $width: "35%", $height: "300px", $rotate: "2deg", $mobileHeight: "120px", $mobileWidth: "65%" },
-    { genre: "homme", label: "Homme", $zIndex: 1, $top: "100px", $left: "60%", $width: "30%", $height: "250px", $rotate: "-2deg", $mobileHeight: "100px", $mobileWidth: "60%" },
-  ];
+  if (loading) return <LoaderWrapper><Loader /></LoaderWrapper>;
 
-  const handleClick = (genre) => {
-    setActiveItem(genre);
-    // attendre 300ms pour animation puis naviguer
-    setTimeout(() => navigate(`/${genre}`), 300);
-  };
+  const filtered = products.filter(p => {
+    const matchCategory =
+      category === "Tous" || p.genre.toLowerCase() === category.toLowerCase();
+    const matchNew = filterNew ? p.isNew : true;
+    const matchPromo = filterPromo ? p.badge === "promo" : true;
+    return matchCategory && matchNew && matchPromo;
+  });
 
   return (
     <PageWrapper>
-      <PageTitle>Nos Collections</PageTitle>
-      <StairWrapper>
-        {sections.map(section => (
-          <CollectionItem
-            key={section.genre}
-            $zIndex={section.$zIndex}
-            $top={section.$top}
-            $left={section.$left}
-            $width={section.$width}
-            $height={section.$height}
-            $rotate={section.$rotate}
-            $mobileHeight={section.$mobileHeight}
-            $mobileWidth={section.$mobileWidth}
-            $isActive={activeItem === section.genre}
-            onClick={() => handleClick(section.genre)}
-          >
-            {images[section.genre] && (
-              <>
-                <CollectionImage src={images[section.genre]} alt={section.label} />
-                <Label>{section.label}</Label>
-              </>
-            )}
-          </CollectionItem>
+      <Sidebar>
+        {/* Catégories */}
+        <FilterSection>
+          {categories.map(cat => (
+            <FilterButton
+              key={cat}
+              active={category === cat}
+              onClick={() => setCategory(cat)}
+            >
+              <FiFilter /> {cat}
+            </FilterButton>
+          ))}
+        </FilterSection>
+
+        {/* Nouveautés / Promotions */}
+        <FilterSection>
+          <FilterButton active={filterNew} onClick={() => setFilterNew(!filterNew)}>
+            <FiClock /> Nouveautés
+          </FilterButton>
+          <FilterButton active={filterPromo} onClick={() => setFilterPromo(!filterPromo)}>
+            <FiStar /> Promotions
+          </FilterButton>
+        </FilterSection>
+      </Sidebar>
+
+      <Grid>
+        {filtered.map(p => (
+          <ProductCard key={p._id}>
+            {p.isNew && <Badge type="new">Nouveau</Badge>}
+            {p.badge === "promo" && <Badge type="promo">Promo</Badge>}
+            <ProductImage src={p.images?.[0]?.url} alt={p.title} />
+            <ProductInfo>
+              <ProductName>{p.title}</ProductName>
+              <ProductPrice>{p.price.toLocaleString()} FCFA</ProductPrice>
+            </ProductInfo>
+          </ProductCard>
         ))}
-      </StairWrapper>
+      </Grid>
     </PageWrapper>
   );
 }
-
-export default Collection;

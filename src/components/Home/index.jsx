@@ -179,7 +179,6 @@ export default function Home() {
     fetch(`${import.meta.env.VITE_API_URL}/api/produits`)
       .then(res => res.json())
       .then(data => {
-        console.log(data)
         setHeroProducts(data.filter(p => p.hero));
         setProducts((data?.filter(p => !p.hero) || []).slice(0, 10));
       });
@@ -234,7 +233,7 @@ export default function Home() {
         <HeroText>
           <h1>{t("heroTitle")}</h1>
           <p>{t("heroSubtitle")}</p>
-          <HeroButton to="/collection">
+          <HeroButton to="/collections">
             {t("heroButton")} <FiChevronRight />
           </HeroButton>
         </HeroText>

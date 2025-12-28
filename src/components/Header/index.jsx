@@ -11,6 +11,7 @@ import {
 import { useContext, useState, useEffect } from "react";
 import { ThemeContext } from "../../Utils/Context";
 import { useTranslation } from "react-i18next";
+import New from './../../pages/new';
 
 const HEADER_HEIGHT = 70; // hauteur réduite
 
@@ -334,10 +335,10 @@ export default function Header() {
           <MobileItem to="/collections" onClick={() => setOpen(false)} $isdark={$isdark}>
             {t("collections")}
           </MobileItem>
-          <MobileItem to="/nouveautes" onClick={() => setOpen(false)} $isdark={$isdark}>
+          <MobileItem to="/new" onClick={() => setOpen(false)} $isdark={$isdark}>
             {t("new")}
           </MobileItem>
-          <MobileItem to="/promotions" onClick={() => setOpen(false)} $isdark={$isdark}>
+          <MobileItem to="/promo" onClick={() => setOpen(false)} $isdark={$isdark}>
             {t("deals")}
           </MobileItem>
           <MobileItem to="/a-propos" onClick={() => setOpen(false)} $isdark={$isdark}>

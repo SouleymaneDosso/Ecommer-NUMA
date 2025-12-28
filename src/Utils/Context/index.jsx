@@ -70,87 +70,58 @@ export const PanierContext = createContext();
 export const Panier = ({ children }) => {
   const [ajouter, setAjouter] = useState(() => {
     try {
-      const saved = localStorage.getItem("Panier");
+      const saved = localStorage.getItem("panier");
       return saved ? JSON.parse(saved) : [];
-    } catch (err) {
-      console.error("Erreur lecture panier:", err);
+    } catch {
       return [];
     }
   });
 
-  // 🔹 Ajouter un produit au panier avec variations et quantité
-  const ajouterPanier = (element) => {
-    setAjouter((prev) => {
-      const existe = prev.find(
-        (item) =>
-          item.id === element.id &&
-          item.taille === element.taille &&
-          item.couleur === element.couleur
-      );
+  /* ================== ACTIONS ================== */
 
-      if (existe) {
-        // On augmente la quantité
-        return prev.map((item) =>
-          item === existe
-            ? { ...item, quantite: item.quantite + element.quantite }
-            : item
+  const ajouterPanier = (produit) => {
+    setAjouter((prev) => {
+      const exist = prev.find((p) => p.id === produit.id);
+
+      if (exist) {
+        return prev.map((p) =>
+          p.id === produit.id
+            ? { ...p, quantite: p.quantite + produit.quantite }
+            : p
         );
       }
 
-      // Nouveau produit
-      return [...prev, element];
+      return [...prev, produit];
     });
   };
 
-  // 🔹 Supprimer un produit spécifique (taille/couleur comprise)
-  const supprimer = (element) => {
+  const supprimer = (id) => {
+    setAjouter((prev) => prev.filter((p) => p.id !== id));
+  };
+
+  const augmenter = (id) => {
     setAjouter((prev) =>
-      prev.filter(
-        (item) =>
-          !(
-            item.id === element.id &&
-            item.taille === element.taille &&
-            item.couleur === element.couleur
-          )
+      prev.map((p) =>
+        p.id === id ? { ...p, quantite: p.quantite + 1 } : p
       )
     );
   };
 
-  // 🔹 Vider tout le panier
+  const diminuer = (id) => {
+    setAjouter((prev) =>
+      prev.map((p) =>
+        p.id === id && p.quantite > 1
+          ? { ...p, quantite: p.quantite - 1 }
+          : p
+      )
+    );
+  };
+
   const toutSupprimer = () => setAjouter([]);
 
-  // 🔹 Augmenter / diminuer la quantité d’un produit
-  const augmenter = (element) => {
-    setAjouter((prev) =>
-      prev.map((item) =>
-        item.id === element.id &&
-        item.taille === element.taille &&
-        item.couleur === element.couleur
-          ? { ...item, quantite: item.quantite + 1 }
-          : item
-      )
-    );
-  };
-
-  const diminuer = (element) => {
-    setAjouter((prev) =>
-      prev.map((item) =>
-        item.id === element.id &&
-        item.taille === element.taille &&
-        item.couleur === element.couleur
-          ? { ...item, quantite: item.quantite > 1 ? item.quantite - 1 : 1 }
-          : item
-      )
-    );
-  };
-
-  // 🔹 Sauvegarde automatique dans localStorage
+  /* ================== PERSISTENCE ================== */
   useEffect(() => {
-    try {
-      localStorage.setItem("Panier", JSON.stringify(ajouter));
-    } catch (err) {
-      console.error("Impossible de sauvegarder le panier", err);
-    }
+    localStorage.setItem("panier", JSON.stringify(ajouter));
   }, [ajouter]);
 
   return (
@@ -159,9 +130,9 @@ export const Panier = ({ children }) => {
         ajouter,
         ajouterPanier,
         supprimer,
-        toutSupprimer,
         augmenter,
         diminuer,
+        toutSupprimer,
       }}
     >
       {children}

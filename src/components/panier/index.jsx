@@ -1,54 +1,32 @@
-// src/pages/PagePanier.jsx
-import { useContext, useState } from "react";
-import styled, { keyframes } from "styled-components";
+// src/pages/PagePanierZara.jsx
+import { useContext } from "react";
+import styled from "styled-components";
 import { PanierContext } from "../../Utils/Context";
 import { Link } from "react-router-dom";
-import { FiTrash2, FiMinus, FiPlus, FiCheck } from "react-icons/fi";
+import { FiMinus, FiPlus, FiTrash2 } from "react-icons/fi";
 
-/* ===== ANIMATION TOAST ===== */
-const fadeInOut = keyframes`
-  0%, 100% { opacity: 0; transform: translateY(-20px); }
-  10%, 90% { opacity: 1; transform: translateY(0); }
-`;
+/* ================== STYLES ================== */
 
-const Toast = styled.div`
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  background: #2563eb;
-  color: white;
-  padding: 12px 20px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  animation: ${fadeInOut} 2s ease forwards;
-  z-index: 999;
-`;
-
-/* ===== STYLES ===== */
-const PageWrapper = styled.main`
-  padding: 2rem 4%;
+const Page = styled.main`
   max-width: 1200px;
-  margin: auto;
+  margin: 3rem auto;
+  padding: 0 4%;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 `;
 
 const Title = styled.h1`
-  font-size: 2rem;
-  margin-bottom: 2rem;
-`;
-
-const Empty = styled.div`
-  text-align: center;
-  padding: 4rem 0;
+  font-size: 2.4rem;
+  font-weight: 400;
+  letter-spacing: 2px;
+  margin-bottom: 3rem;
 `;
 
 const Grid = styled.div`
   display: grid;
   grid-template-columns: 2fr 1fr;
-  gap: 2rem;
+  gap: 3rem;
 
-  @media (max-width: 768px) {
+  @media (max-width: 900px) {
     grid-template-columns: 1fr;
   }
 `;
@@ -56,93 +34,89 @@ const Grid = styled.div`
 const Items = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 1.2rem;
+  gap: 2rem;
 `;
 
 const Item = styled.div`
   display: grid;
-  grid-template-columns: 100px 1fr auto;
-  gap: 1rem;
+  grid-template-columns: 120px 1fr auto;
+  gap: 1.5rem;
   align-items: center;
-  padding: 1rem;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-  transition: transform 0.2s, box-shadow 0.2s;
-
-  &:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 25px rgba(0,0,0,0.1);
-  }
+  border-bottom: 1px solid #e5e5e5;
+  padding-bottom: 2rem;
 `;
 
 const Image = styled.img`
-  width: 100px;
-  height: 100px;
+  width: 120px;
+  height: 150px;
   object-fit: cover;
-  border-radius: 10px;
 `;
 
 const Info = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0.6rem;
 `;
 
 const Name = styled.h3`
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+`;
+
+const Meta = styled.span`
+  font-size: 0.85rem;
+  color: #555;
+  text-transform: capitalize;
 `;
 
 const Price = styled.span`
-  font-weight: 700;
+  font-size: 0.95rem;
+  font-weight: 600;
 `;
 
 const Quantity = styled.div`
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  margin-top: 0.5rem;
 `;
 
 const QtyBtn = styled.button`
-  border: none;
-  background: #f1f5f9;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
+  border: 1px solid #000;
+  background: transparent;
+  width: 28px;
+  height: 28px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.2s;
 
-  &:hover {
-    background: #e2e8f0;
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
   }
 `;
 
-const QuantityInput = styled.input`
-  width: 50px;
+const Qty = styled.span`
+  min-width: 20px;
   text-align: center;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-size: 1rem;
-  padding: 4px;
+  font-size: 0.9rem;
 `;
 
 const Remove = styled.button`
   border: none;
   background: transparent;
-  color: #ef4444;
   cursor: pointer;
-  font-size: 1.2rem;
+  color: #000;
 `;
 
-const Summary = styled.div`
-  background: #fff;
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+/* ===== SUMMARY ===== */
+
+const Summary = styled.aside`
+  border: 1px solid #e5e5e5;
+  padding: 2rem;
   height: fit-content;
 `;
 
@@ -150,95 +124,86 @@ const Line = styled.div`
   display: flex;
   justify-content: space-between;
   margin-bottom: 1rem;
+  font-size: 0.9rem;
 `;
 
 const Total = styled(Line)`
-  font-size: 1.2rem;
-  font-weight: 800;
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-top: 2rem;
 `;
 
-const Button = styled.button`
+const PayButton = styled.button`
   width: 100%;
-  padding: 12px;
-  border-radius: 10px;
+  margin-top: 2rem;
+  padding: 14px;
   border: none;
-  cursor: pointer;
-  font-weight: 600;
-  margin-top: 1rem;
-  background: ${({ danger }) => (danger ? "#ef4444" : "#2563eb")};
+  background: #000;
   color: white;
-  transition: background 0.2s;
+  font-size: 0.9rem;
+  letter-spacing: 2px;
+  cursor: pointer;
+  text-transform: uppercase;
 
   &:hover {
-    background: ${({ danger }) => (danger ? "#dc2626" : "#1e40af")};
+    background: #111;
   }
+`;
+
+const Clear = styled.button`
+  width: 100%;
+  margin-top: 1rem;
+  padding: 12px;
+  border: 1px solid #000;
+  background: transparent;
+  cursor: pointer;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+`;
+
+const Empty = styled.div`
+  text-align: center;
+  padding: 5rem 0;
 `;
 
 const Back = styled(Link)`
   display: inline-block;
   margin-top: 2rem;
+  color: #000;
   text-decoration: none;
-  color: #2563eb;
+  border-bottom: 1px solid #000;
 `;
 
-/* ===== PAGE PANIER ===== */
+/* ================== COMPONENT ================== */
 
-function PagePanier() {
+export default function PagePanierZara() {
   const {
     ajouter,
     supprimer,
-    toutSupprimer,
     augmenter,
     diminuer,
-    setQuantite // à ajouter dans ton context
+    toutSupprimer
   } = useContext(PanierContext);
 
-  const [toastMessage, setToastMessage] = useState("");
-
-  const total = ajouter.reduce((acc, item) => acc + item.prix * item.quantite, 0);
-
-  // Gestion du toast
-  const showToast = (message, duration = 1500) => {
-    setToastMessage(message);
-    setTimeout(() => setToastMessage(""), duration);
-  };
-
-  const handleRemove = (id) => {
-    supprimer(id);
-    showToast("Produit supprimé du panier !");
-  };
-
-  const handleIncrease = (id) => {
-    augmenter(id);
-    showToast("Quantité augmentée !");
-  };
-
-  const handleDecrease = (id) => {
-    diminuer(id);
-    showToast("Quantité diminuée !");
-  };
-
-  const handleChangeQuantity = (id, q) => {
-    setQuantite(id, q);
-    showToast("Quantité mise à jour !");
-  };
+  const total = ajouter.reduce(
+    (acc, item) => acc + item.prix * item.quantite,
+    0
+  );
 
   if (ajouter.length === 0) {
     return (
-      <PageWrapper>
-        {toastMessage && <Toast><FiCheck /> {toastMessage}</Toast>}
+      <Page>
         <Empty>
-          <h2>Votre panier est vide 🛒</h2>
-          <Back to="/">← Continuer vos achats</Back>
+          <h2>Votre panier est vide</h2>
+          <Back to="/">Continuer vos achats</Back>
         </Empty>
-      </PageWrapper>
+      </Page>
     );
   }
 
   return (
-    <PageWrapper>
-      {toastMessage && <Toast><FiCheck /> {toastMessage}</Toast>}
-      <Title>Mon panier</Title>
+    <Page>
+      <Title>Shopping Bag</Title>
 
       <Grid>
         {/* PRODUITS */}
@@ -249,41 +214,38 @@ function PagePanier() {
 
               <Info>
                 <Name>{item.nom}</Name>
-                <Price>{item.prix} FCFA</Price>
+                <Meta>Couleur : {item.couleur}</Meta>
+                <Meta>Taille : {item.taille}</Meta>
+                <Price>{item.prix.toLocaleString()} FCFA</Price>
 
                 <Quantity>
-                  <QtyBtn onClick={() => handleDecrease(item.id)}>
-                    <FiMinus />
+                  <QtyBtn
+                    onClick={() => diminuer(item.id)}
+                    disabled={item.quantite <= 1}
+                  >
+                    <FiMinus size={12} />
                   </QtyBtn>
 
-                  <QuantityInput
-                    type="number"
-                    min={1}
-                    value={item.quantite}
-                    onChange={(e) => {
-                      let q = Number(e.target.value) || 1;
-                      handleChangeQuantity(item.id, q);
-                    }}
-                  />
+                  <Qty>{item.quantite}</Qty>
 
-                  <QtyBtn onClick={() => handleIncrease(item.id)}>
-                    <FiPlus />
+                  <QtyBtn onClick={() => augmenter(item.id)}>
+                    <FiPlus size={12} />
                   </QtyBtn>
                 </Quantity>
               </Info>
 
-              <Remove onClick={() => handleRemove(item.id)}>
+              <Remove onClick={() => supprimer(item.id)}>
                 <FiTrash2 />
               </Remove>
             </Item>
           ))}
         </Items>
 
-        {/* RÉCAP */}
+        {/* SUMMARY */}
         <Summary>
           <Line>
             <span>Sous-total</span>
-            <span>{total.toFixed(2)} FCFA</span>
+            <span>{total.toLocaleString()} FCFA</span>
           </Line>
 
           <Line>
@@ -293,20 +255,15 @@ function PagePanier() {
 
           <Total>
             <span>Total</span>
-            <span>{total.toFixed(2)} FCFA</span>
+            <span>{total.toLocaleString()} FCFA</span>
           </Total>
 
-          <Button>Payer maintenant</Button>
-          <Button danger onClick={toutSupprimer}>
-            Vider le panier
-          </Button>
+          <PayButton>Procéder au paiement</PayButton>
+          <Clear onClick={toutSupprimer}>Vider le panier</Clear>
         </Summary>
       </Grid>
 
-      <Back to="/">← Continuer les achats</Back>
-    </PageWrapper>
+      <Back to="/">← Retour boutique</Back>
+    </Page>
   );
 }
-
-export default PagePanier;
-

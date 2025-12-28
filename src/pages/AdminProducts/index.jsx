@@ -86,7 +86,7 @@ const ImagePreview = styled.img`
   cursor: pointer;
 `;
 
-const CommentsContainer = styled.div`
+const CommentContainer = styled.div`
   background: #f1f1f1;
   padding: 10px;
   border-radius: 6px;
@@ -99,6 +99,9 @@ const CommentItem = styled.div`
   border-bottom: 1px solid #ccc;
 `;
 
+// ===============================
+// COMPOSANT
+// ===============================
 function AdminProducts() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -106,18 +109,21 @@ function AdminProducts() {
   const [colors, setColors] = useState([]);
   const [sizes, setSizes] = useState([]);
   const [stock, setStock] = useState({});
-  const [images, setImages] = useState([]);
-  const [mainImageIndex, setMainImageIndex] = useState(0);
+  const [existingImages, setExistingImages] = useState([]);
+  const [imagesToDelete, setImagesToDelete] = useState([]);
+  const [newImages, setNewImages] = useState([]);
+  const [mainImageIndex, setMainImageIndex] = useState(null);
   const [products, setProducts] = useState([]);
   const [genre, setGenre] = useState("homme");
   const [categorie, setCategorie] = useState("haut");
   const [badge, setBadge] = useState(null);
   const [hero, setHero] = useState(false);
+  const [editingProductId, setEditingProductId] = useState(null);
 
   const token = localStorage.getItem("adminToken");
 
   // ===============================
-  // FETCH PRODUITS EXISTANTS
+  // FETCH PRODUITS
   // ===============================
   useEffect(() => {
     fetchProducts();
@@ -136,12 +142,15 @@ function AdminProducts() {
   };
 
   // ===============================
-  // GESTION IMAGES
+  // GESTION NOUVELLES IMAGES
   // ===============================
-  const handleImageChange = (e) => {
+  const handleNewImageChange = (e) => {
     const files = Array.from(e.target.files);
-    setImages(files);
-    setMainImageIndex(0);
+    setNewImages(files);
+
+    if (mainImageIndex === null && existingImages.length + files.length > 0) {
+      setMainImageIndex(0);
+    }
   };
 
   // ===============================
@@ -155,11 +164,58 @@ function AdminProducts() {
   };
 
   // ===============================
-  // AJOUT PRODUIT
+  // SUPPRESSION IMAGE EXISTANTE
+  // ===============================
+  const handleDeleteExistingImage = (publicId, idx) => {
+    const updatedImages = existingImages.filter(
+      (img) => img.publicId !== publicId
+    );
+    setExistingImages(updatedImages);
+    setImagesToDelete([...imagesToDelete, publicId]);
+
+    if (mainImageIndex === idx) {
+      // image principale supprimée
+      if (updatedImages.length + newImages.length > 0) {
+        setMainImageIndex(0);
+      } else {
+        setMainImageIndex(null);
+      }
+    } else if (mainImageIndex > idx) {
+      // image supprimée avant l'image principale
+      setMainImageIndex(mainImageIndex - 1);
+    }
+  };
+
+  const handleDeleteNewImage = (idx) => {
+    const globalIdx = existingImages.length + idx;
+
+    const updatedNewImages = newImages.filter((_, i) => i !== idx);
+    setNewImages(updatedNewImages);
+
+    if (mainImageIndex === globalIdx) {
+      // image principale supprimée
+      if (existingImages.length + updatedNewImages.length > 0) {
+        setMainImageIndex(0);
+      } else {
+        setMainImageIndex(null);
+      }
+    } else if (mainImageIndex > globalIdx) {
+      // image supprimée avant l'image principale
+      setMainImageIndex(mainImageIndex - 1);
+    }
+  };
+
+  // ===============================
+  // SUBMIT PRODUIT
   // ===============================
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!title || !description || !price || images.length === 0) {
+    if (
+      !title ||
+      !description ||
+      !price ||
+      existingImages.length + newImages.length === 0
+    ) {
       alert("Tous les champs sont obligatoires !");
       return;
     }
@@ -184,34 +240,42 @@ function AdminProducts() {
     formData.append("badge", badge);
     formData.append("hero", hero);
     formData.append("mainImageIndex", mainImageIndex);
+    formData.append("imagesToDelete", JSON.stringify(imagesToDelete));
 
-    images.forEach((img) => formData.append("images", img));
+    const allImages = [
+      ...existingImages,
+      ...newImages.map((file) => ({ file })),
+    ];
+    allImages.forEach((img) => {
+      if (img.file) formData.append("images", img.file);
+    });
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        alert(data.message || "Erreur lors de l'ajout");
-        return;
+      let res, data;
+      if (editingProductId) {
+        res = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/produits/${editingProductId}`,
+          {
+            method: "PUT",
+            headers: { Authorization: `Bearer ${token}` },
+            body: formData,
+          }
+        );
+        data = await res.json();
+        if (!res.ok)
+          return alert(data.message || "Erreur lors de la modification");
+        alert("Produit modifié !");
+      } else {
+        res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        });
+        data = await res.json();
+        if (!res.ok) return alert(data.message || "Erreur lors de l'ajout");
+        alert("Produit ajouté !");
       }
-      alert("Produit ajouté !");
-      // reset form
-      setTitle("");
-      setDescription("");
-      setPrice("");
-      setColors([]);
-      setSizes([]);
-      setStock({});
-      setImages([]);
-      setMainImageIndex(0);
-      setGenre("homme");
-      setCategorie("haut");
-      setBadge(null);
-      setHero(false);
+      resetForm();
       fetchProducts();
     } catch (err) {
       console.error(err);
@@ -219,12 +283,58 @@ function AdminProducts() {
     }
   };
 
+  const resetForm = () => {
+    setTitle("");
+    setDescription("");
+    setPrice("");
+    setColors([]);
+    setSizes([]);
+    setStock({});
+    setExistingImages([]);
+    setImagesToDelete([]);
+    setNewImages([]);
+    setMainImageIndex(null);
+    setGenre("homme");
+    setCategorie("haut");
+    setBadge(null);
+    setHero(false);
+    setEditingProductId(null);
+  };
+
+  // ===============================
+  // ÉDITER PRODUIT
+  // ===============================
+  const handleEditProduct = (p) => {
+    setEditingProductId(p._id);
+    setTitle(p.title);
+    setDescription(p.description);
+    setPrice(p.price);
+    setColors(p.couleurs || []);
+    setSizes(p.tailles || []);
+
+    const stockObj = {};
+    Object.entries(p.stockParVariation || {}).forEach(([color, sizesMap]) => {
+      stockObj[color] = Object.fromEntries(Object.entries(sizesMap));
+    });
+    setStock(stockObj);
+
+    setHero(p.hero);
+    setGenre(p.genre);
+    setCategorie(p.categorie);
+    setBadge(p.badge);
+    setExistingImages(p.images || []);
+    setImagesToDelete([]);
+    setNewImages([]);
+
+    const mainIdx = p.images?.findIndex((i) => i.isMain);
+    setMainImageIndex(mainIdx !== -1 ? mainIdx : 0);
+  };
+
   // ===============================
   // SUPPRESSION PRODUIT
   // ===============================
   const handleDeleteProduct = async (id) => {
     if (!window.confirm("Supprimer ce produit ?")) return;
-
     try {
       const res = await fetch(
         `${import.meta.env.VITE_API_URL}/api/produits/${id}`,
@@ -237,9 +347,7 @@ function AdminProducts() {
       if (res.ok) {
         setProducts((prev) => prev.filter((p) => p._id !== id));
         alert(data.message || "Produit supprimé !");
-      } else {
-        alert(data.message || "Erreur suppression produit");
-      }
+      } else alert(data.message || "Erreur suppression produit");
     } catch (err) {
       console.error(err);
       alert("Erreur serveur");
@@ -254,15 +362,11 @@ function AdminProducts() {
     try {
       const res = await fetch(
         `${import.meta.env.VITE_API_URL}/api/produits/${produitId}/commentaires/${commentaireId}`,
-        {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
       );
       if (!res.ok) {
         const data = await res.json();
-        alert(data.message || "Erreur suppression commentaire");
-        return;
+        return alert(data.message || "Erreur suppression commentaire");
       }
       setProducts((prev) =>
         prev.map((p) =>
@@ -290,6 +394,7 @@ function AdminProducts() {
       <Title>Admin Produits</Title>
 
       <Form onSubmit={handleSubmit}>
+        {/* CHAMPS PRODUIT */}
         <Input
           type="text"
           placeholder="Titre"
@@ -360,6 +465,7 @@ function AdminProducts() {
           }
         />
 
+        {/* STOCK */}
         {colors.length > 0 && sizes.length > 0 && (
           <div>
             {colors.map((color) => (
@@ -382,40 +488,95 @@ function AdminProducts() {
           </div>
         )}
 
+        {/* EXISTING IMAGES */}
+        <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
+          {existingImages.map((img, idx) => (
+            <div key={img.publicId} style={{ position: "relative" }}>
+              <ImagePreview
+                src={img.url}
+                isMain={idx === mainImageIndex}
+                onClick={() => setMainImageIndex(idx)}
+              />
+              <Button
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  right: 0,
+                  background: "#e74c3c",
+                  padding: "2px 6px",
+                }}
+                onClick={() => handleDeleteExistingImage(img.publicId, idx)}
+                type="button"
+              >
+                X
+              </Button>
+            </div>
+          ))}
+        </div>
+
+        {/* NEW IMAGES */}
         <Input
           type="file"
           multiple
           accept="image/*"
-          onChange={handleImageChange}
+          onChange={handleNewImageChange}
         />
-
         <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
-          {images.map((img, idx) => (
-            <ImagePreview
-              key={idx}
-              src={URL.createObjectURL(img)}
-              isMain={idx === mainImageIndex}
-              onClick={() => setMainImageIndex(idx)}
-            />
+          {newImages.map((img, idx) => (
+            <div key={idx} style={{ position: "relative" }}>
+              <ImagePreview
+                src={URL.createObjectURL(img)}
+                isMain={existingImages.length + idx === mainImageIndex}
+                onClick={() => setMainImageIndex(existingImages.length + idx)}
+              />
+              <Button
+                type="button"
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  right: 0,
+                  background: "#e74c3c",
+                  padding: "2px 6px",
+                }}
+                onClick={() => handleDeleteNewImage(idx)}
+              >
+                X
+              </Button>
+            </div>
           ))}
         </div>
 
-        <Button type="submit">Ajouter Produit</Button>
+        <Button type="submit">
+          {editingProductId ? "Modifier Produit" : "Ajouter Produit"}
+        </Button>
+        {editingProductId && (
+          <Button
+            type="button"
+            style={{ background: "#6c757d", marginTop: "5px" }}
+            onClick={resetForm}
+          >
+            Annuler
+          </Button>
+        )}
       </Form>
 
+      {/* LISTE PRODUITS */}
       <ProductList>
         {products.map((p) => (
           <ProductItem key={p._id}>
             <ProductHeader>
               <div>
-                {p.title} {p.hero && "(Hero)"}
+                {p.title} {p.hero && "(Hero)"} {p.isNew && "(Nouveau)"}
               </div>
-              <Button
-                onClick={() => handleDeleteProduct(p._id)}
-                style={{ background: "#e74c3c" }}
-              >
-                Supprimer
-              </Button>
+              <div style={{ display: "flex", gap: "5px" }}>
+                <Button onClick={() => handleEditProduct(p)}>Modifier</Button>
+                <Button
+                  onClick={() => handleDeleteProduct(p._id)}
+                  style={{ background: "#e74c3c" }}
+                >
+                  Supprimer
+                </Button>
+              </div>
             </ProductHeader>
 
             {p.images && p.images.length > 0 && (
@@ -426,7 +587,7 @@ function AdminProducts() {
             )}
 
             {p.commentaires && p.commentaires.length > 0 && (
-              <CommentsContainer>
+              <CommentContainer>
                 <strong>Commentaires :</strong>
                 {p.commentaires.map((c) => (
                   <CommentItem key={c._id}>
@@ -445,7 +606,7 @@ function AdminProducts() {
                     </Button>
                   </CommentItem>
                 ))}
-              </CommentsContainer>
+              </CommentContainer>
             )}
           </ProductItem>
         ))}
