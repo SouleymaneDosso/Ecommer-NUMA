@@ -79,14 +79,18 @@ export const Panier = ({ children }) => {
 
   /* ================== ACTIONS ================== */
 
+  // Ajouter un produit au panier
   const ajouterPanier = (produit) => {
     setAjouter((prev) => {
       const exist = prev.find((p) => p.id === produit.id);
 
       if (exist) {
+        // Si le produit existe déjà, on additionne les quantités
+        const newQuantite = exist.quantite + produit.quantite;
+        // On ne peut pas dépasser le stock disponible
         return prev.map((p) =>
           p.id === produit.id
-            ? { ...p, quantite: p.quantite + produit.quantite }
+            ? { ...p, quantite: newQuantite > p.stockDisponible ? p.stockDisponible : newQuantite }
             : p
         );
       }
@@ -95,18 +99,23 @@ export const Panier = ({ children }) => {
     });
   };
 
+  // Supprimer un produit du panier
   const supprimer = (id) => {
     setAjouter((prev) => prev.filter((p) => p.id !== id));
   };
 
+  // Augmenter la quantité (bloquée par stock disponible)
   const augmenter = (id) => {
     setAjouter((prev) =>
       prev.map((p) =>
-        p.id === id ? { ...p, quantite: p.quantite + 1 } : p
+        p.id === id
+          ? { ...p, quantite: p.quantite < p.stockDisponible ? p.quantite + 1 : p.quantite }
+          : p
       )
     );
   };
 
+  // Diminuer la quantité (minimum 1)
   const diminuer = (id) => {
     setAjouter((prev) =>
       prev.map((p) =>
@@ -117,6 +126,7 @@ export const Panier = ({ children }) => {
     );
   };
 
+  // Vider le panier
   const toutSupprimer = () => setAjouter([]);
 
   /* ================== PERSISTENCE ================== */

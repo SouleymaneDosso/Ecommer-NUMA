@@ -1,6 +1,7 @@
 import styled from "styled-components";
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { PanierContext } from "../Utils/Context";
+import { useNavigate } from "react-router-dom";
 
 // ---------- COLOR MAP ----------
 const colorMap = {
@@ -54,7 +55,7 @@ const ColorCircle = styled.button`
   height: 30px;
   border-radius: 50%;
   border: ${({ $active }) => ($active ? "2px solid #000" : "1px solid #ccc")};
-  background: ${({ color }) => color || "#fff"};
+  background: ${({ color }) => color};
   cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
   opacity: ${({ disabled }) => (disabled ? 0.4 : 1)};
 `;
@@ -65,7 +66,6 @@ const SizeButton = styled.button`
   border-radius: 6px;
   border: ${({ $active }) => ($active ? "2px solid #000" : "1px solid #ccc")};
   background: ${({ disabled }) => (disabled ? "#f5f5f5" : "#fff")};
-  color: ${({ disabled }) => (disabled ? "#aaa" : "#000")};
   cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
   font-weight: 600;
 `;
@@ -75,7 +75,6 @@ const QuantitySelect = styled.select`
   padding: 8px;
   border-radius: 6px;
   border: 1px solid #ccc;
-  font-size: 1rem;
 `;
 
 const AddButton = styled.button`
@@ -93,6 +92,28 @@ const StockInfo = styled.span`
   color: #444;
 `;
 
+/* ---------- MODAL ---------- */
+const Overlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const Modal = styled.div`
+  background: #fff;
+  padding: 2rem;
+  border-radius: 14px;
+  width: 90%;
+  max-width: 420px;
+  z-index: 9999;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+  text-align: center;
+`;
+
 // ---------- COMPONENT ----------
 export default function AddToCartBar({
   produit,
@@ -104,15 +125,16 @@ export default function AddToCartBar({
   setQuantity,
 }) {
   const { ajouterPanier } = useContext(PanierContext);
+  const [showModal, setShowModal] = useState(false);
+  const navigate = useNavigate();
+
   const stockParVariation = produit.stockParVariation;
 
-  // Stock réel selon variante
   const stockDisponible =
     selectedColor && selectedSize
-      ? stockParVariation?.[selectedColor]?.[selectedSize] ?? 0
+      ? (stockParVariation?.[selectedColor]?.[selectedSize] ?? 0)
       : 0;
 
-  // Ajuster la quantité automatiquement
   useEffect(() => {
     if (stockDisponible === 0) setQuantity(1);
     else if (quantity > stockDisponible) setQuantity(stockDisponible);
@@ -132,51 +154,30 @@ export default function AddToCartBar({
       quantite: quantity,
       couleur: selectedColor,
       taille: selectedSize,
+      stockDisponible: stockDisponible,
     });
+
+    setShowModal(true);
   };
 
-  // Fonction pour transformer le nom couleur en code hex
-  const parseColor = (colorName) =>
-    colorMap[colorName.toLowerCase()] || colorName.toLowerCase();
-
-  // Liste des couleurs disponibles selon la taille sélectionnée
-  const availableColors = selectedSize
-    ? produit.couleurs.filter(
-        (c) => (stockParVariation?.[c]?.[selectedSize] ?? 0) > 0
-      )
-    : produit.couleurs;
+  const parseColor = (color) =>
+    colorMap[color.toLowerCase()] || color.toLowerCase();
 
   return (
     <ActionWrapper>
       {/* COULEURS */}
       <Label>Couleur</Label>
       <Row>
-        {availableColors.map((color) => (
-          <div
+        {produit.couleurs.map((color) => (
+          <ColorCircle
             key={color}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "4px",
+            color={parseColor(color)}
+            $active={selectedColor === color}
+            onClick={() => {
+              setSelectedColor(color);
+              setSelectedSize(null);
             }}
-          >
-            <ColorCircle
-              color={parseColor(color)}
-              title={color}
-              $active={selectedColor === color}
-              disabled={produit.tailles.every(
-                (size) => (stockParVariation?.[color]?.[size] ?? 0) === 0
-              )}
-              onClick={() => {
-                setSelectedColor(color);
-                setSelectedSize(null); // reset taille
-              }}
-            />
-            <span style={{ fontSize: "0.75rem", textTransform: "capitalize" }}>
-              {color}
-            </span>
-          </div>
+          />
         ))}
       </Row>
 
@@ -206,28 +207,66 @@ export default function AddToCartBar({
           disabled={disabled}
           onChange={(e) => setQuantity(Number(e.target.value))}
         >
-          {Array.from({ length: stockDisponible }, (_, i) => i + 1).map(
-            (q) => (
-              <option key={q} value={q}>
-                {q}
-              </option>
-            )
-          )}
+          {Array.from({ length: stockDisponible }, (_, i) => i + 1).map((q) => (
+            <option key={q} value={q}>
+              {q}
+            </option>
+          ))}
         </QuantitySelect>
 
         <AddButton disabled={disabled} onClick={handleAddToCart}>
-          {stockDisponible > 0 ? "Ajouter au panier" : "Rupture de stock"}
+          Ajouter au panier
         </AddButton>
       </Row>
 
-      {/* STOCK INFO */}
       <StockInfo>
         {!selectedColor || !selectedSize
           ? "Sélectionnez une couleur et une taille"
-          : stockDisponible > 0
-          ? `Stock disponible : ${stockDisponible}`
-          : "Rupture de stock"}
+          : `Stock disponible : ${stockDisponible}`}
       </StockInfo>
+
+      {/* MODAL */}
+      {showModal && (
+        <Overlay onClick={() => setShowModal(false)}>
+          <Modal onClick={(e) => e.stopPropagation()}>
+            <h3>✅ Produit ajouté au panier</h3>
+            <p style={{ margin: "1rem 0", color: "#555" }}>{produit.title}</p>
+
+            <div
+              style={{ display: "flex", gap: "10px", justifyContent: "center" }}
+            >
+              <button
+                onClick={() => navigate("/panier")}
+                style={{
+                  padding: "10px 16px",
+                  background: "#000",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontWeight: 600,
+                }}
+              >
+                Voir le panier
+              </button>
+
+              <button
+                onClick={() => setShowModal(false)}
+                style={{
+                  padding: "10px 16px",
+                  background: "#fff",
+                  border: "1px solid #ccc",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontWeight: 600,
+                }}
+              >
+                Continuer mes achats
+              </button>
+            </div>
+          </Modal>
+        </Overlay>
+      )}
     </ActionWrapper>
   );
 }

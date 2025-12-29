@@ -124,16 +124,19 @@ export default function Homme() {
 
   // Helper pour image principale
   const getMainImage = (p) =>
-    p.images?.find((img) => img.isMain)?.url || p.images?.[0]?.url || "/placeholder.jpg";
+    p.images?.find((img) => img.isMain)?.url ||
+    p.images?.[0]?.url ||
+    "/placeholder.jpg";
 
   // Charger les produits
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/api/produits`)
       .then((res) => res.json())
       .then((data) => {
-        const valid = data.filter((p) => p && p.images?.length && p.genre === "homme");
+        const valid = data.filter(
+          (p) => p && p.images?.length && p.genre === "homme"
+        );
         setProducts(valid);
-
         // Preload images
         const promises = valid.flatMap((p) =>
           p.images.map(
@@ -150,6 +153,17 @@ export default function Homme() {
       })
       .catch(console.error);
   }, []);
+  // Initialiser l'image principale pour chaque produit
+  useEffect(() => {
+    if (!products.length) return;
+    const initialIndexes = {};
+    products.forEach((p) => {
+      if (!p?._id) return;
+      const mainIndex = p.images?.findIndex((img) => img.isMain);
+      initialIndexes[p._id] = mainIndex >= 0 ? mainIndex : 0;
+    });
+    setImageIndexes(initialIndexes);
+  }, [products]);
 
   // Carousel automatique
   useEffect(() => {
@@ -174,7 +188,9 @@ export default function Homme() {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
-      .then((data) => setFavorites(data.map((f) => f.productId?._id).filter(Boolean)))
+      .then((data) =>
+        setFavorites(data.map((f) => f.productId?._id).filter(Boolean))
+      )
       .catch(console.error);
   }, [token]);
 
@@ -185,14 +201,17 @@ export default function Homme() {
       return;
     }
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/favorites/toggle`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ productId: id }),
-      });
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/favorites/toggle`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ productId: id }),
+        }
+      );
       const data = await res.json();
       if (res.ok) {
         if (data.active) setFavorites((prev) => [...prev, id]);
@@ -231,9 +250,12 @@ export default function Homme() {
               >
                 <ProductImageWrapper>
                   <ProductImage
-                    src={p.images?.[imageIndexes[pid] || 0]?.url || getMainImage(p)}
+                    src={
+                      p.images?.[imageIndexes[pid]]?.url || "/placeholder.jpg"
+                    }
                     alt={p.title}
                   />
+
                   {p.badge && <Badge type={p.badge}>{p.badge}</Badge>}
                   {isActive && (
                     <ViewButton to={`/produit/${pid}`} $visible={true}>

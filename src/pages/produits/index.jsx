@@ -82,7 +82,9 @@ export default function Produit() {
   useEffect(() => {
     async function fetchProduit() {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits/${id}`);
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/produits/${id}`
+        );
         if (!res.ok) throw new Error("Erreur fetch produit");
         const data = await res.json();
         setProduit(data);
@@ -109,13 +111,26 @@ export default function Produit() {
   // calcule stock disponible
   const stockDisponible =
     selectedColor && selectedSize
-      ? produit.stockParVariation?.[selectedColor]?.[selectedSize] ?? 0
+      ? (produit.stockParVariation?.[selectedColor]?.[selectedSize] ?? 0)
       : 0;
 
   // couleurs disponibles selon taille sélectionnée
   const availableColors = selectedSize
-    ? produit.couleurs.filter(c => produit.stockParVariation?.[c]?.[selectedSize] > 0)
+    ? produit.couleurs.filter(
+        (c) => produit.stockParVariation?.[c]?.[selectedSize] > 0
+      )
     : produit.couleurs;
+
+  const orderedImages = produit.images
+    ? [
+        produit.images.find((img) => img.isMain) || produit.images[0],
+        ...produit.images.filter(
+          (img) =>
+            img !==
+            (produit.images.find((img) => img.isMain) || produit.images[0])
+        ),
+      ]
+    : [];
 
   return (
     <PageWrapper>
@@ -125,7 +140,7 @@ export default function Produit() {
       </BackLink>
 
       <ProductWrapper>
-        <ProductImages images={produit.images} />
+        <ProductImages images={orderedImages} />
 
         <ProductDetails>
           <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>

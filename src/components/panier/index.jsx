@@ -105,6 +105,12 @@ const Qty = styled.span`
   font-size: 0.9rem;
 `;
 
+const StockHint = styled.span`
+  font-size: 0.75rem;
+  color: #888;
+  margin-top: 4px;
+`;
+
 const Remove = styled.button`
   border: none;
   background: transparent;
@@ -176,13 +182,13 @@ const Back = styled(Link)`
 
 /* ================== COMPONENT ================== */
 
-export default function PagePanier() {
+export default function PagePanierZara() {
   const {
     ajouter,
     supprimer,
     augmenter,
     diminuer,
-    toutSupprimer
+    toutSupprimer,
   } = useContext(PanierContext);
 
   const total = ajouter.reduce(
@@ -208,7 +214,7 @@ export default function PagePanier() {
       <Grid>
         {/* PRODUITS */}
         <Items>
-          {ajouter.map(item => (
+          {ajouter.map((item) => (
             <Item key={item.id}>
               <Image src={item.image} alt={item.nom} />
 
@@ -228,10 +234,18 @@ export default function PagePanier() {
 
                   <Qty>{item.quantite}</Qty>
 
-                  <QtyBtn onClick={() => augmenter(item.id)}>
+                  <QtyBtn
+                    onClick={() => augmenter(item.id)}
+                    disabled={item.quantite >= item.stockDisponible}
+                  >
                     <FiPlus size={12} />
                   </QtyBtn>
                 </Quantity>
+
+                {/* BONUS : info stock */}
+                <StockHint>
+                  Stock maximum : {item.stockDisponible}
+                </StockHint>
               </Info>
 
               <Remove onClick={() => supprimer(item.id)}>

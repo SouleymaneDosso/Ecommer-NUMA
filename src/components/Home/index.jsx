@@ -82,7 +82,6 @@ const CategoryCard = styled(Link)`
   text-align: center;
   width: 120px;
 
-
   img {
     width: 90px;
     height: 90px;
@@ -211,7 +210,12 @@ export default function Home() {
     return url.startsWith("http") ? url : `${import.meta.env.VITE_API_URL}${url}`;
   };
 
-  const getMainImage = (product) => getFullImageUrl(product?.images?.[0]?.url);
+  // ⚡ Corrected: prend en compte isMain
+  const getMainImage = (product) => {
+    if (!product?.images?.length) return null;
+    const mainImg = product.images.find((img) => img.isMain) || product.images[0];
+    return getFullImageUrl(mainImg.url);
+  };
 
   /* ---------------------- FETCH PRODUITS ---------------------- */
   useEffect(() => {
@@ -219,12 +223,15 @@ export default function Home() {
       .then((res) => res.json())
       .then((data) => {
         setProducts(data);
+        console.log(data)
+
         const getFirstImageByGenre = (genre) => {
           const prod = data.find(
             (p) => p.genre?.toLowerCase() === genre && p.images?.length
           );
           return getMainImage(prod);
         };
+
         setCategoryImages({
           homme: getFirstImageByGenre("homme"),
           femme: getFirstImageByGenre("femme"),

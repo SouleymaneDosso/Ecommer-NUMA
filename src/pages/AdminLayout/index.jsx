@@ -104,7 +104,7 @@ function AdminLayout() {
 
   useEffect(() => {
     const token = localStorage.getItem("adminToken");
-    if (!token) navigate("/admin");
+    if (!token) navigate("/admin/login");
   }, [navigate]);
 
   const handleLogout = () => {

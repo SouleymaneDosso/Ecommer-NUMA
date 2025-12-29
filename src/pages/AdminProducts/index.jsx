@@ -82,7 +82,8 @@ const ImagePreview = styled.img`
   object-fit: cover;
   border-radius: 6px;
   margin-right: 10px;
-  border: ${(props) => (props.$isMain ? "2px solid #007bff" : "1px solid #ccc")};
+  border: ${(props) =>
+    props.$isMain ? "2px solid #007bff" : "1px solid #ccc"};
   cursor: pointer;
 `;
 
@@ -359,27 +360,36 @@ function AdminProducts() {
   // ===============================
   const handleDeleteComment = async (produitId, commentaireId) => {
     if (!window.confirm("Supprimer ce commentaire ?")) return;
+
     try {
       const res = await fetch(
         `${import.meta.env.VITE_API_URL}/api/produits/${produitId}/commentaires/${commentaireId}`,
-        { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
-      if (!res.ok) {
-        const data = await res.json();
+
+      const data = await res.json();
+
+      if (!res.ok)
         return alert(data.message || "Erreur suppression commentaire");
-      }
+
+      // Mise à jour frontend : filtrer par ID converti en string
       setProducts((prev) =>
         prev.map((p) =>
           p._id === produitId
             ? {
                 ...p,
                 commentaires: p.commentaires.filter(
-                  (c) => c._id !== commentaireId
+                  (c) => c._id.toString() !== commentaireId.toString()
                 ),
               }
             : p
         )
       );
+
+      alert("Commentaire supprimé !");
     } catch (err) {
       console.error(err);
       alert("Erreur serveur");

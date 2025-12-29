@@ -5,7 +5,6 @@ import { FiHeart } from "react-icons/fi";
 import { FaHeart } from "react-icons/fa";
 import { Link } from "react-router-dom";
 
-
 /* ===== STYLES ===== */
 const PageWrapper = styled.main`
   padding: 2rem 4%;
@@ -123,11 +122,7 @@ export default function Favorie() {
       });
       const data = await res.json();
       // Filtrer les produits null ou invalides
-      setFavorites(
-        data
-          .map((f) => f.productId)
-          .filter((p) => p && p._id)
-      );
+      setFavorites(data.map((f) => f.productId).filter((p) => p && p._id));
     } catch (err) {
       console.error("Erreur fetch favorites:", err);
       setFavorites([]);
@@ -143,17 +138,19 @@ export default function Favorie() {
     if (!token) return alert("Connecte-toi pour ajouter un favori");
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/favorites/toggle`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ productId: product._id }),
-      });
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/favorites/toggle`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ productId: product._id }),
+        }
+      );
 
       const data = await res.json();
-
       setFavorites((prev) => {
         const exists = prev.find((f) => f._id === product._id);
 
@@ -167,6 +164,10 @@ export default function Favorie() {
       console.error("Erreur toggle favori:", err);
     }
   };
+  const getMainImage = (p) =>
+    p.images?.find((img) => img.isMain)?.url ||
+    p.images?.[0]?.url ||
+    "/placeholder.jpg";
 
   return (
     <PageWrapper>
@@ -180,10 +181,13 @@ export default function Favorie() {
               <ProductCard key={product._id}>
                 <ProductImageWrapper>
                   <ProductImage
-                    src={Array.isArray(product.images[0]?.url) ? product.images[0]?.url : product.images[0]?.url}
+                    src={getMainImage(product)}
                     alt={product.title}
                   />
-                  {product.badge && <Badge type={product.badge}>{product.badge}</Badge>}
+
+                  {product.badge && (
+                    <Badge type={product.badge}>{product.badge}</Badge>
+                  )}
                 </ProductImageWrapper>
 
                 <CardContent>
@@ -198,7 +202,9 @@ export default function Favorie() {
                       )}
                     </FavoriteButton>
                   </ActionWrapper>
-                  <ViewButton to={`/produit/${product._id}`}>Voir produit</ViewButton>
+                  <ViewButton to={`/produit/${product._id}`}>
+                    Voir produit
+                  </ViewButton>
                 </CardContent>
               </ProductCard>
             )
