@@ -122,7 +122,7 @@ export default function Femme() {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
-  /* Helper pour image principale */
+  // Helper pour image principale
   const getMainImage = (p) =>
     p.images?.find((img) => img.isMain)?.url || p.images?.[0]?.url || "/placeholder.jpg";
 
@@ -133,6 +133,7 @@ export default function Femme() {
       .then((data) => {
         const valid = data.filter((p) => p.images?.length && p.genre === "femme");
         setProducts(valid);
+
         // Preload images
         const promises = valid.flatMap((p) =>
           p.images.map(
@@ -165,6 +166,42 @@ export default function Femme() {
     return () => clearInterval(interval);
   }, [products]);
 
+  // Charger favoris
+  useEffect(() => {
+    if (!token) return;
+    fetch(`${import.meta.env.VITE_API_URL}/api/favorites`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => setFavorites(data.map((f) => f.productId._id)))
+      .catch(console.error);
+  }, [token]);
+
+  // Toggle favori
+  const toggleFavorite = async (id) => {
+    if (!token) {
+      navigate("/compte");
+      return;
+    }
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/favorites/toggle`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ productId: id }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        if (data.active) setFavorites((prev) => [...prev, id]);
+        else setFavorites((prev) => prev.filter((f) => f !== id));
+      }
+    } catch (err) {
+      console.error("Erreur favoris :", err);
+    }
+  };
+
   if (loading)
     return (
       <LoaderWrapper>
@@ -179,6 +216,7 @@ export default function Femme() {
         {products.map((p) => {
           const isActive = activeCardId === p._id;
           const isFav = favorites.includes(p._id);
+
           return (
             <ProductCard
               key={p._id}
@@ -208,7 +246,7 @@ export default function Femme() {
                     $favorite={isFav}
                     onClick={(e) => {
                       e.stopPropagation();
-                      // toggleFavorite ici
+                      toggleFavorite(p._id);
                     }}
                   >
                     {isFav ? <FaHeart /> : <FiHeart />}

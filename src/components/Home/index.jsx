@@ -3,6 +3,7 @@ import styled from "styled-components";
 import { Link } from "react-router-dom";
 import { FiChevronRight } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
+
 /* ---------------------- STYLES ---------------------- */
 const Wrapper = styled.div`
   display: flex;
@@ -30,7 +31,7 @@ const HeroSlide = styled.div`
 const HeroOverlay = styled.div`
   position: absolute;
   inset: 0;
-  background: rgba(0,0,0,0.35);
+  background: rgba(0, 0, 0, 0.35);
 `;
 
 const HeroText = styled.div`
@@ -90,7 +91,6 @@ const CategoryCard = styled(Link)`
   p { margin-top: 12px; font-weight: bold; }
 `;
 
-/* ===== SLIDER CONTINU ===== */
 const SliderContainer = styled.div`
   width: 100%;
   height: 380px;
@@ -147,7 +147,7 @@ const CardHorizontal = styled(Link)`
 
 const ProductGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px,1fr));
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 24px;
   padding: 20px;
 `;
@@ -173,24 +173,47 @@ export default function Home() {
   const [products, setProducts] = useState([]);
   const [activeSlide, setActiveSlide] = useState(0);
   const [imagesLoaded, setImagesLoaded] = useState(false);
+  const [categoryImages, setCategoryImages] = useState({
+    homme: "",
+    femme: "",
+    enfant: "",
+  });
 
-  /* FETCH */
+  const getFullImageUrl = (url) => {
+    if (!url) return "";
+    return url.startsWith("http") ? url : `${import.meta.env.VITE_API_URL}${url}`;
+  };
+
+  /* FETCH PRODUITS */
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/api/produits`)
-      .then(res => res.json())
-      .then(data => {
-        setHeroProducts(data.filter(p => p.hero));
-        setProducts((data?.filter(p => !p.hero) || []).slice(0, 10));
+      .then((res) => res.json())
+      .then((data) => {
+        setHeroProducts(data.filter((p) => p.hero));
+        setProducts((data.filter((p) => !p.hero) || []).slice(0, 10));
+
+        const getFirstImageByGenre = (genre) => {
+          const prod = data.find(
+            (p) => p.genre?.toLowerCase() === genre && p.images?.length > 0
+          );
+          return getFullImageUrl(prod?.images[0]?.url);
+        };
+
+        setCategoryImages({
+          homme: getFirstImageByGenre("homme"),
+          femme: getFirstImageByGenre("femme"),
+          enfant: getFirstImageByGenre("enfant"),
+        });
       });
   }, []);
 
-  /* PRELOAD HERO IMAGES (pas lazy) */
+  /* PRELOAD HERO IMAGES */
   useEffect(() => {
     if (!heroProducts.length) return;
     let loaded = 0;
-    heroProducts.forEach(p => {
+    heroProducts.forEach((p) => {
       const img = new Image();
-      img.src = p.images[0]?.url;
+      img.src = getFullImageUrl(p.images[0]?.url);
       img.onload = () => {
         loaded++;
         if (loaded === heroProducts.length) setImagesLoaded(true);
@@ -202,20 +225,16 @@ export default function Home() {
   useEffect(() => {
     if (!heroProducts.length) return;
     const interval = setInterval(
-      () => setActiveSlide(s => (s + 1) % heroProducts.length),
+      () => setActiveSlide((s) => (s + 1) % heroProducts.length),
       3500
     );
     return () => clearInterval(interval);
   }, [heroProducts]);
 
-  /* SLIDER SPEED RESPONSIVE */
-  const sliderDuration = useMemo(
-    () => (window.innerWidth < 768 ? 18 : 30),
-    []
-  );
+  const sliderDuration = useMemo(() => (window.innerWidth < 768 ? 18 : 30), []);
 
   const sliderDouble = [...heroProducts, ...heroProducts];
-  const nouveautes = products.filter(p => p.isNew);
+  const nouveautes = products.filter((p) => p.isNew);
 
   return (
     <Wrapper>
@@ -226,7 +245,7 @@ export default function Home() {
             <HeroSlide
               key={p._id}
               $active={i === activeSlide}
-              style={{ backgroundImage: `url('${p.images[0]?.url}')` }}
+              style={{ backgroundImage: `url('${getFullImageUrl(p.images[0]?.url)}')` }}
             />
           ))}
         <HeroOverlay />
@@ -243,9 +262,18 @@ export default function Home() {
 
       {/* CATEGORIES */}
       <Categories>
-        <CategoryCard to="/homme"><img src="/image1.jpg" loading="lazy" /><p>{t("categoryMen")}</p></CategoryCard>
-        <CategoryCard to="/femme"><img src="/image2.jpg" loading="lazy" /><p>{t("categoryWomen")}</p></CategoryCard>
-        <CategoryCard to="/enfant"><img src="/image3.jpg" loading="lazy" /><p>{t("categoryKids")}</p></CategoryCard>
+        <CategoryCard to="/homme">
+          <img src={categoryImages.homme} loading="lazy" alt="Homme" />
+          <p>{t("categoryMen")}</p>
+        </CategoryCard>
+        <CategoryCard to="/femme">
+          <img src={categoryImages.femme} loading="lazy" alt="Femme" />
+          <p>{t("categoryWomen")}</p>
+        </CategoryCard>
+        <CategoryCard to="/enfant">
+          <img src={categoryImages.enfant} loading="lazy" alt="Enfant" />
+          <p>{t("categoryKids")}</p>
+        </CategoryCard>
       </Categories>
 
       {/* SLIDER CONTINU */}
@@ -254,7 +282,7 @@ export default function Home() {
           {sliderDouble.map((p, i) => (
             <Slide
               key={`${p._id}-${i}`}
-              style={{ backgroundImage: `url('${p.images[0]?.url}')` }}
+              style={{ backgroundImage: `url('${getFullImageUrl(p.images[0]?.url)}')` }}
             />
           ))}
         </SlideRow>
@@ -263,9 +291,9 @@ export default function Home() {
       {/* NOUVEAUTÉS */}
       <SectionTitle>{t("newArrivals")}</SectionTitle>
       <HorizontalScroll>
-        {nouveautes.map(p => (
+        {nouveautes.map((p) => (
           <CardHorizontal key={p._id} to={`/produit/${p._id}`}>
-            <img src={p.images[0]?.url} loading="lazy" decoding="async" />
+            <img src={getFullImageUrl(p.images[0]?.url)} loading="lazy" decoding="async" />
             <p>{p.title} – {p.price} FCFA</p>
           </CardHorizontal>
         ))}
@@ -274,9 +302,9 @@ export default function Home() {
       {/* PRODUITS */}
       <SectionTitle>{t("forYou")}</SectionTitle>
       <ProductGrid>
-        {products.map(p => (
+        {products.map((p) => (
           <Card key={p._id} to={`/produit/${p._id}`}>
-            <img src={p.images[0]?.url} loading="lazy" decoding="async" />
+            <img src={getFullImageUrl(p.images[0]?.url)} loading="lazy" decoding="async" />
             <p>{p.title} – {p.price} FCFA</p>
           </Card>
         ))}

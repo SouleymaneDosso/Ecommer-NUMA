@@ -1,46 +1,35 @@
 import { useEffect, useState } from "react";
 import styled from "styled-components";
+import { useNavigate } from "react-router-dom";
 
 // ---------- STYLES ----------
 const RecommendationsWrapper = styled.div`
-  margin-top: 2rem;
+  margin-top: 3rem;
 `;
 
 const Grid = styled.div`
   display: grid;
-  gap: 1.5rem;
-
-  /* 3 colonnes sur grand écran */
-  grid-template-columns: repeat(3, 1fr);
-
-  /* 2 colonnes sur tablette et mobile */
-  @media (max-width: 992px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  @media (max-width: 576px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
+  gap: 2px; /* très petit espace entre les cartes */
+  grid-template-columns: repeat(3, 1fr); /* toujours 3 colonnes */
 `;
 
 const RecommendationItem = styled.div`
-  border: 1px solid #ddd;
   border-radius: 12px;
   overflow: hidden;
-  background: white;
-  transition:
-    transform 0.2s,
-    box-shadow 0.2s;
+  background: #fff;
   cursor: pointer;
+  transition: transform 0.35s, box-shadow 0.35s;
 
   &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.12);
   }
 `;
 
 const ImageWrapper = styled.div`
+  position: relative;
   width: 100%;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 1 / 1; /* carré parfait */
   overflow: hidden;
 `;
 
@@ -48,23 +37,31 @@ const Image = styled.img`
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.5s;
+  ${RecommendationItem}:hover & {
+    transform: scale(1.06);
+  }
 `;
 
-const Info = styled.div`
-  padding: 0.5rem 0.75rem 1rem 0.75rem;
+const Overlay = styled.div`
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  padding: 0.8rem;
+  background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);
+  color: #fff;
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.2rem;
 `;
 
 const Title = styled.h4`
-  font-size: 1rem;
-  font-weight: 600;
-  color: #333;
+  font-size: 1.05rem;
+  font-weight: 700;
   margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
   text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
 `;
 
 const Price = styled.span`
@@ -73,9 +70,24 @@ const Price = styled.span`
   color: #f59e0b;
 `;
 
+const Badge = styled.span`
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: ${({ type }) =>
+    type === "new" ? "#10b981" : type === "promo" ? "#f59e0b" : "#000"};
+  color: #fff;
+`;
+
 // ---------- COMPONENT ----------
 export default function Recommendations({ currentId }) {
   const [produits, setProduits] = useState([]);
+  const [imageIndexes, setImageIndexes] = useState({});
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!currentId) return;
@@ -98,19 +110,27 @@ export default function Recommendations({ currentId }) {
 
   if (!produits.length) return null;
 
+  const handleClick = (id) => navigate(`/produit/${id}`);
+
   return (
     <RecommendationsWrapper>
-      <h3>Produits recommandés</h3>
+      <h3 style={{ fontSize: "1.8rem", fontWeight: 700, marginBottom: "1rem" }}>
+        Produits recommandés
+      </h3>
       <Grid>
         {produits.map((p) => (
-          <RecommendationItem key={p._id}>
+          <RecommendationItem key={p._id} onClick={() => handleClick(p._id)}>
             <ImageWrapper>
-              <Image src={p.images[0]?.url} alt={p.title} />
+              <Image
+                src={p.images?.[imageIndexes[p._id] || 0]?.url || "/placeholder.jpg"}
+                alt={p.title}
+              />
+              {p.badge && <Badge type={p.badge}>{p.badge}</Badge>}
             </ImageWrapper>
-            <Info>
+            <Overlay>
               <Title>{p.title}</Title>
-              <Price>{p.price} FCFA</Price>
-            </Info>
+              <Price>{p.price.toLocaleString()} FCFA</Price>
+            </Overlay>
           </RecommendationItem>
         ))}
       </Grid>

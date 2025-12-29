@@ -3,7 +3,7 @@ import styled from "styled-components";
 import { FiHeart } from "react-icons/fi";
 import { FaHeart } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
-import { LoaderWrapper, Loader } from "../../Utils/Rotate"; // <-- loader Rotate
+import { LoaderWrapper, Loader } from "../../Utils/Rotate"; // loader Rotate
 
 /* ===== STYLES PAGE ===== */
 const PageWrapper = styled.main`
@@ -122,7 +122,7 @@ export default function Homme() {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
-  /* Helper pour image principale */
+  // Helper pour image principale
   const getMainImage = (p) =>
     p.images?.find((img) => img.isMain)?.url || p.images?.[0]?.url || "/placeholder.jpg";
 
@@ -133,14 +133,18 @@ export default function Homme() {
       .then((data) => {
         const valid = data.filter((p) => p.images?.length && p.genre === "homme");
         setProducts(valid);
+
         // Preload images
         const promises = valid.flatMap((p) =>
-          p.images.map((img) => new Promise((res) => {
-            const i = new Image();
-            i.src = img.url;
-            i.onload = res;
-            i.onerror = res;
-          }))
+          p.images.map(
+            (img) =>
+              new Promise((res) => {
+                const i = new Image();
+                i.src = img.url;
+                i.onload = res;
+                i.onerror = res;
+              })
+          )
         );
         Promise.all(promises).then(() => setLoading(false));
       })
@@ -162,11 +166,48 @@ export default function Homme() {
     return () => clearInterval(interval);
   }, [products]);
 
-  if (loading) return (
-    <LoaderWrapper>
-      <Loader />
-    </LoaderWrapper>
-  );
+  // Charger favoris
+  useEffect(() => {
+    if (!token) return;
+    fetch(`${import.meta.env.VITE_API_URL}/api/favorites`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => setFavorites(data.map((f) => f.productId._id)))
+      .catch(console.error);
+  }, [token]);
+
+  // Toggle favori
+  const toggleFavorite = async (id) => {
+    if (!token) {
+      navigate("/compte");
+      return;
+    }
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/favorites/toggle`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ productId: id }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        if (data.active) setFavorites((prev) => [...prev, id]);
+        else setFavorites((prev) => prev.filter((f) => f !== id));
+      }
+    } catch (err) {
+      console.error("Erreur favoris :", err);
+    }
+  };
+
+  if (loading)
+    return (
+      <LoaderWrapper>
+        <Loader />
+      </LoaderWrapper>
+    );
 
   return (
     <PageWrapper onClick={() => setActiveCardId(null)}>
@@ -175,6 +216,7 @@ export default function Homme() {
         {products.map((p) => {
           const isActive = activeCardId === p._id;
           const isFav = favorites.includes(p._id);
+
           return (
             <ProductCard
               key={p._id}
@@ -204,7 +246,7 @@ export default function Homme() {
                     $favorite={isFav}
                     onClick={(e) => {
                       e.stopPropagation();
-                      // toggleFavorite ici
+                      toggleFavorite(p._id);
                     }}
                   >
                     {isFav ? <FaHeart /> : <FiHeart />}

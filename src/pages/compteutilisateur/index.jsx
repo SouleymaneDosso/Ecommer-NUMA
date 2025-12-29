@@ -21,14 +21,14 @@ const Loader = styled.div`
   animation: ${spin} 1s linear infinite;
 `;
 
-/* ===== STYLES RESPONSIVE & LUXE ===== */
+/* ===== STYLES LUXE ===== */
 const PageWrapper = styled.main`
   max-width: 900px;
   margin: 3rem auto;
   padding: 2rem;
   background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  border-radius: 18px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
   font-family: 'Inter', sans-serif;
   transition: all 0.3s ease;
 
@@ -40,11 +40,16 @@ const PageWrapper = styled.main`
 
 const Section = styled.section`
   background: #f9f9f9;
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 1.5rem;
   margin-bottom: 2.5rem;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.05);
   transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  }
 
   @media (max-width: 768px) {
     padding: 1rem;
@@ -71,16 +76,16 @@ const Input = styled.input`
   flex: 1 1 200px;
   width: 100%;
   padding: 12px 14px;
-  border-radius: 8px;
+  border-radius: 10px;
   border: 1px solid #ccc;
   box-sizing: border-box;
   font-size: 1rem;
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
 
   &:focus {
     border-color: #007bff;
     outline: none;
-    box-shadow: 0 0 6px rgba(0,123,255,0.3);
+    box-shadow: 0 0 8px rgba(0,123,255,0.3);
   }
 `;
 
@@ -91,11 +96,16 @@ const EyeIcon = styled.span`
   transform: translateY(-50%);
   cursor: pointer;
   color: #555;
+  transition: color 0.25s ease;
+
+  &:hover {
+    color: #007bff;
+  }
 `;
 
 const Button = styled.button`
   padding: 12px 16px;
-  border-radius: 10px;
+  border-radius: 12px;
   border: none;
   background: #007bff;
   color: white;
@@ -108,6 +118,8 @@ const Button = styled.button`
 
   &:hover {
     background: #0056b3;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   }
 
   @media (max-width: 500px) {
@@ -140,8 +152,8 @@ const FlexRow = styled.div`
 const ProductCard = styled.div`
   display: flex;
   gap: 1rem;
-  padding: 12px;
-  border-radius: 12px;
+  padding: 14px;
+  border-radius: 14px;
   background: #fff;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
   align-items: center;
@@ -149,7 +161,8 @@ const ProductCard = styled.div`
   transition: all 0.3s ease;
 
   &:hover {
-    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.1);
   }
 
   @media (max-width: 768px) {
@@ -164,6 +177,11 @@ const ProductImage = styled.img`
   height: 70px;
   object-fit: cover;
   border-radius: 12px;
+  transition: transform 0.3s ease;
+
+  &:hover {
+    transform: scale(1.05);
+  }
 
   @media (max-width: 500px) {
     width: 100%;

@@ -1,6 +1,18 @@
 import { useState, useRef, useEffect } from "react";
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 import { LoaderWrapper, Loader } from "../Utils/Rotate";
+
+// ---------- ANIMATIONS ----------
+const fadeInScale = keyframes`
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+`;
 
 // ---------- STYLES ----------
 const Wrapper = styled.div`
@@ -10,7 +22,7 @@ const Wrapper = styled.div`
 `;
 
 const ImagesWrapper = styled.div`
-  max-height: 400px;
+  max-height: 450px;
   overflow-y: auto;
   scroll-snap-type: y mandatory;
   -webkit-overflow-scrolling: touch;
@@ -20,7 +32,7 @@ const ImagesWrapper = styled.div`
 
 const ImageSlide = styled.div`
   scroll-snap-align: start;
-  height: 400px;
+  height: 450px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -31,41 +43,46 @@ const ProductImage = styled.img`
   max-height: 100%;
   object-fit: cover;
   cursor: pointer;
-  transition: transform 0.3s ease;
+  border-radius: 12px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+
   &:hover {
     transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
   }
 `;
 
 const FullscreenOverlay = styled.div`
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100dvh;
-  background: rgba(0, 0, 0, 0.9);
+  inset: 0;
+  background: rgba(0, 0, 0, 0.95);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 9999;
-  overscroll-behavior: contain;
+  animation: ${fadeInScale} 0.25s ease-out;
 `;
 
 const FullscreenImage = styled.img`
   max-width: 90%;
   max-height: 90%;
   object-fit: contain;
-  border-radius: 8px;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
 `;
 
 const Arrow = styled.div`
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 2.5rem;
-  color: white;
+  font-size: 3rem;
+  color: #fff;
   cursor: pointer;
   user-select: none;
+  transition: color 0.2s;
+  &:hover {
+    color: #f59e0b;
+  }
   z-index: 10000;
 `;
 
@@ -74,29 +91,28 @@ const ArrowRight = styled(Arrow)`right: 20px;`;
 
 const DotsWrapper = styled.div`
   position: absolute;
-  top: 50%;
-  right: 10px;
-  transform: translateY(-50%);
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
-  flex-direction: column;
   gap: 8px;
 `;
 
 const Dot = styled.div`
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  background: ${({ isActive }) => (isActive ? "#000" : "#ccc")};
+  background: ${({ isActive }) => (isActive ? "#f59e0b" : "#ccc")};
+  transition: all 0.2s;
 `;
 
 const ThumbnailsWrapper = styled.div`
   display: flex;
-  gap: 8px;
+  gap: 6px;
   overflow-x: auto;
   padding: 8px 0;
   margin-top: 12px;
   scroll-behavior: smooth;
-
   &::-webkit-scrollbar {
     display: none;
   }
@@ -107,9 +123,9 @@ const Thumb = styled.img`
   height: 60px;
   object-fit: cover;
   cursor: pointer;
-  border: ${({ isActive }) => (isActive ? "2px solid #000" : "1px solid #ccc")};
+  border: ${({ isActive }) => (isActive ? "2px solid #f59e0b" : "1px solid #ccc")};
   border-radius: 6px;
-  opacity: ${({ isActive }) => (isActive ? 1 : 0.6)};
+  opacity: ${({ isActive }) => (isActive ? 1 : 0.7)};
   transition: all 0.2s;
 `;
 
@@ -123,7 +139,6 @@ export default function ProductImages({ images = [] }) {
   const wrapperRef = useRef(null);
   const slidesRef = useRef([]);
 
-  // Backend images -> urls
   useEffect(() => {
     if (images.length) {
       setUrls(images.map((img) => img.url));
@@ -131,15 +146,22 @@ export default function ProductImages({ images = [] }) {
     setLoading(false);
   }, [images]);
 
-  // Bloquer scroll page en fullscreen
+  // Bloquer scroll sur la page principale en fullscreen
   useEffect(() => {
-    document.body.style.overflow = isFullscreen ? "hidden" : "";
+    if (isFullscreen) {
+      document.body.style.overflow = "hidden";
+      document.body.style.overscrollBehavior = "none";
+    } else {
+      document.body.style.overflow = "";
+      document.body.style.overscrollBehavior = "";
+    }
     return () => {
       document.body.style.overflow = "";
+      document.body.style.overscrollBehavior = "";
     };
   }, [isFullscreen]);
 
-  // Scroll vers l'image actuelle si currentIndex change
+  // Scroll automatique vers l'image active si pas fullscreen
   useEffect(() => {
     if (slidesRef.current[currentIndex] && !isFullscreen) {
       slidesRef.current[currentIndex].scrollIntoView({
@@ -155,22 +177,20 @@ export default function ProductImages({ images = [] }) {
   };
 
   const closeFullscreen = () => setIsFullscreen(false);
+
   const prevImage = (e) => {
     e?.stopPropagation();
     setCurrentIndex((prev) => (prev === 0 ? urls.length - 1 : prev - 1));
   };
+
   const nextImage = (e) => {
     e?.stopPropagation();
     setCurrentIndex((prev) => (prev === urls.length - 1 ? 0 : prev + 1));
   };
 
-  if (loading) {
-    return (
-      <LoaderWrapper>
-        <Loader />
-      </LoaderWrapper>
-    );
-  }
+  if (loading) return (
+    <LoaderWrapper><Loader /></LoaderWrapper>
+  );
 
   if (!urls.length) return null;
 
@@ -178,9 +198,9 @@ export default function ProductImages({ images = [] }) {
     <Wrapper>
       <ImagesWrapper ref={wrapperRef}>
         {urls.map((url, i) => (
-          <ImageSlide key={i} ref={(el) => (slidesRef.current[i] = el)}>
+          <div key={i} ref={(el) => (slidesRef.current[i] = el)}>
             <ProductImage src={url} alt={`Produit ${i + 1}`} onClick={() => openFullscreen(i)} />
-          </ImageSlide>
+          </div>
         ))}
       </ImagesWrapper>
 
@@ -199,7 +219,7 @@ export default function ProductImages({ images = [] }) {
       {isFullscreen && urls[currentIndex] && (
         <FullscreenOverlay onClick={closeFullscreen}>
           <ArrowLeft onClick={prevImage}>&larr;</ArrowLeft>
-          <FullscreenImage src={urls[currentIndex]} />
+          <FullscreenImage src={urls[currentIndex]} onClick={(e) => e.stopPropagation()} />
           <ArrowRight onClick={nextImage}>&rarr;</ArrowRight>
         </FullscreenOverlay>
       )}
