@@ -21,7 +21,7 @@ const Loader = styled.div`
   animation: ${spin} 1s linear infinite;
 `;
 
-/* ===== STYLES ===== */
+/* ===== STYLES RESPONSIVE ===== */
 const PageWrapper = styled.main`
   max-width: 900px;
   margin: 3rem auto;
@@ -29,25 +29,46 @@ const PageWrapper = styled.main`
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+
+  @media (max-width: 768px) {
+    margin: 1.5rem;
+    padding: 1rem;
+  }
 `;
+
 const Section = styled.section`
   background: #f9f9f9;
   border-radius: 10px;
   padding: 1.2rem;
   margin-bottom: 2rem;
+
+  @media (max-width: 768px) {
+    padding: 0.8rem;
+  }
 `;
+
 const Title = styled.h2`
   margin-bottom: 1rem;
 `;
+
 const InputGroup = styled.div`
   position: relative;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+
+  @media (max-width: 500px) {
+    flex-direction: column;
+  }
 `;
+
 const Input = styled.input`
-  width: 100%;
+  flex: 1 1 200px;
   padding: 10px 12px;
   border-radius: 6px;
   border: 1px solid #ccc;
 `;
+
 const EyeIcon = styled.span`
   position: absolute;
   right: 12px;
@@ -56,6 +77,7 @@ const EyeIcon = styled.span`
   cursor: pointer;
   color: #555;
 `;
+
 const Button = styled.button`
   padding: 10px;
   border-radius: 8px;
@@ -64,22 +86,35 @@ const Button = styled.button`
   color: white;
   font-weight: 600;
   cursor: pointer;
+  flex-shrink: 0;
+
+  @media (max-width: 500px) {
+    width: 100%;
+  }
 `;
+
 const Error = styled.p`
   color: #e11d48;
   font-weight: 600;
   margin-bottom: 1rem;
 `;
+
 const Success = styled.p`
   color: #10b981;
   font-weight: 600;
   margin-bottom: 1rem;
 `;
+
 const FlexRow = styled.div`
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    gap: 0.5rem;
+  }
 `;
+
 const ProductCard = styled.div`
   display: flex;
   gap: 1rem;
@@ -88,13 +123,27 @@ const ProductCard = styled.div`
   background: #fff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   align-items: center;
+  flex: 1 1 calc(50% - 1rem);
+
+  @media (max-width: 768px) {
+    flex: 1 1 100%;
+    flex-direction: column;
+    align-items: flex-start;
+  }
 `;
+
 const ProductImage = styled.img`
   width: 70px;
   height: 70px;
   object-fit: cover;
   border-radius: 8px;
+
+  @media (max-width: 500px) {
+    width: 60px;
+    height: 60px;
+  }
 `;
+
 const StatusBadge = styled.span`
   padding: 4px 8px;
   border-radius: 6px;
@@ -108,8 +157,14 @@ const StatusBadge = styled.span`
         : props.statut === "livré"
           ? "#10b981"
           : "#ef4444"};
+
+  @media (max-width: 500px) {
+    padding: 2px 6px;
+    font-size: 0.8rem;
+  }
 `;
 
+/* ===== COMPONENT ===== */
 export default function CompteClient() {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
@@ -119,20 +174,17 @@ export default function CompteClient() {
   const [favorites, setFavorites] = useState([]);
   const [commandes, setCommandes] = useState([]);
   const [error, setError] = useState("");
+  const [updateMessage, setUpdateMessage] = useState("");
 
   const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-
   const [editUsername, setEditUsername] = useState("");
   const [editEmail, setEditEmail] = useState("");
-  const [updateMessage, setUpdateMessage] = useState("");
-
   const [filterStatus, setFilterStatus] = useState("");
 
-  // Login attempts & modal
   const [loginAttempts, setLoginAttempts] = useState(0);
   const [showResetModal, setShowResetModal] = useState(false);
 
@@ -151,7 +203,7 @@ export default function CompteClient() {
       setEditUsername(data.user.username);
       setEditEmail(data.user.email);
     } catch (err) {
-      setError(err.message);
+      setError("Impossible de récupérer vos informations.");
     } finally {
       setLoading(false);
     }
@@ -165,21 +217,25 @@ export default function CompteClient() {
     e.preventDefault();
     setError("");
     setLoading(true);
+
+    // Vérification des champs
+    if (!username || (!isLogin && !email) || !password) {
+      setError("Veuillez remplir tous les champs.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const endpoint = isLogin ? "login" : "signup";
-      const body = isLogin
-        ? { username, password }
-        : { username, email, password };
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/user/${endpoint}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        }
-      );
+      const body = isLogin ? { username, password } : { username, email, password };
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/user/${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Erreur serveur");
+      if (!res.ok) throw new Error(data.message || "Erreur lors de la connexion");
 
       if (isLogin) {
         localStorage.setItem("token", data.token);
@@ -196,7 +252,7 @@ export default function CompteClient() {
     } catch (err) {
       setError(err.message);
       if (isLogin) {
-        setLoginAttempts((prev) => {
+        setLoginAttempts(prev => {
           const attempts = prev + 1;
           if (attempts >= 3) setShowResetModal(true);
           return attempts;
@@ -212,8 +268,12 @@ export default function CompteClient() {
     setUser(null);
     navigate("/compte");
   };
+
   const handleUpdateProfile = async () => {
-    if (!editUsername || !editEmail) return;
+    if (!editUsername || !editEmail) {
+      setUpdateMessage("Tous les champs sont obligatoires.");
+      return;
+    }
     setUpdateMessage("");
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/compte`, {
@@ -226,27 +286,21 @@ export default function CompteClient() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Erreur serveur");
-      setUser((prev) => ({
-        ...prev,
-        username: editUsername,
-        email: editEmail,
-      }));
+      setUser(prev => ({ ...prev, username: editUsername, email: editEmail }));
       setUpdateMessage("Profil mis à jour ✅");
     } catch (err) {
       setUpdateMessage(err.message);
     }
   };
+
   const removeFavorite = async (id) => {
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/favorites/${id}`,
-        {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/favorites/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (!res.ok) throw new Error("Erreur lors de la suppression");
-      setFavorites((favs) => favs.filter((f) => f._id !== id));
+      setFavorites(favs => favs.filter(f => f._id !== id));
     } catch (err) {
       alert(err.message);
     }
@@ -264,65 +318,30 @@ export default function CompteClient() {
       <PageWrapper>
         <Title>{isLogin ? "Connexion" : "Inscription"}</Title>
         {error && <Error>{error}</Error>}
-        <form
-          onSubmit={handleAuth}
-          style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
-        >
-          <Input
-            placeholder="Nom d'utilisateur"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
-          {!isLogin && (
-            <Input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          )}
+        <form onSubmit={handleAuth} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <Input placeholder="Nom d'utilisateur" value={username} onChange={e => setUsername(e.target.value)} required />
+          {!isLogin && <Input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />}
           <InputGroup>
-            <Input
-              type={showPassword ? "text" : "password"}
-              placeholder="Mot de passe"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-            <EyeIcon onClick={() => setShowPassword(!showPassword)}>
-              {showPassword ? <FiEyeOff /> : <FiEye />}
-            </EyeIcon>
+            <Input type={showPassword ? "text" : "password"} placeholder="Mot de passe" value={password} onChange={e => setPassword(e.target.value)} required />
+            <EyeIcon onClick={() => setShowPassword(!showPassword)}>{showPassword ? <FiEyeOff /> : <FiEye />}</EyeIcon>
           </InputGroup>
-          <Button type="submit">
-            {isLogin ? "Se connecter" : "Créer un compte"}
-          </Button>
+          <Button type="submit">{isLogin ? "Se connecter" : "Créer un compte"}</Button>
         </form>
 
         <p style={{ marginTop: "1rem", textAlign: "center" }}>
           {isLogin ? "Pas de compte ?" : "Déjà inscrit ?"}{" "}
-          <span
-            style={{ color: "#007bff", cursor: "pointer", fontWeight: 600 }}
-            onClick={() => {
-              setIsLogin(!isLogin);
-              setError("");
-            }}
-          >
+          <span style={{ color: "#007bff", cursor: "pointer", fontWeight: 600 }}
+            onClick={() => { setIsLogin(!isLogin); setError(""); }}>
             {isLogin ? "Créer un compte" : "Se connecter"}
           </span>
         </p>
 
-        {showResetModal && (
-          <ResetPasswordModal onClose={() => setShowResetModal(false)} />
-        )}
+        {showResetModal && <ResetPasswordModal onClose={() => setShowResetModal(false)} />}
       </PageWrapper>
     );
   }
 
-  const filteredCommandes = filterStatus
-    ? commandes.filter((c) => c.statut === filterStatus)
-    : commandes;
+  const filteredCommandes = filterStatus ? commandes.filter(c => c.statut === filterStatus) : commandes;
 
   return (
     <PageWrapper>
@@ -330,48 +349,25 @@ export default function CompteClient() {
         <Title>Bonjour {user.username}</Title>
         <p>Email : {user.email}</p>
         <InputGroup style={{ marginTop: "0.5rem" }}>
-          <Input
-            value={editUsername}
-            onChange={(e) => setEditUsername(e.target.value)}
-            placeholder="Modifier username"
-          />
-          <Input
-            value={editEmail}
-            onChange={(e) => setEditEmail(e.target.value)}
-            placeholder="Modifier email"
-          />
+          <Input value={editUsername} onChange={e => setEditUsername(e.target.value)} placeholder="Modifier username" />
+          <Input value={editEmail} onChange={e => setEditEmail(e.target.value)} placeholder="Modifier email" />
           <Button onClick={handleUpdateProfile}>Mettre à jour</Button>
           {updateMessage && <Success>{updateMessage}</Success>}
         </InputGroup>
-        <Button
-          onClick={logout}
-          style={{ marginTop: "0.5rem", background: "#ef4444" }}
-        >
-          Se déconnecter
-        </Button>
+        <Button onClick={logout} style={{ marginTop: "0.5rem", background: "#ef4444" }}>Se déconnecter</Button>
       </Section>
 
       <Section>
         <Title>Favoris</Title>
-        {favorites.length === 0 ? (
-          <p>Aucun favori</p>
-        ) : (
+        {favorites.length === 0 ? <p>Aucun favori</p> : (
           <FlexRow>
-            {favorites.map((f) => (
+            {favorites.map(f => (
               <ProductCard key={f._id}>
-                <ProductImage
-                  src={
-                    f.productId?.images[0]?.url ||
-                    "https://via.placeholder.com/70"
-                  }
-                  alt={f.productId?.title || "Produit"}
-                />
+                <ProductImage src={f.productId?.images[0]?.url || "https://via.placeholder.com/70"} alt={f.productId?.title || "Produit"} />
                 <div>
                   <p>{f.productId?.title || "—"}</p>
                   <p>{f.productId?.price?.toLocaleString() || "—"} FCFA</p>
-                  <Button onClick={() => removeFavorite(f._id)}>
-                    Supprimer
-                  </Button>
+                  <Button onClick={() => removeFavorite(f._id)}>Supprimer</Button>
                 </div>
               </ProductCard>
             ))}
@@ -383,10 +379,7 @@ export default function CompteClient() {
         <Title>Commandes</Title>
         <div style={{ marginBottom: "1rem" }}>
           <label>Filtrer par statut : </label>
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-          >
+          <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
             <option value="">Tous</option>
             <option value="en cours">En cours</option>
             <option value="envoyé">Envoyé</option>
@@ -395,27 +388,19 @@ export default function CompteClient() {
           </select>
         </div>
 
-        {filteredCommandes.length === 0 ? (
-          <p>Aucune commande</p>
-        ) : (
+        {filteredCommandes.length === 0 ? <p>Aucune commande</p> : (
           <FlexRow>
-            {filteredCommandes.map((c) => (
+            {filteredCommandes.map(c => (
               <ProductCard key={c._id}>
                 <div>
                   <p>ID: {c._id}</p>
-                  <p>
-                    Statut:{" "}
-                    <StatusBadge statut={c.statut}>{c.statut}</StatusBadge>
-                  </p>
+                  <p>Statut: <StatusBadge statut={c.statut}>{c.statut}</StatusBadge></p>
                   <p>Total: {c.total.toLocaleString()} FCFA</p>
                   <p>Date: {new Date(c.createdAt).toLocaleString()}</p>
                   <div>
                     Produits:
-                    {c.produits.map((pr) => (
-                      <p key={pr.produitId?._id || Math.random()}>
-                        {pr.produitId?.title || "Produit supprimé"} x{" "}
-                        {pr.quantite}
-                      </p>
+                    {c.produits.map(pr => (
+                      <p key={pr.produitId?._id || Math.random()}>{pr.produitId?.title || "Produit supprimé"} x {pr.quantite}</p>
                     ))}
                   </div>
                 </div>
