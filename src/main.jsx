@@ -24,6 +24,7 @@ import FAQ from "./pages/faq";
 import Contact from "./pages/contact";
 import ReturnPolicy from "./pages/politiqueretour";
 import Delivery from "./pages/livraison"
+import TermsOfUse from "./pages/conditionutilisation";
 import Erreur from "./components/Erreur";
 
 import AdminLogin from './pages/AdminLogin';
@@ -32,7 +33,6 @@ import AdminLayout from "./pages/AdminLayout";
 import AdminProducts from "./pages/AdminProducts";
 import AdminOrdersPro from "./pages/AdminCommande";
 import CompteClient from "./pages/compteutilisateur";
-import TermsOfUse from "./pages/compteutilisateur";
 import Collection from "./pages/Collection";
 
 import "./i18n";
@@ -66,7 +66,7 @@ createRoot(document.getElementById("root")).render(
             <Route path="/promo" element={<PublicLayout><Promo /></PublicLayout>} />
             <Route path="/apropo" element={<PublicLayout><Apropos /></PublicLayout>} />
             <Route path="/faq" element={<PublicLayout><FAQ /></PublicLayout>} />
-             <Route path="/politiqueretour" element={<PublicLayout>< ReturnPolicy  /></PublicLayout>} />
+             <Route path="/politiqueretour" element={<PublicLayout><ReturnPolicy  /></PublicLayout>} />
             <Route path="/contact" element={<PublicLayout><Contact /></PublicLayout>} />
             <Route path="/livraison" element={<PublicLayout><Delivery /></PublicLayout>} />  
             <Route path="/conditionUtilisation" element={<PublicLayout><TermsOfUse /></PublicLayout>} /> 

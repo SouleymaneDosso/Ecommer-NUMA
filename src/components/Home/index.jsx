@@ -82,15 +82,16 @@ const CategoryCard = styled(Link)`
   text-align: center;
   width: 120px;
 
+
   img {
-    width: 120px;
-    height: 120px;
+    width: 90px;
+    height: 90px;
     object-fit: cover;
-    border-radius: 16px;
+    border-radius: 32px;
   }
 
   p {
-    margin-top: 12px;
+    margin-top: 1px;
     font-weight: bold;
   }
 `;
@@ -309,7 +310,7 @@ export default function Home() {
             ) : (
               <SkeletonImage />
             )}
-            <p>{t(`category${cat.charAt(0).toUpperCase() + cat.slice(1)}`)}</p>
+            <p>{t(`${cat.charAt(0).toUpperCase() + cat.slice(1)}`)}</p>
           </CategoryCard>
         ))}
       </Categories>

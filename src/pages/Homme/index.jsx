@@ -3,7 +3,7 @@ import styled from "styled-components";
 import { FiHeart } from "react-icons/fi";
 import { FaHeart } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
-import { LoaderWrapper, Loader } from "../../Utils/Rotate"; // loader Rotate
+import { LoaderWrapper, Loader } from "../../Utils/Rotate";
 
 /* ===== STYLES PAGE ===== */
 const PageWrapper = styled.main`
@@ -131,7 +131,7 @@ export default function Homme() {
     fetch(`${import.meta.env.VITE_API_URL}/api/produits`)
       .then((res) => res.json())
       .then((data) => {
-        const valid = data.filter((p) => p.images?.length && p.genre === "homme");
+        const valid = data.filter((p) => p && p.images?.length && p.genre === "homme");
         setProducts(valid);
 
         // Preload images
@@ -157,6 +157,7 @@ export default function Homme() {
       setImageIndexes((prev) => {
         const updated = { ...prev };
         products.forEach((p) => {
+          if (!p?._id) return; // Sécurité
           const current = prev[p._id] || 0;
           updated[p._id] = (current + 1) % (p.images?.length || 1);
         });
@@ -173,7 +174,7 @@ export default function Homme() {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
-      .then((data) => setFavorites(data.map((f) => f.productId._id)))
+      .then((data) => setFavorites(data.map((f) => f.productId?._id).filter(Boolean)))
       .catch(console.error);
   }, [token]);
 
@@ -213,49 +214,52 @@ export default function Homme() {
     <PageWrapper onClick={() => setActiveCardId(null)}>
       <PageTitle>Collection Homme</PageTitle>
       <Grid>
-        {products.map((p) => {
-          const isActive = activeCardId === p._id;
-          const isFav = favorites.includes(p._id);
+        {products
+          .filter((p) => p && p._id) // filtrer les produits invalides
+          .map((p) => {
+            const pid = p._id;
+            const isActive = activeCardId === pid;
+            const isFav = favorites.includes(pid);
 
-          return (
-            <ProductCard
-              key={p._id}
-              onClick={(e) => {
-                e.stopPropagation();
-                setActiveCardId(isActive ? null : p._id);
-              }}
-            >
-              <ProductImageWrapper>
-                <ProductImage
-                  src={p.images?.[imageIndexes[p._id] || 0]?.url || getMainImage(p)}
-                  alt={p.title}
-                />
-                {p.badge && <Badge type={p.badge}>{p.badge}</Badge>}
-                {isActive && (
-                  <ViewButton to={`/produit/${p._id}`} $visible={true}>
-                    Voir produit
-                  </ViewButton>
-                )}
-              </ProductImageWrapper>
+            return (
+              <ProductCard
+                key={pid}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveCardId(isActive ? null : pid);
+                }}
+              >
+                <ProductImageWrapper>
+                  <ProductImage
+                    src={p.images?.[imageIndexes[pid] || 0]?.url || getMainImage(p)}
+                    alt={p.title}
+                  />
+                  {p.badge && <Badge type={p.badge}>{p.badge}</Badge>}
+                  {isActive && (
+                    <ViewButton to={`/produit/${pid}`} $visible={true}>
+                      Voir produit
+                    </ViewButton>
+                  )}
+                </ProductImageWrapper>
 
-              <CardContent>
-                <ProductTitle>{p.title}</ProductTitle>
-                <ActionWrapper>
-                  <ProductPrice>{p.price} FCFA</ProductPrice>
-                  <FavoriteButton
-                    $favorite={isFav}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleFavorite(p._id);
-                    }}
-                  >
-                    {isFav ? <FaHeart /> : <FiHeart />}
-                  </FavoriteButton>
-                </ActionWrapper>
-              </CardContent>
-            </ProductCard>
-          );
-        })}
+                <CardContent>
+                  <ProductTitle>{p.title}</ProductTitle>
+                  <ActionWrapper>
+                    <ProductPrice>{p.price} FCFA</ProductPrice>
+                    <FavoriteButton
+                      $favorite={isFav}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleFavorite(pid);
+                      }}
+                    >
+                      {isFav ? <FaHeart /> : <FiHeart />}
+                    </FavoriteButton>
+                  </ActionWrapper>
+                </CardContent>
+              </ProductCard>
+            );
+          })}
       </Grid>
     </PageWrapper>
   );

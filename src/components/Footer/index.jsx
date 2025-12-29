@@ -4,6 +4,7 @@ import styled, { keyframes } from "styled-components";
 import { FiFacebook, FiTwitter, FiInstagram, FiChevronDown, FiHome, FiGrid, FiUser } from "react-icons/fi";
 import { ThemeContext } from "../../Utils/Context";
 import { useTranslation } from "react-i18next";
+import Apropos from './../../pages/apropos';
 
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(20px); }
@@ -133,25 +134,24 @@ export default function Footer() {
     {
       title: t("about"),
       links: [
-        { text: t("ourStory"), to: "apropo" },
-        { text: t("faq"), to: "faq" },
+        { text: t("ourStory"), to: "/apropo" },
+        { text: t("faq"), to: "/faq" },
         { text: t("contact"), to: "/contact" }
       ]
     },
     {
       title: t("services"),
       links: [
-        { text: t("returnPolicy"), to: "politiqueretour" },
-        { text: t("shipping"), to: "livraison" },
-        { text: t("terms"), to: "conditionUtilisation" }
+        { text: t("returnPolicy"), to: "/politiqueretour" },
+        { text: t("shipping"), to: "/livraison" },
+        { text: t("terms"), to: "/conditionUtilisation" }
       ]
     },
     {
       title: t("social"),
       links: [
-        { text: "Facebook", href: "#", icon: <FiFacebook /> },
-        { text: "Twitter", href: "#", icon: <FiTwitter /> },
-        { text: "Instagram", href: "#", icon: <FiInstagram /> }
+        { text: "Facebook", href: "https://www.facebook.com/share/1E3D5avSoi/?mibextid=wwXIfr", icon: <FiFacebook /> },
+        { text: "Instagram", href: "https://www.instagram.com/numa12472?igsh=MXUyeDFrM2kzbDczdQ%3D%3D&utm_source=qr", icon: <FiInstagram /> }
       ]
     }
   ];

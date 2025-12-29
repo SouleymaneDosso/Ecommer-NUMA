@@ -53,7 +53,7 @@ const ColorCircle = styled.button`
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  border: ${({ active }) => (active ? "2px solid #000" : "1px solid #ccc")};
+  border: ${({ $active }) => ($active ? "2px solid #000" : "1px solid #ccc")};
   background: ${({ color }) => color || "#fff"};
   cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
   opacity: ${({ disabled }) => (disabled ? 0.4 : 1)};
@@ -63,7 +63,7 @@ const SizeButton = styled.button`
   padding: 10px;
   min-width: 44px;
   border-radius: 6px;
-  border: ${({ active }) => (active ? "2px solid #000" : "1px solid #ccc")};
+  border: ${({ $active }) => ($active ? "2px solid #000" : "1px solid #ccc")};
   background: ${({ disabled }) => (disabled ? "#f5f5f5" : "#fff")};
   color: ${({ disabled }) => (disabled ? "#aaa" : "#000")};
   cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
@@ -164,7 +164,7 @@ export default function AddToCartBar({
             <ColorCircle
               color={parseColor(color)}
               title={color}
-              active={selectedColor === color}
+              $active={selectedColor === color}
               disabled={produit.tailles.every(
                 (size) => (stockParVariation?.[color]?.[size] ?? 0) === 0
               )}
@@ -188,7 +188,7 @@ export default function AddToCartBar({
           return (
             <SizeButton
               key={size}
-              active={selectedSize === size}
+              $active={selectedSize === size}
               disabled={!selectedColor || stock === 0}
               onClick={() => setSelectedSize(size)}
             >
