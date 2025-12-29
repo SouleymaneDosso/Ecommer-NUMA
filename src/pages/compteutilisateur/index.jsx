@@ -21,14 +21,16 @@ const Loader = styled.div`
   animation: ${spin} 1s linear infinite;
 `;
 
-/* ===== STYLES RESPONSIVE ===== */
+/* ===== STYLES RESPONSIVE & LUXE ===== */
 const PageWrapper = styled.main`
   max-width: 900px;
   margin: 3rem auto;
   padding: 2rem;
   background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  font-family: 'Inter', sans-serif;
+  transition: all 0.3s ease;
 
   @media (max-width: 768px) {
     margin: 1.5rem;
@@ -38,23 +40,26 @@ const PageWrapper = styled.main`
 
 const Section = styled.section`
   background: #f9f9f9;
-  border-radius: 10px;
-  padding: 1.2rem;
-  margin-bottom: 2rem;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2.5rem;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
 
   @media (max-width: 768px) {
-    padding: 0.8rem;
+    padding: 1rem;
   }
 `;
 
 const Title = styled.h2`
   margin-bottom: 1rem;
+  font-weight: 700;
 `;
 
 const InputGroup = styled.div`
   position: relative;
   display: flex;
-  gap: 0.5rem;
+  gap: 0.8rem;
   flex-wrap: wrap;
 
   @media (max-width: 500px) {
@@ -64,9 +69,19 @@ const InputGroup = styled.div`
 
 const Input = styled.input`
   flex: 1 1 200px;
-  padding: 10px 12px;
-  border-radius: 6px;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 8px;
   border: 1px solid #ccc;
+  box-sizing: border-box;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+
+  &:focus {
+    border-color: #007bff;
+    outline: none;
+    box-shadow: 0 0 6px rgba(0,123,255,0.3);
+  }
 `;
 
 const EyeIcon = styled.span`
@@ -79,14 +94,21 @@ const EyeIcon = styled.span`
 `;
 
 const Button = styled.button`
-  padding: 10px;
-  border-radius: 8px;
+  padding: 12px 16px;
+  border-radius: 10px;
   border: none;
   background: #007bff;
   color: white;
   font-weight: 600;
   cursor: pointer;
+  transition: all 0.3s ease;
   flex-shrink: 0;
+  min-width: 120px;
+  max-width: 200px;
+
+  &:hover {
+    background: #0056b3;
+  }
 
   @media (max-width: 500px) {
     width: 100%;
@@ -118,12 +140,17 @@ const FlexRow = styled.div`
 const ProductCard = styled.div`
   display: flex;
   gap: 1rem;
-  padding: 10px;
-  border-radius: 8px;
+  padding: 12px;
+  border-radius: 12px;
   background: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
   align-items: center;
   flex: 1 1 calc(50% - 1rem);
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+  }
 
   @media (max-width: 768px) {
     flex: 1 1 100%;
@@ -136,17 +163,18 @@ const ProductImage = styled.img`
   width: 70px;
   height: 70px;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: 12px;
 
   @media (max-width: 500px) {
-    width: 60px;
-    height: 60px;
+    width: 100%;
+    height: auto;
+    max-height: 150px;
   }
 `;
 
 const StatusBadge = styled.span`
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 5px 10px;
+  border-radius: 8px;
   font-weight: 600;
   color: white;
   background-color: ${(props) =>
@@ -159,8 +187,8 @@ const StatusBadge = styled.span`
           : "#ef4444"};
 
   @media (max-width: 500px) {
-    padding: 2px 6px;
-    font-size: 0.8rem;
+    padding: 3px 6px;
+    font-size: 0.85rem;
   }
 `;
 
@@ -209,22 +237,17 @@ export default function CompteClient() {
     }
   };
 
-  useEffect(() => {
-    if (token) fetchCompte();
-  }, [token]);
+  useEffect(() => { if (token) fetchCompte(); }, [token]);
 
   const handleAuth = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
-
-    // Vérification des champs
     if (!username || (!isLogin && !email) || !password) {
       setError("Veuillez remplir tous les champs.");
       setLoading(false);
       return;
     }
-
     try {
       const endpoint = isLogin ? "login" : "signup";
       const body = isLogin ? { username, password } : { username, email, password };
@@ -233,10 +256,8 @@ export default function CompteClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Erreur lors de la connexion");
-
       if (isLogin) {
         localStorage.setItem("token", data.token);
         fetchCompte();
@@ -245,7 +266,6 @@ export default function CompteClient() {
         alert("Compte créé. Connecte-toi !");
         setIsLogin(true);
       }
-
       setUsername("");
       setEmail("");
       setPassword("");
@@ -327,7 +347,6 @@ export default function CompteClient() {
           </InputGroup>
           <Button type="submit">{isLogin ? "Se connecter" : "Créer un compte"}</Button>
         </form>
-
         <p style={{ marginTop: "1rem", textAlign: "center" }}>
           {isLogin ? "Pas de compte ?" : "Déjà inscrit ?"}{" "}
           <span style={{ color: "#007bff", cursor: "pointer", fontWeight: 600 }}
@@ -335,7 +354,6 @@ export default function CompteClient() {
             {isLogin ? "Créer un compte" : "Se connecter"}
           </span>
         </p>
-
         {showResetModal && <ResetPasswordModal onClose={() => setShowResetModal(false)} />}
       </PageWrapper>
     );
@@ -352,8 +370,8 @@ export default function CompteClient() {
           <Input value={editUsername} onChange={e => setEditUsername(e.target.value)} placeholder="Modifier username" />
           <Input value={editEmail} onChange={e => setEditEmail(e.target.value)} placeholder="Modifier email" />
           <Button onClick={handleUpdateProfile}>Mettre à jour</Button>
-          {updateMessage && <Success>{updateMessage}</Success>}
         </InputGroup>
+        {updateMessage && <Success>{updateMessage}</Success>}
         <Button onClick={logout} style={{ marginTop: "0.5rem", background: "#ef4444" }}>Se déconnecter</Button>
       </Section>
 
