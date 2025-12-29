@@ -1,15 +1,28 @@
 import { Link } from "react-router-dom";
 import styled, { keyframes } from "styled-components";
-import { FiShoppingBag, FiUser, FiSun, FiMoon, FiX, FiHeart } from "react-icons/fi";
+import {
+  FiShoppingBag,
+  FiUser,
+  FiSun,
+  FiMoon,
+  FiX,
+  FiHeart,
+} from "react-icons/fi";
 import { useContext, useState, useEffect } from "react";
-import { ThemeContext, PanierContext } from "../../Utils/Context";
+import { ThemeContext, PanierContext } from "../../Utils/Context"; // Ajout du PanierContext
 import { useTranslation } from "react-i18next";
 
-const HEADER_HEIGHT = 70;
+const HEADER_HEIGHT = 70; 
 
 /* ===== ANIMATIONS ===== */
-const fadeIn = keyframes`from { opacity: 0 } to { opacity: 1 }`;
-const fadeOut = keyframes`from { opacity: 1 } to { opacity: 0 }`;
+const fadeIn = keyframes`
+  from { opacity: 0 }
+  to { opacity: 1 }
+`;
+const fadeOut = keyframes`
+  from { opacity: 1 }
+  to { opacity: 0 }
+`;
 
 /* ===== STYLES ===== */
 const HeaderWrapper = styled.header`
@@ -37,32 +50,77 @@ const HeaderWrapper = styled.header`
     $isdark ? "0 6px 28px rgba(0,0,0,0.6)" : "0 6px 28px rgba(15,23,42,0.08)"};
 `;
 
-const HeaderSpacer = styled.div`height: ${HEADER_HEIGHT}px; width: 100%;`;
-const Logo = styled(Link)`font-weight: 700; font-size: 1.15rem; letter-spacing: -0.02em; color: ${({ $isdark }) => ($isdark ? "#e6eefc" : "#0f172a")}; text-decoration: none;`;
-const DesktopNav = styled.nav`display: flex; gap: 1rem; align-items: center; @media (max-width: 840px) { display: none; }`;
-const NavLink = styled(Link)`color: ${({ $isdark }) => ($isdark ? "#e6eefc" : "#071230")}; text-decoration: none; padding: 6px 10px; border-radius: 8px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; transition: transform 160ms ease, background 160ms ease, color 160ms ease; &:hover { transform: translateY(-2px); background: ${({ $isdark }) => ($isdark ? "rgba(255,255,255,0.03)" : "rgba(15,23,42,0.03)")}; }`;
-const Actions = styled.div`display: flex; align-items: center; gap: 4px; position: relative;`;
-const IconButton = styled.button`width: 36px; height: 36px; min-width: 36px; border-radius: 8px; border: none; cursor: pointer; background: ${({ $isdark }) => ($isdark ? "rgba(255,255,255,0.03)" : "rgba(15,23,42,0.03)")}; color: ${({ $isdark }) => ($isdark ? "#fff" : "#0f172a")}; display: inline-flex; align-items: center; justify-content: center; transition: transform 150ms ease, background 150ms ease; &:hover { transform: scale(1.05); }`;
+const HeaderSpacer = styled.div`
+  height: ${HEADER_HEIGHT}px;
+  width: 100%;
+`;
 
-const CartBadge = styled.span`
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  background: #ff0000;
-  color: #fff;
-  font-size: 0.65rem;
+const Logo = styled(Link)`
   font-weight: 700;
-  width: 18px;
-  height: 18px;
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+  color: ${({ $isdark }) => ($isdark ? "#e6eefc" : "#0f172a")};
+  text-decoration: none;
+`;
+
+const DesktopNav = styled.nav`
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+
+  @media (max-width: 840px) {
+    display: none;
+  }
+`;
+
+const NavLink = styled(Link)`
+  color: ${({ $isdark }) => ($isdark ? "#e6eefc" : "#071230")};
+  text-decoration: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: transform 160ms ease, background 160ms ease, color 160ms ease;
+  &:hover {
+    transform: translateY(-2px);
+    background: ${({ $isdark }) =>
+      $isdark ? "rgba(255,255,255,0.03)" : "rgba(15,23,42,0.03)"};
+  }
+`;
+
+const Actions = styled.div`
   display: flex;
   align-items: center;
+  gap: 4px;
+  position: relative;
+`;
+
+const IconButton = styled.button`
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  background: ${({ $isdark }) =>
+    $isdark ? "rgba(255,255,255,0.03)" : "rgba(15,23,42,0.03)"};
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#0f172a")};
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  transition: transform 150ms ease, background 150ms ease;
+  &:hover {
+    transform: scale(1.05);
+  }
 `;
 
 const BurgerButton = styled.button`
   display: none;
-  @media (max-width: 840px) { display: inline-flex; }
+  @media (max-width: 840px) {
+    display: inline-flex;
+  }
   width: 40px;
   height: 40px;
   padding: 6px;
@@ -72,6 +130,7 @@ const BurgerButton = styled.button`
   cursor: pointer;
   position: relative;
   z-index: 10001;
+
   div.bar {
     width: 22px;
     height: 2px;
@@ -82,12 +141,28 @@ const BurgerButton = styled.button`
     transform: translateX(-50%);
     transition: all 260ms ease;
   }
-  div.bar.top { top: ${({ $open }) => ($open ? "19px" : "12px")}; transform: ${({ $open }) => ($open ? "rotate(45deg)" : "none")}; }
-  div.bar.mid { top: 21px; opacity: ${({ $open }) => ($open ? 0 : 1)}; }
-  div.bar.bot { top: ${({ $open }) => ($open ? "19px" : "30px")}; transform: ${({ $open }) => ($open ? "rotate(-45deg)" : "none")}; }
+  div.bar.top {
+    top: ${({ $open }) => ($open ? "19px" : "12px")};
+    transform: ${({ $open }) => ($open ? "rotate(45deg)" : "none")};
+  }
+  div.bar.mid {
+    top: 21px;
+    opacity: ${({ $open }) => ($open ? 0 : 1)};
+  }
+  div.bar.bot {
+    top: ${({ $open }) => ($open ? "19px" : "30px")};
+    transform: ${({ $open }) => ($open ? "rotate(-45deg)" : "none")};
+  }
 `;
 
-const Overlay = styled.div`display: ${({ $open }) => ($open ? "block" : "none")}; position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 1000; animation: ${({ $open }) => ($open ? fadeIn : fadeOut)} 260ms ease forwards;`;
+const Overlay = styled.div`
+  display: ${({ $open }) => ($open ? "block" : "none")};
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 1000;
+  animation: ${({ $open }) => ($open ? fadeIn : fadeOut)} 260ms ease forwards;
+`;
 
 const MobilePanel = styled.aside`
   position: fixed;
@@ -102,26 +177,115 @@ const MobilePanel = styled.aside`
   z-index: 1001;
   display: flex;
   flex-direction: column;
-  box-shadow: ${({ $open }) => ($open ? "-12px 0 30px rgba(0,0,0,0.24)" : "none")};
+  box-shadow: ${({ $open }) =>
+    $open ? "-12px 0 30px rgba(0,0,0,0.24)" : "none"};
 `;
 
-const MobileHeader = styled.div`display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid ${({ $isdark }) => ($isdark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.06)")};`;
-const MobileTitle = styled.div`font-weight: 700; font-size: 1.15rem; color: ${({ $isdark }) => ($isdark ? "#fff" : "#071230")};`;
-const CloseButton = styled.button`background: none; border: none; cursor: pointer; color: ${({ $isdark }) => ($isdark ? "#fff" : "#071230")}; font-size: 22px; z-index: 1002;`;
-const MobileContent = styled.div`padding: 20px; display: flex; flex-direction: column; gap: 12px;`;
-const MobileItem = styled(Link)`padding: 12px; border-radius: 8px; text-decoration: none; color: ${({ $isdark }) => ($isdark ? "#fff" : "#071230")}; font-weight: 600; &:hover { background: ${({ $isdark }) => ($isdark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.03)")}; }`;
+const MobileHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid
+    ${({ $isdark }) => ($isdark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.06)")};
+`;
 
+const MobileTitle = styled.div`
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#071230")};
+`;
+
+const CloseButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#071230")};
+  font-size: 22px;
+  z-index: 1002;
+`;
+
+const MobileContent = styled.div`
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+const MobileItem = styled(Link)`
+  padding: 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#071230")};
+  font-weight: 600;
+  &:hover {
+    background: ${({ $isdark }) =>
+      $isdark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.03)"};
+  }
+`;
+
+/* ===== COMPTEUR PANIER ===== */
+const CartCount = styled.span`
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: red;
+  color: white;
+  width: 18px;
+  height: 18px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+/* ===== COMPONENT ===== */
 export default function Header() {
   const { theme, themeToglle, ToggleTheme } = useContext(ThemeContext || {});
+  const { ajouter } = useContext(PanierContext); // compteur
   const toggleTheme = themeToglle ?? ToggleTheme ?? (() => {});
   const $isdark = theme === "light";
+
   const { t, i18n } = useTranslation();
-  const toggleLangue = () => i18n.changeLanguage(i18n.language === "fr" ? "en" : "fr");
+  const toggleLangue = () =>
+    i18n.changeLanguage(i18n.language === "fr" ? "en" : "fr");
+
   const [open, setOpen] = useState(false);
 
-  // ======= Panier =======
-  const { ajouter } = useContext(PanierContext);
-  const totalArticles = ajouter.reduce((acc, item) => acc + item.quantite, 0);
+  // Scroll lock fiable
+  useEffect(() => {
+    let scrollY = 0;
+    if (open) {
+      scrollY = window.scrollY || window.pageYOffset;
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.left = "0";
+      document.body.style.right = "0";
+    } else {
+      const top = document.body.style.top;
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      if (top) {
+        const scrollPosition = parseInt(top.replace("-", "").replace("px", ""), 10);
+        window.scrollTo(0, scrollPosition);
+      }
+    }
+  }, [open]);
+
+  // Close on escape
+  useEffect(() => {
+    function onKey(e) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
+  const totalItems = ajouter.reduce((acc, item) => acc + item.quantite, 0);
 
   return (
     <>
@@ -136,15 +300,28 @@ export default function Header() {
         </DesktopNav>
 
         <Actions>
-          <IconButton onClick={toggleTheme} $isdark={$isdark}>{$isdark ? <FiMoon size={18}/> : <FiSun size={18}/>}</IconButton>
-          <IconButton onClick={toggleLangue} $isdark={$isdark}>{i18n.language === "fr" ? "FR" : "EN"}</IconButton>
+          <IconButton onClick={toggleTheme} $isdark={$isdark}>
+            {$isdark ? <FiMoon size={18} /> : <FiSun size={18} />}
+          </IconButton>
+          <IconButton onClick={toggleLangue} $isdark={$isdark}>
+            {i18n.language === "fr" ? "FR" : "EN"}
+          </IconButton>
+
           <NavLink to="/compte" $isdark={$isdark}><FiUser /></NavLink>
+
           <NavLink to="/panier" $isdark={$isdark} style={{ position: "relative" }}>
             <FiShoppingBag />
-            {totalArticles > 0 && <CartBadge>{totalArticles}</CartBadge>}
+            {totalItems > 0 && <CartCount>{totalItems}</CartCount>}
           </NavLink>
+
           <NavLink to="/favoris" $isdark={$isdark}><FiHeart /></NavLink>
-          <BurgerButton onClick={() => setOpen(prev => !prev)} $open={open} $isdark={$isdark} aria-expanded={open}>
+
+          <BurgerButton
+            onClick={() => setOpen(prev => !prev)}
+            $open={open}
+            $isdark={$isdark}
+            aria-expanded={open}
+          >
             <div className="bar top" />
             <div className="bar mid" />
             <div className="bar bot" />
@@ -153,7 +330,9 @@ export default function Header() {
       </HeaderWrapper>
 
       <HeaderSpacer />
+
       <Overlay $open={open} onClick={() => setOpen(false)} />
+
       <MobilePanel $open={open} $isdark={$isdark}>
         <MobileHeader $isdark={$isdark}>
           <MobileTitle $isdark={$isdark}>NUMA</MobileTitle>
@@ -170,10 +349,7 @@ export default function Header() {
           <div style={{ height: 1, background: $isdark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.04)", margin: "8px 0 4px" }} />
 
           <MobileItem to="/compte" onClick={() => setOpen(false)}><FiUser /> {t("account")}</MobileItem>
-          <MobileItem to="/panier" onClick={() => setOpen(false)} style={{ position: "relative" }}>
-            <FiShoppingBag /> {t("cart")}
-            {totalArticles > 0 && <CartBadge>{totalArticles}</CartBadge>}
-          </MobileItem>
+          <MobileItem to="/panier" onClick={() => setOpen(false)}><FiShoppingBag /> {t("cart")}</MobileItem>
         </MobileContent>
       </MobilePanel>
     </>
