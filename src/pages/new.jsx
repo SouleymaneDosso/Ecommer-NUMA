@@ -1,9 +1,14 @@
-// src/pages/CollectionLuxuryMobile.jsx
 import { useState, useEffect, useRef } from "react";
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { LoaderWrapper, Loader } from "../Utils/Rotate";
+
+// ---------- ANIMATIONS ----------
+const badgeAnim = keyframes`
+  0% { transform: translateY(-10px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+`;
 
 // ---------- STYLES ----------
 const PageWrapper = styled.main`
@@ -26,7 +31,7 @@ const SliderWrapper = styled.div`
   }
 `;
 
-const ProductCard = styled.div`
+const ProductCardWrapper = styled.div`
   scroll-snap-align: start;
   min-width: 80%;
   flex-shrink: 0;
@@ -42,6 +47,7 @@ const ProductCard = styled.div`
 
   @media (max-width: 900px) {
     min-width: 90%;
+    &:hover { transform: none; box-shadow: none; }
   }
 `;
 
@@ -58,8 +64,7 @@ const ProductImage = styled.img`
   height: 100%;
   object-fit: cover;
   transition: transform 0.5s;
-
-  ${ProductCard}:hover & {
+  ${ProductCardWrapper}:hover & {
     transform: scale(1.08) rotate(0.3deg);
   }
 `;
@@ -95,8 +100,9 @@ const Badge = styled.span`
   border-radius: 12px;
   font-size: 0.8rem;
   font-weight: 700;
-  background: ${({ type }) => type === "new" ? "#10b981" : "#f59e0b"};
+  background: #10b981;
   color: #fff;
+  animation: ${badgeAnim} 0.3s ease-out;
 `;
 
 const ArrowButton = styled.button`
@@ -143,13 +149,70 @@ const CarouselDot = styled.div`
   transition: background 0.2s;
 `;
 
+const Skeleton = styled.div`
+  width: 100%;
+  height: 400px;
+  border-radius: 16px;
+  background: linear-gradient(
+    90deg,
+    #e5e7eb 25%,
+    #f3f4f6 37%,
+    #e5e7eb 63%
+  );
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+
+  @keyframes shimmer {
+    0% { background-position: 100% 0; }
+    100% { background-position: -100% 0; }
+  }
+`;
+
+// ---------- PRODUCT CARD ----------
+function ProductCard({ product, imageIndex, setImageIndex, onClick }) {
+  return (
+    <ProductCardWrapper onClick={() => onClick(product._id)}>
+      <ProductImageWrapper>
+        {product.images?.[0] ? (
+          <ProductImage
+            src={product.images[imageIndex || 0].url}
+            alt={product.title}
+            loading="lazy"
+          />
+        ) : <Skeleton />}
+
+        <Badge>Nouveau</Badge>
+
+        {product.images?.length > 1 && (
+          <CarouselWrapper>
+            {product.images.map((_, i) => (
+              <CarouselDot
+                key={i}
+                active={i === (imageIndex || 0)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setImageIndex(i);
+                }}
+              />
+            ))}
+          </CarouselWrapper>
+        )}
+      </ProductImageWrapper>
+
+      <Overlay>
+        <ProductName>{product.title}</ProductName>
+        <ProductPrice>{product.price.toLocaleString()} FCFA</ProductPrice>
+      </Overlay>
+    </ProductCardWrapper>
+  );
+}
+
 // ---------- COMPONENT ----------
-export default function CollectionLuxuryMobile() {
+export default function Nouveautes() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [imageIndexes, setImageIndexes] = useState({});
   const sliderRef = useRef(null);
-  const [currentSlide, setCurrentSlide] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -157,7 +220,9 @@ export default function CollectionLuxuryMobile() {
       try {
         const res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits`);
         const data = await res.json();
-        setProducts(data);
+        // FILTRE : uniquement les produits isNew === true
+        const newProducts = data.filter(p => p.isNew);
+        setProducts(newProducts);
       } catch (err) {
         console.error(err);
       } finally {
@@ -169,75 +234,38 @@ export default function CollectionLuxuryMobile() {
 
   if (loading) return <LoaderWrapper><Loader /></LoaderWrapper>;
 
-  const changeImage = (productId, direction) => {
-    setImageIndexes(prev => {
-      const current = prev[productId] || 0;
-      const product = products.find(p => p._id === productId);
-      if (!product || !product.images) return prev;
-      const length = product.images.length;
-      let next = direction === "next" ? current + 1 : current - 1;
-      if (next < 0) next = length - 1;
-      if (next >= length) next = 0;
-      return { ...prev, [productId]: next };
-    });
-  };
-
-  const handleClickProduct = (id) => {
-    navigate(`/produit/${id}`);
+  const handleClickProduct = (id) => navigate(`/produit/${id}`);
+  const setImageIndexForProduct = (productId, index) => {
+    setImageIndexes(prev => ({ ...prev, [productId]: index }));
   };
 
   const scrollSlide = (direction) => {
     if (!sliderRef.current) return;
-    const slideWidth = sliderRef.current.firstChild?.offsetWidth || 0;
+    const slideWidth = sliderRef.current.firstChild?.getBoundingClientRect().width || 0;
     const scrollAmount = direction === "next" ? slideWidth + 32 : -(slideWidth + 32);
     sliderRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
-
-    const totalSlides = products.length;
-    setCurrentSlide(prev => {
-      let next = direction === "next" ? prev + 1 : prev - 1;
-      if (next < 0) next = totalSlides - 1;
-      if (next >= totalSlides) next = 0;
-      return next;
-    });
   };
 
   return (
     <PageWrapper>
+      <h1 style={{ fontSize: "2rem", fontWeight: 700, marginBottom: "1.5rem" }}>Nouveautés</h1>
+
       <SliderWrapper ref={sliderRef}>
-        <ArrowButton left onClick={() => scrollSlide("prev")}><FaChevronLeft /></ArrowButton>
-        <ArrowButton right onClick={() => scrollSlide("next")}><FaChevronRight /></ArrowButton>
+        <ArrowButton left onClick={() => scrollSlide("prev")} aria-label="Slide précédent">
+          <FaChevronLeft />
+        </ArrowButton>
+        <ArrowButton right onClick={() => scrollSlide("next")} aria-label="Slide suivant">
+          <FaChevronRight />
+        </ArrowButton>
 
-        {products.map((product, idx) => (
-          <ProductCard key={product._id} onClick={() => handleClickProduct(product._id)}>
-            <ProductImageWrapper>
-              <ProductImage
-                src={product.images?.[imageIndexes[product._id] || 0]?.url || "/placeholder.jpg"}
-                alt={product.title}
-              />
-              {product.isNew && <Badge type="new">Nouveau</Badge>}
-              {product.badge === "promo" && <Badge type="promo">Promo</Badge>}
-
-              {product.images?.length > 1 && (
-                <CarouselWrapper>
-                  {product.images.map((_, i) => (
-                    <CarouselDot
-                      key={i}
-                      active={i === (imageIndexes[product._id] || 0)}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setImageIndexes(prev => ({ ...prev, [product._id]: i }));
-                      }}
-                    />
-                  ))}
-                </CarouselWrapper>
-              )}
-            </ProductImageWrapper>
-
-            <Overlay>
-              <ProductName>{product.title}</ProductName>
-              <ProductPrice>{product.price.toLocaleString()} FCFA</ProductPrice>
-            </Overlay>
-          </ProductCard>
+        {products.map((product) => (
+          <ProductCard
+            key={product._id}
+            product={product}
+            imageIndex={imageIndexes[product._id] || 0}
+            setImageIndex={(index) => setImageIndexForProduct(product._id, index)}
+            onClick={handleClickProduct}
+          />
         ))}
       </SliderWrapper>
     </PageWrapper>

@@ -43,7 +43,7 @@ const HeroText = styled.div`
   z-index: 3;
   max-width: 500px;
 
-  h1 { font-size: 3rem; margin: 0; }
+  h1 { font-size: 3rem; }
   p { margin-top: 12px; font-size: 1.2rem; }
 `;
 
@@ -72,7 +72,7 @@ const PromoBanner = styled.div`
 const Categories = styled.div`
   display: flex;
   justify-content: center;
-  gap: 20px;
+  gap: 24px;
   flex-wrap: wrap;
 `;
 
@@ -80,14 +80,38 @@ const CategoryCard = styled(Link)`
   text-decoration: none;
   color: inherit;
   text-align: center;
+  width: 120px;
 
   img {
     width: 120px;
-    height: 80px;
+    height: 120px;
     object-fit: cover;
+    border-radius: 16px;
   }
 
-  p { margin-top: 12px; font-weight: bold; }
+  p {
+    margin-top: 12px;
+    font-weight: bold;
+  }
+`;
+
+const SkeletonImage = styled.div`
+  width: ${({ width }) => width || "120px"};
+  height: ${({ height }) => height || "120px"};
+  border-radius: 16px;
+  background: linear-gradient(
+    90deg,
+    #e5e7eb 25%,
+    #f3f4f6 37%,
+    #e5e7eb 63%
+  );
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+
+  @keyframes shimmer {
+    0% { background-position: 100% 0; }
+    100% { background-position: -100% 0; }
+  }
 `;
 
 const SliderContainer = styled.div`
@@ -104,8 +128,8 @@ const SlideRow = styled.div`
   animation-duration: ${({ $duration }) => $duration}s;
 
   @keyframes slide {
-    from { transform: translateX(0); }
-    to { transform: translateX(-50%); }
+    from { transform: translate3d(0,0,0); }
+    to { transform: translate3d(-50%,0,0); }
   }
 `;
 
@@ -168,59 +192,72 @@ const Card = styled(Link)`
 /* ---------------------- COMPONENT ---------------------- */
 export default function Home() {
   const { t } = useTranslation();
-  const [heroProducts, setHeroProducts] = useState([]);
   const [products, setProducts] = useState([]);
   const [activeSlide, setActiveSlide] = useState(0);
   const [imagesLoaded, setImagesLoaded] = useState(false);
   const [categoryImages, setCategoryImages] = useState({
-    homme: "",
-    femme: "",
-    enfant: "",
+    homme: null,
+    femme: null,
+    enfant: null,
   });
+  const [sliderDuration, setSliderDuration] = useState(
+    window.innerWidth < 768 ? 18 : 30
+  );
 
+  /* ---------------------- HELPERS ---------------------- */
   const getFullImageUrl = (url) => {
-    if (!url) return "";
+    if (!url) return null;
     return url.startsWith("http") ? url : `${import.meta.env.VITE_API_URL}${url}`;
   };
 
-  /* FETCH PRODUITS */
+  const getMainImage = (product) => getFullImageUrl(product?.images?.[0]?.url);
+
+  /* ---------------------- FETCH PRODUITS ---------------------- */
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/api/produits`)
       .then((res) => res.json())
       .then((data) => {
-        setHeroProducts(data.filter((p) => p.hero));
-        setProducts((data.filter((p) => !p.hero) || []).slice(0, 10));
-
+        setProducts(data);
         const getFirstImageByGenre = (genre) => {
           const prod = data.find(
-            (p) => p.genre?.toLowerCase() === genre && p.images?.length > 0
+            (p) => p.genre?.toLowerCase() === genre && p.images?.length
           );
-          return getFullImageUrl(prod?.images[0]?.url);
+          return getMainImage(prod);
         };
-
         setCategoryImages({
           homme: getFirstImageByGenre("homme"),
           femme: getFirstImageByGenre("femme"),
           enfant: getFirstImageByGenre("enfant"),
         });
-      });
+      })
+      .catch((err) => console.error("Erreur fetch produits:", err));
   }, []);
 
-  /* PRELOAD HERO IMAGES */
+  /* ---------------------- HERO PRODUCTS ---------------------- */
+  const heroProducts = useMemo(() => products.filter((p) => p.hero), [products]);
+  const nouveautes = useMemo(() => products.filter((p) => p.isNew), [products]);
+  const normalProducts = useMemo(() => products.filter((p) => !p.hero), [products]);
+
+  /* ---------------------- PRELOAD HERO IMAGES ---------------------- */
   useEffect(() => {
     if (!heroProducts.length) return;
-    let loaded = 0;
-    heroProducts.forEach((p) => {
-      const img = new Image();
-      img.src = getFullImageUrl(p.images[0]?.url);
-      img.onload = () => {
-        loaded++;
-        if (loaded === heroProducts.length) setImagesLoaded(true);
-      };
-    });
+    const preloadImages = async () => {
+      const promises = heroProducts.map(
+        (p) =>
+          new Promise((res) => {
+            const img = new Image();
+            img.src = getMainImage(p);
+            img.onload = res;
+            img.onerror = res;
+          })
+      );
+      await Promise.all(promises);
+      setImagesLoaded(true);
+    };
+    preloadImages();
   }, [heroProducts]);
 
-  /* HERO AUTOPLAY */
+  /* ---------------------- HERO AUTOPLAY ---------------------- */
   useEffect(() => {
     if (!heroProducts.length) return;
     const interval = setInterval(
@@ -230,10 +267,14 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [heroProducts]);
 
-  const sliderDuration = useMemo(() => (window.innerWidth < 768 ? 18 : 30), []);
+  /* ---------------------- SLIDER RESPONSIVE ---------------------- */
+  useEffect(() => {
+    const handleResize = () => setSliderDuration(window.innerWidth < 768 ? 18 : 30);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const sliderDouble = [...heroProducts, ...heroProducts];
-  const nouveautes = products.filter((p) => p.isNew);
 
   return (
     <Wrapper>
@@ -244,7 +285,7 @@ export default function Home() {
             <HeroSlide
               key={p._id}
               $active={i === activeSlide}
-              style={{ backgroundImage: `url('${getFullImageUrl(p.images[0]?.url)}')` }}
+              style={{ backgroundImage: `url('${getMainImage(p)}')` }}
             />
           ))}
         <HeroOverlay />
@@ -261,27 +302,25 @@ export default function Home() {
 
       {/* CATEGORIES */}
       <Categories>
-        <CategoryCard to="/homme">
-          <img src={categoryImages.homme} loading="lazy" alt="Homme" />
-          <p>{t("categoryMen")}</p>
-        </CategoryCard>
-        <CategoryCard to="/femme">
-          <img src={categoryImages.femme} loading="lazy" alt="Femme" />
-          <p>{t("categoryWomen")}</p>
-        </CategoryCard>
-        <CategoryCard to="/enfant">
-          <img src={categoryImages.enfant} loading="lazy" alt="Enfant" />
-          <p>{t("categoryKids")}</p>
-        </CategoryCard>
+        {["homme", "femme", "enfant"].map((cat) => (
+          <CategoryCard key={cat} to={`/${cat}`}>
+            {categoryImages[cat] ? (
+              <img src={categoryImages[cat]} alt={cat} loading="lazy" />
+            ) : (
+              <SkeletonImage />
+            )}
+            <p>{t(`category${cat.charAt(0).toUpperCase() + cat.slice(1)}`)}</p>
+          </CategoryCard>
+        ))}
       </Categories>
 
-      {/* SLIDER CONTINU */}
+      {/* SLIDER */}
       <SliderContainer>
         <SlideRow $duration={sliderDuration}>
           {sliderDouble.map((p, i) => (
             <Slide
               key={`${p._id}-${i}`}
-              style={{ backgroundImage: `url('${getFullImageUrl(p.images[0]?.url)}')` }}
+              style={{ backgroundImage: `url('${getMainImage(p)}')` }}
             />
           ))}
         </SlideRow>
@@ -292,7 +331,7 @@ export default function Home() {
       <HorizontalScroll>
         {nouveautes.map((p) => (
           <CardHorizontal key={p._id} to={`/produit/${p._id}`}>
-            <img src={getFullImageUrl(p.images[0]?.url)} loading="lazy" decoding="async" />
+            <img src={getMainImage(p)} loading="lazy" alt={p.title} />
             <p>{p.title} – {p.price} FCFA</p>
           </CardHorizontal>
         ))}
@@ -301,9 +340,9 @@ export default function Home() {
       {/* PRODUITS */}
       <SectionTitle>{t("forYou")}</SectionTitle>
       <ProductGrid>
-        {products.map((p) => (
+        {normalProducts.map((p) => (
           <Card key={p._id} to={`/produit/${p._id}`}>
-            <img src={getFullImageUrl(p.images[0]?.url)} loading="lazy" decoding="async" />
+            <img src={getMainImage(p)} loading="lazy" alt={p.title} />
             <p>{p.title} – {p.price} FCFA</p>
           </Card>
         ))}

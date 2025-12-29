@@ -133,17 +133,17 @@ export default function Footer() {
     {
       title: t("about"),
       links: [
-        { text: t("ourStory"), to: "/about" },
-        { text: t("faq"), to: "/faq" },
+        { text: t("ourStory"), to: "apropo" },
+        { text: t("faq"), to: "faq" },
         { text: t("contact"), to: "/contact" }
       ]
     },
     {
       title: t("services"),
       links: [
-        { text: t("returnPolicy"), to: "/return-policy" },
-        { text: t("shipping"), to: "/shipping" },
-        { text: t("terms"), to: "/terms" }
+        { text: t("returnPolicy"), to: "politiqueretour" },
+        { text: t("shipping"), to: "livraison" },
+        { text: t("terms"), to: "conditionUtilisation" }
       ]
     },
     {
