@@ -10,6 +10,11 @@ const badgeAnim = keyframes`
   100% { transform: translateY(0); opacity: 1; }
 `;
 
+const shimmer = keyframes`
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+`;
+
 // ---------- STYLES ----------
 const PageWrapper = styled.main`
   width: 100%;
@@ -23,8 +28,9 @@ const SliderWrapper = styled.div`
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
-  gap: 2rem;
+  gap: 1.5rem;
   position: relative;
+  scroll-padding: 2%;
 
   &::-webkit-scrollbar {
     display: none;
@@ -33,8 +39,9 @@ const SliderWrapper = styled.div`
 
 const ProductCardWrapper = styled.div`
   scroll-snap-align: start;
-  min-width: 80%;
   flex-shrink: 0;
+  width: 100%;
+  max-width: 400px;
   border-radius: 16px;
   position: relative;
   cursor: pointer;
@@ -45,16 +52,18 @@ const ProductCardWrapper = styled.div`
     box-shadow: 0 15px 40px rgba(0,0,0,0.2);
   }
 
-  @media (max-width: 900px) {
-    min-width: 90%;
-    &:hover { transform: none; box-shadow: none; }
+  @media (max-width: 600px) {
+    &:hover {
+      transform: none;
+      box-shadow: none;
+    }
   }
 `;
 
 const ProductImageWrapper = styled.div`
   position: relative;
   width: 100%;
-  height: 400px;
+  aspect-ratio: 4/3;
   overflow: hidden;
   border-radius: 16px;
 `;
@@ -64,6 +73,7 @@ const ProductImage = styled.img`
   height: 100%;
   object-fit: cover;
   transition: transform 0.5s;
+
   ${ProductCardWrapper}:hover & {
     transform: scale(1.08) rotate(0.3deg);
   }
@@ -73,7 +83,7 @@ const Overlay = styled.div`
   position: absolute;
   bottom: 0;
   width: 100%;
-  padding: 1.5rem;
+  padding: 1rem;
   background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
   color: #fff;
   display: flex;
@@ -82,23 +92,23 @@ const Overlay = styled.div`
 `;
 
 const ProductName = styled.h2`
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 700;
   margin: 0;
 `;
 
 const ProductPrice = styled.span`
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 600;
 `;
 
 const Badge = styled.span`
   position: absolute;
-  top: 16px;
-  left: 16px;
-  padding: 5px 12px;
+  top: 12px;
+  left: 12px;
+  padding: 4px 10px;
   border-radius: 12px;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 700;
   background: ${({ type }) => type === "promo" ? "#f59e0b" : "#10b981"};
   color: #fff;
@@ -112,8 +122,8 @@ const ArrowButton = styled.button`
   background: rgba(255,255,255,0.7);
   border: none;
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
+  width: 35px;
+  height: 35px;
   cursor: pointer;
   display: flex;
   justify-content: center;
@@ -127,13 +137,20 @@ const ArrowButton = styled.button`
     background: rgba(255,255,255,1);
   }
 
-  ${({ left }) => left && `left: 1rem;`}
-  ${({ right }) => right && `right: 1rem;`}
+  ${({ left }) => left && `left: 0.5rem;`}
+  ${({ right }) => right && `right: 0.5rem;`}
+
+  @media (min-width: 600px) {
+    width: 40px;
+    height: 40px;
+    ${({ left }) => left && `left: 1rem;`}
+    ${({ right }) => right && `right: 1rem;`}
+  }
 `;
 
 const CarouselWrapper = styled.div`
   position: absolute;
-  bottom: 1rem;
+  bottom: 0.5rem;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -151,7 +168,7 @@ const CarouselDot = styled.div`
 
 const Skeleton = styled.div`
   width: 100%;
-  height: 400px;
+  aspect-ratio: 4/3;
   border-radius: 16px;
   background: linear-gradient(
     90deg,
@@ -160,15 +177,10 @@ const Skeleton = styled.div`
     #e5e7eb 63%
   );
   background-size: 400% 100%;
-  animation: shimmer 1.4s ease infinite;
-
-  @keyframes shimmer {
-    0% { background-position: 100% 0; }
-    100% { background-position: -100% 0; }
-  }
+  animation: ${shimmer} 1.4s ease infinite;
 `;
 
-// ---------- PRODUCT CARD COMPONENT ----------
+// ---------- PRODUCT CARD ----------
 function ProductCard({ product, imageIndex, setImageIndex, onClick }) {
   return (
     <ProductCardWrapper onClick={() => onClick(product._id)}>
@@ -207,7 +219,7 @@ function ProductCard({ product, imageIndex, setImageIndex, onClick }) {
   );
 }
 
-// ---------- PROMO LUXURY ----------
+// ---------- COMPONENT ----------
 export default function PromoLuxury() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -231,10 +243,6 @@ export default function PromoLuxury() {
     fetchProducts();
   }, []);
 
-  useEffect(() => {
-    return () => setImageIndexes({});
-  }, []);
-
   if (loading) return <LoaderWrapper><Loader /></LoaderWrapper>;
 
   const handleClickProduct = (id) => navigate(`/produit/${id}`);
@@ -245,7 +253,7 @@ export default function PromoLuxury() {
   const scrollSlide = (direction) => {
     if (!sliderRef.current) return;
     const slideWidth = sliderRef.current.firstChild?.getBoundingClientRect().width || 0;
-    const scrollAmount = direction === "next" ? slideWidth + 32 : -(slideWidth + 32);
+    const scrollAmount = direction === "next" ? slideWidth + 24 : -(slideWidth + 24);
     sliderRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
   };
 
