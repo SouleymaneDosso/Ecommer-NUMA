@@ -176,7 +176,7 @@ const Back = styled(Link)`
 
 /* ================== COMPONENT ================== */
 
-export default function PagePanierZara() {
+export default function PagePanier() {
   const {
     ajouter,
     supprimer,

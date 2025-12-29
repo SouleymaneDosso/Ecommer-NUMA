@@ -55,6 +55,8 @@ const ProductImage = styled.img`
 const FullscreenOverlay = styled.div`
   position: fixed;
   inset: 0;
+  width: 100vw;
+  height: 100vh;
   background: rgba(0, 0, 0, 0.95);
   display: flex;
   justify-content: center;
@@ -69,6 +71,7 @@ const FullscreenImage = styled.img`
   object-fit: contain;
   border-radius: 12px;
   box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  transition: transform 0.3s ease;
 `;
 
 const Arrow = styled.div`
@@ -89,44 +92,23 @@ const Arrow = styled.div`
 const ArrowLeft = styled(Arrow)`left: 20px;`;
 const ArrowRight = styled(Arrow)`right: 20px;`;
 
-const DotsWrapper = styled.div`
+// ---------- INDICATEUR MODERNE ----------
+const IndicatorWrapper = styled.div`
   position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 8px;
+  bottom: 40px;
+  width: 60%;
+  height: 4px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 2px;
+  overflow: hidden;
 `;
 
-const Dot = styled.div`
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: ${({ isActive }) => (isActive ? "#f59e0b" : "#ccc")};
-  transition: all 0.2s;
-`;
-
-const ThumbnailsWrapper = styled.div`
-  display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  padding: 8px 0;
-  margin-top: 12px;
-  scroll-behavior: smooth;
-  &::-webkit-scrollbar {
-    display: none;
-  }
-`;
-
-const Thumb = styled.img`
-  width: 60px;
-  height: 60px;
-  object-fit: cover;
-  cursor: pointer;
-  border: ${({ isActive }) => (isActive ? "2px solid #f59e0b" : "1px solid #ccc")};
-  border-radius: 6px;
-  opacity: ${({ isActive }) => (isActive ? 1 : 0.7)};
-  transition: all 0.2s;
+const IndicatorBar = styled.div`
+  width: ${({ progress }) => progress}%;
+  height: 100%;
+  background: #f59e0b;
+  border-radius: 2px;
+  transition: width 0.3s ease;
 `;
 
 // ---------- COMPONENT ----------
@@ -149,16 +131,19 @@ export default function ProductImages({ images = [] }) {
   // Bloquer scroll sur la page principale en fullscreen
   useEffect(() => {
     if (isFullscreen) {
-      document.body.style.overflow = "hidden";
-      document.body.style.overscrollBehavior = "none";
+      const scrollY = window.scrollY;
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.left = "0";
+      document.body.style.width = "100%";
     } else {
-      document.body.style.overflow = "";
-      document.body.style.overscrollBehavior = "";
+      const scrollY = -parseInt(document.body.style.top || "0");
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.width = "";
+      window.scrollTo(0, scrollY);
     }
-    return () => {
-      document.body.style.overflow = "";
-      document.body.style.overscrollBehavior = "";
-    };
   }, [isFullscreen]);
 
   // Scroll automatique vers l'image active si pas fullscreen
@@ -188,39 +173,30 @@ export default function ProductImages({ images = [] }) {
     setCurrentIndex((prev) => (prev === urls.length - 1 ? 0 : prev + 1));
   };
 
-  if (loading) return (
-    <LoaderWrapper><Loader /></LoaderWrapper>
-  );
+  const progress = ((currentIndex + 1) / urls.length) * 100;
 
+  if (loading) return <LoaderWrapper><Loader /></LoaderWrapper>;
   if (!urls.length) return null;
 
   return (
     <Wrapper>
       <ImagesWrapper ref={wrapperRef}>
         {urls.map((url, i) => (
-          <div key={i} ref={(el) => (slidesRef.current[i] = el)}>
+          <ImageSlide key={i} ref={(el) => (slidesRef.current[i] = el)}>
             <ProductImage src={url} alt={`Produit ${i + 1}`} onClick={() => openFullscreen(i)} />
-          </div>
+          </ImageSlide>
         ))}
       </ImagesWrapper>
-
-      <DotsWrapper>
-        {urls.map((_, i) => (
-          <Dot key={i} isActive={i === currentIndex} />
-        ))}
-      </DotsWrapper>
-
-      <ThumbnailsWrapper>
-        {urls.map((url, i) => (
-          <Thumb key={i} src={url} isActive={i === currentIndex} onClick={() => setCurrentIndex(i)} />
-        ))}
-      </ThumbnailsWrapper>
 
       {isFullscreen && urls[currentIndex] && (
         <FullscreenOverlay onClick={closeFullscreen}>
           <ArrowLeft onClick={prevImage}>&larr;</ArrowLeft>
           <FullscreenImage src={urls[currentIndex]} onClick={(e) => e.stopPropagation()} />
           <ArrowRight onClick={nextImage}>&rarr;</ArrowRight>
+
+          <IndicatorWrapper>
+            <IndicatorBar progress={progress} />
+          </IndicatorWrapper>
         </FullscreenOverlay>
       )}
     </Wrapper>

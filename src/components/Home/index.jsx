@@ -72,7 +72,7 @@ const PromoBanner = styled.div`
 const Categories = styled.div`
   display: flex;
   justify-content: center;
-  gap: 24px;
+  gap: 20px;
   flex-wrap: wrap;
 `;
 
@@ -82,10 +82,9 @@ const CategoryCard = styled(Link)`
   text-align: center;
 
   img {
-    width: 150px;
-    height: 160px;
+    width: 120px;
+    height: 80px;
     object-fit: cover;
-    border-radius: 16px;
   }
 
   p { margin-top: 12px; font-weight: bold; }

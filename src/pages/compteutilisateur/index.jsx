@@ -7,85 +7,66 @@ import ResetPasswordModal from "./ResetPasswordModal";
 /* ===== LOADER ===== */
 const spin = keyframes` to { transform: rotate(360deg); } `;
 const LoaderWrapper = styled.div`
-  min-height: 50vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  min-height: 50vh; display: flex; justify-content: center; align-items: center;
 `;
 const Loader = styled.div`
-  width: 48px;
-  height: 48px;
-  border: 5px solid #ddd;
-  border-top-color: #007bff;
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top-color: #4f46e5;
   border-radius: 50%;
   animation: ${spin} 1s linear infinite;
 `;
 
-/* ===== STYLES LUXE ===== */
+/* ===== STYLES GÉNÉRAUX ===== */
 const PageWrapper = styled.main`
-  max-width: 900px;
+  max-width: 950px;
   margin: 3rem auto;
   padding: 2rem;
-  background: #fff;
-  border-radius: 18px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
   font-family: 'Inter', sans-serif;
-  transition: all 0.3s ease;
-
-  @media (max-width: 768px) {
-    margin: 1.5rem;
-    padding: 1rem;
+  @media(max-width: 768px) {
+    padding: 1.5rem;
+    margin: 2rem 1rem;
   }
 `;
 
 const Section = styled.section`
-  background: #f9f9f9;
-  border-radius: 14px;
-  padding: 1.5rem;
+  background: #f8f9ff;
+  border-radius: 16px;
+  padding: 2rem;
   margin-bottom: 2.5rem;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.05);
   transition: all 0.3s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-  }
-
-  @media (max-width: 768px) {
-    padding: 1rem;
-  }
 `;
 
 const Title = styled.h2`
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   font-weight: 700;
+  color: #1f2937;
+  font-size: 1.6rem;
 `;
 
 const InputGroup = styled.div`
   position: relative;
   display: flex;
+  flex-direction: column;
   gap: 0.8rem;
-  flex-wrap: wrap;
-
-  @media (max-width: 500px) {
-    flex-direction: column;
-  }
 `;
 
 const Input = styled.input`
-  flex: 1 1 200px;
   width: 100%;
-  padding: 12px 14px;
+  padding: 10px 12px;  /* plus compact */
   border-radius: 10px;
-  border: 1px solid #ccc;
-  box-sizing: border-box;
-  font-size: 1rem;
-  transition: all 0.25s ease;
-
+  border: 1px solid #d1d5db;
+  background: #fff;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
   &:focus {
-    border-color: #007bff;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
     outline: none;
-    box-shadow: 0 0 8px rgba(0,123,255,0.3);
   }
 `;
 
@@ -95,119 +76,77 @@ const EyeIcon = styled.span`
   top: 50%;
   transform: translateY(-50%);
   cursor: pointer;
-  color: #555;
-  transition: color 0.25s ease;
-
-  &:hover {
-    color: #007bff;
-  }
+  color: #6b7280;
+  transition: color 0.2s;
+  &:hover { color: #4f46e5; }
 `;
 
 const Button = styled.button`
-  padding: 12px 16px;
-  border-radius: 12px;
+  padding: 10px 14px;      /* plus compact */
+  border-radius: 10px;
   border: none;
-  background: #007bff;
-  color: white;
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  color: #fff;
   font-weight: 600;
+  font-size: 0.95rem;
   cursor: pointer;
   transition: all 0.3s ease;
-  flex-shrink: 0;
-  min-width: 120px;
-  max-width: 200px;
-
   &:hover {
-    background: #0056b3;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  }
-
-  @media (max-width: 500px) {
-    width: 100%;
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    transform: translateY(-1.5px);
+    box-shadow: 0 4px 12px rgba(79,70,229,0.25);
   }
 `;
 
-const Error = styled.p`
-  color: #e11d48;
-  font-weight: 600;
-  margin-bottom: 1rem;
+const DangerButton = styled(Button)`
+  background: linear-gradient(135deg, #ef4444, #f87171);
+  &:hover { background: linear-gradient(135deg, #f87171, #ef4444); }
 `;
 
-const Success = styled.p`
-  color: #10b981;
+const Message = styled.p`
   font-weight: 600;
-  margin-bottom: 1rem;
+  margin-top: 0.5rem;
+  color: ${props => props.type === "error" ? "#dc2626" : "#10b981"};
 `;
 
 const FlexRow = styled.div`
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
-
-  @media (max-width: 768px) {
-    gap: 0.5rem;
-  }
 `;
 
 const ProductCard = styled.div`
   display: flex;
   gap: 1rem;
-  padding: 14px;
+  padding: 12px;  /* plus compact */
   border-radius: 14px;
-  background: #fff;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+  background: #ffffff;
+  box-shadow: 0 6px 25px rgba(0,0,0,0.07);
   align-items: center;
-  flex: 1 1 calc(50% - 1rem);
-  transition: all 0.3s ease;
-
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
   &:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 40px rgba(0,0,0,0.1);
-  }
-
-  @media (max-width: 768px) {
-    flex: 1 1 100%;
-    flex-direction: column;
-    align-items: flex-start;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
   }
 `;
 
 const ProductImage = styled.img`
-  width: 70px;
-  height: 70px;
+  width: 80px;
+  height: 80px;
   object-fit: cover;
-  border-radius: 12px;
-  transition: transform 0.3s ease;
-
-  &:hover {
-    transform: scale(1.05);
-  }
-
-  @media (max-width: 500px) {
-    width: 100%;
-    height: auto;
-    max-height: 150px;
-  }
+  border-radius: 14px;
 `;
 
 const StatusBadge = styled.span`
-  padding: 5px 10px;
+  padding: 4px 10px;  /* plus compact */
   border-radius: 8px;
   font-weight: 600;
-  color: white;
-  background-color: ${(props) =>
-    props.statut === "en cours"
-      ? "#f59e0b"
-      : props.statut === "envoyé"
-        ? "#3b82f6"
-        : props.statut === "livré"
-          ? "#10b981"
-          : "#ef4444"};
-
-  @media (max-width: 500px) {
-    padding: 3px 6px;
-    font-size: 0.85rem;
-  }
+  color: #fff;
+  background-color: ${props =>
+    props.statut === "en cours" ? "#f59e0b" :
+    props.statut === "envoyé" ? "#3b82f6" :
+    props.statut === "livré" ? "#10b981" : "#ef4444"};
+  font-size: 0.8rem;
 `;
 
 /* ===== COMPONENT ===== */
@@ -220,17 +159,18 @@ export default function CompteClient() {
   const [favorites, setFavorites] = useState([]);
   const [commandes, setCommandes] = useState([]);
   const [error, setError] = useState("");
-  const [updateMessage, setUpdateMessage] = useState("");
 
   const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
   const [editUsername, setEditUsername] = useState("");
   const [editEmail, setEditEmail] = useState("");
-  const [filterStatus, setFilterStatus] = useState("");
+  const [updateMessage, setUpdateMessage] = useState("");
 
+  const [filterStatus, setFilterStatus] = useState("");
   const [loginAttempts, setLoginAttempts] = useState(0);
   const [showResetModal, setShowResetModal] = useState(false);
 
@@ -238,9 +178,7 @@ export default function CompteClient() {
     if (!token) return;
     setLoading(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/compte`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/compte`, { headers: { Authorization: `Bearer ${token}` } });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Erreur serveur");
       setUser(data.user);
@@ -248,24 +186,14 @@ export default function CompteClient() {
       setCommandes(data.commandes || []);
       setEditUsername(data.user.username);
       setEditEmail(data.user.email);
-    } catch (err) {
-      setError("Impossible de récupérer vos informations.");
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { setError(err.message); } finally { setLoading(false); }
   };
 
   useEffect(() => { if (token) fetchCompte(); }, [token]);
 
   const handleAuth = async (e) => {
     e.preventDefault();
-    setError("");
-    setLoading(true);
-    if (!username || (!isLogin && !email) || !password) {
-      setError("Veuillez remplir tous les champs.");
-      setLoading(false);
-      return;
-    }
+    setError(""); setLoading(true);
     try {
       const endpoint = isLogin ? "login" : "signup";
       const body = isLogin ? { username, password } : { username, email, password };
@@ -275,7 +203,8 @@ export default function CompteClient() {
         body: JSON.stringify(body),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Erreur lors de la connexion");
+      if (!res.ok) throw new Error(data.message || "Erreur serveur");
+
       if (isLogin) {
         localStorage.setItem("token", data.token);
         fetchCompte();
@@ -284,78 +213,52 @@ export default function CompteClient() {
         alert("Compte créé. Connecte-toi !");
         setIsLogin(true);
       }
-      setUsername("");
-      setEmail("");
-      setPassword("");
+
+      setUsername(""); setEmail(""); setPassword("");
     } catch (err) {
       setError(err.message);
       if (isLogin) {
-        setLoginAttempts(prev => {
-          const attempts = prev + 1;
-          if (attempts >= 3) setShowResetModal(true);
-          return attempts;
-        });
+        setLoginAttempts(prev => { const attempts = prev + 1; if (attempts >= 3) setShowResetModal(true); return attempts; });
       }
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    setUser(null);
-    navigate("/compte");
-  };
+  const logout = () => { localStorage.removeItem("token"); setUser(null); navigate("/compte"); };
 
   const handleUpdateProfile = async () => {
-    if (!editUsername || !editEmail) {
-      setUpdateMessage("Tous les champs sont obligatoires.");
-      return;
-    }
+    if (!editUsername || !editEmail) return;
     setUpdateMessage("");
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/compte`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ username: editUsername, email: editEmail }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ username: editUsername, email: editEmail })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Erreur serveur");
       setUser(prev => ({ ...prev, username: editUsername, email: editEmail }));
       setUpdateMessage("Profil mis à jour ✅");
-    } catch (err) {
-      setUpdateMessage(err.message);
-    }
+    } catch (err) { setUpdateMessage(err.message); }
   };
 
   const removeFavorite = async (id) => {
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/favorites/${id}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error("Erreur lors de la suppression");
       setFavorites(favs => favs.filter(f => f._id !== id));
-    } catch (err) {
-      alert(err.message);
-    }
+    } catch (err) { alert(err.message); }
   };
 
-  if (loading)
-    return (
-      <LoaderWrapper>
-        <Loader />
-      </LoaderWrapper>
-    );
+  if (loading) return <LoaderWrapper><Loader /></LoaderWrapper>;
 
   if (!token || !user) {
     return (
       <PageWrapper>
         <Title>{isLogin ? "Connexion" : "Inscription"}</Title>
-        {error && <Error>{error}</Error>}
+        {error && <Message type="error">{error}</Message>}
         <form onSubmit={handleAuth} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           <Input placeholder="Nom d'utilisateur" value={username} onChange={e => setUsername(e.target.value)} required />
           {!isLogin && <Input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />}
@@ -365,13 +268,14 @@ export default function CompteClient() {
           </InputGroup>
           <Button type="submit">{isLogin ? "Se connecter" : "Créer un compte"}</Button>
         </form>
-        <p style={{ marginTop: "1rem", textAlign: "center" }}>
+
+        <p style={{ marginTop: "1rem", textAlign: "center", color: "#4b5563" }}>
           {isLogin ? "Pas de compte ?" : "Déjà inscrit ?"}{" "}
-          <span style={{ color: "#007bff", cursor: "pointer", fontWeight: 600 }}
-            onClick={() => { setIsLogin(!isLogin); setError(""); }}>
+          <span style={{ color: "#4f46e5", cursor: "pointer", fontWeight: 700 }} onClick={() => { setIsLogin(!isLogin); setError(""); }}>
             {isLogin ? "Créer un compte" : "Se connecter"}
           </span>
         </p>
+
         {showResetModal && <ResetPasswordModal onClose={() => setShowResetModal(false)} />}
       </PageWrapper>
     );
@@ -381,25 +285,27 @@ export default function CompteClient() {
 
   return (
     <PageWrapper>
+      {/* Profil */}
       <Section>
         <Title>Bonjour {user.username}</Title>
         <p>Email : {user.email}</p>
-        <InputGroup style={{ marginTop: "0.5rem" }}>
+        <InputGroup style={{ marginTop: "1rem" }}>
           <Input value={editUsername} onChange={e => setEditUsername(e.target.value)} placeholder="Modifier username" />
           <Input value={editEmail} onChange={e => setEditEmail(e.target.value)} placeholder="Modifier email" />
           <Button onClick={handleUpdateProfile}>Mettre à jour</Button>
+          {updateMessage && <Message type="success">{updateMessage}</Message>}
         </InputGroup>
-        {updateMessage && <Success>{updateMessage}</Success>}
-        <Button onClick={logout} style={{ marginTop: "0.5rem", background: "#ef4444" }}>Se déconnecter</Button>
+        <DangerButton onClick={logout} style={{ marginTop: "1rem" }}>Se déconnecter</DangerButton>
       </Section>
 
+      {/* Favoris */}
       <Section>
         <Title>Favoris</Title>
-        {favorites.length === 0 ? <p>Aucun favori</p> : (
+        {favorites.length === 0 ? <p>Aucun favori</p> :
           <FlexRow>
             {favorites.map(f => (
               <ProductCard key={f._id}>
-                <ProductImage src={f.productId?.images[0]?.url || "https://via.placeholder.com/70"} alt={f.productId?.title || "Produit"} />
+                <ProductImage src={f.productId?.images[0]?.url || "https://via.placeholder.com/80"} alt={f.productId?.title || "Produit"} />
                 <div>
                   <p>{f.productId?.title || "—"}</p>
                   <p>{f.productId?.price?.toLocaleString() || "—"} FCFA</p>
@@ -408,14 +314,25 @@ export default function CompteClient() {
               </ProductCard>
             ))}
           </FlexRow>
-        )}
+        }
       </Section>
 
+      {/* Commandes */}
       <Section>
         <Title>Commandes</Title>
         <div style={{ marginBottom: "1rem" }}>
           <label>Filtrer par statut : </label>
-          <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+          <select
+            value={filterStatus}
+            onChange={e => setFilterStatus(e.target.value)}
+            style={{
+              padding: '8px 12px',
+              borderRadius: '10px',
+              border: '1px solid #d1d5db',
+              fontSize: '0.95rem',
+              background: '#fff',
+            }}
+          >
             <option value="">Tous</option>
             <option value="en cours">En cours</option>
             <option value="envoyé">Envoyé</option>
@@ -424,7 +341,7 @@ export default function CompteClient() {
           </select>
         </div>
 
-        {filteredCommandes.length === 0 ? <p>Aucune commande</p> : (
+        {filteredCommandes.length === 0 ? <p>Aucune commande</p> :
           <FlexRow>
             {filteredCommandes.map(c => (
               <ProductCard key={c._id}>
@@ -443,7 +360,7 @@ export default function CompteClient() {
               </ProductCard>
             ))}
           </FlexRow>
-        )}
+        }
       </Section>
     </PageWrapper>
   );
