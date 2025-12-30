@@ -4,7 +4,6 @@ import styled, { keyframes } from "styled-components";
 import { FiFacebook, FiTwitter, FiInstagram, FiChevronDown, FiHome, FiGrid, FiUser } from "react-icons/fi";
 import { ThemeContext } from "../../Utils/Context";
 import { useTranslation } from "react-i18next";
-import Apropos from './../../pages/apropos';
 
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(20px); }

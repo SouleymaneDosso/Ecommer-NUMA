@@ -133,6 +133,14 @@ const Progress = styled.div`
   transition: width 0.3s ease;
 `;
 
+const RadioLabel = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-right: 1rem;
+  font-size: 0.95rem;
+`;
+
 /* ===== COMPONENT ===== */
 export default function PaiementSemiManuel() {
   const { id } = useParams();
@@ -147,12 +155,13 @@ export default function PaiementSemiManuel() {
   const [service, setService] = useState("orange");
   const [step, setStep] = useState(1);
 
+  // Récupérer la commande
   useEffect(() => {
     const fetchCommande = async () => {
       try {
         const res = await fetch(`${API_URL}/api/commandes/${id}`);
         const data = await res.json();
-        setCommande(data.commande || data);
+        setCommande(data); // corrige data.commande → data
       } catch (err) {
         console.error(err);
       } finally {
@@ -223,9 +232,7 @@ export default function PaiementSemiManuel() {
         </Line>
         <Line>
           <strong>Service choisi :</strong>
-          <span>
-            {commande.servicePaiement === "wave" ? "Wave" : "Orange Money"}
-          </span>
+          <span>{commande.servicePaiement === "wave" ? "Wave" : "Orange Money"}</span>
         </Line>
       </Box>
 
@@ -253,15 +260,31 @@ export default function PaiementSemiManuel() {
             placeholder="Étape de paiement"
             value={step}
             min={1}
-            max={totalSteps}
+            max={commande?.paiements?.length || 1}
             onChange={(e) => setStep(Number(e.target.value))}
           />
-          <RadioLabel>
-            <input type="radio" name="service" value="orange" checked={service === "orange"} onChange={(e)=>setService(e.target.value)}/> Orange Money
-          </RadioLabel>
-          <RadioLabel>
-            <input type="radio" name="service" value="wave" checked={service === "wave"} onChange={(e)=>setService(e.target.value)}/> Wave
-          </RadioLabel>
+          <div style={{ display: "flex", marginBottom: "1rem" }}>
+            <RadioLabel>
+              <input
+                type="radio"
+                name="service"
+                value="orange"
+                checked={service === "orange"}
+                onChange={(e) => setService(e.target.value)}
+              />
+              Orange Money
+            </RadioLabel>
+            <RadioLabel>
+              <input
+                type="radio"
+                name="service"
+                value="wave"
+                checked={service === "wave"}
+                onChange={(e) => setService(e.target.value)}
+              />
+              Wave
+            </RadioLabel>
+          </div>
           <Button type="submit">Envoyer pour validation</Button>
         </form>
       </Box>
@@ -281,7 +304,7 @@ export default function PaiementSemiManuel() {
               )}
               <StepInfo>
                 <StepLabel>Étape {p.step}</StepLabel>
-                <StepAmount>{p.amountExpected.toLocaleString()} FCFA</StepAmount>
+                <StepAmount>{(p.amountExpected || 0).toLocaleString()} FCFA</StepAmount>
                 <Badge status={p.status}>{p.status}</Badge>
               </StepInfo>
             </TimelineItem>

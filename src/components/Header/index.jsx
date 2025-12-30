@@ -296,7 +296,7 @@ export default function Header() {
           <NavLink to="/collections" $isdark={$isdark}>{t("collections")}</NavLink>
           <NavLink to="/nouveautes" $isdark={$isdark}>{t("new")}</NavLink>
           <NavLink to="/promotions" $isdark={$isdark}>{t("deals")}</NavLink>
-          <NavLink to="/a-propos" $isdark={$isdark}>{t("about")}</NavLink>
+          <NavLink to="/apropo" $isdark={$isdark}>{t("about")}</NavLink>
         </DesktopNav>
 
         <Actions>
