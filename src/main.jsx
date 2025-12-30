@@ -37,6 +37,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminLayout from "./pages/AdminLayout";
 import AdminProducts from "./pages/AdminProducts";
 import AdminOrdersPro from "./pages/AdminCommande";
+import AdminPaiements from "./pages/AdminPaiements"
 
 import "./i18n";
 
@@ -232,6 +233,7 @@ createRoot(document.getElementById("root")).render(
             />
 
             {/* Pages admin sans Header et Footer */}
+            <Route path="admin/paiement" element={<AdminPaiements />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin" element={<AdminLayout />}>
               <Route path="dashboard" element={<AdminDashboard />} />

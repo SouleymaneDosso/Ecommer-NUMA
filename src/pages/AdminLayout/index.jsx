@@ -144,7 +144,16 @@ function AdminLayout() {
         >
           Utilisateurs <Badge>5</Badge>
         </SidebarItem>
+
+
+          <SidebarItem
+          $active={location.pathname.includes("paiement")}
+          onClick={() => navigate("/admin/paiement")}
+        >
+          Paiement <Badge>0</Badge>
+        </SidebarItem>
       </Sidebar>
+      
 
       <Main>
         <Header>
