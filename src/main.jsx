@@ -28,8 +28,8 @@ import TermsOfUse from "./pages/conditionutilisation";
 import Collection from "./pages/Collection";
 import CompteClient from "./pages/compteutilisateur";
 import PaiementWave from "./pages/PaiementWave";
-import SuiviPaiement from "./pages/SuiviPaiement";
-import Merci from "./pages/Merci"
+import PaiementSemiManuel from "./pages/PaiementSemiManuel";
+import Merci from "./pages/Merci";
 import Erreur from "./components/Erreur";
 
 import AdminLogin from "./pages/AdminLogin";
@@ -206,15 +206,14 @@ createRoot(document.getElementById("root")).render(
             />
 
             <Route
-              path="/suivi"
+              path="/paiement-semi/:id"
               element={
                 <PublicLayout>
-                  <SuiviPaiement />
+                  <PaiementSemiManuel />
                 </PublicLayout>
               }
             />
-
-             <Route
+            <Route
               path="/merci"
               element={
                 <PublicLayout>

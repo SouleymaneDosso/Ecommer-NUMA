@@ -34,12 +34,18 @@ const Badge = styled.span`
   border-radius: 12px;
   font-size: 0.8rem;
   font-weight: 600;
-  background: ${(p) =>
-    p.status === "PAID" ? "#dcfce7" : "#fee2e2"};
-  color: ${(p) =>
-    p.status === "PAID" ? "#166534" : "#991b1b"};
+  background: ${(p) => (p.status === "PAID" ? "#dcfce7" : "#fee2e2")};
+  color: ${(p) => (p.status === "PAID" ? "#166534" : "#991b1b")};
 `;
 
+const Coffre = styled.p`
+  font-weight: bold;
+  font-size: 1rem;
+  color: ${(p) => (p.unlocked ? "#166534" : "#991b1b")};
+  margin-top: 1rem;
+`;
+
+/* ===== COMPONENT ===== */
 export default function Merci() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -50,42 +56,42 @@ export default function Merci() {
 
   const API_URL = import.meta.env.VITE_API_URL;
 
+  // Récupération commande
+  const fetchCommande = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/commandes/${commandeId}`);
+      const data = await res.json();
+      setCommande(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!commandeId) {
       navigate("/");
       return;
     }
 
-    const fetchCommande = async () => {
-      try {
-        const res = await fetch(`${API_URL}/api/commandes/${commandeId}`);
-        const data = await res.json();
-
-        if (!res.ok) {
-          alert("Commande introuvable");
-          navigate("/");
-          return;
-        }
-
-        setCommande(data.commande);
-      } catch (err) {
-        console.error(err);
-        alert("Erreur serveur");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchCommande();
-  }, [commandeId, API_URL, navigate]);
+
+    // Rafraîchissement automatique toutes les 5 secondes
+    const interval = setInterval(fetchCommande, 5000);
+    return () => clearInterval(interval);
+  }, [commandeId, navigate]);
 
   if (loading) return <Page>Chargement...</Page>;
-  if (!commande) return null;
+  if (!commande) return <Page>Commande introuvable</Page>;
+
+  const toutesPayees = commande.paiements.every((p) => p.status === "PAID");
 
   return (
     <Page>
       <Title>Merci pour votre commande 🎉</Title>
 
+      {/* Informations client */}
       <Box>
         <h3>Informations client</h3>
         <p>
@@ -97,6 +103,7 @@ export default function Merci() {
         </p>
       </Box>
 
+      {/* Produits et total */}
       <Box>
         <h3>Produits</h3>
         {commande.panier.map((item) => (
@@ -104,20 +111,17 @@ export default function Merci() {
             <span>
               {item.nom} x {item.quantite}
             </span>
-            <span>
-              {(item.prix * item.quantite).toLocaleString()} FCFA
-            </span>
+            <span>{(item.prix * item.quantite).toLocaleString()} FCFA</span>
           </Line>
         ))}
-
         <hr />
-
         <Line>
           <strong>Total</strong>
           <strong>{commande.total.toLocaleString()} FCFA</strong>
         </Line>
       </Box>
 
+      {/* Paiement */}
       <Box>
         <h3>Mode de paiement</h3>
         <p>
@@ -126,19 +130,24 @@ export default function Merci() {
             : "Paiement en totalité"}
         </p>
 
-        {commande.modePaiement === "installments" && (
-          <>
-            <h4>Échéances</h4>
-            {commande.paiements.map((p) => (
-              <Line key={p._id}>
-                <span>Étape {p.step}</span>
-                <span>
-                  {p.amount.toLocaleString()} FCFA{" "}
-                  <Badge status={p.status}>{p.status}</Badge>
-                </span>
-              </Line>
-            ))}
-          </>
+        <Coffre unlocked={toutesPayees}>
+          Coffre : {toutesPayees ? "Déverrouillé ✅" : "Verrouillé 🔒"}
+        </Coffre>
+
+        <h4>État des paiements</h4>
+        {commande.paiements.map((p) => (
+          <Line key={p._id}>
+            <span>Étape {p.step}</span>
+            <span>
+              {p.amount.toLocaleString()} FCFA <Badge status={p.status}>{p.status}</Badge>
+            </span>
+          </Line>
+        ))}
+
+        {toutesPayees && (
+          <p style={{ marginTop: "1rem", fontWeight: "bold", color: "#166534" }}>
+            Toutes les étapes sont payées. Livraison possible !
+          </p>
         )}
       </Box>
     </Page>

@@ -88,7 +88,8 @@ export default function PageCheckout() {
   const [ville, setVille] = useState("");
   const [codePostal, setCodePostal] = useState("");
   const [pays, setPays] = useState("");
-  const [modePaiement, setModePaiement] = useState("full");
+  const [modePaiement, setModePaiement] = useState("full"); // full ou installments
+  const [servicePaiement, setServicePaiement] = useState("orange"); // orange ou wave
 
   const API_URL = import.meta.env.VITE_API_URL;
 
@@ -109,7 +110,8 @@ export default function PageCheckout() {
       client: { nom, prenom, adresse, ville, codePostal, pays },
       panier: ajouter,
       total,
-      modePaiement
+      modePaiement,
+      servicePaiement, // 🔹 On envoie le service choisi
     };
 
     try {
@@ -126,7 +128,8 @@ export default function PageCheckout() {
         return;
       }
 
-      navigate("/merci", { state: { commandeId: data.commande._id } });
+      // 🔹 Redirection vers la page Paiement Semi-Manuel
+      navigate(`/paiement-semi/${data.commande._id}`);
     } catch (err) {
       console.error(err);
       alert("Erreur serveur");
@@ -150,12 +153,36 @@ export default function PageCheckout() {
           <h2>Adresse de livraison</h2>
 
           <form onSubmit={handlePaiement}>
-            <Input placeholder="Nom" value={nom} onChange={(e) => setNom(e.target.value)} />
-            <Input placeholder="Prénom" value={prenom} onChange={(e) => setPrenom(e.target.value)} />
-            <Input placeholder="Adresse" value={adresse} onChange={(e) => setAdresse(e.target.value)} />
-            <Input placeholder="Ville" value={ville} onChange={(e) => setVille(e.target.value)} />
-            <Input placeholder="Code postal" value={codePostal} onChange={(e) => setCodePostal(e.target.value)} />
-            <Input placeholder="Pays" value={pays} onChange={(e) => setPays(e.target.value)} />
+            <Input
+              placeholder="Nom"
+              value={nom}
+              onChange={(e) => setNom(e.target.value)}
+            />
+            <Input
+              placeholder="Prénom"
+              value={prenom}
+              onChange={(e) => setPrenom(e.target.value)}
+            />
+            <Input
+              placeholder="Adresse"
+              value={adresse}
+              onChange={(e) => setAdresse(e.target.value)}
+            />
+            <Input
+              placeholder="Ville"
+              value={ville}
+              onChange={(e) => setVille(e.target.value)}
+            />
+            <Input
+              placeholder="Code postal"
+              value={codePostal}
+              onChange={(e) => setCodePostal(e.target.value)}
+            />
+            <Input
+              placeholder="Pays"
+              value={pays}
+              onChange={(e) => setPays(e.target.value)}
+            />
 
             <h3>Mode de paiement</h3>
             <label>
@@ -176,6 +203,25 @@ export default function PageCheckout() {
               Paiement en 3 fois
             </label>
 
+            <h3>Service de paiement</h3>
+            <label>
+              <input
+                type="radio"
+                checked={servicePaiement === "orange"}
+                onChange={() => setServicePaiement("orange")}
+              />{" "}
+              Orange Money
+            </label>
+
+            <label style={{ marginLeft: "1rem" }}>
+              <input
+                type="radio"
+                checked={servicePaiement === "wave"}
+                onChange={() => setServicePaiement("wave")}
+              />{" "}
+              Wave
+            </label>
+
             <Button type="submit">Valider la commande</Button>
           </form>
         </Section>
@@ -185,7 +231,9 @@ export default function PageCheckout() {
 
           {ajouter.map((item) => (
             <ProductItem key={item.id}>
-              <span>{item.nom} x {item.quantite}</span>
+              <span>
+                {item.nom} x {item.quantite}
+              </span>
               <span>{(item.prix * item.quantite).toLocaleString()} FCFA</span>
             </ProductItem>
           ))}
