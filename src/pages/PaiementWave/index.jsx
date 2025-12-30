@@ -1,0 +1,211 @@
+import { useContext, useState } from "react";
+import styled from "styled-components";
+import * as Context from "../../Utils/Context";
+import { useNavigate } from "react-router-dom";
+
+/* ===== STYLES ===== */
+const Page = styled.main`
+  max-width: 1000px;
+  margin: 3rem auto;
+  padding: 0 2rem;
+  font-family: "Inter", sans-serif;
+`;
+
+const Title = styled.h1`
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  font-weight: 700;
+`;
+
+const Grid = styled.div`
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const Section = styled.section`
+  background: #f8f9ff;
+  padding: 2rem;
+  border-radius: 16px;
+`;
+
+const Input = styled.input`
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+`;
+
+const Button = styled.button`
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 1rem;
+`;
+
+const Summary = styled.div`
+  background: #fff;
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.05);
+`;
+
+const Line = styled.div`
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+`;
+
+const Total = styled(Line)`
+  font-weight: 700;
+  font-size: 1.1rem;
+`;
+
+const ProductItem = styled.div`
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.8rem;
+`;
+
+/* ===== COMPONENT ===== */
+export default function PageCheckout() {
+  const { ajouter } = useContext(Context.PanierContext);
+  const navigate = useNavigate();
+
+  const [nom, setNom] = useState("");
+  const [prenom, setPrenom] = useState("");
+  const [adresse, setAdresse] = useState("");
+  const [ville, setVille] = useState("");
+  const [codePostal, setCodePostal] = useState("");
+  const [pays, setPays] = useState("");
+  const [modePaiement, setModePaiement] = useState("full");
+
+  const API_URL = import.meta.env.VITE_API_URL;
+
+  const total = ajouter.reduce(
+    (acc, item) => acc + item.prix * item.quantite,
+    0
+  );
+
+  const handlePaiement = async (e) => {
+    e.preventDefault();
+
+    if (!nom || !prenom || !adresse || !ville || !codePostal || !pays) {
+      alert("Veuillez remplir tous les champs.");
+      return;
+    }
+
+    const commande = {
+      client: { nom, prenom, adresse, ville, codePostal, pays },
+      panier: ajouter,
+      total,
+      modePaiement
+    };
+
+    try {
+      const res = await fetch(`${API_URL}/api/commandes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(commande),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message || "Erreur lors de la commande");
+        return;
+      }
+
+      navigate("/merci", { state: { commandeId: data.commande._id } });
+    } catch (err) {
+      console.error(err);
+      alert("Erreur serveur");
+    }
+  };
+
+  if (ajouter.length === 0) {
+    return (
+      <Page>
+        <h2>Votre panier est vide</h2>
+      </Page>
+    );
+  }
+
+  return (
+    <Page>
+      <Title>Checkout</Title>
+
+      <Grid>
+        <Section>
+          <h2>Adresse de livraison</h2>
+
+          <form onSubmit={handlePaiement}>
+            <Input placeholder="Nom" value={nom} onChange={(e) => setNom(e.target.value)} />
+            <Input placeholder="Prénom" value={prenom} onChange={(e) => setPrenom(e.target.value)} />
+            <Input placeholder="Adresse" value={adresse} onChange={(e) => setAdresse(e.target.value)} />
+            <Input placeholder="Ville" value={ville} onChange={(e) => setVille(e.target.value)} />
+            <Input placeholder="Code postal" value={codePostal} onChange={(e) => setCodePostal(e.target.value)} />
+            <Input placeholder="Pays" value={pays} onChange={(e) => setPays(e.target.value)} />
+
+            <h3>Mode de paiement</h3>
+            <label>
+              <input
+                type="radio"
+                checked={modePaiement === "full"}
+                onChange={() => setModePaiement("full")}
+              />{" "}
+              Paiement total
+            </label>
+
+            <label style={{ marginLeft: "1rem" }}>
+              <input
+                type="radio"
+                checked={modePaiement === "installments"}
+                onChange={() => setModePaiement("installments")}
+              />{" "}
+              Paiement en 3 fois
+            </label>
+
+            <Button type="submit">Valider la commande</Button>
+          </form>
+        </Section>
+
+        <Summary>
+          <h2>Récapitulatif</h2>
+
+          {ajouter.map((item) => (
+            <ProductItem key={item.id}>
+              <span>{item.nom} x {item.quantite}</span>
+              <span>{(item.prix * item.quantite).toLocaleString()} FCFA</span>
+            </ProductItem>
+          ))}
+
+          <Line>
+            <span>Sous-total</span>
+            <span>{total.toLocaleString()} FCFA</span>
+          </Line>
+
+          <Line>
+            <span>Livraison</span>
+            <span>Gratuite</span>
+          </Line>
+
+          <Total>
+            <span>Total</span>
+            <span>{total.toLocaleString()} FCFA</span>
+          </Total>
+        </Summary>
+      </Grid>
+    </Page>
+  );
+}

@@ -23,17 +23,20 @@ import Apropos from "./pages/apropos";
 import FAQ from "./pages/faq";
 import Contact from "./pages/contact";
 import ReturnPolicy from "./pages/politiqueretour";
-import Delivery from "./pages/livraison"
+import Delivery from "./pages/livraison";
 import TermsOfUse from "./pages/conditionutilisation";
+import Collection from "./pages/Collection";
+import CompteClient from "./pages/compteutilisateur";
+import PaiementWave from "./pages/PaiementWave";
+import SuiviPaiement from "./pages/SuiviPaiement";
+import Merci from "./pages/Merci"
 import Erreur from "./components/Erreur";
 
-import AdminLogin from './pages/AdminLogin';
-import AdminDashboard from './pages/AdminDashboard';
+import AdminLogin from "./pages/AdminLogin";
+import AdminDashboard from "./pages/AdminDashboard";
 import AdminLayout from "./pages/AdminLayout";
 import AdminProducts from "./pages/AdminProducts";
 import AdminOrdersPro from "./pages/AdminCommande";
-import CompteClient from "./pages/compteutilisateur";
-import Collection from "./pages/Collection";
 
 import "./i18n";
 
@@ -41,7 +44,7 @@ import "./i18n";
 const PublicLayout = ({ children }) => {
   return (
     <>
-     <ScrollToTop />
+      <ScrollToTop />
       <Header />
       <main>{children}</main>
       <Footer />
@@ -57,24 +60,177 @@ createRoot(document.getElementById("root")).render(
           <GlobalStyle />
           <Routes>
             {/* Pages publiques */}
-            <Route path="/" element={<PublicLayout><Home /></PublicLayout>} />
-            <Route path="/homme" element={<PublicLayout><Homme /></PublicLayout>} />
-            <Route path="/femme" element={<PublicLayout><Femme /></PublicLayout>} />
-            <Route path="/enfant" element={<PublicLayout><Enfant /></PublicLayout>} />
-            <Route path="/collections" element={<PublicLayout><Collection /></PublicLayout>} />
-            <Route path="/new" element={<PublicLayout><New /></PublicLayout>} />
-            <Route path="/promo" element={<PublicLayout><Promo /></PublicLayout>} />
-            <Route path="/apropo" element={<PublicLayout><Apropos /></PublicLayout>} />
-            <Route path="/faq" element={<PublicLayout><FAQ /></PublicLayout>} />
-             <Route path="/politiqueretour" element={<PublicLayout><ReturnPolicy  /></PublicLayout>} />
-            <Route path="/contact" element={<PublicLayout><Contact /></PublicLayout>} />
-            <Route path="/livraison" element={<PublicLayout><Delivery /></PublicLayout>} />  
-            <Route path="/conditionUtilisation" element={<PublicLayout><TermsOfUse /></PublicLayout>} /> 
-            <Route path="/favoris" element={<PublicLayout><Favorie /></PublicLayout>} />
-            <Route path="/produit/:id" element={<PublicLayout><Produit /></PublicLayout>} />
-            <Route path="/panier" element={<PublicLayout><PagePanier /></PublicLayout>} />
-            <Route path="/compte" element={<PublicLayout><CompteClient /></PublicLayout>} />
-            <Route path="*" element={<PublicLayout><Erreur /></PublicLayout>} />
+            <Route
+              path="/"
+              element={
+                <PublicLayout>
+                  <Home />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/homme"
+              element={
+                <PublicLayout>
+                  <Homme />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/femme"
+              element={
+                <PublicLayout>
+                  <Femme />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/enfant"
+              element={
+                <PublicLayout>
+                  <Enfant />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/collections"
+              element={
+                <PublicLayout>
+                  <Collection />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/new"
+              element={
+                <PublicLayout>
+                  <New />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/promo"
+              element={
+                <PublicLayout>
+                  <Promo />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/apropo"
+              element={
+                <PublicLayout>
+                  <Apropos />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/faq"
+              element={
+                <PublicLayout>
+                  <FAQ />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/politiqueretour"
+              element={
+                <PublicLayout>
+                  <ReturnPolicy />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/contact"
+              element={
+                <PublicLayout>
+                  <Contact />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/livraison"
+              element={
+                <PublicLayout>
+                  <Delivery />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/conditionUtilisation"
+              element={
+                <PublicLayout>
+                  <TermsOfUse />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/favoris"
+              element={
+                <PublicLayout>
+                  <Favorie />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/produit/:id"
+              element={
+                <PublicLayout>
+                  <Produit />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/panier"
+              element={
+                <PublicLayout>
+                  <PagePanier />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/compte"
+              element={
+                <PublicLayout>
+                  <CompteClient />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/checkout"
+              element={
+                <PublicLayout>
+                  <PaiementWave />
+                </PublicLayout>
+              }
+            />
+
+            <Route
+              path="/suivi"
+              element={
+                <PublicLayout>
+                  <SuiviPaiement />
+                </PublicLayout>
+              }
+            />
+
+             <Route
+              path="/merci"
+              element={
+                <PublicLayout>
+                  <Merci />
+                </PublicLayout>
+              }
+            />
+
+            <Route
+              path="*"
+              element={
+                <PublicLayout>
+                  <Erreur />
+                </PublicLayout>
+              }
+            />
 
             {/* Pages admin sans Header et Footer */}
             <Route path="/admin/login" element={<AdminLogin />} />

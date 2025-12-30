@@ -1,12 +1,10 @@
-// src/pages/PagePanierZara.jsx
 import { useContext } from "react";
 import styled from "styled-components";
 import { PanierContext } from "../../Utils/Context";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { FiMinus, FiPlus, FiTrash2 } from "react-icons/fi";
 
 /* ================== STYLES ================== */
-
 const Page = styled.main`
   max-width: 1200px;
   margin: 3rem auto;
@@ -25,7 +23,6 @@ const Grid = styled.div`
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 3rem;
-
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
   }
@@ -92,7 +89,6 @@ const QtyBtn = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-
   &:disabled {
     opacity: 0.3;
     cursor: not-allowed;
@@ -119,7 +115,6 @@ const Remove = styled.button`
 `;
 
 /* ===== SUMMARY ===== */
-
 const Summary = styled.aside`
   border: 1px solid #e5e5e5;
   padding: 2rem;
@@ -150,7 +145,6 @@ const PayButton = styled.button`
   letter-spacing: 2px;
   cursor: pointer;
   text-transform: uppercase;
-
   &:hover {
     background: #111;
   }
@@ -181,15 +175,10 @@ const Back = styled(Link)`
 `;
 
 /* ================== COMPONENT ================== */
-
 export default function PagePanierZara() {
-  const {
-    ajouter,
-    supprimer,
-    augmenter,
-    diminuer,
-    toutSupprimer,
-  } = useContext(PanierContext);
+  const navigate = useNavigate();
+  const { ajouter, supprimer, augmenter, diminuer, toutSupprimer } =
+    useContext(PanierContext);
 
   const total = ajouter.reduce(
     (acc, item) => acc + item.prix * item.quantite,
@@ -242,10 +231,7 @@ export default function PagePanierZara() {
                   </QtyBtn>
                 </Quantity>
 
-                {/* BONUS : info stock */}
-                <StockHint>
-                  Stock maximum : {item.stockDisponible}
-                </StockHint>
+                <StockHint>Stock maximum : {item.stockDisponible}</StockHint>
               </Info>
 
               <Remove onClick={() => supprimer(item.id)}>
@@ -272,11 +258,14 @@ export default function PagePanierZara() {
             <span>{total.toLocaleString()} FCFA</span>
           </Total>
 
-          <PayButton>Procéder au paiement</PayButton>
+          {/* Composant Paiement Wave */}
+          <PayButton onClick={() => navigate("/checkout")}>
+            Passer au paiement
+          </PayButton>
+
           <Clear onClick={toutSupprimer}>Vider le panier</Clear>
         </Summary>
       </Grid>
-
       <Back to="/">← Retour boutique</Back>
     </Page>
   );
