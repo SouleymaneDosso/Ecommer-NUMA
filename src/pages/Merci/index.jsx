@@ -34,8 +34,18 @@ const Badge = styled.span`
   border-radius: 12px;
   font-size: 0.8rem;
   font-weight: 600;
-  background: ${(p) => (p.status === "PAID" ? "#dcfce7" : "#fee2e2")};
-  color: ${(p) => (p.status === "PAID" ? "#166534" : "#991b1b")};
+  background: ${(p) =>
+    p.status === "PAID"
+      ? "#dcfce7"
+      : p.status === "PENDING"
+      ? "#fef3c7"
+      : "#fee2e2"};
+  color: ${(p) =>
+    p.status === "PAID"
+      ? "#166534"
+      : p.status === "PENDING"
+      ? "#92400e"
+      : "#991b1b"};
 `;
 
 const Coffre = styled.p`
@@ -61,7 +71,7 @@ export default function Merci() {
     try {
       const res = await fetch(`${API_URL}/api/commandes/${commandeId}`);
       const data = await res.json();
-      setCommande(data);
+      setCommande(data.commande || data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -77,7 +87,6 @@ export default function Merci() {
 
     fetchCommande();
 
-    // Rafraîchissement automatique toutes les 5 secondes
     const interval = setInterval(fetchCommande, 5000);
     return () => clearInterval(interval);
   }, [commandeId, navigate]);
@@ -107,7 +116,7 @@ export default function Merci() {
       <Box>
         <h3>Produits</h3>
         {commande.panier.map((item) => (
-          <Line key={item._id}>
+          <Line key={item.produitId}>
             <span>
               {item.nom} x {item.quantite}
             </span>
@@ -139,7 +148,7 @@ export default function Merci() {
           <Line key={p._id}>
             <span>Étape {p.step}</span>
             <span>
-              {p.amount.toLocaleString()} FCFA <Badge status={p.status}>{p.status}</Badge>
+              {p.amountExpected.toLocaleString()} FCFA <Badge status={p.status}>{p.status}</Badge>
             </span>
           </Line>
         ))}

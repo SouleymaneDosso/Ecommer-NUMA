@@ -17,10 +17,6 @@ const Box = styled.div`
   border-radius: 16px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
   margin-bottom: 2rem;
-
-  @media (max-width: 768px) {
-    padding: 1.5rem;
-  }
 `;
 
 const Title = styled.h1`
@@ -66,6 +62,11 @@ const Button = styled.button`
   &:active {
     transform: scale(0.98);
   }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 `;
 
 const Badge = styled.span`
@@ -73,8 +74,18 @@ const Badge = styled.span`
   border-radius: 12px;
   font-size: 0.8rem;
   font-weight: 600;
-  background: ${(p) => (p.status === "PAID" ? "#dcfce7" : "#fee2e2")};
-  color: ${(p) => (p.status === "PAID" ? "#166534" : "#991b1b")};
+  background: ${(p) =>
+    p.status === "PAID"
+      ? "#dcfce7"
+      : p.status === "PENDING"
+      ? "#fef3c7"
+      : "#fee2e2"};
+  color: ${(p) =>
+    p.status === "PAID"
+      ? "#166534"
+      : p.status === "PENDING"
+      ? "#92400e"
+      : "#991b1b"};
 `;
 
 const Timeline = styled.ul`
@@ -125,15 +136,17 @@ const Progress = styled.div`
 /* ===== COMPONENT ===== */
 export default function PaiementSemiManuel() {
   const { id } = useParams();
-  const API_URL = import.meta.env.VITE_API_URL;
   const navigate = useNavigate();
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const [commande, setCommande] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [transactionId, setTransactionId] = useState("");
-  const [montant, setMontant] = useState("");
+  const [numeroClient, setNumeroClient] = useState("");
+  const [montantEnvoye, setMontantEnvoye] = useState("");
+  const [reference, setReference] = useState("");
+  const [service, setService] = useState("orange");
+  const [step, setStep] = useState(1);
 
-  // Récupérer la commande
   useEffect(() => {
     const fetchCommande = async () => {
       try {
@@ -149,38 +162,42 @@ export default function PaiementSemiManuel() {
     fetchCommande();
   }, [id]);
 
-  // Soumettre paiement semi-manuel
   const handlePaiement = async (e) => {
     e.preventDefault();
-    if (!transactionId || !montant) {
+
+    if (!numeroClient || !montantEnvoye || !reference) {
       alert("Veuillez remplir tous les champs");
       return;
     }
+
     try {
       const res = await fetch(`${API_URL}/api/commandes/${id}/paiement-semi`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          numeroPaiement: transactionId,
-          montant: Number(montant),
-          reference: transactionId,
+          step,
+          numeroClient,
+          montantEnvoye: Number(montantEnvoye),
+          reference,
+          service,
         }),
       });
+
       const data = await res.json();
       if (!res.ok) {
         alert(data.message || "Erreur lors de l'enregistrement du paiement");
         return;
       }
-      alert("Paiement soumis avec succès, en attente de validation admin");
-      navigate("/merci");
+
+      navigate("/merci", { state: { commandeId: id } });
     } catch (err) {
       console.error(err);
       alert("Erreur serveur");
     }
   };
 
-  if (loading) return <Page><p>Chargement...</p></Page>;
-  if (!commande) return <Page><p>Commande introuvable</p></Page>;
+  if (loading) return <Page>Chargement...</Page>;
+  if (!commande) return <Page>Commande introuvable</Page>;
 
   const totalSteps = commande.paiements.length;
   const paidSteps = commande.paiements.filter((p) => p.status === "PAID").length;
@@ -194,7 +211,9 @@ export default function PaiementSemiManuel() {
         <h2>Récapitulatif de la commande</h2>
         {commande.panier.map((item) => (
           <Line key={item.produitId}>
-            <span>{item.nom} x {item.quantite}</span>
+            <span>
+              {item.nom} x {item.quantite}
+            </span>
             <span>{(item.prix * item.quantite).toLocaleString()} FCFA</span>
           </Line>
         ))}
@@ -204,24 +223,45 @@ export default function PaiementSemiManuel() {
         </Line>
         <Line>
           <strong>Service choisi :</strong>
-          <span>{commande.servicePaiement === "wave" ? "Wave" : "Orange Money"}</span>
+          <span>
+            {commande.servicePaiement === "wave" ? "Wave" : "Orange Money"}
+          </span>
         </Line>
       </Box>
 
       <Box>
-        <h2>Enregistrement du paiement</h2>
+        <h2>Soumettre votre paiement</h2>
         <form onSubmit={handlePaiement}>
           <Input
-            placeholder="ID de transaction"
-            value={transactionId}
-            onChange={(e) => setTransactionId(e.target.value)}
+            placeholder="Numéro de téléphone"
+            value={numeroClient}
+            onChange={(e) => setNumeroClient(e.target.value)}
           />
           <Input
             placeholder="Montant payé (FCFA)"
             type="number"
-            value={montant}
-            onChange={(e) => setMontant(e.target.value)}
+            value={montantEnvoye}
+            onChange={(e) => setMontantEnvoye(e.target.value)}
           />
+          <Input
+            placeholder="Référence du paiement"
+            value={reference}
+            onChange={(e) => setReference(e.target.value)}
+          />
+          <Input
+            type="number"
+            placeholder="Étape de paiement"
+            value={step}
+            min={1}
+            max={totalSteps}
+            onChange={(e) => setStep(Number(e.target.value))}
+          />
+          <RadioLabel>
+            <input type="radio" name="service" value="orange" checked={service === "orange"} onChange={(e)=>setService(e.target.value)}/> Orange Money
+          </RadioLabel>
+          <RadioLabel>
+            <input type="radio" name="service" value="wave" checked={service === "wave"} onChange={(e)=>setService(e.target.value)}/> Wave
+          </RadioLabel>
           <Button type="submit">Envoyer pour validation</Button>
         </form>
       </Box>
@@ -234,10 +274,14 @@ export default function PaiementSemiManuel() {
         <Timeline>
           {commande.paiements.map((p) => (
             <TimelineItem key={p._id}>
-              {p.status === "PAID" ? <FaCheckCircle color="#4f46e5" size={18} /> : <FaRegCircle color="#d1d5db" size={18} />}
+              {p.status === "PAID" ? (
+                <FaCheckCircle color="#4f46e5" size={18} />
+              ) : (
+                <FaRegCircle color="#d1d5db" size={18} />
+              )}
               <StepInfo>
                 <StepLabel>Étape {p.step}</StepLabel>
-                <StepAmount>{p.amount.toLocaleString()} FCFA</StepAmount>
+                <StepAmount>{p.amountExpected.toLocaleString()} FCFA</StepAmount>
                 <Badge status={p.status}>{p.status}</Badge>
               </StepInfo>
             </TimelineItem>

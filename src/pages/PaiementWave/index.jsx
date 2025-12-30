@@ -44,7 +44,7 @@ const Input = styled.input`
   margin-bottom: 1rem;
   border-radius: 10px;
   border: 1px solid #d1d5db;
-  font-size: 16px; /* ✅ empêche zoom mobile iOS */
+  font-size: 16px;
   line-height: 1.4;
   box-sizing: border-box;
   background: #fff;
@@ -84,6 +84,11 @@ const Button = styled.button`
 
   &:active {
     transform: scale(0.98);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 `;
 
@@ -129,6 +134,7 @@ export default function PageCheckout() {
   const [pays, setPays] = useState("");
   const [modePaiement, setModePaiement] = useState("full"); // full ou installments
   const [servicePaiement, setServicePaiement] = useState("orange"); // orange ou wave
+  const [loading, setLoading] = useState(false);
 
   const API_URL = import.meta.env.VITE_API_URL;
 
@@ -142,9 +148,18 @@ export default function PageCheckout() {
       return;
     }
 
+    setLoading(true);
+
     const commande = {
       client: { nom, prenom, adresse, ville, codePostal, pays },
-      panier: ajouter,
+      panier: ajouter.map((item) => ({
+        produitId: item.id,
+        nom: item.nom,
+        prix: item.prix,
+        quantite: item.quantite,
+        couleur: item.couleur || "",
+        taille: item.taille || "",
+      })),
       total,
       modePaiement,
       servicePaiement,
@@ -168,6 +183,8 @@ export default function PageCheckout() {
     } catch (err) {
       console.error(err);
       alert("Erreur serveur");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -210,11 +227,23 @@ export default function PageCheckout() {
             <h3>Mode de paiement</h3>
             <RadioGroup>
               <RadioLabel>
-                <input type="radio" checked={modePaiement === "full"} onChange={() => setModePaiement("full")} />
+                <input
+                  type="radio"
+                  name="modePaiement"
+                  value="full"
+                  checked={modePaiement === "full"}
+                  onChange={(e) => setModePaiement(e.target.value)}
+                />
                 Paiement total
               </RadioLabel>
               <RadioLabel>
-                <input type="radio" checked={modePaiement === "installments"} onChange={() => setModePaiement("installments")} />
+                <input
+                  type="radio"
+                  name="modePaiement"
+                  value="installments"
+                  checked={modePaiement === "installments"}
+                  onChange={(e) => setModePaiement(e.target.value)}
+                />
                 Paiement en 3 fois
               </RadioLabel>
             </RadioGroup>
@@ -222,16 +251,30 @@ export default function PageCheckout() {
             <h3>Service de paiement</h3>
             <RadioGroup>
               <RadioLabel>
-                <input type="radio" checked={servicePaiement === "orange"} onChange={() => setServicePaiement("orange")} />
+                <input
+                  type="radio"
+                  name="servicePaiement"
+                  value="orange"
+                  checked={servicePaiement === "orange"}
+                  onChange={(e) => setServicePaiement(e.target.value)}
+                />
                 Orange Money
               </RadioLabel>
               <RadioLabel>
-                <input type="radio" checked={servicePaiement === "wave"} onChange={() => setServicePaiement("wave")} />
+                <input
+                  type="radio"
+                  name="servicePaiement"
+                  value="wave"
+                  checked={servicePaiement === "wave"}
+                  onChange={(e) => setServicePaiement(e.target.value)}
+                />
                 Wave
               </RadioLabel>
             </RadioGroup>
 
-            <Button type="submit">Valider la commande</Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? "Envoi..." : "Valider la commande"}
+            </Button>
           </form>
         </Section>
 
