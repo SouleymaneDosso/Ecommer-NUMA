@@ -6,8 +6,8 @@ import { useNavigate } from "react-router-dom";
 /* ===== STYLES ===== */
 const Page = styled.main`
   max-width: 1000px;
-  margin: 3rem auto;
-  padding: 0 2rem;
+  margin: 2rem auto;
+  padding: 0 1rem;
   font-family: "Inter", sans-serif;
 `;
 
@@ -24,6 +24,7 @@ const Grid = styled.div`
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
+    gap: 1.5rem;
   }
 `;
 
@@ -33,24 +34,57 @@ const Section = styled.section`
   border-radius: 16px;
 `;
 
+const FieldGroup = styled.div`
+  margin-bottom: 1.2rem;
+`;
+
 const Input = styled.input`
   width: 100%;
-  padding: 10px 12px;
+  padding: 14px;
   margin-bottom: 1rem;
-  border-radius: 8px;
+  border-radius: 10px;
   border: 1px solid #d1d5db;
+  font-size: 16px; /* ✅ empêche zoom mobile iOS */
+  line-height: 1.4;
+  box-sizing: border-box;
+  background: #fff;
+
+  &:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+  }
+`;
+
+const RadioGroup = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 0.5rem 0 1.5rem;
+`;
+
+const RadioLabel = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.95rem;
 `;
 
 const Button = styled.button`
   width: 100%;
-  padding: 12px;
-  border-radius: 10px;
+  padding: 14px;
+  border-radius: 12px;
   border: none;
   background: linear-gradient(135deg, #4f46e5, #6366f1);
   color: #fff;
   font-weight: 600;
+  font-size: 1rem;
   cursor: pointer;
   margin-top: 1rem;
+
+  &:active {
+    transform: scale(0.98);
+  }
 `;
 
 const Summary = styled.div`
@@ -58,6 +92,11 @@ const Summary = styled.div`
   padding: 2rem;
   border-radius: 16px;
   box-shadow: 0 6px 25px rgba(0, 0, 0, 0.05);
+
+  @media (min-width: 769px) {
+    position: sticky;
+    top: 2rem;
+  }
 `;
 
 const Line = styled.div`
@@ -93,10 +132,7 @@ export default function PageCheckout() {
 
   const API_URL = import.meta.env.VITE_API_URL;
 
-  const total = ajouter.reduce(
-    (acc, item) => acc + item.prix * item.quantite,
-    0
-  );
+  const total = ajouter.reduce((acc, item) => acc + item.prix * item.quantite, 0);
 
   const handlePaiement = async (e) => {
     e.preventDefault();
@@ -111,7 +147,7 @@ export default function PageCheckout() {
       panier: ajouter,
       total,
       modePaiement,
-      servicePaiement, // 🔹 On envoie le service choisi
+      servicePaiement,
     };
 
     try {
@@ -128,7 +164,6 @@ export default function PageCheckout() {
         return;
       }
 
-      // 🔹 Redirection vers la page Paiement Semi-Manuel
       navigate(`/paiement-semi/${data.commande._id}`);
     } catch (err) {
       console.error(err);
@@ -153,74 +188,48 @@ export default function PageCheckout() {
           <h2>Adresse de livraison</h2>
 
           <form onSubmit={handlePaiement}>
-            <Input
-              placeholder="Nom"
-              value={nom}
-              onChange={(e) => setNom(e.target.value)}
-            />
-            <Input
-              placeholder="Prénom"
-              value={prenom}
-              onChange={(e) => setPrenom(e.target.value)}
-            />
-            <Input
-              placeholder="Adresse"
-              value={adresse}
-              onChange={(e) => setAdresse(e.target.value)}
-            />
-            <Input
-              placeholder="Ville"
-              value={ville}
-              onChange={(e) => setVille(e.target.value)}
-            />
-            <Input
-              placeholder="Code postal"
-              value={codePostal}
-              onChange={(e) => setCodePostal(e.target.value)}
-            />
-            <Input
-              placeholder="Pays"
-              value={pays}
-              onChange={(e) => setPays(e.target.value)}
-            />
+            <FieldGroup>
+              <Input placeholder="Nom" value={nom} onChange={(e) => setNom(e.target.value)} />
+            </FieldGroup>
+            <FieldGroup>
+              <Input placeholder="Prénom" value={prenom} onChange={(e) => setPrenom(e.target.value)} />
+            </FieldGroup>
+            <FieldGroup>
+              <Input placeholder="Adresse" value={adresse} onChange={(e) => setAdresse(e.target.value)} />
+            </FieldGroup>
+            <FieldGroup>
+              <Input placeholder="Ville" value={ville} onChange={(e) => setVille(e.target.value)} />
+            </FieldGroup>
+            <FieldGroup>
+              <Input placeholder="Code postal" value={codePostal} onChange={(e) => setCodePostal(e.target.value)} />
+            </FieldGroup>
+            <FieldGroup>
+              <Input placeholder="Pays" value={pays} onChange={(e) => setPays(e.target.value)} />
+            </FieldGroup>
 
             <h3>Mode de paiement</h3>
-            <label>
-              <input
-                type="radio"
-                checked={modePaiement === "full"}
-                onChange={() => setModePaiement("full")}
-              />{" "}
-              Paiement total
-            </label>
-
-            <label style={{ marginLeft: "1rem" }}>
-              <input
-                type="radio"
-                checked={modePaiement === "installments"}
-                onChange={() => setModePaiement("installments")}
-              />{" "}
-              Paiement en 3 fois
-            </label>
+            <RadioGroup>
+              <RadioLabel>
+                <input type="radio" checked={modePaiement === "full"} onChange={() => setModePaiement("full")} />
+                Paiement total
+              </RadioLabel>
+              <RadioLabel>
+                <input type="radio" checked={modePaiement === "installments"} onChange={() => setModePaiement("installments")} />
+                Paiement en 3 fois
+              </RadioLabel>
+            </RadioGroup>
 
             <h3>Service de paiement</h3>
-            <label>
-              <input
-                type="radio"
-                checked={servicePaiement === "orange"}
-                onChange={() => setServicePaiement("orange")}
-              />{" "}
-              Orange Money
-            </label>
-
-            <label style={{ marginLeft: "1rem" }}>
-              <input
-                type="radio"
-                checked={servicePaiement === "wave"}
-                onChange={() => setServicePaiement("wave")}
-              />{" "}
-              Wave
-            </label>
+            <RadioGroup>
+              <RadioLabel>
+                <input type="radio" checked={servicePaiement === "orange"} onChange={() => setServicePaiement("orange")} />
+                Orange Money
+              </RadioLabel>
+              <RadioLabel>
+                <input type="radio" checked={servicePaiement === "wave"} onChange={() => setServicePaiement("wave")} />
+                Wave
+              </RadioLabel>
+            </RadioGroup>
 
             <Button type="submit">Valider la commande</Button>
           </form>

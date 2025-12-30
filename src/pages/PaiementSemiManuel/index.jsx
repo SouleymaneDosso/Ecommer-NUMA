@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import styled from "styled-components";
+import { FaCheckCircle, FaRegCircle } from "react-icons/fa";
 
 /* ===== STYLES ===== */
 const Page = styled.main`
   max-width: 800px;
-  margin: 3rem auto;
-  padding: 0 2rem;
+  margin: 2rem auto;
+  padding: 0 1rem;
   font-family: "Inter", sans-serif;
 `;
 
@@ -16,6 +17,10 @@ const Box = styled.div`
   border-radius: 16px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
   margin-bottom: 2rem;
+
+  @media (max-width: 768px) {
+    padding: 1.5rem;
+  }
 `;
 
 const Title = styled.h1`
@@ -32,22 +37,35 @@ const Line = styled.div`
 
 const Input = styled.input`
   width: 100%;
-  padding: 10px 12px;
+  padding: 14px;
   margin-bottom: 1rem;
-  border-radius: 8px;
+  border-radius: 10px;
   border: 1px solid #d1d5db;
+  font-size: 16px;
+  box-sizing: border-box;
+
+  &:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+  }
 `;
 
 const Button = styled.button`
   width: 100%;
-  padding: 12px;
-  border-radius: 10px;
+  padding: 14px;
+  border-radius: 12px;
   border: none;
   background: linear-gradient(135deg, #4f46e5, #6366f1);
   color: #fff;
   font-weight: 600;
+  font-size: 1rem;
   cursor: pointer;
   margin-top: 1rem;
+
+  &:active {
+    transform: scale(0.98);
+  }
 `;
 
 const Badge = styled.span`
@@ -59,9 +77,54 @@ const Badge = styled.span`
   color: ${(p) => (p.status === "PAID" ? "#166534" : "#991b1b")};
 `;
 
+const Timeline = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0 0;
+`;
+
+const TimelineItem = styled.li`
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.5rem;
+`;
+
+const StepInfo = styled.div`
+  margin-left: 0.8rem;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  align-items: center;
+`;
+
+const StepLabel = styled.span`
+  font-weight: 500;
+`;
+
+const StepAmount = styled.span`
+  font-size: 0.9rem;
+  color: #6b7280;
+`;
+
+const ProgressBar = styled.div`
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  margin: 0.5rem 0 1.5rem 2rem;
+  position: relative;
+`;
+
+const Progress = styled.div`
+  height: 100%;
+  width: ${(p) => p.percent}%;
+  background: linear-gradient(90deg, #4f46e5, #6366f1);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+`;
+
 /* ===== COMPONENT ===== */
 export default function PaiementSemiManuel() {
-  const { id } = useParams(); // ID de la commande
+  const { id } = useParams();
   const API_URL = import.meta.env.VITE_API_URL;
   const navigate = useNavigate();
 
@@ -71,45 +134,43 @@ export default function PaiementSemiManuel() {
   const [montant, setMontant] = useState("");
 
   // Récupérer la commande
-  const fetchCommande = async () => {
-    try {
-      const res = await fetch(`${API_URL}/api/commandes/${id}`);
-      const data = await res.json();
-      setCommande(data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const fetchCommande = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/commandes/${id}`);
+        const data = await res.json();
+        setCommande(data.commande || data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchCommande();
   }, [id]);
 
   // Soumettre paiement semi-manuel
   const handlePaiement = async (e) => {
     e.preventDefault();
-
     if (!transactionId || !montant) {
       alert("Veuillez remplir tous les champs");
       return;
     }
-
     try {
       const res = await fetch(`${API_URL}/api/commandes/${id}/paiement-semi`, {
-        method: "PUT",
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ transactionId, montant }),
+        body: JSON.stringify({
+          numeroPaiement: transactionId,
+          montant: Number(montant),
+          reference: transactionId,
+        }),
       });
-
       const data = await res.json();
-
       if (!res.ok) {
         alert(data.message || "Erreur lors de l'enregistrement du paiement");
         return;
       }
-
       alert("Paiement soumis avec succès, en attente de validation admin");
       navigate("/merci");
     } catch (err) {
@@ -120,6 +181,10 @@ export default function PaiementSemiManuel() {
 
   if (loading) return <Page><p>Chargement...</p></Page>;
   if (!commande) return <Page><p>Commande introuvable</p></Page>;
+
+  const totalSteps = commande.paiements.length;
+  const paidSteps = commande.paiements.filter((p) => p.status === "PAID").length;
+  const progressPercent = (paidSteps / totalSteps) * 100;
 
   return (
     <Page>
@@ -163,12 +228,21 @@ export default function PaiementSemiManuel() {
 
       <Box>
         <h2>Étapes de paiement</h2>
-        {commande.paiements.map((p) => (
-          <Line key={p._id}>
-            <span>Étape {p.step}</span>
-            <Badge status={p.status}>{p.status}</Badge>
-          </Line>
-        ))}
+        <ProgressBar>
+          <Progress percent={progressPercent} />
+        </ProgressBar>
+        <Timeline>
+          {commande.paiements.map((p) => (
+            <TimelineItem key={p._id}>
+              {p.status === "PAID" ? <FaCheckCircle color="#4f46e5" size={18} /> : <FaRegCircle color="#d1d5db" size={18} />}
+              <StepInfo>
+                <StepLabel>Étape {p.step}</StepLabel>
+                <StepAmount>{p.amount.toLocaleString()} FCFA</StepAmount>
+                <Badge status={p.status}>{p.status}</Badge>
+              </StepInfo>
+            </TimelineItem>
+          ))}
+        </Timeline>
       </Box>
     </Page>
   );
