@@ -67,27 +67,6 @@ const Title = styled.h2`
   font-size: 1.6rem;
 `;
 
-const InputGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-`;
-
-const Input = styled.input`
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid #d1d5db;
-  background: #fff;
-  font-size: 0.95rem;
-  transition: all 0.3s ease;
-  &:focus {
-    border-color: #4f46e5;
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-    outline: none;
-  }
-`;
-
 const Button = styled.button`
   padding: 10px 14px;
   border-radius: 10px;
@@ -108,12 +87,6 @@ const Button = styled.button`
 const DangerButton = styled(Button)`
   background: linear-gradient(135deg, #ef4444, #f87171);
   &:hover { background: linear-gradient(135deg, #f87171, #ef4444); }
-`;
-
-const Message = styled.p`
-  font-weight: 600;
-  margin-top: 0.5rem;
-  color: ${(props) => (props.type === "error" ? "#dc2626" : "#10b981")};
 `;
 
 const FlexRow = styled.div`
@@ -142,22 +115,6 @@ const ProductImage = styled.img`
   height: 80px;
   object-fit: cover;
   border-radius: 14px;
-`;
-
-const StatusBadge = styled.span`
-  padding: 4px 10px;
-  border-radius: 8px;
-  font-weight: 600;
-  color: #fff;
-  background-color: ${(props) =>
-    props.statut === "en cours"
-      ? "#f59e0b"
-      : props.statut === "envoyé"
-      ? "#3b82f6"
-      : props.statut === "livré"
-      ? "#10b981"
-      : "#ef4444"};
-  font-size: 0.8rem;
 `;
 
 const TrashIcon = styled(FiTrash2)`
@@ -246,37 +203,48 @@ export default function CompteClient() {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [favorites, setFavorites] = useState([]);
   const [commandes, setCommandes] = useState([]);
-  const [error, setError] = useState("");
-
   const [expandedOrders, setExpandedOrders] = useState({});
   const [showModal, setShowModal] = useState(false);
 
   const fetchCompte = async () => {
     if (!token) return;
-    setLoading(true);
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/compte`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
+      // Vérification si la réponse est bien JSON
+      const contentType = res.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Réponse invalide du serveur");
+      }
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Erreur serveur");
+
       setUser(data.user);
       setFavorites(data.favorites || []);
       setCommandes(data.commandes || []);
     } catch (err) {
-      setError(err.message);
+      console.error(err);
+      localStorage.removeItem("token");
+      navigate("/login");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { if(token) fetchCompte(); }, [token]);
+  useEffect(() => { 
+    if (!token) navigate("/login"); 
+    else fetchCompte(); 
+  }, [token]);
 
   const toggleOrder = (id) => setExpandedOrders((prev) => ({ ...prev, [id]: !prev[id] }));
+
   const removeFavorite = async (favId) => {
     try {
       setLoading(true);
@@ -289,25 +257,18 @@ export default function CompteClient() {
     } catch (err) { alert(err.message); }
     finally { setLoading(false); }
   };
+
   const getMainImage = (product) => product?.images?.find(img => img.isMain)?.url || product?.images?.[0]?.url || "https://via.placeholder.com/80";
 
-  if (loading) return (
+  if (loading || !user) return (
     <LoaderWrapper>
       <Loader />
     </LoaderWrapper>
   );
 
-  if (!token || !user) {
-    return <PageWrapper>
-      <Title>Connexion</Title>
-      {error && <Message type="error">{error}</Message>}
-    </PageWrapper>
-  }
-
-  // Coffre calcul
-  const totalPaid = commandes.flatMap(c => c.paiements).filter(p => p.status === "PAID").reduce((a,b)=>a+b.amountExpected,0);
+  const totalPaid = commandes.flatMap(c => c.paiements || []).filter(p => p.status === "PAID").reduce((a,b)=>a+b.amountExpected,0);
   const totalAmount = commandes.reduce((a,c)=>a+c.total,0);
-  const progressPercent = (totalPaid/totalAmount)*100;
+  const progressPercent = totalAmount>0 ? (totalPaid/totalAmount)*100 : 0;
 
   return (
     <PageWrapper>
@@ -318,7 +279,7 @@ export default function CompteClient() {
       <Section>
         <Title>Bonjour {user.username}</Title>
         <p>Email : {user.email}</p>
-        <DangerButton onClick={() => { localStorage.removeItem("token"); setUser(null); navigate("/compte"); }} style={{ marginTop:"1rem" }}>
+        <DangerButton onClick={() => { localStorage.removeItem("token"); setUser(null); navigate("/login"); }} style={{ marginTop:"1rem" }}>
           Se déconnecter
         </DangerButton>
       </Section>
@@ -379,7 +340,7 @@ export default function CompteClient() {
               {expandedOrders[c._id]?<FiChevronUp/>:<FiChevronDown/>}
             </CommandHeader>
             <CommandContent open={expandedOrders[c._id]}>
-              {c.produits.map(pr=>(
+              {c.produits.map(pr => (
                 <div key={pr.produitId?._id||Math.random()} style={{ display:"flex", alignItems:"center", gap:"8px", marginBottom:"6px" }}>
                   <ProductImage src={getMainImage(pr.produitId)} alt={pr.produitId?.title||"Produit"} />
                   <div>

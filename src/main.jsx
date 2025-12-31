@@ -26,6 +26,8 @@ import ReturnPolicy from "./pages/politiqueretour";
 import Delivery from "./pages/livraison";
 import TermsOfUse from "./pages/conditionutilisation";
 import Collection from "./pages/Collection";
+import Signup from "./pages/inscription";
+import Login from "./pages/connexion";
 import CompteClient from "./pages/compteutilisateur";
 import PaiementWave from "./pages/PaiementWave";
 import PaiementSemiManuel from "./pages/PaiementSemiManuel";
@@ -37,7 +39,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminLayout from "./pages/AdminLayout";
 import AdminProducts from "./pages/AdminProducts";
 import AdminOrdersPro from "./pages/AdminCommande";
-import AdminPaiements from "./pages/AdminPaiements"
+import AdminPaiements from "./pages/AdminPaiements";
 
 import "./i18n";
 
@@ -186,6 +188,23 @@ createRoot(document.getElementById("root")).render(
               element={
                 <PublicLayout>
                   <PagePanier />
+                </PublicLayout>
+              }
+            />
+
+            <Route
+              path="/signup"
+              element={
+                <PublicLayout>
+                  <Signup />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/login"
+              element={
+                <PublicLayout>
+                  <Login />
                 </PublicLayout>
               }
             />
