@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 import { FaCheckCircle, FaRegCircle } from "react-icons/fa";
+
+/* ===== ANIMATION ===== */
+const spin = keyframes`to { transform: rotate(360deg); }`;
 
 /* ===== STYLES ===== */
 const Page = styled.main`
@@ -9,6 +12,22 @@ const Page = styled.main`
   margin: 2rem auto;
   padding: 0 1rem;
   font-family: "Inter", sans-serif;
+`;
+
+const LoaderWrapper = styled.div`
+  min-height: 50vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
+const Loader = styled.div`
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top-color: #4f46e5;
+  border-radius: 50%;
+  animation: ${spin} 1s linear infinite;
 `;
 
 const Box = styled.div`
@@ -155,13 +174,12 @@ export default function PaiementSemiManuel() {
   const [service, setService] = useState("orange");
   const [step, setStep] = useState(1);
 
-  // Récupérer la commande
   useEffect(() => {
     const fetchCommande = async () => {
       try {
         const res = await fetch(`${API_URL}/api/commandes/${id}`);
         const data = await res.json();
-        setCommande(data); // corrige data.commande → data
+        setCommande(data);
       } catch (err) {
         console.error(err);
       } finally {
@@ -174,8 +192,8 @@ export default function PaiementSemiManuel() {
   const handlePaiement = async (e) => {
     e.preventDefault();
 
-    if (!numeroClient || !montantEnvoye || !reference) {
-      alert("Veuillez remplir tous les champs");
+    if (!numeroClient || !montantEnvoye || !reference || step < 1) {
+      alert("Veuillez remplir tous les champs correctement");
       return;
     }
 
@@ -205,7 +223,7 @@ export default function PaiementSemiManuel() {
     }
   };
 
-  if (loading) return <Page>Chargement...</Page>;
+  if (loading) return <LoaderWrapper><Loader /></LoaderWrapper>;
   if (!commande) return <Page>Commande introuvable</Page>;
 
   const totalSteps = commande.paiements.length;
@@ -216,13 +234,12 @@ export default function PaiementSemiManuel() {
     <Page>
       <Title>Paiement Semi-Manuel</Title>
 
+      {/* Récapitulatif */}
       <Box>
         <h2>Récapitulatif de la commande</h2>
         {commande.panier.map((item) => (
           <Line key={item.produitId}>
-            <span>
-              {item.nom} x {item.quantite}
-            </span>
+            <span>{item.nom} x {item.quantite}</span>
             <span>{(item.prix * item.quantite).toLocaleString()} FCFA</span>
           </Line>
         ))}
@@ -236,6 +253,20 @@ export default function PaiementSemiManuel() {
         </Line>
       </Box>
 
+      {/* Numéros officiels */}
+      <Box>
+        <h2>Numéros pour le paiement</h2>
+        <Line>
+          <strong>Orange Money :</strong>
+          <span>0700247693</span>
+        </Line>
+        <Line>
+          <strong>Wave :</strong>
+          <span>0700247693</span>
+        </Line>
+      </Box>
+
+      {/* Formulaire */}
       <Box>
         <h2>Soumettre votre paiement</h2>
         <form onSubmit={handlePaiement}>
@@ -247,6 +278,7 @@ export default function PaiementSemiManuel() {
           <Input
             placeholder="Montant payé (FCFA)"
             type="number"
+            min={0}
             value={montantEnvoye}
             onChange={(e) => setMontantEnvoye(e.target.value)}
           />
@@ -260,7 +292,7 @@ export default function PaiementSemiManuel() {
             placeholder="Étape de paiement"
             value={step}
             min={1}
-            max={commande?.paiements?.length || 1}
+            max={totalSteps}
             onChange={(e) => setStep(Number(e.target.value))}
           />
           <div style={{ display: "flex", marginBottom: "1rem" }}>
@@ -289,6 +321,7 @@ export default function PaiementSemiManuel() {
         </form>
       </Box>
 
+      {/* Timeline des paiements */}
       <Box>
         <h2>Étapes de paiement</h2>
         <ProgressBar>

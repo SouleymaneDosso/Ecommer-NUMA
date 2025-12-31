@@ -1,7 +1,7 @@
 import { useState, useContext, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import styled, { keyframes } from "styled-components";
-import { FiFacebook, FiTwitter, FiInstagram, FiChevronDown, FiHome, FiGrid, FiUser } from "react-icons/fi";
+import { FiFacebook, FiInstagram, FiChevronDown,} from "react-icons/fi";
 import { ThemeContext } from "../../Utils/Context";
 import { useTranslation } from "react-i18next";
 
