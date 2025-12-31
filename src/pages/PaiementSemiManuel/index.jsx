@@ -48,26 +48,9 @@ const Line = styled.div`
   display: flex;
   justify-content: space-between;
   margin-bottom: 0.7rem;
-  flex-wrap: wrap;
 `;
 
 const Input = styled.input`
-  width: 100%;
-  padding: 14px;
-  margin-bottom: 1rem;
-  border-radius: 10px;
-  border: 1px solid #d1d5db;
-  font-size: 16px;
-  box-sizing: border-box;
-
-  &:focus {
-    outline: none;
-    border-color: #6366f1;
-    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
-  }
-`;
-
-const Select = styled.select`
   width: 100%;
   padding: 14px;
   margin-bottom: 1rem;
@@ -114,14 +97,14 @@ const Badge = styled.span`
     p.status === "PAID"
       ? "#dcfce7"
       : p.status === "PENDING"
-      ? "#fef3c7"
-      : "#fee2e2"};
+        ? "#fef3c7"
+        : "#fee2e2"};
   color: ${(p) =>
     p.status === "PAID"
       ? "#166534"
       : p.status === "PENDING"
-      ? "#92400e"
-      : "#991b1b"};
+        ? "#92400e"
+        : "#991b1b"};
 `;
 
 const Timeline = styled.ul`
@@ -134,7 +117,6 @@ const TimelineItem = styled.li`
   display: flex;
   align-items: center;
   margin-bottom: 1.5rem;
-  flex-wrap: wrap;
 `;
 
 const StepInfo = styled.div`
@@ -143,7 +125,6 @@ const StepInfo = styled.div`
   justify-content: space-between;
   width: 100%;
   align-items: center;
-  flex-wrap: wrap;
 `;
 
 const StepLabel = styled.span`
@@ -179,8 +160,7 @@ const RadioLabel = styled.label`
   font-size: 0.95rem;
 `;
 
-/* ===== Cartes Wave & Orange ===== */
-const CardWrapper = styled.div`
+const PaymentCards = styled.div`
   display: flex;
   gap: 1rem;
   margin-bottom: 2rem;
@@ -189,33 +169,25 @@ const CardWrapper = styled.div`
 
 const PaymentCard = styled.div`
   flex: 1;
-  min-width: 200px;
+  min-width: 220px;
   background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
   padding: 1.5rem;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
   display: flex;
   align-items: center;
   gap: 1rem;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  
-  &:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-  }
 `;
 
-const Logo = styled.img`
-  width: 50px;
-  height: 50px;
+const PaymentLogo = styled.img`
+  width: 48px;
+  height: 48px;
   object-fit: contain;
 `;
 
-const Number = styled.span`
+const PaymentNumber = styled.div`
   font-weight: 600;
   font-size: 1.1rem;
-  color: #111827;
-  word-break: break-all;
 `;
 
 /* ===== COMPONENT ===== */
@@ -233,6 +205,7 @@ export default function PaiementSemiManuel() {
   const [step, setStep] = useState(1);
   const [token, setToken] = useState(null);
 
+  // ✅ Sécuriser la page avec token
   useEffect(() => {
     const savedToken = localStorage.getItem("token");
     if (!savedToken) {
@@ -278,9 +251,9 @@ export default function PaiementSemiManuel() {
     try {
       const res = await fetch(`${API_URL}/api/commandes/${id}/paiement-semi`, {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token}`, // ✅ token sécurisé
         },
         body: JSON.stringify({
           step,
@@ -304,35 +277,44 @@ export default function PaiementSemiManuel() {
     }
   };
 
-  if (loading) return <LoaderWrapper><Loader /></LoaderWrapper>;
+  if (loading)
+    return (
+      <LoaderWrapper>
+        <Loader />
+      </LoaderWrapper>
+    );
   if (!commande) return <Page>Commande introuvable</Page>;
 
   const totalSteps = commande.paiements.length;
-  const paidSteps = commande.paiements.filter((p) => p.status === "PAID").length;
+  const paidSteps = commande.paiements.filter(
+    (p) => p.status === "PAID"
+  ).length;
   const progressPercent = (paidSteps / totalSteps) * 100;
 
   return (
     <Page>
       <Title>Paiement Semi-Manuel</Title>
 
-      {/* Cartes Wave et Orange */}
-      <CardWrapper>
+      {/* WAVE & ORANGE */}
+      <PaymentCards>
         <PaymentCard>
-          <Logo src="/logosorange.png" alt="Orange Money" />
-          <Number>0700247693</Number>
+          <PaymentLogo src="/logosorange.png" alt="Orange Money" />
+          <PaymentNumber>0700247693</PaymentNumber>
         </PaymentCard>
         <PaymentCard>
-          <Logo src="/logoswave.jpg" alt="Wave" />
-          <Number>0700247693</Number>
+          <PaymentLogo src="/logoswave.jpg" alt="Wave" />
+          <PaymentNumber>0700247693</PaymentNumber>
         </PaymentCard>
-      </CardWrapper>
+      </PaymentCards>
 
       {/* Récapitulatif */}
       <Box>
         <h2>Récapitulatif de la commande</h2>
         {commande.panier.map((item) => (
           <Line key={item.produitId}>
-            <span>{item.nom} x {item.quantite}</span>
+            <span>
+              {item.nom} x {item.quantite}
+            </span>
             <span>{(item.prix * item.quantite).toLocaleString()} FCFA</span>
           </Line>
         ))}
@@ -342,7 +324,9 @@ export default function PaiementSemiManuel() {
         </Line>
         <Line>
           <strong>Service choisi :</strong>
-          <span>{commande.servicePaiement === "wave" ? "Wave" : "Orange Money"}</span>
+          <span>
+            {commande.servicePaiement === "wave" ? "Wave" : "Orange Money"}
+          </span>
         </Line>
       </Box>
 
@@ -367,17 +351,27 @@ export default function PaiementSemiManuel() {
             value={reference}
             onChange={(e) => setReference(e.target.value)}
           />
-          <Select
+          <select
             value={step}
             onChange={(e) => setStep(Number(e.target.value))}
+            style={{
+              width: "100%",
+              padding: "14px",
+              marginBottom: "1rem",
+              borderRadius: "10px",
+              border: "1px solid #d1d5db",
+              fontSize: "16px",
+              boxSizing: "border-box",
+            }}
           >
             {Array.from({ length: totalSteps }, (_, i) => i + 1).map((s) => (
               <option key={s} value={s}>
                 Étape {s}
               </option>
             ))}
-          </Select>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", marginBottom: "1rem" }}>
+          </select>
+
+          <div style={{ display: "flex", marginBottom: "1rem" }}>
             <RadioLabel>
               <input
                 type="radio"
@@ -419,7 +413,9 @@ export default function PaiementSemiManuel() {
               )}
               <StepInfo>
                 <StepLabel>Étape {p.step}</StepLabel>
-                <StepAmount>{(p.amountExpected || 0).toLocaleString()} FCFA</StepAmount>
+                <StepAmount>
+                  {(p.amountExpected || 0).toLocaleString()} FCFA
+                </StepAmount>
                 <Badge status={p.status}>{p.status}</Badge>
               </StepInfo>
             </TimelineItem>
