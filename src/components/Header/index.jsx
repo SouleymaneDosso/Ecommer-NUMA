@@ -344,7 +344,7 @@ export default function Header() {
           <MobileItem to="/collections" onClick={() => setOpen(false)} $isdark={$isdark}>{t("collections")}</MobileItem>
           <MobileItem to="/new" onClick={() => setOpen(false)} $isdark={$isdark}>{t("new")}</MobileItem>
           <MobileItem to="/promo" onClick={() => setOpen(false)} $isdark={$isdark}>{t("deals")}</MobileItem>
-          <MobileItem to="/a-propos" onClick={() => setOpen(false)} $isdark={$isdark}>{t("about")}</MobileItem>
+          <MobileItem to="/apropo" onClick={() => setOpen(false)} $isdark={$isdark}>{t("about")}</MobileItem>
 
           <div style={{ height: 1, background: $isdark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.04)", margin: "8px 0 4px" }} />
 

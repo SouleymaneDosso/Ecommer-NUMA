@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import styled, { keyframes } from "styled-components";
 import { FaCheckCircle, FaRegCircle } from "react-icons/fa";
+import { useContext } from "react";
+import { PanierContext } from "../../Utils/Context";
 
 /* ===== ANIMATION ===== */
 const spin = keyframes`to { transform: rotate(360deg); }`;
@@ -204,6 +206,7 @@ export default function PaiementSemiManuel() {
   const [service, setService] = useState("orange");
   const [step, setStep] = useState(1);
   const [token, setToken] = useState(null);
+  const { toutSupprimer } = useContext(PanierContext);
 
   // ✅ Sécuriser la page avec token
   useEffect(() => {
@@ -269,6 +272,8 @@ export default function PaiementSemiManuel() {
         alert(data.message || "Erreur lors de l'enregistrement du paiement");
         return;
       }
+
+      toutSupprimer();
 
       navigate("/merci", { state: { commandeId: id } });
     } catch (err) {
