@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import styled from "styled-components";
 import * as Context from "../../Utils/Context";
 import { useNavigate } from "react-router-dom";
@@ -136,12 +136,29 @@ export default function PageCheckout() {
   const [servicePaiement, setServicePaiement] = useState("orange"); // orange ou wave
   const [loading, setLoading] = useState(false);
 
+  const [token, setToken] = useState(null);
+
   const API_URL = import.meta.env.VITE_API_URL;
+
+  useEffect(() => {
+    const savedToken = localStorage.getItem("token");
+    if (!savedToken) {
+      navigate("/login");
+      return;
+    }
+    setToken(savedToken);
+  }, []);
 
   const total = ajouter.reduce((acc, item) => acc + item.prix * item.quantite, 0);
 
   const handlePaiement = async (e) => {
     e.preventDefault();
+
+    if (!token) {
+      alert("Vous devez être connecté pour passer la commande.");
+      navigate("/login");
+      return;
+    }
 
     if (!nom || !prenom || !adresse || !ville || !codePostal || !pays) {
       alert("Veuillez remplir tous les champs.");
@@ -168,7 +185,10 @@ export default function PageCheckout() {
     try {
       const res = await fetch(`${API_URL}/api/commandes`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}` // ✅ token utilisé
+        },
         body: JSON.stringify(commande),
       });
 

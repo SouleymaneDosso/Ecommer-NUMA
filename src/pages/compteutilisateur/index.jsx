@@ -46,7 +46,6 @@ const Carousel = styled.div`
   margin-bottom: 2rem;
   font-weight: 600;
   animation: scroll 15s linear infinite;
-  
   @keyframes scroll {
     0% { transform: translateX(100%); }
     100% { transform: translateX(-100%); }
@@ -203,7 +202,7 @@ export default function CompteClient() {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
   const [favorites, setFavorites] = useState([]);
   const [commandes, setCommandes] = useState([]);
@@ -212,25 +211,17 @@ export default function CompteClient() {
 
   const fetchCompte = async () => {
     if (!token) return;
+    setLoading(true);
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/compte`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
-      // Vérification si la réponse est bien JSON
-      const contentType = res.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        throw new Error("Réponse invalide du serveur");
-      }
-
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Erreur serveur");
-
       setUser(data.user);
       setFavorites(data.favorites || []);
       setCommandes(data.commandes || []);
     } catch (err) {
-      console.error(err);
       localStorage.removeItem("token");
       navigate("/login");
     } finally {
@@ -238,9 +229,9 @@ export default function CompteClient() {
     }
   };
 
-  useEffect(() => { 
-    if (!token) navigate("/login"); 
-    else fetchCompte(); 
+  useEffect(() => {
+    if (!token) return navigate("/login");
+    fetchCompte();
   }, [token]);
 
   const toggleOrder = (id) => setExpandedOrders((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -254,18 +245,22 @@ export default function CompteClient() {
       });
       if (!res.ok) throw new Error("Erreur lors de la suppression");
       setFavorites(prev => prev.filter(f => f._id !== favId));
-    } catch (err) { alert(err.message); }
-    finally { setLoading(false); }
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const getMainImage = (product) => product?.images?.find(img => img.isMain)?.url || product?.images?.[0]?.url || "https://via.placeholder.com/80";
+  const getMainImage = (product) => product?.images?.[0]?.url || "https://via.placeholder.com/80";
 
-  if (loading || !user) return (
+  if (loading) return (
     <LoaderWrapper>
       <Loader />
     </LoaderWrapper>
   );
 
+  // Coffre calcul
   const totalPaid = commandes.flatMap(c => c.paiements || []).filter(p => p.status === "PAID").reduce((a,b)=>a+b.amountExpected,0);
   const totalAmount = commandes.reduce((a,c)=>a+c.total,0);
   const progressPercent = totalAmount>0 ? (totalPaid/totalAmount)*100 : 0;
@@ -277,8 +272,8 @@ export default function CompteClient() {
       </Carousel>
 
       <Section>
-        <Title>Bonjour {user.username}</Title>
-        <p>Email : {user.email}</p>
+        <Title>Bonjour {user?.username}</Title>
+        <p>Email : {user?.email}</p>
         <DangerButton onClick={() => { localStorage.removeItem("token"); setUser(null); navigate("/login"); }} style={{ marginTop:"1rem" }}>
           Se déconnecter
         </DangerButton>
@@ -299,8 +294,8 @@ export default function CompteClient() {
             <CoffreProgress percent={progressPercent} />
           </CoffreProgressBar>
 
-          {commandes.map(c => c.paiements.map(p => (
-            <CoffreLine key={p._id}>
+          {commandes.flatMap(c => c.paiements.map(p => (
+            <CoffreLine key={`${c._id}-${p.step}`}>
               <span>Commande {c._id} - Étape {p.step} {p.status === "PAID"?<FaUnlock/>:<FaLock/>}</span>
               {p.status !== "PAID" && <Button onClick={()=>navigate(`/paiement-semi/${c._id}`)}>Payer cette étape</Button>}
             </CoffreLine>
@@ -340,13 +335,13 @@ export default function CompteClient() {
               {expandedOrders[c._id]?<FiChevronUp/>:<FiChevronDown/>}
             </CommandHeader>
             <CommandContent open={expandedOrders[c._id]}>
-              {c.produits.map(pr => (
-                <div key={pr.produitId?._id||Math.random()} style={{ display:"flex", alignItems:"center", gap:"8px", marginBottom:"6px" }}>
-                  <ProductImage src={getMainImage(pr.produitId)} alt={pr.produitId?.title||"Produit"} />
+              {c.panier.map(pr => (
+                <div key={pr.produitId || Math.random()} style={{ display:"flex", alignItems:"center", gap:"8px", marginBottom:"6px" }}>
+                  <ProductImage src={getMainImage(pr)} alt={pr.nom || "Produit"} />
                   <div>
-                    <Link to={`/product/${pr.produitId?._id}`} style={{ fontWeight:600 }}>{pr.produitId?.title||"Produit supprimé"}</Link>
+                    <Link to={`/product/${pr.produitId}`} style={{ fontWeight:600 }}>{pr.nom || "Produit supprimé"}</Link>
                     <p>Quantité: {pr.quantite}</p>
-                    <p>Prix: {pr.produitId?.price?.toLocaleString()||"—"} FCFA</p>
+                    <p>Prix: {pr.prix?.toLocaleString() || "—"} FCFA</p>
                   </div>
                 </div>
               ))}

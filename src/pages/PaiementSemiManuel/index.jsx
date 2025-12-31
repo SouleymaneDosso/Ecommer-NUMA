@@ -48,9 +48,26 @@ const Line = styled.div`
   display: flex;
   justify-content: space-between;
   margin-bottom: 0.7rem;
+  flex-wrap: wrap;
 `;
 
 const Input = styled.input`
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 1rem;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  font-size: 16px;
+  box-sizing: border-box;
+
+  &:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+  }
+`;
+
+const Select = styled.select`
   width: 100%;
   padding: 14px;
   margin-bottom: 1rem;
@@ -117,6 +134,7 @@ const TimelineItem = styled.li`
   display: flex;
   align-items: center;
   margin-bottom: 1.5rem;
+  flex-wrap: wrap;
 `;
 
 const StepInfo = styled.div`
@@ -125,6 +143,7 @@ const StepInfo = styled.div`
   justify-content: space-between;
   width: 100%;
   align-items: center;
+  flex-wrap: wrap;
 `;
 
 const StepLabel = styled.span`
@@ -160,6 +179,45 @@ const RadioLabel = styled.label`
   font-size: 0.95rem;
 `;
 
+/* ===== Cartes Wave & Orange ===== */
+const CardWrapper = styled.div`
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+`;
+
+const PaymentCard = styled.div`
+  flex: 1;
+  min-width: 200px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+  }
+`;
+
+const Logo = styled.img`
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+`;
+
+const Number = styled.span`
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #111827;
+  word-break: break-all;
+`;
+
 /* ===== COMPONENT ===== */
 export default function PaiementSemiManuel() {
   const { id } = useParams();
@@ -173,24 +231,44 @@ export default function PaiementSemiManuel() {
   const [reference, setReference] = useState("");
   const [service, setService] = useState("orange");
   const [step, setStep] = useState(1);
+  const [token, setToken] = useState(null);
 
   useEffect(() => {
+    const savedToken = localStorage.getItem("token");
+    if (!savedToken) {
+      navigate("/login");
+      return;
+    }
+    setToken(savedToken);
+  }, []);
+
+  useEffect(() => {
+    if (!token) return;
     const fetchCommande = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/commandes/${id}`);
+        const res = await fetch(`${API_URL}/api/commandes/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         const data = await res.json();
+        if (!res.ok) throw new Error(data.message || "Erreur serveur");
         setCommande(data);
       } catch (err) {
         console.error(err);
+        alert(err.message);
       } finally {
         setLoading(false);
       }
     };
     fetchCommande();
-  }, [id]);
+  }, [id, token]);
 
   const handlePaiement = async (e) => {
     e.preventDefault();
+    if (!token) {
+      alert("Vous devez être connecté pour payer cette commande.");
+      navigate("/login");
+      return;
+    }
 
     if (!numeroClient || !montantEnvoye || !reference || step < 1) {
       alert("Veuillez remplir tous les champs correctement");
@@ -200,7 +278,10 @@ export default function PaiementSemiManuel() {
     try {
       const res = await fetch(`${API_URL}/api/commandes/${id}/paiement-semi`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           step,
           numeroClient,
@@ -234,6 +315,18 @@ export default function PaiementSemiManuel() {
     <Page>
       <Title>Paiement Semi-Manuel</Title>
 
+      {/* Cartes Wave et Orange */}
+      <CardWrapper>
+        <PaymentCard>
+          <Logo src="/logosorange.png" alt="Orange Money" />
+          <Number>0700247693</Number>
+        </PaymentCard>
+        <PaymentCard>
+          <Logo src="/logoswave.jpg" alt="Wave" />
+          <Number>0700247693</Number>
+        </PaymentCard>
+      </CardWrapper>
+
       {/* Récapitulatif */}
       <Box>
         <h2>Récapitulatif de la commande</h2>
@@ -250,19 +343,6 @@ export default function PaiementSemiManuel() {
         <Line>
           <strong>Service choisi :</strong>
           <span>{commande.servicePaiement === "wave" ? "Wave" : "Orange Money"}</span>
-        </Line>
-      </Box>
-
-      {/* Numéros officiels */}
-      <Box>
-        <h2>Numéros pour le paiement</h2>
-        <Line>
-          <strong>Orange Money :</strong>
-          <span>0700247693</span>
-        </Line>
-        <Line>
-          <strong>Wave :</strong>
-          <span>0700247693</span>
         </Line>
       </Box>
 
@@ -287,15 +367,17 @@ export default function PaiementSemiManuel() {
             value={reference}
             onChange={(e) => setReference(e.target.value)}
           />
-          <Input
-            type="number"
-            placeholder="Étape de paiement"
+          <Select
             value={step}
-            min={1}
-            max={totalSteps}
             onChange={(e) => setStep(Number(e.target.value))}
-          />
-          <div style={{ display: "flex", marginBottom: "1rem" }}>
+          >
+            {Array.from({ length: totalSteps }, (_, i) => i + 1).map((s) => (
+              <option key={s} value={s}>
+                Étape {s}
+              </option>
+            ))}
+          </Select>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", marginBottom: "1rem" }}>
             <RadioLabel>
               <input
                 type="radio"
