@@ -104,12 +104,7 @@ const SkeletonImage = styled.div`
   width: ${({ width }) => width || "120px"};
   height: ${({ height }) => height || "120px"};
   border-radius: 16px;
-  background: linear-gradient(
-    90deg,
-    #e5e7eb 25%,
-    #f3f4f6 37%,
-    #e5e7eb 63%
-  );
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 37%, #e5e7eb 63%);
   background-size: 400% 100%;
   animation: shimmer 1.4s ease infinite;
 
@@ -247,7 +242,7 @@ export default function Home() {
         const res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits`);
         const data = await res.json();
         setProducts(Array.isArray(data) ? data : []);
-        console.log(data)
+        console.log(data);
         const getFirstImageByGenre = (genre) => {
           const prod = data.find(
             (p) => p.genre?.toLowerCase() === genre && p.images?.length
@@ -279,17 +274,28 @@ export default function Home() {
   );
 
   useEffect(() => {
-    const fetchNew = async () => {
+    const fetchProductsForNew = async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits/new`);
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits`);
         const data = await res.json();
-        setNouveautes(Array.isArray(data) ? data : []);
+        if (Array.isArray(data)) {
+          const now = new Date();
+          const days = 7; // nombre de jours pour considérer un produit "nouveau"
+          const newProducts = data.filter((p) => {
+            const createdAt = new Date(p.createdAt);
+            const diffDays = (now - createdAt) / (1000 * 60 * 60 * 24);
+            return diffDays <= days;
+          });
+          setNouveautes(newProducts);
+        } else {
+          setNouveautes([]);
+        }
       } catch (err) {
         console.error("Erreur fetch nouveautés:", err);
         setNouveautes([]);
       }
     };
-    fetchNew();
+    fetchProductsForNew();
   }, []);
 
   /* ---------------------- PRELOAD HERO IMAGES ---------------------- */
@@ -392,39 +398,35 @@ export default function Home() {
       {/* NOUVEAUTÉS */}
       <SectionTitle>{t("newArrivals")}</SectionTitle>
       <HorizontalScroll>
-        {Array.isArray(nouveautes) && nouveautes.length > 0 ? (
-          nouveautes.map((p) => (
-            <CardHorizontal key={p._id} to={`/produit/${p._id}`}>
-              <img src={getMainImage(p)} loading="lazy" alt={p.title} />
-              <p>
-                {p.title} – {p.price} FCFA
-              </p>
-            </CardHorizontal>
-          ))
-        ) : (
-          Array.from({ length: 4 }).map((_, i) => (
-            <SkeletonImage key={i} width="220px" height="260px" />
-          ))
-        )}
+        {Array.isArray(nouveautes) && nouveautes.length > 0
+          ? nouveautes.map((p) => (
+              <CardHorizontal key={p._id} to={`/produit/${p._id}`}>
+                <img src={getMainImage(p)} loading="lazy" alt={p.title} />
+                <p>
+                  {p.title} – {p.price} FCFA
+                </p>
+              </CardHorizontal>
+            ))
+          : Array.from({ length: 4 }).map((_, i) => (
+              <SkeletonImage key={i} width="220px" height="260px" />
+            ))}
       </HorizontalScroll>
 
       {/* PRODUITS */}
       <SectionTitle>{t("forYou")}</SectionTitle>
       <ProductGrid>
-        {normalProducts.length > 0 ? (
-          normalProducts.map((p) => (
-            <Card key={p._id} to={`/produit/${p._id}`}>
-              <img src={getMainImage(p)} loading="lazy" alt={p.title} />
-              <p>
-                {p.title} – {p.price} FCFA
-              </p>
-            </Card>
-          ))
-        ) : (
-          Array.from({ length: 6 }).map((_, i) => (
-            <SkeletonImage key={i} width="260px" height="260px" />
-          ))
-        )}
+        {normalProducts.length > 0
+          ? normalProducts.map((p) => (
+              <Card key={p._id} to={`/produit/${p._id}`}>
+                <img src={getMainImage(p)} loading="lazy" alt={p.title} />
+                <p>
+                  {p.title} – {p.price} FCFA
+                </p>
+              </Card>
+            ))
+          : Array.from({ length: 6 }).map((_, i) => (
+              <SkeletonImage key={i} width="260px" height="260px" />
+            ))}
       </ProductGrid>
     </Wrapper>
   );
