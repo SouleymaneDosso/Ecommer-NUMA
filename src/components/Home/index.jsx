@@ -223,6 +223,7 @@ export default function Home() {
       .then((res) => res.json())
       .then((data) => {
         setProducts(data);
+        console.log(data)
         const getFirstImageByGenre = (genre) => {
           const prod = data.find(
             (p) => p.genre?.toLowerCase() === genre && p.images?.length

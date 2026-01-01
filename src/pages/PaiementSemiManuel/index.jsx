@@ -369,9 +369,13 @@ export default function PaiementSemiManuel() {
               boxSizing: "border-box",
             }}
           >
-            {Array.from({ length: totalSteps }, (_, i) => i + 1).map((s) => (
-              <option key={s} value={s}>
-                Étape {s}
+            {commande.paiements.map((p) => (
+              <option
+                key={p.step}
+                value={p.step}
+                disabled={p.status === "PAID"} // ✅ désactive les étapes déjà payées
+              >
+                Étape {p.step} {p.status === "PAID" ? "(Déjà payée)" : ""}
               </option>
             ))}
           </select>
@@ -398,7 +402,14 @@ export default function PaiementSemiManuel() {
               Wave
             </RadioLabel>
           </div>
-          <Button type="submit">Envoyer pour validation</Button>
+          <Button
+            type="submit"
+            disabled={
+              commande.paiements.find((p) => p.step === step)?.status === "PAID"
+            }
+          >
+            Envoyer pour validation
+          </Button>
         </form>
       </Box>
 

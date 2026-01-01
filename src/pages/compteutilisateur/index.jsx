@@ -76,11 +76,11 @@ const Button = styled.button`
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  transition: all .25s ease;
+  transition: all 0.25s ease;
 
   &:hover {
     transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(99,102,241,.35);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.35);
   }
 
   @media (max-width: 600px) {
@@ -97,7 +97,7 @@ const CoffreBox = styled.div`
   background: linear-gradient(145deg, #2a2a3d, #1c1c2b);
   padding: 1.5rem;
   border-radius: 22px;
-  box-shadow: 0 0 30px rgba(99,102,241,.45);
+  box-shadow: 0 0 30px rgba(99, 102, 241, 0.45);
 `;
 
 const CoffreLine = styled.div`
@@ -116,8 +116,8 @@ const CoffreLine = styled.div`
 const CoffreLabel = styled.div`
   display: flex;
   align-items: center;
-  gap: .5rem;
-  font-size: .95rem;
+  gap: 0.5rem;
+  font-size: 0.95rem;
   line-height: 1.4;
   word-break: break-word;
 `;
@@ -134,7 +134,7 @@ const CoffreProgress = styled.div`
   height: 100%;
   width: ${({ percent }) => percent}%;
   background: linear-gradient(90deg, #4f46e5, #6366f1);
-  transition: width .4s ease;
+  transition: width 0.4s ease;
 `;
 
 /* ================= CARDS ================= */
@@ -221,11 +221,11 @@ export default function CompteClient() {
   }
 
   const totalPaid = commandes
-    .flatMap(c => c.paiements || [])
-    .filter(p => p.status === "PAID")
-    .reduce((a,b) => a + b.amountExpected, 0);
+    .flatMap((c) => c.paiements || [])
+    .filter((p) => p.status === "PAID")
+    .reduce((a, b) => a + b.amountExpected, 0);
 
-  const totalAmount = commandes.reduce((a,c) => a + c.total, 0);
+  const totalAmount = commandes.reduce((a, c) => a + c.total, 0);
   const progress = totalAmount ? (totalPaid / totalAmount) * 100 : 0;
 
   return (
@@ -237,10 +237,12 @@ export default function CompteClient() {
       <Section>
         <Title>Bonjour {user?.username}</Title>
         <p>{user?.email}</p>
-        <DangerButton onClick={() => {
-          localStorage.removeItem("token");
-          navigate("/login");
-        }}>
+        <DangerButton
+          onClick={() => {
+            localStorage.removeItem("token");
+            navigate("/login");
+          }}
+        >
           Se déconnecter
         </DangerButton>
       </Section>
@@ -248,7 +250,6 @@ export default function CompteClient() {
       <Section>
         <Title>Votre Coffre</Title>
         <CoffreBox>
-
           <CoffreLine>
             <span>Montant payé</span>
             <strong>{totalPaid.toLocaleString()} FCFA</strong>
@@ -263,21 +264,41 @@ export default function CompteClient() {
             <CoffreProgress percent={progress} />
           </CoffreProgressBar>
 
-          {commandes.flatMap(c =>
-            c.paiements.map(p => (
-              <CoffreLine key={`${c._id}-${p.step}`}>
-                <CoffreLabel>
-                  Commande #{c._id.slice(-6)} — Étape {p.step}
-                  {p.status === "PAID" ? <FaUnlock /> : <FaLock />}
-                </CoffreLabel>
+          {commandes.flatMap((c) =>
+            c.paiements.map((p) => {
+              const paiementRecus = c.paiementsRecus?.find(
+                (pr) => pr.step === p.step
+              );
 
-                {p.status !== "PAID" && (
-                  <Button onClick={() => navigate(`/paiement-semi/${c._id}`)}>
-                    Payer cette étape
-                  </Button>
-                )}
-              </CoffreLine>
-            ))
+              return (
+                <CoffreLine key={`${c._id}-${p.step}`}>
+                  <CoffreLabel>
+                    Commande #{c._id.slice(-6)} — Étape {p.step}{" "}
+                    {p.status === "PAID" ? (
+                      <FaUnlock />
+                    ) : paiementRecus?.status === "PENDING" ? (
+                      <span style={{ color: "#fbbf24" }}>
+                        En attente de confirmation
+                      </span>
+                    ) : paiementRecus?.status === "REJECTED" ? (
+                      <span style={{ color: "#ef4444" }}>Paiement rejeté</span>
+                    ) : (
+                      <FaLock />
+                    )}
+                  </CoffreLabel>
+
+                  {p.status !== "PAID" &&
+                    (!paiementRecus ||
+                    paiementRecus.status === "REJECTED") && (
+                      <Button
+                        onClick={() => navigate(`/paiement-semi/${c._id}`)}
+                      >
+                        Payer cette étape
+                      </Button>
+                    )}
+                </CoffreLine>
+              );
+            })
           )}
         </CoffreBox>
       </Section>
@@ -285,7 +306,7 @@ export default function CompteClient() {
       <Section>
         <Title>Favoris</Title>
         <FlexRow>
-          {favorites.map(f => (
+          {favorites.map((f) => (
             <ProductCard key={f._id}>
               <ProductImage src={getMainImage(f.productId)} />
               <div style={{ flex: 1 }}>
@@ -300,9 +321,13 @@ export default function CompteClient() {
 
       <Section>
         <Title>Commandes</Title>
-        {commandes.map(c => (
+        {commandes.map((c) => (
           <ProductCard key={c._id} style={{ flexDirection: "column" }}>
-            <CommandHeader onClick={() => setExpanded(p => ({...p,[c._id]:!p[c._id]}))}>
+            <CommandHeader
+              onClick={() =>
+                setExpanded((p) => ({ ...p, [c._id]: !p[c._id] }))
+              }
+            >
               <div>
                 <p>Commande #{c._id.slice(-6)}</p>
                 <p>Total: {c.total.toLocaleString()} FCFA</p>
@@ -312,11 +337,20 @@ export default function CompteClient() {
 
             {expanded[c._id] && (
               <CommandContent>
-                {c.panier.map(p => (
-                  <div key={p.produitId} style={{ display:"flex", gap:"10px", marginBottom:"8px" }}>
-                    <ProductImage src={getMainImage(p)} />
+                {c.panier.map((p) => (
+                  <div
+                    key={p.produitId}
+                    style={{ display: "flex", gap: "10px", marginBottom: "8px" }}
+                  >
+                    <ProductImage
+                      src={
+                        p.images?.[0]?.url ||
+                        p.produitId?.images?.[0]?.url ||
+                        "https://via.placeholder.com/80"
+                      }
+                    />
                     <div>
-                      <Link to={`/product/${p.id}`}>{p.nom}</Link>
+                      <Link to={`/produit/${p.produitId._id}`}>{p.nom}</Link>
                       <p>Qté: {p.quantite}</p>
                     </div>
                   </div>

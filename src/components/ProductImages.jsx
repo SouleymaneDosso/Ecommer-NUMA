@@ -22,6 +22,7 @@ const Wrapper = styled.div`
 `;
 
 const ImagesWrapper = styled.div`
+  height: 60vh;
   max-height: 450px;
   overflow-y: auto;
   scroll-snap-type: y mandatory;
@@ -30,18 +31,20 @@ const ImagesWrapper = styled.div`
   border-radius: 12px;
 `;
 
+
 const ImageSlide = styled.div`
-  scroll-snap-align: start;
-  height: 450px;
+  scroll-snap-align: center;
+  height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
 `;
 
+
 const ProductImage = styled.img`
   max-width: 100%;
   max-height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   cursor: pointer;
   border-radius: 12px;
   transition: transform 0.3s ease, box-shadow 0.3s ease;

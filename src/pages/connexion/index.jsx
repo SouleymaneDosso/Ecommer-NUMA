@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import styled from "styled-components";
+import { FiEye, FiEyeOff } from "react-icons/fi"; // <- icônes œil
 
 // ===== STYLES =====
 const PageWrapper = styled.div`
@@ -28,10 +29,16 @@ const Title = styled.h1`
   margin-bottom: 2rem;
 `;
 
+const InputWrapper = styled.div`
+  position: relative;
+  width: 100%;
+  margin-bottom: 1.2rem;
+`;
+
 const Input = styled.input`
   width: 100%;
   padding: 12px 16px;
-  margin-bottom: 1.2rem;
+  padding-right: 40px; /* espace pour l'icône œil */
   border-radius: 12px;
   border: none;
   background: #2a2a3d;
@@ -41,6 +48,21 @@ const Input = styled.input`
     outline: none;
     box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.3);
   }
+`;
+
+const EyeButton = styled.button`
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #aaa;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
 `;
 
 const Button = styled.button`
@@ -83,6 +105,7 @@ export default function Login() {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false); // <-- état mot de passe visible
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -99,10 +122,7 @@ export default function Login() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Erreur serveur");
 
-      // ⚡ Récupérer le token et le stocker
       localStorage.setItem("token", data.token);
-
-      // Redirection directe vers le compte
       navigate("/compte");
     } catch (err) {
       setMessage(err.message);
@@ -124,13 +144,18 @@ export default function Login() {
             onChange={e => setUsername(e.target.value)} 
             required 
           />
-          <Input 
-            type="password" 
-            placeholder="Mot de passe" 
-            value={password} 
-            onChange={e => setPassword(e.target.value)} 
-            required 
-          />
+          <InputWrapper>
+            <Input 
+              type={showPassword ? "text" : "password"} 
+              placeholder="Mot de passe" 
+              value={password} 
+              onChange={e => setPassword(e.target.value)} 
+              required 
+            />
+            <EyeButton type="button" onClick={() => setShowPassword(!showPassword)}>
+              {showPassword ? <FiEyeOff /> : <FiEye />}
+            </EyeButton>
+          </InputWrapper>
           <Button type="submit" disabled={loading}>
             {loading ? "Connexion..." : "Se connecter"}
           </Button>
@@ -142,3 +167,4 @@ export default function Login() {
     </PageWrapper>
   );
 }
+

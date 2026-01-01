@@ -137,7 +137,6 @@ export default function PageCheckout() {
   const [loading, setLoading] = useState(false);
 
   const [token, setToken] = useState(null);
-
   const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
@@ -148,8 +147,6 @@ export default function PageCheckout() {
     }
     setToken(savedToken);
   }, []);
-
-  const total = ajouter.reduce((acc, item) => acc + item.prix * item.quantite, 0);
 
   const handlePaiement = async (e) => {
     e.preventDefault();
@@ -167,17 +164,17 @@ export default function PageCheckout() {
 
     setLoading(true);
 
+    // Préparer le panier pour backend
+    const panierBackend = ajouter.map((item) => ({
+      produitId: item.id.split("_")[0], // 🔹 prend seulement l'ID Mongo valide
+      quantite: item.quantite,
+      couleur: item.couleur || "",
+      taille: item.taille || "",
+    }));
+
     const commande = {
       client: { nom, prenom, adresse, ville, codePostal, pays },
-      panier: ajouter.map((item) => ({
-        produitId: item.id,
-        nom: item.nom,
-        prix: item.prix,
-        quantite: item.quantite,
-        couleur: item.couleur || "",
-        taille: item.taille || "",
-      })),
-      total,
+      panier: panierBackend,
       modePaiement,
       servicePaiement,
     };
@@ -185,9 +182,9 @@ export default function PageCheckout() {
     try {
       const res = await fetch(`${API_URL}/api/commandes`, {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}` // ✅ token utilisé
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(commande),
       });
@@ -226,22 +223,46 @@ export default function PageCheckout() {
 
           <form onSubmit={handlePaiement}>
             <FieldGroup>
-              <Input placeholder="Nom" value={nom} onChange={(e) => setNom(e.target.value)} />
+              <Input
+                placeholder="Nom"
+                value={nom}
+                onChange={(e) => setNom(e.target.value)}
+              />
             </FieldGroup>
             <FieldGroup>
-              <Input placeholder="Prénom" value={prenom} onChange={(e) => setPrenom(e.target.value)} />
+              <Input
+                placeholder="Prénom"
+                value={prenom}
+                onChange={(e) => setPrenom(e.target.value)}
+              />
             </FieldGroup>
             <FieldGroup>
-              <Input placeholder="Adresse" value={adresse} onChange={(e) => setAdresse(e.target.value)} />
+              <Input
+                placeholder="Adresse"
+                value={adresse}
+                onChange={(e) => setAdresse(e.target.value)}
+              />
             </FieldGroup>
             <FieldGroup>
-              <Input placeholder="Ville" value={ville} onChange={(e) => setVille(e.target.value)} />
+              <Input
+                placeholder="Ville"
+                value={ville}
+                onChange={(e) => setVille(e.target.value)}
+              />
             </FieldGroup>
             <FieldGroup>
-              <Input placeholder="Code postal" value={codePostal} onChange={(e) => setCodePostal(e.target.value)} />
+              <Input
+                placeholder="Code postal"
+                value={codePostal}
+                onChange={(e) => setCodePostal(e.target.value)}
+              />
             </FieldGroup>
             <FieldGroup>
-              <Input placeholder="Pays" value={pays} onChange={(e) => setPays(e.target.value)} />
+              <Input
+                placeholder="Pays"
+                value={pays}
+                onChange={(e) => setPays(e.target.value)}
+              />
             </FieldGroup>
 
             <h3>Mode de paiement</h3>
@@ -312,7 +333,12 @@ export default function PageCheckout() {
 
           <Line>
             <span>Sous-total</span>
-            <span>{total.toLocaleString()} FCFA</span>
+            <span>
+              {ajouter
+                .reduce((acc, item) => acc + item.prix * item.quantite, 0)
+                .toLocaleString()}{" "}
+              FCFA
+            </span>
           </Line>
 
           <Line>
@@ -322,7 +348,12 @@ export default function PageCheckout() {
 
           <Total>
             <span>Total</span>
-            <span>{total.toLocaleString()} FCFA</span>
+            <span>
+              {ajouter
+                .reduce((acc, item) => acc + item.prix * item.quantite, 0)
+                .toLocaleString()}{" "}
+              FCFA
+            </span>
           </Total>
         </Summary>
       </Grid>
