@@ -43,8 +43,13 @@ const HeroText = styled.div`
   z-index: 3;
   max-width: 500px;
 
-  h1 { font-size: 3rem; }
-  p { margin-top: 12px; font-size: 1.2rem; }
+  h1 {
+    font-size: 3rem;
+  }
+  p {
+    margin-top: 12px;
+    font-size: 1.2rem;
+  }
 `;
 
 const HeroButton = styled(Link)`
@@ -109,8 +114,12 @@ const SkeletonImage = styled.div`
   animation: shimmer 1.4s ease infinite;
 
   @keyframes shimmer {
-    0% { background-position: 100% 0; }
-    100% { background-position: -100% 0; }
+    0% {
+      background-position: 100% 0;
+    }
+    100% {
+      background-position: -100% 0;
+    }
   }
 `;
 
@@ -128,8 +137,12 @@ const SlideRow = styled.div`
   animation-duration: ${({ $duration }) => $duration}s;
 
   @keyframes slide {
-    from { transform: translate3d(0,0,0); }
-    to { transform: translate3d(-50%,0,0); }
+    from {
+      transform: translate3d(0, 0, 0);
+    }
+    to {
+      transform: translate3d(-50%, 0, 0);
+    }
   }
 `;
 
@@ -165,7 +178,10 @@ const CardHorizontal = styled(Link)`
     border-radius: 12px;
   }
 
-  p { text-align: center; font-weight: 600; }
+  p {
+    text-align: center;
+    font-weight: 600;
+  }
 `;
 
 const ProductGrid = styled.div`
@@ -186,12 +202,15 @@ const Card = styled(Link)`
     border-radius: 12px;
   }
 
-  p { font-weight: 600; padding: 6px; }
+  p {
+    font-weight: 600;
+    padding: 6px;
+  }
 `;
 
 /* ---------------------- COMPONENT ---------------------- */
 export default function Home() {
-  const { t } = useTranslation();
+  const [nouveautes, setNouveautes] = useState([]);
   const [products, setProducts] = useState([]);
   const [activeSlide, setActiveSlide] = useState(0);
   const [imagesLoaded, setImagesLoaded] = useState(false);
@@ -204,25 +223,30 @@ export default function Home() {
     window.innerWidth < 768 ? 18 : 30
   );
 
+  const { t } = useTranslation();
+
   /* ---------------------- HELPERS ---------------------- */
   const getFullImageUrl = (url) => {
     if (!url) return null;
-    return url.startsWith("http") ? url : `${import.meta.env.VITE_API_URL}${url}`;
+    return url.startsWith("http")
+      ? url
+      : `${import.meta.env.VITE_API_URL}${url}`;
   };
 
-  // ⚡ Corrected: prend en compte isMain
   const getMainImage = (product) => {
     if (!product?.images?.length) return null;
-    const mainImg = product.images.find((img) => img.isMain) || product.images[0];
+    const mainImg =
+      product.images.find((img) => img.isMain) || product.images[0];
     return getFullImageUrl(mainImg.url);
   };
 
   /* ---------------------- FETCH PRODUITS ---------------------- */
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL}/api/produits`)
-      .then((res) => res.json())
-      .then((data) => {
-        setProducts(data);
+    const fetchProducts = async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits`);
+        const data = await res.json();
+        setProducts(Array.isArray(data) ? data : []);
         console.log(data)
         const getFirstImageByGenre = (genre) => {
           const prod = data.find(
@@ -236,14 +260,37 @@ export default function Home() {
           femme: getFirstImageByGenre("femme"),
           enfant: getFirstImageByGenre("enfant"),
         });
-      })
-      .catch((err) => console.error("Erreur fetch produits:", err));
+      } catch (err) {
+        console.error("Erreur fetch produits:", err);
+      }
+    };
+    fetchProducts();
   }, []);
 
   /* ---------------------- HERO PRODUCTS ---------------------- */
-  const heroProducts = useMemo(() => products.filter((p) => p.hero), [products]);
-  const nouveautes = useMemo(() => products.filter((p) => p.isNew), [products]);
-  const normalProducts = useMemo(() => products.filter((p) => !p.hero), [products]);
+  const heroProducts = useMemo(
+    () => products.filter((p) => p.hero),
+    [products]
+  );
+
+  const normalProducts = useMemo(
+    () => products.filter((p) => !p.hero),
+    [products]
+  );
+
+  useEffect(() => {
+    const fetchNew = async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits/new`);
+        const data = await res.json();
+        setNouveautes(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Erreur fetch nouveautés:", err);
+        setNouveautes([]);
+      }
+    };
+    fetchNew();
+  }, []);
 
   /* ---------------------- PRELOAD HERO IMAGES ---------------------- */
   useEffect(() => {
@@ -276,7 +323,8 @@ export default function Home() {
 
   /* ---------------------- SLIDER RESPONSIVE ---------------------- */
   useEffect(() => {
-    const handleResize = () => setSliderDuration(window.innerWidth < 768 ? 18 : 30);
+    const handleResize = () =>
+      setSliderDuration(window.innerWidth < 768 ? 18 : 30);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
@@ -287,14 +335,21 @@ export default function Home() {
     <Wrapper>
       {/* HERO */}
       <Hero>
-        {imagesLoaded &&
-          heroProducts.map((p, i) => (
-            <HeroSlide
-              key={p._id}
-              $active={i === activeSlide}
-              style={{ backgroundImage: `url('${getMainImage(p)}')` }}
-            />
-          ))}
+        {imagesLoaded
+          ? heroProducts.map((p, i) => (
+              <HeroSlide
+                key={p._id}
+                $active={i === activeSlide}
+                style={{ backgroundImage: `url('${getMainImage(p)}')` }}
+              />
+            ))
+          : Array.from({ length: 3 }).map((_, i) => (
+              <HeroSlide
+                key={i}
+                $active={i === 0}
+                style={{ background: "#ccc" }}
+              />
+            ))}
         <HeroOverlay />
         <HeroText>
           <h1>{t("heroTitle")}</h1>
@@ -305,6 +360,7 @@ export default function Home() {
         </HeroText>
       </Hero>
 
+      {/* PROMO */}
       <PromoBanner>{t("promoBanner")}</PromoBanner>
 
       {/* CATEGORIES */}
@@ -336,23 +392,39 @@ export default function Home() {
       {/* NOUVEAUTÉS */}
       <SectionTitle>{t("newArrivals")}</SectionTitle>
       <HorizontalScroll>
-        {nouveautes.map((p) => (
-          <CardHorizontal key={p._id} to={`/produit/${p._id}`}>
-            <img src={getMainImage(p)} loading="lazy" alt={p.title} />
-            <p>{p.title} – {p.price} FCFA</p>
-          </CardHorizontal>
-        ))}
+        {Array.isArray(nouveautes) && nouveautes.length > 0 ? (
+          nouveautes.map((p) => (
+            <CardHorizontal key={p._id} to={`/produit/${p._id}`}>
+              <img src={getMainImage(p)} loading="lazy" alt={p.title} />
+              <p>
+                {p.title} – {p.price} FCFA
+              </p>
+            </CardHorizontal>
+          ))
+        ) : (
+          Array.from({ length: 4 }).map((_, i) => (
+            <SkeletonImage key={i} width="220px" height="260px" />
+          ))
+        )}
       </HorizontalScroll>
 
       {/* PRODUITS */}
       <SectionTitle>{t("forYou")}</SectionTitle>
       <ProductGrid>
-        {normalProducts.map((p) => (
-          <Card key={p._id} to={`/produit/${p._id}`}>
-            <img src={getMainImage(p)} loading="lazy" alt={p.title} />
-            <p>{p.title} – {p.price} FCFA</p>
-          </Card>
-        ))}
+        {normalProducts.length > 0 ? (
+          normalProducts.map((p) => (
+            <Card key={p._id} to={`/produit/${p._id}`}>
+              <img src={getMainImage(p)} loading="lazy" alt={p.title} />
+              <p>
+                {p.title} – {p.price} FCFA
+              </p>
+            </Card>
+          ))
+        ) : (
+          Array.from({ length: 6 }).map((_, i) => (
+            <SkeletonImage key={i} width="260px" height="260px" />
+          ))
+        )}
       </ProductGrid>
     </Wrapper>
   );
