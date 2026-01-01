@@ -22,15 +22,13 @@ const Wrapper = styled.div`
 `;
 
 const ImagesWrapper = styled.div`
-  height: 80vh;
-  max-height: 500px;
+  height: min(80vh, 500px);
   overflow-y: auto;
   scroll-snap-type: y mandatory;
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
   border-radius: 12px;
 `;
-
 
 const ImageSlide = styled.div`
   scroll-snap-align: center;
@@ -39,7 +37,6 @@ const ImageSlide = styled.div`
   justify-content: center;
   align-items: center;
 `;
-
 
 const ProductImage = styled.img`
   max-width: 100%;
@@ -60,6 +57,7 @@ const FullscreenOverlay = styled.div`
   inset: 0;
   width: 100vw;
   height: 100vh;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   background: rgba(0, 0, 0, 0.95);
   display: flex;
   justify-content: center;
@@ -75,6 +73,10 @@ const FullscreenImage = styled.img`
   border-radius: 12px;
   box-shadow: 0 10px 40px rgba(0,0,0,0.5);
   transition: transform 0.3s ease;
+
+  @media (max-width: 600px) {
+    max-height: 80vh;
+  }
 `;
 
 const Arrow = styled.div`
@@ -86,6 +88,7 @@ const Arrow = styled.div`
   cursor: pointer;
   user-select: none;
   transition: color 0.2s;
+
   &:hover {
     color: #f59e0b;
   }
@@ -95,7 +98,6 @@ const Arrow = styled.div`
 const ArrowLeft = styled(Arrow)`left: 20px;`;
 const ArrowRight = styled(Arrow)`right: 20px;`;
 
-// ---------- INDICATEUR MODERNE ----------
 const IndicatorWrapper = styled.div`
   position: absolute;
   bottom: 40px;
