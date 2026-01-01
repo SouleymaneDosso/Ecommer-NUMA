@@ -28,19 +28,16 @@ const ImagesWrapper = styled.div`
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
   border-radius: 12px;
-  overflow: hidden; /* on gère le scroll dans le slide si nécessaire */
+  overflow: hidden;
 `;
-
-
 
 const ImageSlide = styled.div`
   scroll-snap-align: center;
-  min-height: 80vh; /* pour que les petites images restent centrées */
+  min-height: 80vh;
   display: grid;
-  place-items: center; /* centre parfaitement horizontalement et verticalement */
-  overflow-y: auto; /* si l'image est plus grande, on peut scroller dans le slide */
+  place-items: center;
+  overflow-y: auto;
 `;
-
 
 const ProductImage = styled.img`
   max-width: 100%;
@@ -70,9 +67,10 @@ const FullscreenOverlay = styled.div`
 `;
 
 const FullscreenImage = styled.img`
-  max-width: 90%;
-  max-height: 90%;
+  max-width: 90vw;
+  max-height: 90vh;
   object-fit: contain;
+  margin: auto; /* force le centrage vertical et horizontal */
   border-radius: 12px;
   box-shadow: 0 10px 40px rgba(0,0,0,0.5);
   transition: transform 0.3s ease;
