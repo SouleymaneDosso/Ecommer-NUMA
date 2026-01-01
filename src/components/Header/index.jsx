@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import styled, { keyframes } from "styled-components";
 import {
   FiShoppingBag,
@@ -7,9 +7,10 @@ import {
   FiMoon,
   FiX,
   FiHeart,
+  FiSearch
 } from "react-icons/fi";
 import { useContext, useState, useEffect } from "react";
-import { ThemeContext, PanierContext } from "../../Utils/Context"; // Ajout du PanierContext
+import { ThemeContext, PanierContext } from "../../Utils/Context"; 
 import { useTranslation } from "react-i18next";
 
 const HEADER_HEIGHT = 70; 
@@ -31,13 +32,12 @@ const HeaderWrapper = styled.header`
   top: 0;
   left: 0;
   width: 100%;
-  height: var(--header-h);
   z-index: 9999;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 1rem;
-  gap: 0.5rem;
+  gap: 0.25rem;
+  padding: 0.5rem 1rem;
   background: ${({ $isdark }) =>
     $isdark
       ? "linear-gradient(180deg, rgba(6,8,14,0.85), rgba(12,18,30,0.85))"
@@ -50,24 +50,31 @@ const HeaderWrapper = styled.header`
     $isdark ? "0 6px 28px rgba(0,0,0,0.6)" : "0 6px 28px rgba(15,23,42,0.08)"};
 `;
 
+const HeaderTop = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
 const HeaderSpacer = styled.div`
-  height: ${HEADER_HEIGHT}px;
+  height: ${HEADER_HEIGHT + 60}px; /* +60px pour la barre recherche */
   width: 100%;
 `;
 
 const Logo = styled(Link)`
   font-weight: 700;
-  font-size: 1.15rem;
+  font-size: 1.3rem;
   letter-spacing: -0.02em;
   color: ${({ $isdark }) => ($isdark ? "#e6eefc" : "#0f172a")};
   text-decoration: none;
+  z-index: 10002; /* Logo au dessus du mobile panel */
 `;
 
 const DesktopNav = styled.nav`
   display: flex;
   gap: 1rem;
   align-items: center;
-
   @media (max-width: 840px) {
     display: none;
   }
@@ -95,6 +102,7 @@ const Actions = styled.div`
   align-items: center;
   gap: 4px;
   position: relative;
+  z-index: 10002; /* Au dessus du panel */
 `;
 
 const IconButton = styled.button`
@@ -129,7 +137,7 @@ const BurgerButton = styled.button`
   background: transparent;
   cursor: pointer;
   position: relative;
-  z-index: 10001;
+  z-index: 10003;
 
   div.bar {
     width: 22px;
@@ -174,7 +182,7 @@ const MobilePanel = styled.aside`
   transform: translateX(${({ $open }) => ($open ? "0" : "100%")});
   transition: transform 260ms cubic-bezier(0.25, 0.9, 0.2, 1);
   background: ${({ $isdark }) => ($isdark ? "#071124" : "#fff")};
-  z-index: 1001;
+  z-index: 10001; /* juste en dessous du logo et actions */
   display: flex;
   flex-direction: column;
   box-shadow: ${({ $open }) =>
@@ -202,7 +210,6 @@ const CloseButton = styled.button`
   cursor: pointer;
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#071230")};
   font-size: 22px;
-  z-index: 1002;
 `;
 
 const MobileContent = styled.div`
@@ -210,6 +217,7 @@ const MobileContent = styled.div`
   display: flex;
   flex-direction: column;
   gap: 12px;
+  z-index: 10000;
 `;
 
 const MobileItem = styled(Link)`
@@ -224,7 +232,6 @@ const MobileItem = styled(Link)`
   }
 `;
 
-/* ===== COMPTEUR PANIER ===== */
 const CartCount = styled.span`
   position: absolute;
   top: -6px;
@@ -241,20 +248,64 @@ const CartCount = styled.span`
   justify-content: center;
 `;
 
+/* ===== BARRE DE RECHERCHE LUXE ===== */
+const SearchForm = styled.form`
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+  max-width: 500px;
+`;
+
+const SearchInput = styled.input`
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: 50px 0 0 50px;
+  border: 1px solid ${({ $isdark }) => ($isdark ? "#444" : "#ccc")};
+  background: ${({ $isdark }) => ($isdark ? "rgba(255,255,255,0.05)" : "#f5f5f5")};
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#071230")};
+  font-size: 0.95rem;
+  outline: none;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+  &:focus {
+    box-shadow: 0 0 15px rgba(0,0,0,0.25);
+    transform: scale(1.02);
+  }
+`;
+
+const SearchButton = styled.button`
+  padding: 12px 16px;
+  border-radius: 0 50px 50px 0;
+  border: 1px solid ${({ $isdark }) => ($isdark ? "#444" : "#ccc")};
+  background: ${({ $isdark }) => ($isdark ? "rgba(255,255,255,0.1)" : "#eaeaea")};
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#071230")};
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s ease, transform 0.2s ease;
+  &:hover {
+    background: ${({ $isdark }) => ($isdark ? "rgba(255,255,255,0.2)" : "#ddd")};
+    transform: scale(1.05);
+  }
+`;
+
 /* ===== COMPONENT ===== */
 export default function Header() {
   const { theme, themeToglle, ToggleTheme } = useContext(ThemeContext || {});
-  const { ajouter } = useContext(PanierContext); // compteur
+  const { ajouter } = useContext(PanierContext);
   const toggleTheme = themeToglle ?? ToggleTheme ?? (() => {});
   const $isdark = theme === "light";
-
   const { t, i18n } = useTranslation();
   const toggleLangue = () =>
     i18n.changeLanguage(i18n.language === "fr" ? "en" : "fr");
 
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const navigate = useNavigate();
+  const totalItems = ajouter.reduce((acc, item) => acc + item.quantite, 0);
 
-  // Scroll lock fiable
+  // Scroll lock
   useEffect(() => {
     let scrollY = 0;
     if (open) {
@@ -276,7 +327,6 @@ export default function Header() {
     }
   }, [open]);
 
-  // Close on escape
   useEffect(() => {
     function onKey(e) {
       if (e.key === "Escape") setOpen(false);
@@ -285,48 +335,61 @@ export default function Header() {
     return () => document.removeEventListener("keydown", onKey);
   }, []);
 
-  const totalItems = ajouter.reduce((acc, item) => acc + item.quantite, 0);
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (!query.trim()) return;
+    navigate(`/search?q=${encodeURIComponent(query)}`);
+    setQuery("");
+  };
 
   return (
     <>
       <HeaderWrapper $isdark={$isdark}>
-        <Logo to="/" $isdark={$isdark}>NUMA</Logo>
+        <HeaderTop>
+          <Logo to="/" $isdark={$isdark}>NUMA</Logo>
 
-        <DesktopNav>
-          <NavLink to="/collections" $isdark={$isdark}>{t("collections")}</NavLink>
-          <NavLink to="/nouveautes" $isdark={$isdark}>{t("new")}</NavLink>
-          <NavLink to="/promotions" $isdark={$isdark}>{t("deals")}</NavLink>
-          <NavLink to="/apropo" $isdark={$isdark}>{t("about")}</NavLink>
-        </DesktopNav>
+          <Actions>
+            <IconButton onClick={toggleTheme} $isdark={$isdark}>
+              {$isdark ? <FiMoon size={18} /> : <FiSun size={18} />}
+            </IconButton>
+            <IconButton onClick={toggleLangue} $isdark={$isdark}>
+              {i18n.language === "fr" ? "FR" : "EN"}
+            </IconButton>
 
-        <Actions>
-          <IconButton onClick={toggleTheme} $isdark={$isdark}>
-            {$isdark ? <FiMoon size={18} /> : <FiSun size={18} />}
-          </IconButton>
-          <IconButton onClick={toggleLangue} $isdark={$isdark}>
-            {i18n.language === "fr" ? "FR" : "EN"}
-          </IconButton>
+            <NavLink to="/compte" $isdark={$isdark}><FiUser /></NavLink>
 
-          <NavLink to="/compte" $isdark={$isdark}><FiUser /></NavLink>
+            <NavLink to="/panier" $isdark={$isdark} style={{ position: "relative" }}>
+              <FiShoppingBag />
+              {totalItems > 0 && <CartCount>{totalItems}</CartCount>}
+            </NavLink>
 
-          <NavLink to="/panier" $isdark={$isdark} style={{ position: "relative" }}>
-            <FiShoppingBag />
-            {totalItems > 0 && <CartCount>{totalItems}</CartCount>}
-          </NavLink>
+            <NavLink to="/favoris" $isdark={$isdark}><FiHeart /></NavLink>
 
-          <NavLink to="/favoris" $isdark={$isdark}><FiHeart /></NavLink>
+            <BurgerButton
+              onClick={() => setOpen(prev => !prev)}
+              $open={open}
+              $isdark={$isdark}
+              aria-expanded={open}
+            >
+              <div className="bar top" />
+              <div className="bar mid" />
+              <div className="bar bot" />
+            </BurgerButton>
+          </Actions>
+        </HeaderTop>
 
-          <BurgerButton
-            onClick={() => setOpen(prev => !prev)}
-            $open={open}
+        <SearchForm onSubmit={handleSearch}>
+          <SearchInput
             $isdark={$isdark}
-            aria-expanded={open}
-          >
-            <div className="bar top" />
-            <div className="bar mid" />
-            <div className="bar bot" />
-          </BurgerButton>
-        </Actions>
+            type="text"
+            placeholder={t("searchProducts")}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          <SearchButton type="submit" $isdark={$isdark}>
+            <FiSearch size={20} />
+          </SearchButton>
+        </SearchForm>
       </HeaderWrapper>
 
       <HeaderSpacer />

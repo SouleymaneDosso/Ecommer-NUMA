@@ -24,20 +24,21 @@ const Wrapper = styled.div`
 const ImagesWrapper = styled.div`
   height: 80vh;
   max-height: 500px;
-  overflow-y: auto;
   scroll-snap-type: y mandatory;
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
   border-radius: 12px;
+  overflow: hidden; /* on gère le scroll dans le slide si nécessaire */
 `;
+
 
 
 const ImageSlide = styled.div`
   scroll-snap-align: center;
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  min-height: 80vh; /* pour que les petites images restent centrées */
+  display: grid;
+  place-items: center; /* centre parfaitement horizontalement et verticalement */
+  overflow-y: auto; /* si l'image est plus grande, on peut scroller dans le slide */
 `;
 
 
