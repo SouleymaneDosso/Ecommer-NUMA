@@ -24,20 +24,22 @@ const Wrapper = styled.div`
 const ImagesWrapper = styled.div`
   height: 80vh;
   max-height: 500px;
+  overflow-y: auto;
   scroll-snap-type: y mandatory;
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
   border-radius: 12px;
-  overflow: hidden;
 `;
+
 
 const ImageSlide = styled.div`
   scroll-snap-align: center;
-  min-height: 80vh;
-  display: grid;
-  place-items: center;
-  overflow-y: auto;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 `;
+
 
 const ProductImage = styled.img`
   max-width: 100%;
@@ -67,10 +69,9 @@ const FullscreenOverlay = styled.div`
 `;
 
 const FullscreenImage = styled.img`
-  max-width: 90vw;
-  max-height: 90vh;
+  max-width: 100%;
+  max-height: 100%;
   object-fit: contain;
-  margin: auto; /* force le centrage vertical et horizontal */
   border-radius: 12px;
   box-shadow: 0 10px 40px rgba(0,0,0,0.5);
   transition: transform 0.3s ease;

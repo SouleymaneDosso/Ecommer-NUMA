@@ -8,77 +8,145 @@ import styled from "styled-components";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 /* ===============================
-   STYLES
+   STYLES LUXE RESPONSIVE
 ================================ */
 const Wrapper = styled.div`
-  padding: 40px 16px;
-  max-width: 1200px;
+  padding: 24px 16px;
+  max-width: 1400px;
   margin: auto;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 `;
 
 const Title = styled.h1`
-  font-size: 1.6rem;
-  margin-bottom: 24px;
+  font-size: 1.8rem;
+  margin-bottom: 32px;
+  font-weight: 500;
+  color: #111;
+
+  @media (max-width: 768px) {
+    font-size: 1.5rem;
+    margin-bottom: 24px;
+  }
 `;
 
 const Filters = styled.div`
   display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
+  gap: 16px;
+  margin-bottom: 32px;
   flex-wrap: wrap;
 
   select, input {
-    padding: 8px 12px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    background: #fff;
-    font-size: 0.9rem;
+    padding: 10px 16px;
+    border-radius: 50px;
+    border: 1px solid #ddd;
+    background: #fafafa;
+    font-size: 0.95rem;
     cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  select:hover, input:hover {
+    border-color: #bbb;
   }
 
   input[type="number"] {
     width: 100px;
   }
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 12px;
+
+    select, input {
+      width: 100%;
+    }
+
+    input[type="number"] {
+      width: 100%;
+    }
+  }
 `;
 
 const Grid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 24px;
+  gap: 16px;
+
+  /* Desktop large */
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+
+  /* Tablette */
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  /* Mobile */
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  /* Petit mobile */
+  @media (max-width: 480px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
 `;
 
 const Card = styled(Link)`
+  display: flex;
+  flex-direction: column;
   text-decoration: none;
   color: inherit;
-  border-radius: 14px;
   overflow: hidden;
+  border-radius: 8px;
+  cursor: pointer;
   background: #fff;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  width: 100%; /* important pour remplir la colonne */
 
   &:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+    transform: translateY(-4px);
+    box-shadow: 0 16px 32px rgba(0,0,0,0.12);
   }
+`;
+
+const ImageWrapper = styled.div`
+  width: 100%;
+  aspect-ratio: 1/1; /* carré parfait */
+  overflow: hidden;
+  position: relative;
+  background: #f8f8f8;
 `;
 
 const Image = styled.img`
   width: 100%;
-  height: 260px;
+  height: 100%;
   object-fit: cover;
+  transition: transform 0.4s ease;
+
+  ${Card}:hover & {
+    transform: scale(1.07);
+  }
 `;
 
 const CardBody = styled.div`
-  padding: 14px;
+  padding: 12px 0;
+  text-align: center;
 `;
 
 const ProductTitle = styled.h3`
   font-size: 0.95rem;
   margin: 0 0 6px;
+  color: #222;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 const Price = styled.div`
   font-weight: 700;
+  color: #111;
 `;
 
 const Message = styled.div`
@@ -86,36 +154,40 @@ const Message = styled.div`
   text-align: center;
   font-size: 1.05rem;
   opacity: 0.7;
+  color: #555;
 `;
 
 const SearchInputWrapper = styled.div`
   position: relative;
   max-width: 400px;
-  margin-bottom: 16px;
+  width: 100%;
+  margin-bottom: 24px;
 `;
 
 const SearchInput = styled.input`
   width: 100%;
-  padding: 10px 14px;
+  padding: 12px 20px;
   border-radius: 50px;
-  border: 1px solid #ccc;
+  border: 1px solid #ddd;
   font-size: 0.95rem;
   outline: none;
+  background: #fafafa;
+  transition: all 0.2s ease;
 
   &:focus {
     border-color: #0077ff;
-    box-shadow: 0 0 8px rgba(0, 119, 255, 0.3);
+    box-shadow: 0 0 12px rgba(0,119,255,0.3);
   }
 `;
 
 const Suggestions = styled.ul`
   position: absolute;
-  top: 44px;
+  top: 50px;
   left: 0;
   width: 100%;
   background: #fff;
   border-radius: 12px;
-  border: 1px solid #ccc;
+  border: 1px solid #ddd;
   max-height: 240px;
   overflow-y: auto;
   z-index: 1000;
@@ -125,8 +197,10 @@ const Suggestions = styled.ul`
 `;
 
 const SuggestionItem = styled.li`
-  padding: 10px 14px;
+  padding: 12px 16px;
   cursor: pointer;
+  transition: background 0.2s ease;
+
   &:hover {
     background: #f0f0f0;
   }
@@ -160,7 +234,6 @@ export default function Search() {
 
   const inputRef = useRef(null);
 
-  // Rechercher produits (live + filtre)
   useEffect(() => {
     const fetchProduits = async () => {
       if (!query.trim()) {
@@ -188,7 +261,6 @@ export default function Search() {
         const cats = [...new Set(data.map(p => p.categorie))];
         setCategories(cats);
 
-        // Suggestions
         const sugg = data.map(p => p.title).slice(0, 5);
         setSuggestions(sugg);
         setShowSuggestions(true);
@@ -222,11 +294,8 @@ export default function Search() {
 
   return (
     <Wrapper>
-      <Title>
-        Résultats pour : <strong>“{query}”</strong>
-      </Title>
+      <Title>Résultats pour : <strong>“{query}”</strong></Title>
 
-      {/* ===== Recherche + suggestions ===== */}
       <SearchInputWrapper ref={inputRef}>
         <SearchInput
           type="text"
@@ -246,7 +315,6 @@ export default function Search() {
         )}
       </SearchInputWrapper>
 
-      {/* ===== Filtres ===== */}
       <Filters>
         <select value={categorieFilter} onChange={e => setCategorieFilter(e.target.value)}>
           <option value="">Toutes catégories</option>
@@ -260,18 +328,8 @@ export default function Search() {
           <option value="unisex">Unisex</option>
         </select>
 
-        <input
-          type="number"
-          placeholder="Prix min"
-          value={prixMin}
-          onChange={e => setPrixMin(e.target.value)}
-        />
-        <input
-          type="number"
-          placeholder="Prix max"
-          value={prixMax}
-          onChange={e => setPrixMax(e.target.value)}
-        />
+        <input type="number" placeholder="Prix min" value={prixMin} onChange={e => setPrixMin(e.target.value)} />
+        <input type="number" placeholder="Prix max" value={prixMax} onChange={e => setPrixMax(e.target.value)} />
       </Filters>
 
       {loading && <Message>Recherche en cours…</Message>}
@@ -284,10 +342,12 @@ export default function Search() {
             const mainImage = p.images?.find(img => img.isMain)?.url || p.images?.[0]?.url;
             return (
               <Card key={p._id} to={`/produit/${p._id}`}>
-                {mainImage && <Image src={mainImage} alt={p.title} />}
+                <ImageWrapper>
+                  {mainImage && <Image src={mainImage} alt={p.title} />}
+                </ImageWrapper>
                 <CardBody>
                   <ProductTitle>{p.title}</ProductTitle>
-                  <Price>{p.price} €</Price>
+                  <Price>{p.price} FCFA</Price>
                 </CardBody>
               </Card>
             );
