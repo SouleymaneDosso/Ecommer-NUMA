@@ -64,7 +64,7 @@ const FullscreenOverlay = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  // z-index: 9999;
+  z-index: 9999;
   animation: ${fadeInScale} 0.25s ease-out;
 `;
 

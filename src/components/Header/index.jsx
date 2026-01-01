@@ -13,7 +13,9 @@ import { useContext, useState, useEffect } from "react";
 import { ThemeContext, PanierContext } from "../../Utils/Context"; 
 import { useTranslation } from "react-i18next";
 
+/* ===== CONSTANTES ===== */
 const HEADER_HEIGHT = 70; 
+const SEARCH_HEIGHT = 50;
 
 /* ===== ANIMATIONS ===== */
 const fadeIn = keyframes`
@@ -36,8 +38,6 @@ const HeaderWrapper = styled.header`
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.5rem 1rem;
   background: ${({ $isdark }) =>
     $isdark
       ? "linear-gradient(180deg, rgba(6,8,14,0.85), rgba(12,18,30,0.85))"
@@ -48,6 +48,13 @@ const HeaderWrapper = styled.header`
   -webkit-backdrop-filter: blur(10px) saturate(120%);
   box-shadow: ${({ $isdark }) =>
     $isdark ? "0 6px 28px rgba(0,0,0,0.6)" : "0 6px 28px rgba(15,23,42,0.08)"};
+  height: ${HEADER_HEIGHT + SEARCH_HEIGHT}px;
+  padding: 0.5rem 1rem;
+`;
+
+const HeaderSpacer = styled.div`
+  height: ${HEADER_HEIGHT + SEARCH_HEIGHT}px;
+  width: 100%;
 `;
 
 const HeaderTop = styled.div`
@@ -57,27 +64,37 @@ const HeaderTop = styled.div`
   align-items: center;
 `;
 
-const HeaderSpacer = styled.div`
-  height: ${HEADER_HEIGHT + 60}px; /* +60px pour la barre recherche */
-  width: 100%;
-`;
-
 const Logo = styled(Link)`
   font-weight: 700;
   font-size: 1.3rem;
   letter-spacing: -0.02em;
   color: ${({ $isdark }) => ($isdark ? "#e6eefc" : "#0f172a")};
   text-decoration: none;
-  z-index: 10002; /* Logo au dessus du mobile panel */
+  z-index: 10002;
 `;
 
-const DesktopNav = styled.nav`
+const Actions = styled.div`
   display: flex;
-  gap: 1rem;
   align-items: center;
-  @media (max-width: 840px) {
-    display: none;
-  }
+  gap: 6px;
+  position: relative;
+  z-index: 10002;
+`;
+
+const IconButton = styled.button`
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  background: ${({ $isdark }) =>
+    $isdark ? "rgba(255,255,255,0.03)" : "rgba(15,23,42,0.03)"};
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#0f172a")};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 150ms ease, background 150ms ease;
+  &:hover { transform: scale(1.05); }
 `;
 
 const NavLink = styled(Link)`
@@ -86,10 +103,10 @@ const NavLink = styled(Link)`
   padding: 6px 10px;
   border-radius: 8px;
   font-weight: 500;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 6px;
-  transition: transform 160ms ease, background 160ms ease, color 160ms ease;
+  transition: transform 160ms ease, background 160ms ease;
   &:hover {
     transform: translateY(-2px);
     background: ${({ $isdark }) =>
@@ -97,48 +114,16 @@ const NavLink = styled(Link)`
   }
 `;
 
-const Actions = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  position: relative;
-  z-index: 10002; /* Au dessus du panel */
-`;
-
-const IconButton = styled.button`
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  background: ${({ $isdark }) =>
-    $isdark ? "rgba(255,255,255,0.03)" : "rgba(15,23,42,0.03)"};
-  color: ${({ $isdark }) => ($isdark ? "#fff" : "#0f172a")};
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 150ms ease, background 150ms ease;
-  &:hover {
-    transform: scale(1.05);
-  }
-`;
-
 const BurgerButton = styled.button`
   display: none;
-  @media (max-width: 840px) {
-    display: inline-flex;
-  }
+  @media (max-width: 840px) { display: flex; }
   width: 40px;
   height: 40px;
-  padding: 6px;
-  border-radius: 8px;
   border: none;
   background: transparent;
   cursor: pointer;
   position: relative;
   z-index: 10003;
-
   div.bar {
     width: 22px;
     height: 2px;
@@ -149,25 +134,16 @@ const BurgerButton = styled.button`
     transform: translateX(-50%);
     transition: all 260ms ease;
   }
-  div.bar.top {
-    top: ${({ $open }) => ($open ? "19px" : "12px")};
-    transform: ${({ $open }) => ($open ? "rotate(45deg)" : "none")};
-  }
-  div.bar.mid {
-    top: 21px;
-    opacity: ${({ $open }) => ($open ? 0 : 1)};
-  }
-  div.bar.bot {
-    top: ${({ $open }) => ($open ? "19px" : "30px")};
-    transform: ${({ $open }) => ($open ? "rotate(-45deg)" : "none")};
-  }
+  div.bar.top { top: ${({ $open }) => ($open ? "19px" : "12px")}; transform: ${({ $open }) => ($open ? "rotate(45deg)" : "none")}; }
+  div.bar.mid { top: 21px; opacity: ${({ $open }) => ($open ? 0 : 1)}; }
+  div.bar.bot { top: ${({ $open }) => ($open ? "19px" : "30px")}; transform: ${({ $open }) => ($open ? "rotate(-45deg)" : "none")}; }
 `;
 
 const Overlay = styled.div`
   display: ${({ $open }) => ($open ? "block" : "none")};
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(0,0,0,0.35);
   z-index: 1000;
   animation: ${({ $open }) => ($open ? fadeIn : fadeOut)} 260ms ease forwards;
 `;
@@ -180,13 +156,12 @@ const MobilePanel = styled.aside`
   width: min(360px, 100vw);
   max-width: 70%;
   transform: translateX(${({ $open }) => ($open ? "0" : "100%")});
-  transition: transform 260ms cubic-bezier(0.25, 0.9, 0.2, 1);
+  transition: transform 260ms cubic-bezier(0.25,0.9,0.2,1);
   background: ${({ $isdark }) => ($isdark ? "#071124" : "#fff")};
-  z-index: 10001; /* juste en dessous du logo et actions */
+  z-index: 10001;
   display: flex;
   flex-direction: column;
-  box-shadow: ${({ $open }) =>
-    $open ? "-12px 0 30px rgba(0,0,0,0.24)" : "none"};
+  box-shadow: ${({ $open }) => ($open ? "-12px 0 30px rgba(0,0,0,0.24)" : "none")};
 `;
 
 const MobileHeader = styled.div`
@@ -194,8 +169,7 @@ const MobileHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   padding: 16px 20px;
-  border-bottom: 1px solid
-    ${({ $isdark }) => ($isdark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.06)")};
+  border-bottom: 1px solid ${({ $isdark }) => ($isdark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.06)")};
 `;
 
 const MobileTitle = styled.div`
@@ -217,7 +191,6 @@ const MobileContent = styled.div`
   display: flex;
   flex-direction: column;
   gap: 12px;
-  z-index: 10000;
 `;
 
 const MobileItem = styled(Link)`
@@ -227,8 +200,7 @@ const MobileItem = styled(Link)`
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#071230")};
   font-weight: 600;
   &:hover {
-    background: ${({ $isdark }) =>
-      $isdark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.03)"};
+    background: ${({ $isdark }) => ($isdark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.03)")};
   }
 `;
 
@@ -248,13 +220,11 @@ const CartCount = styled.span`
   justify-content: center;
 `;
 
-/* ===== BARRE DE RECHERCHE LUXE ===== */
 const SearchForm = styled.form`
   width: 100%;
-  display: flex;
-  justify-content: center;
-  margin-top: 8px;
   max-width: 500px;
+  display: flex;
+  margin-top: 8px;
 `;
 
 const SearchInput = styled.input`
@@ -266,10 +236,15 @@ const SearchInput = styled.input`
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#071230")};
   font-size: 0.95rem;
   outline: none;
-  transition: box-shadow 0.3s ease, transform 0.3s ease;
+  transition: box-shadow 0.2s ease;
+
   &:focus {
-    box-shadow: 0 0 15px rgba(0,0,0,0.25);
-    transform: scale(1.02);
+    box-shadow: 0 0 8px rgba(0,0,0,0.15);
+  }
+
+  @media (max-width: 500px) {
+    font-size: 0.9rem;
+    padding: 10px 14px;
   }
 `;
 
@@ -283,10 +258,10 @@ const SearchButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.3s ease, transform 0.2s ease;
+  transition: background 0.2s ease;
+
   &:hover {
     background: ${({ $isdark }) => ($isdark ? "rgba(255,255,255,0.2)" : "#ddd")};
-    transform: scale(1.05);
   }
 `;
 
@@ -328,9 +303,7 @@ export default function Header() {
   }, [open]);
 
   useEffect(() => {
-    function onKey(e) {
-      if (e.key === "Escape") setOpen(false);
-    }
+    function onKey(e) { if (e.key === "Escape") setOpen(false); }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, []);
@@ -365,12 +338,7 @@ export default function Header() {
 
             <NavLink to="/favoris" $isdark={$isdark}><FiHeart /></NavLink>
 
-            <BurgerButton
-              onClick={() => setOpen(prev => !prev)}
-              $open={open}
-              $isdark={$isdark}
-              aria-expanded={open}
-            >
+            <BurgerButton onClick={() => setOpen(prev => !prev)} $open={open} $isdark={$isdark}>
               <div className="bar top" />
               <div className="bar mid" />
               <div className="bar bot" />
