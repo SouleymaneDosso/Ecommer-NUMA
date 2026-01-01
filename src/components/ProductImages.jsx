@@ -64,13 +64,13 @@ const FullscreenOverlay = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 9999;
+  // z-index: 9999;
   animation: ${fadeInScale} 0.25s ease-out;
 `;
 
 const FullscreenImage = styled.img`
-  max-width: 100%;
-  max-height: 100%;
+  max-width: 90%;
+  max-height: 90%;
   object-fit: contain;
   border-radius: 12px;
   box-shadow: 0 10px 40px rgba(0,0,0,0.5);

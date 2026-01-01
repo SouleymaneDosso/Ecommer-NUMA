@@ -2,13 +2,10 @@ import { useEffect, useState, useRef } from "react";
 import { useLocation, Link } from "react-router-dom";
 import styled from "styled-components";
 
-/* ===============================
-   CONFIG API
-================================ */
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 /* ===============================
-   STYLES LUXE RESPONSIVE
+   STYLES LUXE RESPONSIVE FIX
 ================================ */
 const Wrapper = styled.div`
   padding: 24px 16px;
@@ -69,24 +66,18 @@ const Filters = styled.div`
 
 const Grid = styled.div`
   display: grid;
-  gap: 16px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
 
-  /* Desktop large */
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-
-  /* Tablette */
   @media (max-width: 1024px) {
     grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
   }
 
-  /* Mobile */
   @media (max-width: 768px) {
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
   }
 
-  /* Petit mobile */
   @media (max-width: 480px) {
     grid-template-columns: repeat(2, 1fr);
     gap: 8px;
@@ -102,8 +93,8 @@ const Card = styled(Link)`
   border-radius: 8px;
   cursor: pointer;
   background: #fff;
+  width: 100%;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  width: 100%; /* important pour remplir la colonne */
 
   &:hover {
     transform: translateY(-4px);
@@ -113,9 +104,8 @@ const Card = styled(Link)`
 
 const ImageWrapper = styled.div`
   width: 100%;
-  aspect-ratio: 1/1; /* carré parfait */
+  aspect-ratio: 1/1;
   overflow: hidden;
-  position: relative;
   background: #f8f8f8;
 `;
 
@@ -131,7 +121,7 @@ const Image = styled.img`
 `;
 
 const CardBody = styled.div`
-  padding: 12px 0;
+  padding: 12px 8px;
   text-align: center;
 `;
 
