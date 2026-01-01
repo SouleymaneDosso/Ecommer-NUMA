@@ -22,8 +22,8 @@ const Wrapper = styled.div`
 `;
 
 const ImagesWrapper = styled.div`
-  height: 60vh;
-  max-height: 450px;
+  height: 80vh;
+  max-height: 500px;
   overflow-y: auto;
   scroll-snap-type: y mandatory;
   -webkit-overflow-scrolling: touch;
