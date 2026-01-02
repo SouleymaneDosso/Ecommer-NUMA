@@ -70,7 +70,7 @@ const FullscreenOverlay = styled.div`
 
 const FullscreenImage = styled.img`
   max-width: 90%;
-  max-height: calc(100vh - 80px); /* espace pour indicateur et confort visuel */
+  // max-height: calc(100vh - 80px); /* espace pour indicateur et confort visuel */
   object-fit: contain;
   border-radius: 12px;
   box-shadow: 0 10px 40px rgba(0,0,0,0.5);
@@ -82,7 +82,7 @@ const Arrow = styled.div`
   top: 50%;
   transform: translateY(-50%);
   font-size: 3rem;
-  color: #fff;
+  color: black;
   cursor: pointer;
   user-select: none;
   transition: color 0.2s;
