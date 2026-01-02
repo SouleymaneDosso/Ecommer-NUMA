@@ -3,29 +3,40 @@ import styled, { keyframes } from "styled-components";
 import { LoaderWrapper, Loader } from "../Utils/Rotate";
 
 // ---------- ANIMATIONS ----------
-const fadeIn = keyframes`
-  from {
+const fadeSlide = keyframes`
+  0% {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(20px);
   }
-  to {
+  100% {
     opacity: 1;
     transform: translateY(0);
   }
 `;
 
+const flipSlide = keyframes`
+  0% {
+    transform: rotateY(90deg);
+    opacity: 0;
+  }
+  100% {
+    transform: rotateY(0deg);
+    opacity: 1;
+  }
+`;
+
 // ---------- STYLES ----------
 
-// Container principal
 const Wrapper = styled.div`
   width: 100%;
   max-width: 720px;
   margin: 0 auto;
-  background: #fff;
   position: relative;
+  font-family: 'Helvetica Neue', sans-serif;
+  color: #000;
 `;
 
-// Wrapper des images (scroll vertical type runway)
+// Wrapper images vertical
 const ImagesWrapper = styled.div`
   height: 85vh;
   overflow-y: scroll;
@@ -44,7 +55,19 @@ const ImageSlide = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: ${fadeIn} 0.4s ease;
+  position: relative;
+  animation: ${flipSlide} 0.5s ease;
+
+  &:after {
+    content: '${({ index, title }) => title || `0${index + 1}`.slice(-2)}';
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    font-size: 2rem;
+    letter-spacing: 2px;
+    opacity: 0.15;
+    writing-mode: vertical-rl;
+  }
 `;
 
 // Image produit
@@ -53,16 +76,27 @@ const ProductImage = styled.img`
   height: 100%;
   object-fit: cover;
   cursor: zoom-in;
-  transition: transform 0.35s ease;
+  transition: transform 0.35s ease, filter 0.3s ease;
+  filter: contrast(1.05) brightness(0.95) grayscale(0.01);
 
   &:hover {
     transform: scale(1.02);
   }
 `;
 
+// Logo overlay (type Prada)
+const LogoOverlay = styled.div`
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  font-weight: bold;
+  font-size: 1.2rem;
+  opacity: 0.2;
+  letter-spacing: 2px;
+`;
+
 // ---------- FULLSCREEN ----------
 
-// Overlay fullscreen
 const FullscreenOverlay = styled.div`
   position: fixed;
   inset: 0;
@@ -71,22 +105,23 @@ const FullscreenOverlay = styled.div`
   align-items: center;
   justify-content: center;
   z-index: 9999;
+  overflow: hidden;
 `;
 
-// Image fullscreen
 const FullscreenImage = styled.img`
   max-width: 85vw;
   max-height: 90vh;
   object-fit: contain;
-  animation: ${fadeIn} 0.3s ease;
+  animation: ${fadeSlide} 0.4s ease;
+  filter: grayscale(0.02) contrast(1.1);
 `;
 
-// Flèches navigation
+// Flèches minimalistes
 const Arrow = styled.div`
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 2rem;
+  font-size: 2.5rem;
   color: white;
   cursor: pointer;
   opacity: 0.6;
@@ -129,7 +164,7 @@ export default function ProductImages({ images = [] }) {
   // Charger les images
   useEffect(() => {
     if (images.length) {
-      setUrls(images.map((img) => img.url));
+      setUrls(images.map((img) => ({ url: img.url, title: img.title || "" })));
     }
     setLoading(false);
   }, [images]);
@@ -187,9 +222,19 @@ export default function ProductImages({ images = [] }) {
   return (
     <Wrapper>
       <ImagesWrapper ref={wrapperRef}>
-        {urls.map((url, i) => (
-          <ImageSlide key={i} ref={(el) => (slidesRef.current[i] = el)}>
-            <ProductImage src={url} alt={`Produit ${i + 1}`} onClick={() => openFullscreen(i)} />
+        {urls.map((item, i) => (
+          <ImageSlide
+            key={i}
+            index={i}
+            title={item.title}
+            ref={(el) => (slidesRef.current[i] = el)}
+          >
+            <LogoOverlay>PRADA</LogoOverlay>
+            <ProductImage
+              src={item.url}
+              alt={item.title || `Produit ${i + 1}`}
+              onClick={() => openFullscreen(i)}
+            />
           </ImageSlide>
         ))}
       </ImagesWrapper>
@@ -197,7 +242,10 @@ export default function ProductImages({ images = [] }) {
       {isFullscreen && urls[currentIndex] && (
         <FullscreenOverlay onClick={closeFullscreen}>
           <ArrowLeft onClick={prevImage}>&larr;</ArrowLeft>
-          <FullscreenImage src={urls[currentIndex]} onClick={(e) => e.stopPropagation()} />
+          <FullscreenImage
+            src={urls[currentIndex].url}
+            onClick={(e) => e.stopPropagation()}
+          />
           <ArrowRight onClick={nextImage}>&rarr;</ArrowRight>
 
           <IndicatorWrapper>
