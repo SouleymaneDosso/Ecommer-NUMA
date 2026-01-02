@@ -232,7 +232,7 @@ export default function Nouveautes() {
       try {
         const res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits`);
         const data = await res.json();
-        const newProducts = data.filter(p => p.isNew);
+        const newProducts = data.filter(p => p.badge === "new");
         setProducts(newProducts);
       } catch (err) {
         console.error(err);
@@ -242,7 +242,6 @@ export default function Nouveautes() {
     }
     fetchProducts();
   }, []);
-
   if (loading) return <LoaderWrapper><Loader /></LoaderWrapper>;
 
   const handleClickProduct = (id) => navigate(`/produit/${id}`);

@@ -122,7 +122,7 @@ const Arrow = styled.div`
   top: 50%;
   transform: translateY(-50%);
   font-size: 2.5rem;
-  color: white;
+  color: black;
   cursor: pointer;
   opacity: 0.6;
   transition: opacity 0.2s ease;

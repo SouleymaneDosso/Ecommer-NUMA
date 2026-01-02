@@ -218,11 +218,12 @@ export default function AddToCartBar({
           Ajouter au panier
         </AddButton>
       </Row>
-
       <StockInfo>
         {!selectedColor || !selectedSize
           ? "Sélectionnez une couleur et une taille"
-          : `Stock disponible : ${stockDisponible}`}
+          : stockDisponible > 0
+            ? `Stock disponible : ${stockDisponible}`
+            : "Stock épuisé"}
       </StockInfo>
 
       {/* MODAL */}
