@@ -59,9 +59,8 @@ const FullscreenOverlay = styled.div`
   inset: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0,0,0,0.95);
+  background: rgba(0, 0, 0, 0.95);
   display: flex;
-  flex-direction: column; /* permet d'avoir l'image centrée et indicateur en bas */
   justify-content: center;
   align-items: center;
   z-index: 9999;
@@ -69,18 +68,9 @@ const FullscreenOverlay = styled.div`
   overflow: hidden;
 `;
 
-const FullscreenImageWrapper = styled.div`
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  position: relative; /* pour flèches absolues */
-`;
-
 const FullscreenImage = styled.img`
   max-width: 90%;
-  max-height: calc(100vh - 80px); /* espace pour indicateur et confort visuel */
+  max-height: calc(90vh - 70px); /* espace pour indicateur et confort visuel */
   object-fit: contain;
   border-radius: 12px;
   box-shadow: 0 10px 40px rgba(0,0,0,0.5);
@@ -92,7 +82,7 @@ const Arrow = styled.div`
   top: 50%;
   transform: translateY(-50%);
   font-size: 3rem;
-  color: #fff;
+  color: black;
   cursor: pointer;
   user-select: none;
   transition: color 0.2s;
@@ -202,11 +192,9 @@ export default function ProductImages({ images = [] }) {
 
       {isFullscreen && urls[currentIndex] && (
         <FullscreenOverlay onClick={closeFullscreen}>
-          <FullscreenImageWrapper>
-            <ArrowLeft onClick={prevImage}>&larr;</ArrowLeft>
-            <FullscreenImage src={urls[currentIndex]} onClick={(e) => e.stopPropagation()} />
-            <ArrowRight onClick={nextImage}>&rarr;</ArrowRight>
-          </FullscreenImageWrapper>
+          <ArrowLeft onClick={prevImage}>&larr;</ArrowLeft>
+          <FullscreenImage src={urls[currentIndex]} onClick={(e) => e.stopPropagation()} />
+          <ArrowRight onClick={nextImage}>&rarr;</ArrowRight>
 
           <IndicatorWrapper>
             <IndicatorBar progress={progress} />
