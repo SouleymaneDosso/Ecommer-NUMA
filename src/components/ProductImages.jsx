@@ -31,7 +31,6 @@ const ImagesWrapper = styled.div`
   border-radius: 12px;
 `;
 
-
 const ImageSlide = styled.div`
   scroll-snap-align: center;
   height: 100%;
@@ -39,7 +38,6 @@ const ImageSlide = styled.div`
   justify-content: center;
   align-items: center;
 `;
-
 
 const ProductImage = styled.img`
   max-width: 100%;
@@ -55,6 +53,7 @@ const ProductImage = styled.img`
   }
 `;
 
+// ---------- FULLSCREEN ----------
 const FullscreenOverlay = styled.div`
   position: fixed;
   inset: 0;
@@ -66,11 +65,12 @@ const FullscreenOverlay = styled.div`
   align-items: center;
   z-index: 9999;
   animation: ${fadeInScale} 0.25s ease-out;
+  overflow: hidden;
 `;
 
 const FullscreenImage = styled.img`
   max-width: 90%;
-  max-height: 90%;
+  max-height: calc(100vh - 80px); /* espace pour indicateur et confort visuel */
   object-fit: contain;
   border-radius: 12px;
   box-shadow: 0 10px 40px rgba(0,0,0,0.5);
@@ -95,7 +95,6 @@ const Arrow = styled.div`
 const ArrowLeft = styled(Arrow)`left: 20px;`;
 const ArrowRight = styled(Arrow)`right: 20px;`;
 
-// ---------- INDICATEUR MODERNE ----------
 const IndicatorWrapper = styled.div`
   position: absolute;
   bottom: 40px;
