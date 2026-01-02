@@ -5,7 +5,7 @@ import { FiEye, FiEyeOff } from "react-icons/fi";
 
 // ===== STYLES =====
 const PageWrapper = styled.div`
-  min-height: 100dvh;
+  min-height: 100vh; /* Évite les problèmes de 100dvh sur mobile */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -14,8 +14,9 @@ const PageWrapper = styled.div`
   font-family: "Inter", sans-serif;
 
   @media (max-width: 768px) {
-    align-items: flex-start;
-    padding-top: 3.5rem;
+    align-items: flex-start; /* Évite que le clavier pousse le formulaire hors écran */
+    padding-top: 10vh; /* Ajuste pour que le formulaire soit visible */
+    padding-bottom: env(safe-area-inset-bottom, 1rem);
   }
 `;
 
@@ -54,6 +55,9 @@ const Input = styled.input`
     outline: none;
     box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.35);
   }
+
+  /* Évite que le texte saute sur mobile */
+  -webkit-text-size-adjust: 100%;
 `;
 
 const EyeButton = styled.button`

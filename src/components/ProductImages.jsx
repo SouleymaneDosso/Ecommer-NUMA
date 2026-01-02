@@ -45,11 +45,13 @@ const ProductImage = styled.img`
   object-fit: contain;
   cursor: pointer;
   border-radius: 12px;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
 
   &:hover {
     transform: scale(1.05);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
   }
 `;
 
@@ -70,10 +72,10 @@ const FullscreenOverlay = styled.div`
 
 const FullscreenImage = styled.img`
   max-width: 90%;
-  max-height: calc(90vh - 70px); /* espace pour indicateur et confort visuel */
+  max-height: 90vh;
   object-fit: contain;
   border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
   transition: transform 0.3s ease;
 `;
 
@@ -92,15 +94,19 @@ const Arrow = styled.div`
   z-index: 10000;
 `;
 
-const ArrowLeft = styled(Arrow)`left: 20px;`;
-const ArrowRight = styled(Arrow)`right: 20px;`;
+const ArrowLeft = styled(Arrow)`
+  left: 20px;
+`;
+const ArrowRight = styled(Arrow)`
+  right: 20px;
+`;
 
 const IndicatorWrapper = styled.div`
   position: absolute;
   bottom: 40px;
   width: 60%;
   height: 4px;
-  background: rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 2px;
   overflow: hidden;
 `;
@@ -177,7 +183,12 @@ export default function ProductImages({ images = [] }) {
 
   const progress = ((currentIndex + 1) / urls.length) * 100;
 
-  if (loading) return <LoaderWrapper><Loader /></LoaderWrapper>;
+  if (loading)
+    return (
+      <LoaderWrapper>
+        <Loader />
+      </LoaderWrapper>
+    );
   if (!urls.length) return null;
 
   return (
@@ -185,7 +196,11 @@ export default function ProductImages({ images = [] }) {
       <ImagesWrapper ref={wrapperRef}>
         {urls.map((url, i) => (
           <ImageSlide key={i} ref={(el) => (slidesRef.current[i] = el)}>
-            <ProductImage src={url} alt={`Produit ${i + 1}`} onClick={() => openFullscreen(i)} />
+            <ProductImage
+              src={url}
+              alt={`Produit ${i + 1}`}
+              onClick={() => openFullscreen(i)}
+            />
           </ImageSlide>
         ))}
       </ImagesWrapper>
@@ -193,7 +208,10 @@ export default function ProductImages({ images = [] }) {
       {isFullscreen && urls[currentIndex] && (
         <FullscreenOverlay onClick={closeFullscreen}>
           <ArrowLeft onClick={prevImage}>&larr;</ArrowLeft>
-          <FullscreenImage src={urls[currentIndex]} onClick={(e) => e.stopPropagation()} />
+          <FullscreenImage
+            src={urls[currentIndex]}
+            onClick={(e) => e.stopPropagation()}
+          />
           <ArrowRight onClick={nextImage}>&rarr;</ArrowRight>
 
           <IndicatorWrapper>
