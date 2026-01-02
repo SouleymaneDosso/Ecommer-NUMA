@@ -11,61 +11,51 @@ const Container = styled.div`
   background: #f9fafb;
   min-height: 100vh;
 `;
-
 const Title = styled.h1`
   font-size: 28px;
   font-weight: bold;
   color: #2c3e50;
   margin-bottom: 20px;
 `;
-
 const Controls = styled.div`
   display: flex;
   gap: 15px;
   margin-bottom: 20px;
   flex-wrap: wrap;
 `;
-
 const Input = styled.input`
   padding: 10px 12px;
   border-radius: 6px;
   border: 1px solid #ccc;
 `;
-
 const Select = styled.select`
   padding: 10px 12px;
   border-radius: 6px;
   border: 1px solid #ccc;
 `;
-
 const TableWrapper = styled.div`
   overflow-x: auto;
 `;
-
 const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
   background: #fff;
   border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 `;
-
 const Th = styled.th`
   text-align: left;
   padding: 12px;
   background: #f1f3f6;
   font-weight: 600;
   color: #2c3e50;
-  cursor: pointer;
 `;
-
 const Td = styled.td`
   padding: 12px;
   border-bottom: 1px solid #eee;
   color: #4a5568;
   vertical-align: top;
 `;
-
 const Button = styled.button`
   padding: 6px 12px;
   background: ${({ bg }) => bg || "#007bff"};
@@ -74,151 +64,103 @@ const Button = styled.button`
   border-radius: 6px;
   font-weight: bold;
   cursor: pointer;
-  &:hover { opacity: 0.85; }
-  &:disabled { opacity: 0.6; cursor: not-allowed; }
+  &:disabled {
+    opacity: 0.6;
+  }
 `;
-
-const ModalContent = styled.div`
+const Thumbnail = styled.img`
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-right: 8px;
+`;
+const ProductRow = styled.div`
   display: flex;
-  flex-direction: column;
-  gap: 20px;
-`;
-
-const ModalSection = styled.div`
-  background: #f9fafb;
-  padding: 15px;
-  border-radius: 10px;
-`;
-
-const ModalSectionTitle = styled.h4`
+  gap: 15px;
+  align-items: center;
   margin-bottom: 10px;
-  color: #34495e;
 `;
-
-const ModalFooter = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  border-top: 1px solid #eee;
-  padding-top: 15px;
+const ProductImage = styled.img`
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 6px;
 `;
 
 /* ===== COMPONENT ===== */
-function AdminOrdersPro() {
+function AdminOrdersWithThumb() {
   const [orders, setOrders] = useState([]);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
-  const [sortField, setSortField] = useState("createdAt");
-  const [sortOrder, setSortOrder] = useState("desc");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
 
+  const itemsPerPage = 10;
   const token = localStorage.getItem("adminToken");
 
+  /* ===== FETCH ===== */
   const fetchOrders = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/commandes`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/admin/commandes?page=${currentPage}&limit=${itemsPerPage}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       const data = await res.json();
-      setOrders(data || []);
+      setOrders(data.commandes || []);
     } catch (err) {
-      console.error("Erreur récupération commandes:", err);
+      console.error(err);
       setOrders([]);
     }
   };
 
   useEffect(() => {
     fetchOrders();
-  }, []);
+  }, [currentPage]);
 
-  /* ===== Filtrage & tri ===== */
+  /* ===== FILTERS ===== */
   const filteredOrders = useMemo(() => {
-    let filtered = orders.filter(
-      (o) =>
+    return orders.filter((o) => {
+      const matchSearch =
+        !search ||
         o._id.includes(search) ||
-        o.userId.username?.toLowerCase().includes(search.toLowerCase()) ||
-        o.statut.includes(filterStatus)
-    );
+        o.client?.nom?.toLowerCase().includes(search.toLowerCase());
 
-    filtered.sort((a, b) => {
-      if (sortField === "total") return sortOrder === "asc" ? a.total - b.total : b.total - a.total;
-      if (sortField === "createdAt") return sortOrder === "asc" ? new Date(a.createdAt) - new Date(b.createdAt) : new Date(b.createdAt) - new Date(a.createdAt);
-      return 0;
+      const matchStatus =
+        !filterStatus || o.statusCommande === filterStatus;
+
+      return matchSearch && matchStatus;
     });
+  }, [orders, search, filterStatus]);
 
-    return filtered;
-  }, [orders, search, filterStatus, sortField, sortOrder]);
-
+  /* ===== PAGINATION ===== */
   const indexOfLast = currentPage * itemsPerPage;
   const indexOfFirst = indexOfLast - itemsPerPage;
-  const currentOrders = filteredOrders.slice(indexOfFirst, indexOfLast);
+  const currentOrders = filteredOrders.slice(
+    indexOfFirst,
+    indexOfLast
+  );
   const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
 
-  /* ===== Actions ===== */
-  const handleStatusChange = async (orderId, newStatus) => {
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/commande/${orderId}/status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ statut: newStatus })
-      });
-      if (!res.ok) throw new Error("Erreur mise à jour statut");
-      fetchOrders();
-      if (selectedOrder && selectedOrder._id === orderId) {
-        setSelectedOrder({ ...selectedOrder, statut: newStatus });
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Impossible de changer le statut");
-    }
-  };
-
-  const handleSendEmail = async (order) => {
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/commande/${order._id}/send-email`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (!res.ok) throw new Error("Erreur envoi email");
-      alert("Email envoyé avec succès !");
-    } catch (err) {
-      console.error(err);
-      alert("Impossible d’envoyer l’email");
-    }
-  };
-
-  const handleDeleteOrder = async (orderId) => {
-    if (!window.confirm("Voulez-vous vraiment supprimer cette commande ?")) return;
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/commande/${orderId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (!res.ok) throw new Error("Erreur suppression commande");
-      fetchOrders();
-      setModalOpen(false);
-    } catch (err) {
-      console.error(err);
-      alert("Impossible de supprimer la commande");
-    }
-  };
-
-  /* ===== Render ===== */
   return (
     <Container>
-      <Title>Gestion des commandes (PRO)</Title>
+      <Title>Gestion des commandes</Title>
 
       <Controls>
-        <Input placeholder="Recherche par ID ou utilisateur..." value={search} onChange={(e) => setSearch(e.target.value)} />
-        <Select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
-          <option value="">Tous les statuts</option>
-          <option value="en cours">En cours</option>
-          <option value="envoyé">Envoyé</option>
-          <option value="livré">Livré</option>
-          <option value="annulé">Annulé</option>
+        <Input
+          placeholder="Recherche ID / client"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <Select
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+        >
+          <option value="">Tous</option>
+          <option value="PENDING">En attente</option>
+          <option value="PARTIALLY_PAID">Partiel</option>
+          <option value="PAID">Payé</option>
         </Select>
       </Controls>
 
@@ -226,83 +168,105 @@ function AdminOrdersPro() {
         <Table>
           <thead>
             <tr>
-              <Th onClick={() => { setSortField("createdAt"); setSortOrder(sortOrder === "asc" ? "desc" : "asc"); }}>Date</Th>
+              <Th>Date</Th>
               <Th>ID</Th>
-              <Th>Utilisateur</Th>
-              <Th onClick={() => { setSortField("total"); setSortOrder(sortOrder === "asc" ? "desc" : "asc"); }}>Total</Th>
-              <Th>Statut</Th>
+              <Th>Client</Th>
+              <Th>Produit</Th>
+              <Th>Total</Th>
+              <Th>Status</Th>
               <Th>Actions</Th>
             </tr>
           </thead>
           <tbody>
-            {currentOrders.map(order => (
-              <tr key={order._id}>
-                <Td>{new Date(order.createdAt).toLocaleString()}</Td>
-                <Td>{order._id}</Td>
-                <Td>{order.userId?.username || order.userId || "—"}</Td>
-                <Td>{order.total} FCFA</Td>
-                <Td>{order.statut}</Td>
-                <Td style={{ display: "flex", gap: "8px" }}>
-                  <Button onClick={() => { setSelectedOrder(order); setModalOpen(true); }}>Détails</Button>
-                  <Button bg="#28a745" onClick={() => handleSendEmail(order)}>Envoyer email</Button>
-                  <Button bg="#e74c3c" onClick={() => handleDeleteOrder(order._id)}>Supprimer</Button>
-                </Td>
-              </tr>
-            ))}
+            {currentOrders.map((order) => {
+              const firstProduct = order.panier?.[0];
+
+              const label =
+                order.panier?.length === 1
+                  ? firstProduct?.nom
+                  : `${firstProduct?.nom} + ${order.panier.length - 1} autres`;
+
+              return (
+                <tr key={order._id}>
+                  <Td>{new Date(order.createdAt).toLocaleString()}</Td>
+                  <Td>{order._id}</Td>
+                  <Td>{order.client?.nom}</Td>
+                  <Td style={{ display: "flex", alignItems: "center" }}>
+                    {firstProduct?.image && (
+                      <Thumbnail src={firstProduct.image} />
+                    )}
+                    {label}
+                  </Td>
+                  <Td>{order.total} FCFA</Td>
+                  <Td>{order.statusCommande}</Td>
+                  <Td>
+                    <Button
+                      onClick={() => {
+                        setSelectedOrder(order);
+                        setModalOpen(true);
+                      }}
+                    >
+                      Détails
+                    </Button>
+                  </Td>
+                </tr>
+              );
+            })}
           </tbody>
         </Table>
       </TableWrapper>
 
       {/* Pagination */}
-      <div style={{ marginTop: "20px", display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+      <div style={{ marginTop: 20, textAlign: "right" }}>
         {Array.from({ length: totalPages }, (_, i) => (
-          <Button key={i} bg={currentPage === i + 1 ? "#007bff" : "#6c757d"} onClick={() => setCurrentPage(i + 1)}>{i + 1}</Button>
+          <Button
+            key={i}
+            bg={currentPage === i + 1 ? "#007bff" : "#6c757d"}
+            onClick={() => setCurrentPage(i + 1)}
+          >
+            {i + 1}
+          </Button>
         ))}
       </div>
 
-      {/* Modal détails */}
-      <Modal isOpen={modalOpen} onRequestClose={() => setModalOpen(false)} style={{ content: { maxWidth: "800px", margin: "auto", borderRadius: "14px", padding: "25px", maxHeight: "85vh", overflow: "auto" } }}>
+      {/* MODAL */}
+      <Modal
+        isOpen={modalOpen}
+        onRequestClose={() => setModalOpen(false)}
+        style={{
+          content: {
+            maxWidth: "900px",
+            margin: "auto",
+            borderRadius: "14px",
+            padding: "25px",
+          },
+        }}
+      >
         {selectedOrder && (
-          <ModalContent>
+          <>
             <h2>Commande {selectedOrder._id}</h2>
 
-            <ModalSection>
-              <ModalSectionTitle>Utilisateur</ModalSectionTitle>
-              <p>Nom : {selectedOrder.userId?.username || "—"}</p>
-              <p>Email : {selectedOrder.userId?.email || "—"}</p>
-            </ModalSection>
+            <h3>Produits</h3>
+            {selectedOrder.panier.map((p) => (
+              <ProductRow key={p.produitId}>
+                {p.image && <ProductImage src={p.image} />}
+                <div>
+                  <p><strong>{p.nom}</strong></p>
+                  <p>Prix : {p.prix} FCFA</p>
+                  <p>Quantité : {p.quantite}</p>
+                  <p>
+                    Couleur : {p.couleur || "-"} | Taille : {p.taille || "-"}
+                  </p>
+                </div>
+              </ProductRow>
+            ))}
 
-            <ModalSection>
-              <ModalSectionTitle>Produits</ModalSectionTitle>
-              {selectedOrder.produits.map(p => (
-                <p key={p.produitId?._id || p.produitId}>{p.produitId?.title || "Produit"} — Qte: {p.quantite} — Prix: {p.prix} FCFA</p>
-              ))}
-            </ModalSection>
-
-            <ModalSection>
-              <ModalSectionTitle>Statut</ModalSectionTitle>
-              <Select value={selectedOrder.statut} onChange={e => handleStatusChange(selectedOrder._id, e.target.value)}>
-                <option value="en cours">En cours</option>
-                <option value="envoyé">Envoyé</option>
-                <option value="livré">Livré</option>
-                <option value="annulé">Annulé</option>
-              </Select>
-            </ModalSection>
-
-            <ModalSection>
-              <ModalSectionTitle>Total & Adresse</ModalSectionTitle>
-              <p>Total : {selectedOrder.total} FCFA</p>
-              <p>Adresse : {selectedOrder.adresseLivraison || "—"}</p>
-            </ModalSection>
-
-            <ModalFooter>
-              <Button onClick={() => setModalOpen(false)}>Fermer</Button>
-            </ModalFooter>
-          </ModalContent>
+            <Button onClick={() => setModalOpen(false)}>Fermer</Button>
+          </>
         )}
       </Modal>
     </Container>
   );
 }
 
-export default AdminOrdersPro;
+export default AdminOrdersWithThumb;
