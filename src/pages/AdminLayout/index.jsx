@@ -1,6 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, Outlet, useLocation } from "react-router-dom";
 import styled from "styled-components";
+
+/* ================= STYLE ================= */
 const LayoutContainer = styled.div`
   display: flex;
   min-height: 100vh;
@@ -61,7 +63,7 @@ const Header = styled.header`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
 `;
 
 const HeaderTitle = styled.h3`
@@ -98,14 +100,83 @@ const Content = styled.div`
   flex: 1;
 `;
 
+const NotificationButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  position: relative;
+  color: #e67e22;
+  font-weight: bold;
+
+  &::after {
+    content: '${(props) => props.count || 0}';
+    position: absolute;
+    top: -5px;
+    right: -10px;
+    background: red;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    border-radius: 50%;
+    padding: 2px 6px;
+  }
+`;
+
+/* ================= COMPONENT ================= */
 function AdminLayout() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const [nbCommandes, setNbCommandes] = useState(0);
+  const [nbPaiementsPending, setNbPaiementsPending] = useState(0);
+  const notificationSound = useRef(null);
+  const [sonAutorise, setSonAutorise] = useState(false);
+
   useEffect(() => {
     const token = localStorage.getItem("adminToken");
     if (!token) navigate("/admin/login");
+
+    // Prépare le son
+    notificationSound.current = new Audio("/notification.mp3");
+    notificationSound.current.volume = 0.5;
   }, [navigate]);
+
+  // Vérifie commandes + paiements toutes les 5s
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/commandes`);
+        const data = await res.json();
+        if (data?.commandes) {
+          const commandes = data.commandes;
+          setNbCommandes(commandes.length);
+
+          // Compte des paiements PENDING
+          const pending = commandes.reduce((acc, cmd) => {
+            return acc + cmd.paiementsRecus.filter(p => p.status === "PENDING").length;
+          }, 0);
+
+          // Joue le son si nouveau paiement en attente
+          if (sonAutorise && pending > nbPaiementsPending) {
+            notificationSound.current.play().catch(() => {});
+          }
+
+          setNbPaiementsPending(pending);
+        }
+      } catch (err) {
+        console.error("Erreur fetch commandes:", err);
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [nbPaiementsPending, sonAutorise]);
+
+  const handleAutoriserSon = () => {
+    setSonAutorise(true);
+    notificationSound.current.play().catch(() => {});
+    alert("Notifications son activées ✅");
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("adminToken");
@@ -135,30 +206,26 @@ function AdminLayout() {
           $active={location.pathname.includes("orders")}
           onClick={() => navigate("/admin/orders")}
         >
-          Commandes <Badge>12</Badge>
+          Commandes <Badge>{nbCommandes}</Badge>
         </SidebarItem>
 
         <SidebarItem
-          $active={location.pathname.includes("users")}
-          onClick={() => navigate("/admin/users")}
-        >
-          Utilisateurs <Badge>5</Badge>
-        </SidebarItem>
-
-
-          <SidebarItem
           $active={location.pathname.includes("paiement")}
           onClick={() => navigate("/admin/paiement")}
         >
-          Paiement <Badge>0</Badge>
+          Paiements <Badge>{nbPaiementsPending}</Badge>
         </SidebarItem>
       </Sidebar>
-      
 
       <Main>
         <Header>
           <HeaderTitle>Administration</HeaderTitle>
           <HeaderRight>
+            {!sonAutorise && (
+              <NotificationButton onClick={handleAutoriserSon}>
+                🔔 Activer
+              </NotificationButton>
+            )}
             <AdminName>Connecté : Admin</AdminName>
             <LogoutButton onClick={handleLogout}>Déconnexion</LogoutButton>
           </HeaderRight>

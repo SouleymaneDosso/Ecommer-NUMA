@@ -39,7 +39,7 @@ import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminLayout from "./pages/AdminLayout";
 import AdminProducts from "./pages/AdminProducts";
-import AdminOrdersPro from "./pages/AdminCommande";
+import AdminCommandes from "./pages/AdminCommande";
 import AdminPaiements from "./pages/AdminPaiements";
 
 import "./i18n";
@@ -129,7 +129,7 @@ createRoot(document.getElementById("root")).render(
                 </PublicLayout>
               }
             />
-            
+
             <Route
               path="/apropo"
               element={
@@ -263,12 +263,13 @@ createRoot(document.getElementById("root")).render(
             />
 
             {/* Pages admin sans Header et Footer */}
-            <Route path="admin/paiement" element={<AdminPaiements />} />
             <Route path="/admin/login" element={<AdminLogin />} />
+
             <Route path="/admin" element={<AdminLayout />}>
               <Route path="dashboard" element={<AdminDashboard />} />
               <Route path="products" element={<AdminProducts />} />
-              <Route path="orders" element={<AdminOrdersPro />} />
+              <Route path="orders" element={<AdminCommandes />} />
+              <Route path="paiement" element={<AdminPaiements />} />
             </Route>
           </Routes>
         </Panier>
