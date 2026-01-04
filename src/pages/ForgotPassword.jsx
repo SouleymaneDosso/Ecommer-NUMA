@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import styled from "styled-components";
-import { FiEye, FiEyeOff } from "react-icons/fi";
 
 // ===== STYLES =====
 const PageWrapper = styled.div`
@@ -45,14 +44,12 @@ const Title = styled.h1`
 `;
 
 const InputWrapper = styled.div`
-  position: relative;
   margin-bottom: 0.9rem;
 `;
 
 const Input = styled.input`
   width: 100%;
   padding: 12px 14px;
-  padding-right: 40px;
   border-radius: 12px;
   border: none;
   background: #2a2a3d;
@@ -63,19 +60,6 @@ const Input = styled.input`
     outline: none;
     box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.35);
   }
-`;
-
-const EyeButton = styled.button`
-  position: absolute;
-  top: 50%;
-  right: 12px;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: #aaa;
-  cursor: pointer;
-  font-size: 1.1rem;
-  padding: 0;
 `;
 
 const Button = styled.button`
@@ -117,56 +101,48 @@ const SwitchLink = styled.p`
 `;
 
 // ===== COMPOSANT =====
-export default function Login() {
+export default function ResetPassword() {
   const navigate = useNavigate();
-  const [username, setUsername] = useState("");
+  const { token } = useParams(); // on récupère le token dans l'URL
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ⭐ Compteur de tentatives
-  const [attempts, setAttempts] = useState(0);
-  const MAX_ATTEMPTS = 3;
-
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setMessage("");
+    setError("");
+
+    if (!password || !confirmPassword) {
+      setError("Veuillez remplir tous les champs");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Les mots de passe ne correspondent pas");
+      return;
+    }
+
+    setLoading(true);
 
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/user/login`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, password }),
-        }
-      );
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, password }),
+      });
 
       const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Erreur serveur");
 
-      if (!res.ok) {
-        // ⚠️ Mauvais mot de passe → incrémente tentatives
-        const newAttempts = attempts + 1;
-        setAttempts(newAttempts);
+      setMessage(data.message);
 
-        if (newAttempts >= MAX_ATTEMPTS) {
-          // Rediriger vers reset password après 3 échecs
-          navigate(`/forgot`);
-          return;
-        }
-
-        throw new Error(
-          `${data.message || "Mot de passe incorrect"} (Tentative ${newAttempts}/${MAX_ATTEMPTS})`
-        );
-      }
-
-      // ✅ Connexion réussie
-      localStorage.setItem("token", data.token);
-      navigate("/compte");
+      // 🚀 Bonus : redirection vers la page login après 4s
+      setTimeout(() => navigate("/login"), 4000);
     } catch (err) {
-      setMessage(err.message);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -175,49 +151,39 @@ export default function Login() {
   return (
     <PageWrapper>
       <FormWrapper>
-        <Title>Connexion</Title>
+        <Title>Réinitialiser le mot de passe</Title>
 
-        {message && (
-          <Message error={message.toLowerCase().includes("erreur") || message.toLowerCase().includes("incorrect")}>
-            {message}
-          </Message>
-        )}
+        {message && <Message>{message}</Message>}
+        {error && <Message error>{error}</Message>}
 
-        <form onSubmit={handleLogin}>
+        <form onSubmit={handleSubmit}>
           <InputWrapper>
             <Input
-              type="text"
-              placeholder="Identifiant"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-            />
-          </InputWrapper>
-
-          <InputWrapper>
-            <Input
-              type={showPassword ? "text" : "password"}
-              placeholder="Mot de passe"
+              type="password"
+              placeholder="Nouveau mot de passe"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-            <EyeButton
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-            >
-              {showPassword ? <FiEyeOff /> : <FiEye />}
-            </EyeButton>
+          </InputWrapper>
+
+          <InputWrapper>
+            <Input
+              type="password"
+              placeholder="Confirmer le mot de passe"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+            />
           </InputWrapper>
 
           <Button type="submit" disabled={loading}>
-            {loading ? "..." : "Se connecter"}
+            {loading ? "..." : "Réinitialiser le mot de passe"}
           </Button>
         </form>
 
         <SwitchLink>
-          Nouveau ? <Link to="/signup">Créer un compte</Link> |{" "}
-          <Link to="/forgot">Mot de passe oublié ?</Link>
+          Retour à la <Link to="/login">connexion</Link>
         </SwitchLink>
       </FormWrapper>
     </PageWrapper>

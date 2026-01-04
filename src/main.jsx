@@ -33,6 +33,8 @@ import CompteClient from "./pages/compteutilisateur";
 import PaiementWave from "./pages/PaiementWave";
 import PaiementSemiManuel from "./pages/PaiementSemiManuel";
 import Merci from "./pages/Merci";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Erreur from "./components/Erreur";
 
 import AdminLogin from "./pages/AdminLogin";
@@ -219,6 +221,24 @@ createRoot(document.getElementById("root")).render(
                 </PublicLayout>
               }
             />
+            <Route
+              path="/forgot"
+              element={
+                <PublicLayout>
+                  <ForgotPassword />
+                </PublicLayout>
+              }
+            />
+
+            <Route
+              path="/reset-password/:token"
+              element={
+                <PublicLayout>
+                  <ResetPassword />
+                </PublicLayout>
+              }
+            />
+
             <Route
               path="/compte"
               element={
