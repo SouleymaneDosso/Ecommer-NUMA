@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import styled from "styled-components";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 
 // ===== STYLES =====
 const PageWrapper = styled.div`
@@ -12,11 +13,6 @@ const PageWrapper = styled.div`
   background: linear-gradient(135deg, #1f1f2e, #11101a);
   font-family: "Inter", sans-serif;
   overflow-y: auto;
-
-  @media (max-width: 768px) {
-    padding-top: 10vh;
-    padding-bottom: env(safe-area-inset-bottom, 1rem);
-  }
 `;
 
 const FormWrapper = styled.div`
@@ -29,11 +25,6 @@ const FormWrapper = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
-
-  @media (max-width: 480px) {
-    padding: 1.4rem 1.1rem;
-    border-radius: 16px;
-  }
 `;
 
 const Title = styled.h1`
@@ -44,12 +35,14 @@ const Title = styled.h1`
 `;
 
 const InputWrapper = styled.div`
+  position: relative;
   margin-bottom: 0.9rem;
 `;
 
 const Input = styled.input`
   width: 100%;
   padding: 12px 14px;
+  padding-right: 40px;
   border-radius: 12px;
   border: none;
   background: #2a2a3d;
@@ -60,6 +53,19 @@ const Input = styled.input`
     outline: none;
     box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.35);
   }
+`;
+
+const EyeButton = styled.button`
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #aaa;
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 0;
 `;
 
 const Button = styled.button`
@@ -102,10 +108,11 @@ const SwitchLink = styled.p`
 
 // ===== COMPOSANT =====
 export default function ResetPassword() {
-  const { token } = useParams(); // Récupère le token depuis l'URL
+  const { token } = useParams();
   const navigate = useNavigate();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -114,20 +121,18 @@ export default function ResetPassword() {
     e.preventDefault();
     setMessage("");
     setError("");
-    setLoading(true);
 
     if (!password || !confirmPassword) {
       setError("Veuillez remplir tous les champs");
-      setLoading(false);
       return;
     }
 
     if (password !== confirmPassword) {
       setError("Les mots de passe ne correspondent pas");
-      setLoading(false);
       return;
     }
 
+    setLoading(true);
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/reset-password`, {
         method: "POST",
@@ -136,15 +141,13 @@ export default function ResetPassword() {
       });
 
       const data = await res.json();
-
       if (!res.ok) throw new Error(data.message || "Erreur serveur");
 
-      setMessage(data.message || "Mot de passe réinitialisé avec succès !");
+      setMessage("Mot de passe réinitialisé avec succès !");
       setPassword("");
       setConfirmPassword("");
 
-      // Rediriger vers login après 2s
-      setTimeout(() => navigate("/login"), 2000);
+      setTimeout(() => navigate("/login"), 3000);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -163,17 +166,20 @@ export default function ResetPassword() {
         <form onSubmit={handleSubmit}>
           <InputWrapper>
             <Input
-              type="password"
+              type={showPassword ? "text" : "password"}
               placeholder="Nouveau mot de passe"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
+            <EyeButton type="button" onClick={() => setShowPassword(!showPassword)}>
+              {showPassword ? <FiEyeOff /> : <FiEye />}
+            </EyeButton>
           </InputWrapper>
 
           <InputWrapper>
             <Input
-              type="password"
+              type={showPassword ? "text" : "password"}
               placeholder="Confirmer le mot de passe"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
@@ -182,7 +188,7 @@ export default function ResetPassword() {
           </InputWrapper>
 
           <Button type="submit" disabled={loading}>
-            {loading ? "..." : "Réinitialiser"}
+            {loading ? "..." : "Réinitialiser le mot de passe"}
           </Button>
         </form>
 

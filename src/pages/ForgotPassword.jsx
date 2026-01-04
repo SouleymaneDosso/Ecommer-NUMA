@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useParams, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import styled from "styled-components";
 
 // ===== STYLES =====
@@ -12,11 +12,6 @@ const PageWrapper = styled.div`
   background: linear-gradient(135deg, #1f1f2e, #11101a);
   font-family: "Inter", sans-serif;
   overflow-y: auto;
-
-  @media (max-width: 768px) {
-    padding-top: 10vh;
-    padding-bottom: env(safe-area-inset-bottom, 1rem);
-  }
 `;
 
 const FormWrapper = styled.div`
@@ -29,11 +24,6 @@ const FormWrapper = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
-
-  @media (max-width: 480px) {
-    padding: 1.4rem 1.1rem;
-    border-radius: 16px;
-  }
 `;
 
 const Title = styled.h1`
@@ -101,11 +91,8 @@ const SwitchLink = styled.p`
 `;
 
 // ===== COMPOSANT =====
-export default function ResetPassword() {
-  const navigate = useNavigate();
-  const { token } = useParams(); // on récupère le token dans l'URL
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+export default function ForgotPassword() {
+  const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -114,33 +101,20 @@ export default function ResetPassword() {
     e.preventDefault();
     setMessage("");
     setError("");
-
-    if (!password || !confirmPassword) {
-      setError("Veuillez remplir tous les champs");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError("Les mots de passe ne correspondent pas");
-      return;
-    }
-
     setLoading(true);
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/reset-password`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/forgot-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, password }),
+        body: JSON.stringify({ email }),
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Erreur serveur");
 
-      setMessage(data.message);
-
-      // 🚀 Bonus : redirection vers la page login après 4s
-      setTimeout(() => navigate("/login"), 4000);
+      setMessage("Email envoyé ! Vérifiez votre boîte mail pour le lien de réinitialisation.");
+      setEmail("");
     } catch (err) {
       setError(err.message);
     } finally {
@@ -151,7 +125,7 @@ export default function ResetPassword() {
   return (
     <PageWrapper>
       <FormWrapper>
-        <Title>Réinitialiser le mot de passe</Title>
+        <Title>Mot de passe oublié</Title>
 
         {message && <Message>{message}</Message>}
         {error && <Message error>{error}</Message>}
@@ -159,26 +133,16 @@ export default function ResetPassword() {
         <form onSubmit={handleSubmit}>
           <InputWrapper>
             <Input
-              type="password"
-              placeholder="Nouveau mot de passe"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </InputWrapper>
-
-          <InputWrapper>
-            <Input
-              type="password"
-              placeholder="Confirmer le mot de passe"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              type="email"
+              placeholder="Votre email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
             />
           </InputWrapper>
 
           <Button type="submit" disabled={loading}>
-            {loading ? "..." : "Réinitialiser le mot de passe"}
+            {loading ? "..." : "Envoyer le lien"}
           </Button>
         </form>
 
