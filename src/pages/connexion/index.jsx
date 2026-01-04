@@ -5,16 +5,16 @@ import { FiEye, FiEyeOff } from "react-icons/fi";
 
 // ===== STYLES =====
 const PageWrapper = styled.div`
-  min-height: 100vh; /* stable sur mobile */
+  min-height: 100vh;
   display: flex;
   justify-content: center;
-  align-items: center;
-  padding: 1rem;
+  align-items: flex-start;
+  padding: 2rem 1rem;
   background: linear-gradient(135deg, #1f1f2e, #11101a);
   font-family: "Inter", sans-serif;
+  overflow-y: auto; /* Permet le scroll si le clavier pousse le contenu */
 
   @media (max-width: 768px) {
-    align-items: flex-start; /* évite que le clavier pousse le formulaire hors écran */
     padding-top: 10vh;
     padding-bottom: env(safe-area-inset-bottom, 1rem);
   }
@@ -27,6 +27,9 @@ const FormWrapper = styled.div`
   padding: 1.75rem 1.25rem;
   border-radius: 18px;
   box-shadow: 0 0 28px rgba(79, 70, 229, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
 
   @media (max-width: 480px) {
     padding: 1.4rem 1.1rem;
@@ -38,7 +41,7 @@ const Title = styled.h1`
   text-align: center;
   color: #fff;
   font-size: 1.4rem;
-  margin-bottom: 1.2rem;
+  margin-bottom: 1rem;
 `;
 
 const InputWrapper = styled.div`
@@ -48,20 +51,19 @@ const InputWrapper = styled.div`
 
 const Input = styled.input`
   width: 100%;
-  padding: 10px 14px;
+  padding: 12px 14px;
   padding-right: 40px;
   border-radius: 12px;
   border: none;
   background: #2a2a3d;
   color: #fff;
-  font-size: 0.95rem;
+  font-size: 16px; /* Empêche le zoom iOS */
+  -webkit-text-size-adjust: 100%;
 
   &:focus {
     outline: none;
     box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.35);
   }
-
-  -webkit-text-size-adjust: 100%; /* empêche le zoom du texte sur iOS */
 `;
 
 const EyeButton = styled.button`
@@ -79,14 +81,14 @@ const EyeButton = styled.button`
 
 const Button = styled.button`
   width: 100%;
-  padding: 10px;
+  padding: 12px;
   margin-top: 0.4rem;
   border-radius: 12px;
   border: none;
   background: linear-gradient(135deg, #4f46e5, #6366f1);
   color: #fff;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 1rem;
   cursor: pointer;
 
   &:disabled {

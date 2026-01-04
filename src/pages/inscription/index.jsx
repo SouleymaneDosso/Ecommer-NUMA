@@ -1,21 +1,21 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import styled from "styled-components";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 
 // ===== STYLES =====
 const PageWrapper = styled.div`
-  min-height: 100vh; /* Évite les problèmes de 100dvh sur mobile */
+  min-height: 100vh;
   display: flex;
   justify-content: center;
-  align-items: center;
-  padding: 1rem;
+  align-items: flex-start;
+  padding: 2rem 1rem;
   background: linear-gradient(135deg, #1f1f2e, #11101a);
   font-family: "Inter", sans-serif;
+  overflow-y: auto;
+  transition: padding-top 0.3s ease; /* animation clavier */
 
   @media (max-width: 768px) {
-    align-items: flex-start; /* Évite que le clavier pousse le formulaire hors écran */
-    padding-top: 10vh; /* Ajuste pour que le formulaire soit visible */
     padding-bottom: env(safe-area-inset-bottom, 1rem);
   }
 `;
@@ -27,6 +27,7 @@ const FormWrapper = styled.div`
   padding: 1.7rem 1.2rem;
   border-radius: 18px;
   box-shadow: 0 0 28px rgba(79, 70, 229, 0.3);
+  transition: transform 0.3s ease;
 `;
 
 const Title = styled.h1`
@@ -43,21 +44,19 @@ const InputWrapper = styled.div`
 
 const Input = styled.input`
   width: 100%;
-  padding: 10px 14px;
+  padding: 12px 14px;
   padding-right: 40px;
   border-radius: 12px;
   border: none;
   background: #2a2a3d;
   color: #fff;
-  font-size: 0.95rem;
+  font-size: 16px; /* empêche le zoom iOS */
+  -webkit-text-size-adjust: 100%;
 
   &:focus {
     outline: none;
     box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.35);
   }
-
-  /* Évite que le texte saute sur mobile */
-  -webkit-text-size-adjust: 100%;
 `;
 
 const EyeButton = styled.button`
@@ -75,14 +74,14 @@ const EyeButton = styled.button`
 
 const Button = styled.button`
   width: 100%;
-  padding: 10px;
+  padding: 12px;
   margin-top: 0.4rem;
   border-radius: 12px;
   border: none;
   background: linear-gradient(135deg, #4f46e5, #6366f1);
   color: #fff;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 1rem;
   cursor: pointer;
 
   &:disabled {
@@ -120,6 +119,27 @@ export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [paddingTop, setPaddingTop] = useState("10vh");
+  const wrapperRef = useRef(null);
+
+  // Gestion animation clavier mobile
+  useEffect(() => {
+    let initialHeight = window.innerHeight;
+
+    const handleResize = () => {
+      const currentHeight = window.innerHeight;
+      if (currentHeight < initialHeight - 100) {
+        // clavier ouvert
+        setPaddingTop("5vh");
+      } else {
+        // clavier fermé
+        setPaddingTop("10vh");
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const handleSignup = async (e) => {
     e.preventDefault();
@@ -149,8 +169,8 @@ export default function Signup() {
   };
 
   return (
-    <PageWrapper>
-      <FormWrapper>
+    <PageWrapper style={{ paddingTop }}>
+      <FormWrapper ref={wrapperRef}>
         <Title>Créer un compte</Title>
 
         {message && (

@@ -5,13 +5,16 @@ import styled from "styled-components";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 /* ===============================
-   STYLES LUXE RESPONSIVE FIX
+   STYLES RESPONSIVE MOBILE
 ================================ */
 const Wrapper = styled.div`
   padding: 24px 16px;
   max-width: 1400px;
   margin: auto;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  min-height: 100vh;
+  overflow-y: auto;
+  transition: padding-top 0.3s ease; /* animation clavier */
 `;
 
 const Title = styled.h1`
@@ -33,11 +36,11 @@ const Filters = styled.div`
   flex-wrap: wrap;
 
   select, input {
-    padding: 10px 16px;
+    padding: 12px 16px;
     border-radius: 50px;
     border: 1px solid #ddd;
     background: #fafafa;
-    font-size: 0.95rem;
+    font-size: 16px; /* IMPORTANT pour empêcher le zoom iOS */
     cursor: pointer;
     transition: all 0.2s ease;
   }
@@ -159,7 +162,7 @@ const SearchInput = styled.input`
   padding: 12px 20px;
   border-radius: 50px;
   border: 1px solid #ddd;
-  font-size: 0.95rem;
+  font-size: 16px; /* empêche zoom mobile */
   outline: none;
   background: #fafafa;
   transition: all 0.2s ease;
@@ -200,7 +203,7 @@ const SuggestionItem = styled.li`
    HELPERS
 ================================ */
 function useQuery() {
-  return new URLSearchParams(useLocation().search);
+  return new URLSearchParams(window.location.search);
 }
 
 /* ===============================
@@ -221,8 +224,24 @@ export default function Search() {
   const [prixMax, setPrixMax] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [paddingTop, setPaddingTop] = useState("5vh"); // padding dynamique clavier
 
   const inputRef = useRef(null);
+
+  // Ajuste le padding quand le clavier s’ouvre sur mobile
+  useEffect(() => {
+    let initialHeight = window.innerHeight;
+    const handleResize = () => {
+      const currentHeight = window.innerHeight;
+      if (currentHeight < initialHeight - 100) {
+        setPaddingTop("2vh"); // clavier ouvert
+      } else {
+        setPaddingTop("5vh"); // clavier fermé
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     const fetchProduits = async () => {
@@ -283,7 +302,7 @@ export default function Search() {
   }, []);
 
   return (
-    <Wrapper>
+    <Wrapper style={{ paddingTop }}>
       <Title>Résultats pour : <strong>“{query}”</strong></Title>
 
       <SearchInputWrapper ref={inputRef}>
