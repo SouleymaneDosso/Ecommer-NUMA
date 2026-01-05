@@ -45,7 +45,6 @@ const FooterWrapper = styled.footer`
     color 0.35s ease;
 `;
 
-/* Newsletter */
 const NewsletterSection = styled.div`
   display: flex;
   flex-direction: column;
@@ -53,10 +52,12 @@ const NewsletterSection = styled.div`
   gap: 0.8rem;
   text-align: center;
 `;
+
 const NewsletterTitle = styled.h3`
   font-size: 1.4rem;
   font-weight: 700;
 `;
+
 const NewsletterForm = styled.form`
   display: flex;
   gap: 0.5rem;
@@ -64,6 +65,7 @@ const NewsletterForm = styled.form`
   max-width: 450px;
   width: 100%;
 `;
+
 const EmailInput = styled.input`
   flex: 1;
   padding: 14px 16px;
@@ -71,7 +73,7 @@ const EmailInput = styled.input`
   border: 1px solid ${({ $isdark }) => ($isdark ? "#334155" : "#ccc")};
   background: ${({ $isdark }) => ($isdark ? "#1f2a44" : "#fff")};
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#000")};
-  font-size: 16px; /* Evite zoom mobile */
+  font-size: 16px;
   transition: all 0.3s ease;
 
   &:focus {
@@ -80,6 +82,33 @@ const EmailInput = styled.input`
     box-shadow: 0 0 6px rgba(79, 70, 229, 0.5);
   }
 `;
+
+const NameInput = styled.input`
+  flex: 1;
+  padding: 14px 16px;
+  border-radius: 8px;
+  border: 1px solid ${({ $isdark }) => ($isdark ? "#334155" : "#ccc")};
+  background: ${({ $isdark }) => ($isdark ? "#1f2a44" : "#fff")};
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#000")};
+  font-size: 16px;
+  transition: all 0.3s ease;
+
+  &:focus {
+    outline: none;
+    border-color: #4f46e5;
+    box-shadow: 0 0 6px rgba(79, 70, 229, 0.5);
+  }
+`;
+
+const ConsentLabel = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#000")};
+  margin-top: 8px;
+`;
+
 const SubmitButton = styled.button`
   padding: 0 16px;
   border-radius: 8px;
@@ -98,13 +127,17 @@ const SubmitButton = styled.button`
     background: #6366f1;
   }
 
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
   svg {
     margin-left: 6px;
     font-size: 18px;
   }
 `;
 
-/* Sections */
 const Section = styled.div`
   display: flex;
   flex-direction: column;
@@ -113,6 +146,7 @@ const Section = styled.div`
   animation: ${({ $visible }) => ($visible ? fadeIn : "none")} 0.6s ease
     forwards;
 `;
+
 const TitleButton = styled.button`
   display: flex;
   align-items: center;
@@ -126,6 +160,7 @@ const TitleButton = styled.button`
   padding: 0;
   gap: 6px;
 `;
+
 const LinksContainer = styled.div`
   max-height: ${({ $open }) => ($open ? "500px" : "0")};
   overflow: hidden;
@@ -134,6 +169,7 @@ const LinksContainer = styled.div`
   gap: 6px;
   transition: max-height 0.4s ease;
 `;
+
 const FooterLink = styled(Link)`
   text-decoration: none;
   color: inherit;
@@ -152,6 +188,7 @@ const FooterLink = styled(Link)`
     animation: ${glow} 0.8s ease;
   }
 `;
+
 const IconWrapper = styled.a`
   display: inline-flex;
   align-items: center;
@@ -172,6 +209,7 @@ const IconWrapper = styled.a`
     color: white;
   }
 `;
+
 const FooterExtras = styled.div`
   display: flex;
   flex-direction: column;
@@ -180,6 +218,7 @@ const FooterExtras = styled.div`
   padding-top: 1.5rem;
   align-items: center;
 `;
+
 const CookieButton = styled.button`
   background: none;
   border: 1px solid ${({ $isdark }) => ($isdark ? "#a5b4fc" : "#4f46e5")};
@@ -196,6 +235,7 @@ const CookieButton = styled.button`
     color: #fff;
   }
 `;
+
 const BottomText = styled.div`
   text-align: center;
   font-size: 0.85rem;
@@ -203,7 +243,6 @@ const BottomText = styled.div`
   transition: color 0.35s ease;
 `;
 
-/* Scroll to Top */
 const ScrollTopButton = styled.button`
   position: fixed;
   bottom: 30px;
@@ -227,7 +266,6 @@ const ScrollTopButton = styled.button`
   }
 `;
 
-/* Modal */
 const ModalOverlay = styled.div`
   position: fixed;
   inset: 0;
@@ -237,6 +275,7 @@ const ModalOverlay = styled.div`
   justify-content: center;
   z-index: 999;
 `;
+
 const ModalContent = styled.div`
   background: ${({ $isdark }) => ($isdark ? "#0D192B" : "#fff")};
   color: ${({ $isdark }) => ($isdark ? "#e6eefc" : "#071230")};
@@ -250,6 +289,7 @@ const ModalContent = styled.div`
   background: linear-gradient(145deg, #4f46e5, #6366f1);
   color: white;
 `;
+
 const CloseModal = styled.button`
   position: absolute;
   top: 12px;
@@ -260,6 +300,7 @@ const CloseModal = styled.button`
   cursor: pointer;
   color: white;
 `;
+
 const ModalTitle = styled.h2`
   margin-bottom: 1rem;
   font-size: 1.5rem;
@@ -276,6 +317,13 @@ export default function Footer() {
   const sectionRefs = useRef([]);
   const [scrollVisible, setScrollVisible] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+
+  /* Newsletter states */
+  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [consent, setConsent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
 
   const sections = [
     {
@@ -311,7 +359,7 @@ export default function Footer() {
     },
   ];
 
-  /* Intersection Observer for animation */
+  /* Intersection Observer */
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -325,50 +373,93 @@ export default function Footer() {
       },
       { threshold: 0.1 }
     );
-    sectionRefs.current.forEach((el) => {
-      if (el) observer.observe(el);
-    });
+    sectionRefs.current.forEach((el) => el && observer.observe(el));
     return () => observer.disconnect();
   }, []);
 
-  /* Scroll Button Visibility */
   useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > window.innerHeight) setScrollVisible(true);
-      else setScrollVisible(false);
-    };
+    const handleScroll = () =>
+      setScrollVisible(window.scrollY > window.innerHeight);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  /* Submit newsletter */
+  const handleNewsletterSubmit = async (e) => {
+    e.preventDefault();
+    if (!consent)
+      return setMessage(
+        "Vous devez accepter de recevoir des emails marketing."
+      );
+
+    setLoading(true);
+    setMessage("");
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/newsletter`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, name, marketingConsent: consent }),
+        }
+      );
+      const data = await res.json();
+
+      if (!res.ok) setMessage(data.message || "Erreur lors de l'inscription");
+      else {
+        setMessage("Inscription réussie ✅");
+        setEmail("");
+        setName("");
+        setConsent(false);
+        setModalVisible(true);
+      }
+    } catch (error) {
+      console.error("Erreur newsletter:", error);
+      setMessage("Erreur serveur ❌: " + error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <FooterWrapper $isdark={$isdark}>
-      {/* Newsletter Section */}
+      {/* Newsletter */}
       <NewsletterSection>
         <NewsletterTitle>Inscrivez-vous à notre newsletter</NewsletterTitle>
-        <NewsletterForm
-          onSubmit={(e) => {
-            e.preventDefault();
-            setModalVisible(true);
-          }}
-        >
+        <NewsletterForm onSubmit={handleNewsletterSubmit}>
+          <NameInput
+            type="text"
+            placeholder="Votre nom"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            $isdark={$isdark}
+          />
           <EmailInput
             type="email"
             placeholder="Votre email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             $isdark={$isdark}
             required
           />
-          <SubmitButton type="submit">
-            Envoyer <FiSend />
+          <SubmitButton type="submit" disabled={loading || !consent}>
+            {loading ? "Envoi..." : "Envoyer"} <FiSend />
           </SubmitButton>
         </NewsletterForm>
+        <ConsentLabel $isdark={$isdark}>
+          <input
+            type="checkbox"
+            checked={consent}
+            onChange={(e) => setConsent(e.target.checked)}
+          />
+          J’accepte de recevoir des emails marketing
+        </ConsentLabel>
+        {message && (
+          <p style={{ marginTop: "0.5rem", color: "white" }}>{message}</p>
+        )}
       </NewsletterSection>
 
-      {/* Sections principales */}
+      {/* Sections */}
       {sections.map((sec, i) => (
         <Section
           key={i}
@@ -411,8 +502,11 @@ export default function Footer() {
         &copy; {new Date().getFullYear()} NUMA. {t("fashion")}
       </BottomText>
 
-      {/* Scroll to Top Button */}
-      <ScrollTopButton $visible={scrollVisible} onClick={scrollToTop}>
+      {/* Scroll to Top */}
+      <ScrollTopButton
+        $visible={scrollVisible}
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      >
         <FiArrowUp />
       </ScrollTopButton>
 
