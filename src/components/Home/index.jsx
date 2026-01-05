@@ -242,7 +242,6 @@ export default function Home() {
         const res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits`);
         const data = await res.json();
         setProducts(Array.isArray(data) ? data : []);
-        console.log(data);
         const getFirstImageByGenre = (genre) => {
           const prod = data.find(
             (p) => p.genre?.toLowerCase() === genre && p.images?.length

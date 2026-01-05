@@ -12,6 +12,11 @@ const PageWrapper = styled.div`
   background: linear-gradient(135deg, #1f1f2e, #11101a);
   font-family: "Inter", sans-serif;
   overflow-y: auto;
+
+  @media (max-width: 768px) {
+    padding-top: 10vh;
+    padding-bottom: env(safe-area-inset-bottom, 1rem);
+  }
 `;
 
 const FormWrapper = styled.div`
@@ -24,6 +29,11 @@ const FormWrapper = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
+
+  @media (max-width: 480px) {
+    padding: 1.4rem 1.1rem;
+    border-radius: 16px;
+  }
 `;
 
 const Title = styled.h1`
@@ -103,18 +113,39 @@ export default function ForgotPassword() {
     setError("");
     setLoading(true);
 
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/forgot-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
+    if (!email) {
+      setError("Veuillez entrer votre email");
+      setLoading(false);
+      return;
+    }
 
-      const data = await res.json();
+    try {
+      // ✅ Utilisation de la bonne URL avec /api
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/auth/forgot-password`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        }
+      );
+
+      // 🔹 Lire la réponse brute pour debug
+      const text = await res.text();
+      console.log("Réponse brute du serveur :", text);
+
+      // 🔹 Parser JSON si possible
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (err) {
+        console.error("⚠️ Réponse non JSON :", text);
+        throw new Error("Réponse serveur invalide");
+      }
+
       if (!res.ok) throw new Error(data.message || "Erreur serveur");
 
-      setMessage("Email envoyé ! Vérifiez votre boîte mail pour le lien de réinitialisation.");
-      setEmail("");
+      setMessage(data.message);
     } catch (err) {
       setError(err.message);
     } finally {
