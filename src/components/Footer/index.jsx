@@ -69,14 +69,6 @@ const EmailInput = styled.input`
   &:focus { outline: none; border-color: #4f46e5; box-shadow: 0 0 6px rgba(79,70,229,0.5); }
 `;
 const NameInput = styled(EmailInput)``;
-const ConsentLabel = styled.label`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.9rem;
-  color: ${({ $isdark }) => ($isdark ? "#fff" : "#000")};
-  margin-top: 8px;
-`;
 const SubmitButton = styled.button`
   padding: 0 16px;
   border-radius: 8px;
@@ -230,10 +222,10 @@ export default function Footer() {
   /* Newsletter states */
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
-  const [consent, setConsent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [newsletterSuccess, setNewsletterSuccess] = useState(false);
+  const [consent, setConsent] = useState(false); // basé sur cookie
 
   /* Vérifie le cookie existant pour afficher le modal */
   useEffect(() => {
@@ -243,6 +235,7 @@ export default function Footer() {
       return acc;
     }, {});
     if (!cookies.marketingConsent) setModalVisible(true);
+    else setConsent(cookies.marketingConsent === "true");
   }, []);
 
   /* Intersection Observer pour sections */
@@ -274,7 +267,7 @@ export default function Footer() {
       });
       setConsentGiven(true);
       setModalVisible(false);
-      setConsent(accepted); // si accepté, pré-cocher newsletter
+      setConsent(accepted);
     } catch (err) { console.error("Erreur consentement cookie:", err); }
   };
 
@@ -296,7 +289,6 @@ export default function Footer() {
         setNewsletterSuccess(true);
         setEmail("");
         setName("");
-        setConsent(false);
       } else setMessage(data.message || "Erreur lors de l'inscription");
     } catch (error) { console.error("Erreur newsletter:", error); setMessage("Erreur serveur ❌: " + error.message); }
     finally { setLoading(false); }
@@ -319,10 +311,6 @@ export default function Footer() {
           <EmailInput type="email" placeholder="Votre email" value={email} onChange={(e) => setEmail(e.target.value)} $isdark={$isdark} required />
           <SubmitButton type="submit" disabled={loading || !consent}>{loading ? "Envoi..." : "Envoyer"} <FiSend /></SubmitButton>
         </NewsletterForm>
-        <ConsentLabel $isdark={$isdark}>
-          <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
-          J’accepte de recevoir des emails marketing
-        </ConsentLabel>
         {message && <p style={{ marginTop: "0.5rem", color: "white" }}>{message}</p>}
       </NewsletterSection>
 
