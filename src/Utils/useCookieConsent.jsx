@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 
-// --- Hook pour gérer les cookies et les scripts tiers ---
+// Hook pour gérer les cookies et les scripts tiers
 export function useCookieConsent() {
   const [preferences, setPreferences] = useState({
-    essential: true,   // toujours actif
-    marketing: false,  // newsletter / Brevo
+    essential: true,  // toujours actif
+    marketing: false, // newsletter / Brevo
   });
 
-  // --- Lire le cookie au démarrage ---
+  // Lire le cookie au démarrage
   useEffect(() => {
     const consentCookie = document.cookie
       .split("; ")
@@ -23,29 +23,17 @@ export function useCookieConsent() {
     }
   }, []);
 
-  // --- Charger les scripts tiers selon consentement ---
   useEffect(() => {
-    // Brevo Newsletter / Marketing
     if (preferences.marketing) {
-      if (!document.getElementById("brevo-script")) {
-        const script = document.createElement("script");
-        script.id = "brevo-script";
-
-        // Remplace URL et Key par ta clé Brevo
-        script.src = "https://scripts.brevo.com/widget.js"; // Exemple
-        script.async = true;
-
-        document.body.appendChild(script);
-
-        // Si tu as besoin d’initialiser avec ta clé
-        const inline = document.createElement("script");
-        inline.innerHTML = `
-          window.brevoKey = "TA_CLE_BREVO_ICI"; // remplace par ta key Brevo
-        `;
-        document.body.appendChild(inline);
-      }
+      console.log("Consentement marketing accepté : tu peux initier newsletter ou scripts tiers");
     }
   }, [preferences]);
 
-  return preferences;
+  // Fonction pour modifier le consentement
+  const updatePreferences = (newPrefs) => {
+    setPreferences(newPrefs);
+    document.cookie = `cookieConsent=${JSON.stringify(newPrefs)}; path=/; max-age=${60 * 60 * 24 * 365}`;
+  };
+
+  return { preferences, updatePreferences };
 }
