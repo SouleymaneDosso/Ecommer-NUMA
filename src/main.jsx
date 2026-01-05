@@ -35,8 +35,9 @@ import PaiementSemiManuel from "./pages/PaiementSemiManuel";
 import Merci from "./pages/Merci";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import CookieConsent from  "./components/CookieConsent";
+import { useCookieConsent } from "./Utils/useCookieConsent";
 import Erreur from "./components/Erreur";
-
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminLayout from "./pages/AdminLayout";
@@ -48,10 +49,13 @@ import "./i18n";
 
 // --- Layout pour les pages publiques ---
 const PublicLayout = ({ children }) => {
+  const preferences = useCookieConsent();
   return (
     <>
       <ScrollToTop />
       <Header />
+        {/* Modal de consentement cookies */}
+      <CookieConsent />
       <main>{children}</main>
       <Footer />
     </>

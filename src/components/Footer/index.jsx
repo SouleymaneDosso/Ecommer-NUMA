@@ -1,9 +1,10 @@
 import { useState, useContext, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import styled, { keyframes } from "styled-components";
-import { FiFacebook, FiInstagram, FiChevronDown,} from "react-icons/fi";
+import { FiFacebook, FiInstagram, FiChevronDown, FiSend } from "react-icons/fi";
 import { ThemeContext } from "../../Utils/Context";
 import { useTranslation } from "react-i18next";
+import { useCookieConsent } from "../../Utils/useCookieConsent"; // ton hook
 
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(20px); }
@@ -24,12 +25,94 @@ const glow = keyframes`
 const FooterWrapper = styled.footer`
   background: ${({ $isdark }) => ($isdark ? "#0D192B" : "#f4f4f4")};
   color: ${({ $isdark }) => ($isdark ? "#e6eefc" : "#071230")};
-  padding: 3rem 2rem;
+  padding: 3rem 2rem 2rem;
   display: flex;
   flex-direction: column;
   gap: 2rem;
   position: relative;
   transition: background 0.35s ease, color 0.35s ease;
+`;
+
+const NewsletterSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+  text-align: center;
+`;
+
+const NewsletterTitle = styled.h3`
+  font-size: 1.3rem;
+  font-weight: 700;
+`;
+
+const NewsletterForm = styled.form`
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  max-width: 450px;
+  width: 100%;
+`;
+
+const EmailInput = styled.input`
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid ${({ $isdark }) => ($isdark ? "#334155" : "#ccc")};
+  background: ${({ $isdark }) => ($isdark ? "#1f2a44" : "#fff")};
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#000")};
+  font-size: 14px;
+  transition: all 0.3s ease;
+`;
+
+const SubmitButton = styled.button`
+  padding: 0 16px;
+  border-radius: 8px;
+  background: #4f46e5;
+  color: #fff;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  font-size: 14px;
+
+  &:hover {
+    background: #6366f1;
+  }
+
+  svg {
+    margin-left: 6px;
+    font-size: 18px;
+  }
+`;
+
+const FooterExtras = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  border-top: 1px solid ${({ $isdark }) => ($isdark ? "#1f2a44" : "#d1d5db")};
+  padding-top: 1.5rem;
+  align-items: center;
+`;
+
+const CookieButton = styled.button`
+  background: none;
+  border: 1px solid ${({ $isdark }) => ($isdark ? "#a5b4fc" : "#4f46e5")};
+  color: ${({ $isdark }) => ($isdark ? "#a5b4fc" : "#4f46e5")};
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  width: fit-content;
+  font-weight: 500;
+  transition: all 0.25s ease;
+
+  &:hover {
+    background: ${({ $isdark }) => ($isdark ? "#4f46e5" : "#4f46e5")};
+    color: #fff;
+  }
 `;
 
 const Section = styled.div`
@@ -105,29 +188,18 @@ const BottomText = styled.div`
   transition: color 0.35s ease;
 `;
 
-const FooterNav = styled.div`
-  display: flex;
-  justify-content: center;
-  gap: 2rem;
-  margin-top: 1rem;
-  flex-wrap: wrap;
-`;
-
-const NavItem = styled(Link)`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  font-size: 14px;
-  color: ${({ $isdark }) => ($isdark ? "#f3f6fb" : "#071230")};
-  text-decoration: none;
-  gap: 4px;
-`;
-
 export default function Footer() {
   const { theme } = useContext(ThemeContext);
   const $isdark = theme === "light";
-  const footerRef = useRef(null);
   const { t } = useTranslation();
+  const preferences = useCookieConsent();
+
+  // Gestion des sections collapsibles
+  const [openIndex, setOpenIndex] = useState(null);
+  const [visible, setVisible] = useState([]);
+  const sectionRefs = useRef([]);
+
+  const [email, setEmail] = useState("");
 
   const sections = [
     {
@@ -155,10 +227,6 @@ export default function Footer() {
     }
   ];
 
-  const [openIndex, setOpenIndex] = useState(null);
-  const [visible, setVisible] = useState([]);
-  const sectionRefs = useRef([]);
-
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -176,8 +244,51 @@ export default function Footer() {
     return () => observer.disconnect();
   }, []);
 
+  // --- Fonction submit newsletter ---
+  const handleNewsletterSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!preferences.marketing) {
+      return alert("Vous devez accepter les cookies marketing pour vous inscrire");
+    }
+
+    try {
+      const res = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, name: "", marketingConsent: preferences.marketing })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Erreur");
+      alert("Inscription réussie ✅");
+      setEmail("");
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors de l'inscription 😞");
+    }
+  };
+
   return (
-    <FooterWrapper $isdark={$isdark} ref={footerRef}>
+    <FooterWrapper $isdark={$isdark}>
+      {/* --- Newsletter Section --- */}
+      <NewsletterSection>
+        <NewsletterTitle>Inscrivez-vous à notre newsletter</NewsletterTitle>
+        <NewsletterForm onSubmit={handleNewsletterSubmit}>
+          <EmailInput
+            type="email"
+            placeholder="Votre email"
+            $isdark={$isdark}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <SubmitButton type="submit">
+            Envoyer <FiSend />
+          </SubmitButton>
+        </NewsletterForm>
+      </NewsletterSection>
+
+      {/* --- Sections principales --- */}
       {sections.map((sec, i) => (
         <Section
           key={i}
@@ -200,12 +311,22 @@ export default function Footer() {
         </Section>
       ))}
 
+      {/* --- Footer Extras --- */}
+      <FooterExtras $isdark={$isdark}>
+        <CookieButton
+          $isdark={$isdark}
+          onClick={() => {
+            const modal = document.querySelector("#cookie-consent-modal");
+            if (modal) modal.style.display = "flex";
+          }}
+        >
+          Gérer les cookies
+        </CookieButton>
+      </FooterExtras>
+
       <BottomText $isdark={$isdark}>
         &copy; {new Date().getFullYear()} NUMA. {t("fashion")}
       </BottomText>
     </FooterWrapper>
   );
 }
-
-
-
