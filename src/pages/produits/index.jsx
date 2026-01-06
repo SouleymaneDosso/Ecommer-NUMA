@@ -7,6 +7,7 @@ import ProductImages from "../../components/ProductImages";
 import Comments from "../../components/Comments";
 import Recommendations from "../../components/Recommendations";
 import { LoaderWrapper, Loader } from "../../Utils/Rotate";
+import ProductDescription from "../../components/ProductDescription";
 
 // ---------- STYLES ----------
 const PageWrapper = styled.main`
@@ -153,7 +154,10 @@ export default function Produit() {
           </div>
 
           <ProductPrice>{produit.price} FCFA</ProductPrice>
-          <Description>{produit.description}</Description>
+          <ProductDescription
+            description={produit.description}
+            quantity={quantity}
+          />
 
           <AddToCartBar
             produit={produit}
