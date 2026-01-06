@@ -48,8 +48,12 @@ const Carousel = styled.div`
   animation: scroll 15s linear infinite;
 
   @keyframes scroll {
-    from { transform: translateX(100%); }
-    to { transform: translateX(-100%); }
+    from {
+      transform: translateX(100%);
+    }
+    to {
+      transform: translateX(-100%);
+    }
   }
 `;
 
@@ -288,8 +292,7 @@ export default function CompteClient() {
                   </CoffreLabel>
 
                   {p.status !== "PAID" &&
-                    (!paiementRecus ||
-                    paiementRecus.status === "REJECTED") && (
+                    (!paiementRecus || paiementRecus.status === "REJECTED") && (
                       <Button
                         onClick={() => navigate(`/paiement-semi/${c._id}`)}
                       >
@@ -313,7 +316,33 @@ export default function CompteClient() {
                 <p>{f.productId?.title}</p>
                 <p>{f.productId?.price?.toLocaleString()} FCFA</p>
               </div>
-              <TrashIcon size={20} />
+              <TrashIcon
+                size={20}
+                onClick={async () => {
+                  if (!token) return navigate("/login");
+                  try {
+                    const res = await fetch(
+                      `${import.meta.env.VITE_API_URL}/api/favorites/${f._id}`,
+                      {
+                        method: "DELETE",
+                        headers: { Authorization: `Bearer ${token}` },
+                      }
+                    );
+
+                    if (res.ok) {
+                      // Supprime le favori de l'état pour mise à jour instantanée
+                      setFavorites((prev) =>
+                        prev.filter((fav) => fav._id !== f._id)
+                      );
+                    } else {
+                      const data = await res.json();
+                      console.error("Erreur suppression :", data.message);
+                    }
+                  } catch (err) {
+                    console.error("Erreur réseau :", err);
+                  }
+                }}
+              />
             </ProductCard>
           ))}
         </FlexRow>
@@ -324,9 +353,7 @@ export default function CompteClient() {
         {commandes.map((c) => (
           <ProductCard key={c._id} style={{ flexDirection: "column" }}>
             <CommandHeader
-              onClick={() =>
-                setExpanded((p) => ({ ...p, [c._id]: !p[c._id] }))
-              }
+              onClick={() => setExpanded((p) => ({ ...p, [c._id]: !p[c._id] }))}
             >
               <div>
                 <p>Commande #{c._id.slice(-6)}</p>
@@ -340,7 +367,11 @@ export default function CompteClient() {
                 {c.panier.map((p) => (
                   <div
                     key={p.produitId}
-                    style={{ display: "flex", gap: "10px", marginBottom: "8px" }}
+                    style={{
+                      display: "flex",
+                      gap: "10px",
+                      marginBottom: "8px",
+                    }}
                   >
                     <ProductImage
                       src={

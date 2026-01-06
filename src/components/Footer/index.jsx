@@ -15,7 +15,7 @@ const bounce = keyframes`
   50% { transform: translateY(-6px); }
 `;
 const glow = keyframes`
-  0% { box-shadow: 0 0 0px rgba(255,255,255,0.0); }
+  0% { box-shadow: 0 0 0px rgba(20, 15, 15, 0); }
   50% { box-shadow: 0 0 12px rgba(79,70,229,0.6); }
   100% { box-shadow: 0 0 0px rgba(255,255,255,0.0); }
 `;
@@ -41,8 +41,6 @@ const FooterWrapper = styled.footer`
     background 0.35s ease,
     color 0.35s ease;
 `;
-
-/* --- Newsletter --- */
 const NewsletterSection = styled.div`
   display: flex;
   flex-direction: column;
@@ -86,8 +84,6 @@ const SubmitButton = styled.button`
   &:disabled { opacity: 0.6; cursor: not-allowed; }
   svg { margin-left: 6px; font-size: 18px; }
 `;
-
-/* --- Sections --- */
 const Section = styled.div`
   display: flex;
   flex-direction: column;
@@ -121,8 +117,6 @@ const IconWrapper = styled.a`
   transition: all 0.35s ease; font-size: 18px;
   &:hover { animation: ${bounce} 0.5s, ${glow} 0.8s; background: ${({ $isdark }) => ($isdark ? "#4f46e5" : "#6366f1")}; color: white; }
 `;
-
-/* --- Footer Extras --- */
 const FooterExtras = styled.div`
   display: flex;
   flex-direction: column;
@@ -144,8 +138,6 @@ const CookieButton = styled.button`
   &:hover { background: ${({ $isdark }) => ($isdark ? "#4f46e5" : "#4f46e5")}; color: #fff; }
 `;
 const BottomText = styled.div`text-align: center; font-size: 0.85rem; color: ${({ $isdark }) => ($isdark ? "#a5b4fc" : "#374151")}; transition: color 0.35s ease;`;
-
-/* --- Scroll Top --- */
 const ScrollTopButton = styled.button`
   position: fixed; bottom: 30px; right: 30px; background: #4f46e5; color: white;
   border: none; border-radius: 50%; width: 50px; height: 50px; cursor: pointer; font-size: 24px;
@@ -154,8 +146,6 @@ const ScrollTopButton = styled.button`
   box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: all 0.3s ease;
   &:hover { background: #6366f1; }
 `;
-
-/* --- Modal Cookie --- */
 const ModalOverlay = styled.div`
   position: fixed; inset: 0; background: rgba(0,0,0,0.3);
   display: ${({ $visible }) => ($visible ? "flex" : "none")};
@@ -199,12 +189,9 @@ const RejectButton = styled(ConsentButton)`
   background-color: #e5e7eb;
   color: #000;
 `;
-
-/* --- Modal succès newsletter --- */
 const SuccessModal = styled(ModalOverlay)``;
 const SuccessContent = styled(ModalContent)``;
 
-/* --- Footer Component --- */
 export default function Footer() {
   const { theme } = useContext(ThemeContext);
   const $isdark = theme === "light";
@@ -215,30 +202,25 @@ export default function Footer() {
   const sectionRefs = useRef([]);
   const [scrollVisible, setScrollVisible] = useState(false);
 
-  /* Cookie / modal */
   const [modalVisible, setModalVisible] = useState(false);
-  const [consentGiven, setConsentGiven] = useState(false);
+  const [consent, setConsent] = useState(null);
 
-  /* Newsletter states */
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [newsletterSuccess, setNewsletterSuccess] = useState(false);
-  const [consent, setConsent] = useState(false); // basé sur cookie
 
-  /* Vérifie le cookie existant pour afficher le modal */
   useEffect(() => {
     const cookies = document.cookie.split("; ").reduce((acc, cur) => {
       const [key, value] = cur.split("=");
       acc[key] = value;
       return acc;
     }, {});
-    if (!cookies.marketingConsent) setModalVisible(true);
+    if (cookies.marketingConsent === undefined) setModalVisible(true);
     else setConsent(cookies.marketingConsent === "true");
   }, []);
 
-  /* Intersection Observer pour sections */
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
@@ -249,14 +231,12 @@ export default function Footer() {
     return () => observer.disconnect();
   }, []);
 
-  /* Scroll top button */
   useEffect(() => {
     const handleScroll = () => setScrollVisible(window.scrollY > window.innerHeight);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  /* Consentement cookie -> backend */
   const handleConsent = async (accepted) => {
     try {
       await fetch(`${import.meta.env.VITE_API_URL}/api/cookies/consent`, {
@@ -265,13 +245,15 @@ export default function Footer() {
         credentials: "include",
         body: JSON.stringify({ marketingConsent: accepted }),
       });
-      setConsentGiven(true);
-      setModalVisible(false);
+
+      document.cookie = `marketingConsent=${accepted}; path=/; max-age=${60 * 60 * 24 * 365}`;
       setConsent(accepted);
-    } catch (err) { console.error("Erreur consentement cookie:", err); }
+      setModalVisible(false);
+    } catch (err) {
+      console.error("Erreur consentement cookie:", err);
+    }
   };
 
-  /* Submit newsletter */
   const handleNewsletterSubmit = async (e) => {
     e.preventDefault();
     if (!consent) return setMessage("Vous devez accepter de recevoir des emails marketing.");
@@ -290,11 +272,14 @@ export default function Footer() {
         setEmail("");
         setName("");
       } else setMessage(data.message || "Erreur lors de l'inscription");
-    } catch (error) { console.error("Erreur newsletter:", error); setMessage("Erreur serveur ❌: " + error.message); }
-    finally { setLoading(false); }
+    } catch (error) {
+      console.error("Erreur newsletter:", error);
+      setMessage("Erreur serveur ❌: " + error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  /* Sections exemple */
   const sections = [
     { title: t("about"), links: [{ text: t("ourStory"), to: "/apropo" }, { text: t("faq"), to: "/faq" }, { text: t("contact"), to: "/contact" }] },
     { title: t("services"), links: [{ text: t("returnPolicy"), to: "/politiqueretour" }, { text: t("shipping"), to: "/livraison" }, { text: t("terms"), to: "/conditionUtilisation" }] },
@@ -303,7 +288,6 @@ export default function Footer() {
 
   return (
     <FooterWrapper $isdark={$isdark}>
-      {/* Newsletter */}
       <NewsletterSection>
         <NewsletterTitle>Inscrivez-vous à notre newsletter</NewsletterTitle>
         <NewsletterForm onSubmit={handleNewsletterSubmit}>
@@ -314,7 +298,6 @@ export default function Footer() {
         {message && <p style={{ marginTop: "0.5rem", color: "white" }}>{message}</p>}
       </NewsletterSection>
 
-      {/* Sections */}
       {sections.map((sec, i) => (
         <Section key={i} $visible={visible.includes(i.toString())} ref={(el) => (sectionRefs.current[i] = el)} data-index={i}>
           <TitleButton onClick={() => setOpenIndex(openIndex === i ? null : i)}>{sec.title} <FiChevronDown style={{ transform: openIndex === i ? "rotate(180deg)" : "rotate(0)" }} /></TitleButton>
@@ -324,17 +307,14 @@ export default function Footer() {
         </Section>
       ))}
 
-      {/* Footer Extras */}
       <FooterExtras $isdark={$isdark}>
         <CookieButton $isdark={$isdark} onClick={() => setModalVisible(true)}>Gérer les cookies</CookieButton>
       </FooterExtras>
 
       <BottomText $isdark={$isdark}>&copy; {new Date().getFullYear()} NUMA. {t("fashion")}</BottomText>
 
-      {/* Scroll to Top */}
       <ScrollTopButton $visible={scrollVisible} onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}><FiArrowUp /></ScrollTopButton>
 
-      {/* Modal Cookie */}
       <ModalOverlay $visible={modalVisible}>
         <ModalContent>
           <CloseModal onClick={() => setModalVisible(false)}><FiX /></CloseModal>
@@ -347,7 +327,6 @@ export default function Footer() {
         </ModalContent>
       </ModalOverlay>
 
-      {/* Modal succès newsletter */}
       <SuccessModal $visible={newsletterSuccess}>
         <SuccessContent>
           <CloseModal onClick={() => setNewsletterSuccess(false)}><FiX /></CloseModal>
