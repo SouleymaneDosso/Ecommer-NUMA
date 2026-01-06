@@ -51,8 +51,7 @@ const Badge = styled.span`
   font-size: 0.9rem;
   font-weight: 600;
   color: #fff;
-  background-color: ${(p) =>
-    p.status === "PAID" ? "#10b981" : "#f59e0b"};
+  background-color: ${(p) => (p.status === "PAID" ? "#10b981" : "#f59e0b")};
 `;
 const Coffre = styled.div`
   background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
@@ -65,7 +64,7 @@ const Coffre = styled.div`
   font-weight: 600;
   font-size: 1rem;
   color: #1e3a8a;
-  box-shadow: 0 6px 25px rgba(0,0,0,0.1);
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
 `;
 const Button = styled.button`
   display: block;
@@ -80,10 +79,12 @@ const Button = styled.button`
   background: linear-gradient(135deg, #4f46e5, #6366f1);
   color: #fff;
   cursor: pointer;
-  &:hover { opacity: 0.9; }
+  &:hover {
+    opacity: 0.9;
+  }
 `;
 const Modal = styled.div`
-  background: rgba(0,0,0,0.7);
+  background: rgba(0, 0, 0, 0.7);
   position: fixed;
   inset: 0;
   display: flex;
@@ -97,7 +98,7 @@ const ModalContent = styled.div`
   border-radius: 16px;
   max-width: 500px;
   text-align: center;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
 `;
 const CloseModal = styled.button`
   margin-top: 1rem;
@@ -133,7 +134,7 @@ export default function Merci() {
     const fetchCommande = async () => {
       try {
         const res = await fetch(`${API_URL}/api/commandes/${commandeId}`, {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || "Erreur serveur");
@@ -149,10 +150,17 @@ export default function Merci() {
     fetchCommande();
   }, [commandeId, token, navigate]);
 
-  if (loading) return <LoaderWrapper><Loader /></LoaderWrapper>;
+  if (loading)
+    return (
+      <LoaderWrapper>
+        <Loader />
+      </LoaderWrapper>
+    );
   if (!commande) return <Page>Commande introuvable</Page>;
 
-  const paidSteps = commande.paiements.filter((p) => p.status === "PAID").length;
+  const paidSteps = commande.paiements.filter(
+    (p) => p.status === "PAID"
+  ).length;
   const totalSteps = commande.paiements.length;
   const totalPaid = commande.paiements
     .filter((p) => p.status === "PAID")
@@ -176,26 +184,48 @@ export default function Merci() {
         <h3>Récapitulatif de la commande</h3>
         {commande.panier.map((item) => (
           <Line key={item.produitId}>
-            <span>{item.nom} x {item.quantite}</span>
+            <span>
+              {item.nom} x {item.quantite}
+            </span>
             <span>{(item.prix * item.quantite).toLocaleString()} FCFA</span>
           </Line>
         ))}
-        <Line><strong>Total</strong><strong>{commande.total.toLocaleString()} FCFA</strong></Line>
-        <Line><strong>Payé</strong><strong>{totalPaid.toLocaleString()} FCFA</strong></Line>
-        <Line><strong>Reste à payer</strong><strong>{(commande.total - totalPaid).toLocaleString()} FCFA</strong></Line>
+        <Line>
+          <strong>Total</strong>
+          <strong>{commande.total.toLocaleString()} FCFA</strong>
+        </Line>
+        <Line>
+          <strong>Payé</strong>
+          <strong>{totalPaid.toLocaleString()} FCFA</strong>
+        </Line>
+        <Line>
+          <strong>Reste à payer</strong>
+          <strong>{(commande.total - totalPaid).toLocaleString()} FCFA</strong>
+        </Line>
       </Box>
 
       <Coffre>
         <FaBox size={24} />
-        <div>Votre coffre : <strong>{paidSteps}/{totalSteps} étapes payées</strong></div>
+        <div>
+          Votre coffre :{" "}
+          <strong>
+            {paidSteps}/{totalSteps} étapes payées
+          </strong>
+        </div>
       </Coffre>
 
       <Box>
         <h3>Étapes de paiement</h3>
-        {commande.paiements.map(p => (
+        {commande.paiements.map((p) => (
           <Line key={p._id}>
-            {p.status === "PAID" ? <FaCheckCircle color="#10b981"/> : <FaRegCircle color="#f59e0b"/>}
-            <span>Étape {p.step} - {(p.amountExpected || 0).toLocaleString()} FCFA</span>
+            {p.status === "PAID" ? (
+              <FaCheckCircle color="#10b981" />
+            ) : (
+              <FaRegCircle color="#f59e0b" />
+            )}
+            <span>
+              Étape {p.step} - {(p.amountExpected || 0).toLocaleString()} FCFA
+            </span>
             <Badge status={p.status}>{p.status}</Badge>
           </Line>
         ))}

@@ -21,10 +21,10 @@ const StyledGlobalStyle = createGlobalStyle`
 
     background: ${({ $isDark }) =>
       $isDark
-        ? "linear-gradient(145deg, #0F172A, #1E293B 60%, #334155)"
+        ? "linear-gradient(145deg, #111, #111 60%, #111)"
         : "linear-gradient(145deg, #ffffff, #f5f5f7 60%, #e8eaed)"};
 
-    color: ${({ $isDark }) => ($isDark ? "#f8fafc" : "#1f2937")};
+    color: ${({ $isDark }) => ($isDark ? "#f8fafc" : "#111")};
     transition: background 0.45s ease, color 0.35s ease;
   }
 

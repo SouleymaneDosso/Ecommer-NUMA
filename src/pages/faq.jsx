@@ -1,6 +1,43 @@
 // src/pages/FAQ.jsx
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
+import styled from "styled-components";
+import { ThemeContext } from "../Utils/Context";
 
+/* ===== STYLED COMPONENTS ===== */
+const PageWrapper = styled.div`
+  font-family: Arial, sans-serif;
+  padding: 2rem;
+  max-width: 800px;
+  margin: 0 auto;
+  background: ${({ $isdark }) => ($isdark ? "#111" : "#fff")};
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#000")};
+`;
+
+const QuestionWrapper = styled.div`
+  margin-bottom: 1rem;
+  border-bottom: 1px solid ${({ $isdark }) => ($isdark ? "rgba(255,255,255,0.1)" : "#ddd")};
+  padding-bottom: 0.5rem;
+`;
+
+const QuestionButton = styled.button`
+  width: 100%;
+  text-align: left;
+  padding: 1rem;
+  font-size: 1.1rem;
+  font-weight: bold;
+  background: none;
+  border: none;
+  cursor: pointer;
+  outline: none;
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#000")};
+`;
+
+const Answer = styled.p`
+  padding: 0 1rem 1rem 1rem;
+  color: ${({ $isdark }) => ($isdark ? "#ccc" : "#555")};
+`;
+
+/* ===== FAQ DATA ===== */
 const faqData = [
   {
     question: "Comment puis-je passer une commande sur Numa ?",
@@ -24,7 +61,10 @@ const faqData = [
   },
 ];
 
+/* ===== COMPONENT ===== */
 const FAQ = () => {
+  const { theme } = useContext(ThemeContext);
+  const $isdark = theme === "light";
   const [activeIndex, setActiveIndex] = useState(null);
 
   const toggleIndex = (index) => {
@@ -32,33 +72,18 @@ const FAQ = () => {
   };
 
   return (
-    <div style={{ fontFamily: "Arial, sans-serif", padding: "2rem", maxWidth: "800px", margin: "0 auto" }}>
+    <PageWrapper $isdark={$isdark}>
       <h1 style={{ textAlign: "center", marginBottom: "2rem" }}>Foire aux Questions (FAQ)</h1>
 
       {faqData.map((item, index) => (
-        <div key={index} style={{ marginBottom: "1rem", borderBottom: "1px solid #ddd", paddingBottom: "0.5rem" }}>
-          <button
-            onClick={() => toggleIndex(index)}
-            style={{
-              width: "100%",
-              textAlign: "left",
-              padding: "1rem",
-              fontSize: "1.1rem",
-              fontWeight: "bold",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              outline: "none",
-            }}
-          >
+        <QuestionWrapper key={index} $isdark={$isdark}>
+          <QuestionButton onClick={() => toggleIndex(index)} $isdark={$isdark}>
             {item.question}
-          </button>
-          {activeIndex === index && (
-            <p style={{ padding: "0 1rem 1rem 1rem", color: "#555" }}>{item.answer}</p>
-          )}
-        </div>
+          </QuestionButton>
+          {activeIndex === index && <Answer $isdark={$isdark}>{item.answer}</Answer>}
+        </QuestionWrapper>
       ))}
-    </div>
+    </PageWrapper>
   );
 };
 

@@ -40,14 +40,14 @@ const HeaderWrapper = styled.header`
   padding: 0.5rem 1rem;
   background: ${({ $isdark }) =>
     $isdark
-      ? "linear-gradient(180deg, rgba(6,8,14,0.85), rgba(12,18,30,0.85))"
-      : "linear-gradient(180deg, rgba(255,255,255,0.92), rgba(248,250,255,0.92))"};
+      ? "linear-gradient(180deg, rgba(0,0,0,0.85), rgba(20,20,20,0.85))"
+      : "linear-gradient(180deg, #fff, #f5f5f5)"};
   border-bottom: 1px solid
-    ${({ $isdark }) => ($isdark ? "rgba(255,255,255,0.04)" : "rgba(16,24,40,0.06)")};
+    ${({ $isdark }) => ($isdark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.1)")};
   backdrop-filter: blur(10px) saturate(120%);
   -webkit-backdrop-filter: blur(10px) saturate(120%);
   box-shadow: ${({ $isdark }) =>
-    $isdark ? "0 6px 28px rgba(0,0,0,0.6)" : "0 6px 28px rgba(15,23,42,0.08)"};
+    $isdark ? "0 6px 28px rgba(0,0,0,0.6)" : "0 6px 28px rgba(0,0,0,0.08)"};
 `;
 
 const HeaderTop = styled.div`
@@ -66,7 +66,7 @@ const Logo = styled(Link)`
   font-weight: 700;
   font-size: 1.3rem;
   letter-spacing: -0.02em;
-  color: ${({ $isdark }) => ($isdark ? "#e6eefc" : "#0f172a")};
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#000")};
   text-decoration: none;
   z-index: 10002;
 `;
@@ -81,7 +81,7 @@ const DesktopNav = styled.nav`
 `;
 
 const NavLink = styled(Link)`
-  color: ${({ $isdark }) => ($isdark ? "#e6eefc" : "#071230")};
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#000")};
   text-decoration: none;
   padding: 6px 10px;
   border-radius: 8px;
@@ -93,7 +93,7 @@ const NavLink = styled(Link)`
   &:hover {
     transform: translateY(-2px);
     background: ${({ $isdark }) =>
-      $isdark ? "rgba(255,255,255,0.03)" : "rgba(15,23,42,0.03)"};
+      $isdark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)"};
   }
 `;
 
@@ -113,8 +113,8 @@ const IconButton = styled.button`
   border: none;
   cursor: pointer;
   background: ${({ $isdark }) =>
-    $isdark ? "rgba(255,255,255,0.03)" : "rgba(15,23,42,0.03)"};
-  color: ${({ $isdark }) => ($isdark ? "#fff" : "#0f172a")};
+    $isdark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)"};
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#000")};
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -142,7 +142,7 @@ const BurgerButton = styled.button`
   div.bar {
     width: 22px;
     height: 2px;
-    background: ${({ $isdark }) => ($isdark ? "#fff" : "#071230")};
+    background: ${({ $isdark }) => ($isdark ? "#fff" : "#000")};
     border-radius: 2px;
     position: absolute;
     left: 50%;
@@ -181,12 +181,12 @@ const MobilePanel = styled.aside`
   max-width: 70%;
   transform: translateX(${({ $open }) => ($open ? "0" : "100%")});
   transition: transform 260ms cubic-bezier(0.25, 0.9, 0.2, 1);
-  background: ${({ $isdark }) => ($isdark ? "#071124" : "#fff")};
+  background: ${({ $isdark }) => ($isdark ? "#000" : "#fff")};
   z-index: 10001;
   display: flex;
   flex-direction: column;
   box-shadow: ${({ $open }) =>
-    $open ? "-12px 0 30px rgba(0,0,0,0.24)" : "none"};
+    $open ? "-12px 0 30px rgba(0,0,0,0.3)" : "none"};
 `;
 
 const MobileHeader = styled.div`
@@ -195,20 +195,20 @@ const MobileHeader = styled.div`
   align-items: center;
   padding: 16px 20px;
   border-bottom: 1px solid
-    ${({ $isdark }) => ($isdark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.06)")};
+    ${({ $isdark }) => ($isdark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.1)")};
 `;
 
 const MobileTitle = styled.div`
   font-weight: 700;
   font-size: 1.15rem;
-  color: ${({ $isdark }) => ($isdark ? "#fff" : "#071230")};
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#000")};
 `;
 
 const CloseButton = styled.button`
   background: none;
   border: none;
   cursor: pointer;
-  color: ${({ $isdark }) => ($isdark ? "#fff" : "#071230")};
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#000")};
   font-size: 22px;
 `;
 
@@ -224,11 +224,11 @@ const MobileItem = styled(Link)`
   padding: 12px;
   border-radius: 8px;
   text-decoration: none;
-  color: ${({ $isdark }) => ($isdark ? "#fff" : "#071230")};
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#000")};
   font-weight: 600;
   &:hover {
     background: ${({ $isdark }) =>
-      $isdark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.03)"};
+      $isdark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)"};
   }
 `;
 
@@ -248,7 +248,6 @@ const CartCount = styled.span`
   justify-content: center;
 `;
 
-/* ===== BARRE DE RECHERCHE LUXE CORRIGÉE ===== */
 const SearchForm = styled.form`
   width: 100%;
   display: flex;
@@ -260,36 +259,32 @@ const SearchForm = styled.form`
 const SearchInput = styled.input`
   flex: 1;
   padding: 12px 16px;
-  font-size: 16px; /* <-- IMPORTANT pour iOS */
+  font-size: 16px;
   border-radius: 50px 0 0 50px;
-  border: 1px solid ${({ $isdark }) => ($isdark ? "#444" : "#ccc")};
-  background: ${({ $isdark }) => ($isdark ? "rgba(255,255,255,0.05)" : "#f5f5f5")};
-  color: ${({ $isdark }) => ($isdark ? "#fff" : "#071230")};
+  border: 1px solid ${({ $isdark }) => ($isdark ? "#222" : "#ccc")};
+  background: ${({ $isdark }) => ($isdark ? "#111" : "#f5f5f5")};
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#000")};
   outline: none;
   transition: box-shadow 0.3s ease, transform 0.3s ease;
-
   &:focus {
-    box-shadow: 0 0 15px rgba(0,0,0,0.25);
-    transform: scale(1.02);
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
   }
-
   -webkit-text-size-adjust: 100%;
 `;
 
 const SearchButton = styled.button`
   padding: 12px 16px;
   border-radius: 0 50px 50px 0;
-  border: 1px solid ${({ $isdark }) => ($isdark ? "#444" : "#ccc")};
-  background: ${({ $isdark }) => ($isdark ? "rgba(255,255,255,0.1)" : "#eaeaea")};
-  color: ${({ $isdark }) => ($isdark ? "#fff" : "#071230")};
+  border: 1px solid ${({ $isdark }) => ($isdark ? "#222" : "#ccc")};
+  background: ${({ $isdark }) => ($isdark ? "#111" : "#eaeaea")};
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#000")};
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: background 0.3s ease, transform 0.2s ease;
-
   &:hover {
-    background: ${({ $isdark }) => ($isdark ? "rgba(255,255,255,0.2)" : "#ddd")};
+    background: ${({ $isdark }) => ($isdark ? "#222" : "#ddd")};
     transform: scale(1.05);
   }
 `;
