@@ -1,7 +1,14 @@
 import { useState, useContext, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import styled, { keyframes } from "styled-components";
-import { FiFacebook, FiInstagram, FiChevronDown, FiSend, FiX, FiArrowUp } from "react-icons/fi";
+import {
+  FiFacebook,
+  FiInstagram,
+  FiChevronDown,
+  FiSend,
+  FiX,
+  FiArrowUp,
+} from "react-icons/fi";
 import { ThemeContext } from "../../Utils/Context";
 import { useTranslation } from "react-i18next";
 
@@ -37,7 +44,9 @@ const FooterWrapper = styled.footer`
   flex-direction: column;
   gap: 2rem;
   position: relative;
-  transition: background 0.35s ease, color 0.35s ease;
+  transition:
+    background 0.35s ease,
+    color 0.35s ease;
 `;
 
 const NewsletterSection = styled.div`
@@ -49,7 +58,7 @@ const NewsletterSection = styled.div`
 `;
 
 const NewsletterTitle = styled.h3`
-  font-size: 1.4rem; 
+  font-size: 1.4rem;
   font-weight: 700;
 `;
 
@@ -69,10 +78,10 @@ const EmailInput = styled.input`
   background: ${({ $isdark }) => ($isdark ? "#111" : "#fff")};
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#000")};
   font-size: 16px;
-  &:focus { 
-    outline: none; 
-    border-color: #000; 
-    box-shadow: 0 0 6px rgba(0,0,0,0.3); 
+  &:focus {
+    outline: none;
+    border-color: #000;
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.3);
   }
 `;
 
@@ -91,9 +100,17 @@ const SubmitButton = styled.button`
   justify-content: center;
   transition: all 0.3s ease;
   font-size: 14px;
-  &:hover { background: #333; }
-  &:disabled { opacity: 0.6; cursor: not-allowed; }
-  svg { margin-left: 6px; font-size: 18px; }
+  &:hover {
+    background: #333;
+  }
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  svg {
+    margin-left: 6px;
+    font-size: 18px;
+  }
 `;
 
 const Section = styled.div`
@@ -101,13 +118,22 @@ const Section = styled.div`
   flex-direction: column;
   gap: 0.5rem;
   opacity: 0;
-  animation: ${({ $visible }) => ($visible ? fadeIn : "none")} 0.6s ease forwards;
+  animation: ${({ $visible }) => ($visible ? fadeIn : "none")} 0.6s ease
+    forwards;
 `;
 
 const TitleButton = styled.button`
-  display: flex; align-items: center; justify-content: space-between;
-  font-weight: 700; font-size: 1.1rem; background: none; border: none;
-  color: inherit; cursor: pointer; padding: 0; gap: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 700;
+  font-size: 1.1rem;
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  gap: 6px;
 `;
 
 const LinksContainer = styled.div`
@@ -120,31 +146,40 @@ const LinksContainer = styled.div`
 `;
 
 const FooterLink = styled(Link)`
-  text-decoration: none; 
-  color: inherit; 
-  font-weight: 500; 
-  display: flex; 
-  align-items: center; 
+  text-decoration: none;
+  color: inherit;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
   gap: 6px;
-  transition: color 0.25s ease, transform 0.25s ease, box-shadow 0.3s ease;
-  &:hover { 
-    color: ${({ $isdark }) => ($isdark ? "#aaa" : "#333")}; 
-    transform: translateX(4px); 
-    animation: ${glow} 0.8s ease; 
+  transition:
+    color 0.25s ease,
+    transform 0.25s ease,
+    box-shadow 0.3s ease;
+  &:hover {
+    color: ${({ $isdark }) => ($isdark ? "#aaa" : "#333")};
+    transform: translateX(4px);
+    animation: ${glow} 0.8s ease;
   }
 `;
 
 const IconWrapper = styled.a`
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 38px; height: 38px; border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
   background: ${({ $isdark }) => ($isdark ? "#111" : "#e5e7eb")};
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#000")};
-  transition: all 0.35s ease; 
+  transition: all 0.35s ease;
   font-size: 18px;
-  &:hover { 
-    animation: ${bounce} 0.5s, ${glow} 0.8s; 
-    background: ${({ $isdark }) => ($isdark ? "#333" : "#ccc")}; 
-    color: white; 
+  &:hover {
+    animation:
+      ${bounce} 0.5s,
+      ${glow} 0.8s;
+    background: ${({ $isdark }) => ($isdark ? "#333" : "#ccc")};
+    color: white;
   }
 `;
 
@@ -167,37 +202,48 @@ const CookieButton = styled.button`
   width: fit-content;
   font-weight: 500;
   transition: all 0.25s ease;
-  &:hover { background: #000; color: #16317aff; }
+  &:hover {
+    background: #000;
+    color: #16317aff;
+  }
 `;
 
 const BottomText = styled.div`
-  text-align: center; 
-  font-size: 0.85rem; 
-  color: ${({ $isdark }) => ($isdark ? "#aaa" : "#555")}; 
+  text-align: center;
+  font-size: 0.85rem;
+  color: ${({ $isdark }) => ($isdark ? "#aaa" : "#555")};
   transition: color 0.35s ease;
 `;
 
 const ScrollTopButton = styled.button`
-  position: fixed; 
-  bottom: 30px; right: 30px; 
-  background: #000; 
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background: #000;
   color: white;
-  border: none; 
-  border-radius: 50%; 
-  width: 50px; height: 50px; 
-  cursor: pointer; 
+  border: none;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  cursor: pointer;
   font-size: 24px;
   display: ${({ $visible }) => ($visible ? "flex" : "none")};
-  align-items: center; justify-content: center;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3); 
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   transition: all 0.3s ease;
-  &:hover { background: #333; }
+  &:hover {
+    background: #333;
+  }
 `;
 
 const ModalOverlay = styled.div`
-  position: fixed; inset: 0; background: rgba(0,0,0,0.3);
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
   display: ${({ $visible }) => ($visible ? "flex" : "none")};
-  align-items: center; justify-content: center; 
+  align-items: center;
+  justify-content: center;
   z-index: 999;
 `;
 
@@ -217,16 +263,25 @@ const ModalContent = styled.div`
 `;
 
 const CloseModal = styled.button`
-  position: absolute; top: 12px; right: 12px; background: none; border: none; font-size: 20px; cursor: pointer; color: #000;
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #000;
 `;
 
 const ModalTitle = styled.h2`
-  margin-bottom: 1rem; 
+  margin-bottom: 1rem;
   font-size: 1.5rem;
 `;
 
 const ButtonGroup = styled.div`
-  display: flex; justify-content: center; gap: 1rem;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
 `;
 
 const ConsentButton = styled.button`
@@ -236,7 +291,9 @@ const ConsentButton = styled.button`
   cursor: pointer;
   font-weight: 600;
   transition: all 0.3s ease;
-  &:hover { opacity: 0.85; }
+  &:hover {
+    opacity: 0.85;
+  }
 `;
 
 const AcceptButton = styled(ConsentButton)`
@@ -282,17 +339,24 @@ export default function Footer() {
   }, []);
 
   useEffect(() => {
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) setVisible((prev) => [...new Set([...prev, entry.target.dataset.index])]);
-      });
-    }, { threshold: 0.1 });
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting)
+            setVisible((prev) => [
+              ...new Set([...prev, entry.target.dataset.index]),
+            ]);
+        });
+      },
+      { threshold: 0.1 }
+    );
     sectionRefs.current.forEach((el) => el && observer.observe(el));
     return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
-    const handleScroll = () => setScrollVisible(window.scrollY > window.innerHeight);
+    const handleScroll = () =>
+      setScrollVisible(window.scrollY > window.innerHeight);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -316,16 +380,22 @@ export default function Footer() {
 
   const handleNewsletterSubmit = async (e) => {
     e.preventDefault();
-    if (!consent) return setMessage("Vous devez accepter de recevoir des emails marketing.");
+    if (!consent)
+      return setMessage(
+        "Vous devez accepter de recevoir des emails marketing."
+      );
 
     setLoading(true);
     setMessage("");
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/newsletter`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, name, marketingConsent: consent }),
-      });
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/newsletter`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, name, marketingConsent: consent }),
+        }
+      );
       const data = await res.json();
       if (res.ok) {
         setNewsletterSuccess(true);
@@ -341,55 +411,142 @@ export default function Footer() {
   };
 
   const sections = [
-    { title: t("about"), links: [{ text: t("ourStory"), to: "/apropo" }, { text: t("faq"), to: "/faq" }, { text: t("contact"), to: "/contact" }] },
-    { title: t("services"), links: [{ text: t("returnPolicy"), to: "/politiqueretour" }, { text: t("shipping"), to: "/livraison" }, { text: t("terms"), to: "/conditionUtilisation" }] },
-    { title: t("social"), links: [{ text: "Facebook", href: "https://www.facebook.com", icon: <FiFacebook /> }, { text: "Instagram", href: "https://www.instagram.com", icon: <FiInstagram /> }] }
+    {
+      title: t("about"),
+      links: [
+        { text: t("ourStory"), to: "/apropo" },
+        { text: t("faq"), to: "/faq" },
+        { text: t("contact"), to: "/contact" },
+      ],
+    },
+    {
+      title: t("services"),
+      links: [
+        { text: t("returnPolicy"), to: "/politiqueretour" },
+        { text: t("shipping"), to: "/livraison" },
+        { text: t("terms"), to: "/conditionUtilisation" },
+      ],
+    },
+    {
+      title: t("social"),
+      links: [
+        {
+          text: "Facebook",
+          href: "https://www.facebook.com",
+          icon: <FiFacebook />,
+        },
+        {
+          text: "Instagram",
+          href: "https://www.instagram.com",
+          icon: <FiInstagram />,
+        },
+      ],
+    },
   ];
 
   return (
     <FooterWrapper $isdark={$isdark}>
-      <NewsletterSection>
+      <NewsletterSection id="newsletterSection">
         <NewsletterTitle>Inscrivez-vous à notre newsletter</NewsletterTitle>
         <NewsletterForm onSubmit={handleNewsletterSubmit}>
-          <NameInput type="text" placeholder="Votre nom" value={name} onChange={(e) => setName(e.target.value)} $isdark={$isdark} />
-          <EmailInput type="email" placeholder="Votre email" value={email} onChange={(e) => setEmail(e.target.value)} $isdark={$isdark} required />
-          <SubmitButton type="submit" disabled={loading || !consent}>{loading ? "Envoi..." : "Envoyer"} <FiSend /></SubmitButton>
+          <NameInput
+            type="text"
+            placeholder="Votre nom"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            $isdark={$isdark}
+          />
+          <EmailInput
+            type="email"
+            placeholder="Votre email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            $isdark={$isdark}
+            required
+          />
+          <SubmitButton type="submit" disabled={loading || !consent}>
+            {loading ? "Envoi..." : "Envoyer"} <FiSend />
+          </SubmitButton>
         </NewsletterForm>
-        {message && <p style={{ marginTop: "0.5rem", color: "white" }}>{message}</p>}
+        {message && (
+          <p style={{ marginTop: "0.5rem", color: "white" }}>{message}</p>
+        )}
       </NewsletterSection>
 
       {sections.map((sec, i) => (
-        <Section key={i} $visible={visible.includes(i.toString())} ref={(el) => (sectionRefs.current[i] = el)} data-index={i}>
-          <TitleButton onClick={() => setOpenIndex(openIndex === i ? null : i)}>{sec.title} <FiChevronDown style={{ transform: openIndex === i ? "rotate(180deg)" : "rotate(0)" }} /></TitleButton>
+        <Section
+          key={i}
+          $visible={visible.includes(i.toString())}
+          ref={(el) => (sectionRefs.current[i] = el)}
+          data-index={i}
+        >
+          <TitleButton onClick={() => setOpenIndex(openIndex === i ? null : i)}>
+            {sec.title}{" "}
+            <FiChevronDown
+              style={{
+                transform: openIndex === i ? "rotate(180deg)" : "rotate(0)",
+              }}
+            />
+          </TitleButton>
           <LinksContainer $open={openIndex === i}>
-            {sec.links.map((link, j) => link.to ? <FooterLink key={j} to={link.to} $isdark={$isdark}>{link.text}</FooterLink> : <IconWrapper key={j} href={link.href} $isdark={$isdark}>{link.icon}</IconWrapper>)}
+            {sec.links.map((link, j) =>
+              link.to ? (
+                <FooterLink key={j} to={link.to} $isdark={$isdark}>
+                  {link.text}
+                </FooterLink>
+              ) : (
+                <IconWrapper key={j} href={link.href} $isdark={$isdark}>
+                  {link.icon}
+                </IconWrapper>
+              )
+            )}
           </LinksContainer>
         </Section>
       ))}
 
       <FooterExtras $isdark={$isdark}>
-        <CookieButton $isdark={$isdark} onClick={() => setModalVisible(true)}>Gérer les cookies</CookieButton>
+        <CookieButton $isdark={$isdark} onClick={() => setModalVisible(true)}>
+          Gérer les cookies
+        </CookieButton>
       </FooterExtras>
 
-      <BottomText $isdark={$isdark}>&copy; {new Date().getFullYear()} NUMA. {t("fashion")}</BottomText>
+      <BottomText $isdark={$isdark}>
+        &copy; {new Date().getFullYear()} NUMA. {t("fashion")}
+      </BottomText>
 
-      <ScrollTopButton $visible={scrollVisible} onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}><FiArrowUp /></ScrollTopButton>
+      <ScrollTopButton
+        $visible={scrollVisible}
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      >
+        <FiArrowUp />
+      </ScrollTopButton>
 
       <ModalOverlay $visible={modalVisible}>
         <ModalContent>
-          <CloseModal onClick={() => setModalVisible(false)}><FiX /></CloseModal>
+          <CloseModal onClick={() => setModalVisible(false)}>
+            <FiX />
+          </CloseModal>
           <ModalTitle>Cookies et consentement</ModalTitle>
-          <p>Nous utilisons des cookies pour améliorer votre expérience et envoyer des emails marketing. Vous pouvez accepter ou refuser.</p>
+          <p>
+            Nous utilisons des cookies pour améliorer votre expérience et
+            envoyer des emails marketing. Vous pouvez accepter ou refuser.
+          </p>
           <ButtonGroup>
-            <AcceptButton onClick={() => handleConsent(true)}>Accepter</AcceptButton>
-            <RejectButton onClick={() => handleConsent(false)}>Refuser</RejectButton>
+            <AcceptButton onClick={() => handleConsent(true)}>
+              Accepter
+            </AcceptButton>
+            <RejectButton onClick={() => handleConsent(false)}>
+              Refuser
+            </RejectButton>
           </ButtonGroup>
         </ModalContent>
       </ModalOverlay>
 
       <SuccessModal $visible={newsletterSuccess}>
         <SuccessContent>
-          <CloseModal onClick={() => setNewsletterSuccess(false)}><FiX /></CloseModal>
+          <CloseModal onClick={() => setNewsletterSuccess(false)}>
+            <FiX />
+          </CloseModal>
           <ModalTitle>Inscription réussie ✅</ModalTitle>
           <p>Merci ! Vous êtes maintenant inscrit à notre newsletter.</p>
         </SuccessContent>
