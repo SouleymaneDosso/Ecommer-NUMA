@@ -1,5 +1,5 @@
-import { useEffect, useState, useMemo } from "react";
-import styled, { keyframes } from "styled-components";
+import { useEffect, useState } from "react";
+import styled from "styled-components";
 import { FiX } from "react-icons/fi";
 
 const ModalOverlay = styled.div`
@@ -36,7 +36,7 @@ const CloseButton = styled.button`
 `;
 
 const SliderContainer = styled.div`
-  height: 320px; /* hauteur du slider */
+  height: 320px;
   overflow: hidden;
   position: relative;
 `;
@@ -54,7 +54,7 @@ const SlideRow = styled.div`
 
 const Slide = styled.img`
   width: 100%;
-  height: 320px; /* carré vertical */
+  height: 320px;
   object-fit: cover;
 `;
 
@@ -71,9 +71,10 @@ export default function HeroModal({ apiUrl }) {
   const [heroImages, setHeroImages] = useState([]);
 
   useEffect(() => {
-    // Vérifie si l'utilisateur a déjà vu le modal
+    // Vérifie si l'utilisateur a déjà vu le modal ou s'il est déjà inscrit
     const seen = localStorage.getItem("seenHeroModal");
-    if (!seen) setModalVisible(true);
+    const subscribed = localStorage.getItem("newsletterSubscribed"); // flag si l'utilisateur est déjà inscrit
+    if (!seen && !subscribed) setModalVisible(true);
 
     // Fetch produits hero
     const fetchHero = async () => {
@@ -101,26 +102,28 @@ export default function HeroModal({ apiUrl }) {
   };
 
   const handleLinkClick = () => {
-    setModalVisible(false);
+    // Marque comme vu et scroll vers la section newsletter
+    localStorage.setItem("seenHeroModal", "true");
     document.getElementById("newsletterSection")?.scrollIntoView({ behavior: "smooth" });
+    setModalVisible(false);
   };
-
-  if (heroImages.length === 0) return null;
-
-  // On double les images pour l'animation infinie
-  const slides = [...heroImages, ...heroImages];
 
   return (
     <ModalOverlay $visible={modalVisible}>
       <ModalContent>
         <CloseButton onClick={handleClose}><FiX /></CloseButton>
-        <SliderContainer>
-          <SlideRow $duration={16}> {/* durée totale de scroll vertical */}
-            {slides.map((img, i) => (
-              <Slide key={i} src={img} alt={`hero-${i}`} />
-            ))}
-          </SlideRow>
-        </SliderContainer>
+
+        {/* Slider seulement si images chargées */}
+        {heroImages.length > 0 && (
+          <SliderContainer>
+            <SlideRow $duration={16}>
+              {[...heroImages, ...heroImages].map((img, i) => (
+                <Slide key={i} src={img} alt={`hero-${i}`} />
+              ))}
+            </SlideRow>
+          </SliderContainer>
+        )}
+
         <NewsletterLink onClick={handleLinkClick}>
           Inscrivez-vous à notre newsletter pour ne rien rater des nouveautés
         </NewsletterLink>

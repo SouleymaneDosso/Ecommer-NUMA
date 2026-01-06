@@ -1,55 +1,70 @@
 // src/pages/ReturnPolicy.jsx
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 const ReturnPolicy = () => {
+  const { t } = useTranslation();
+
   return (
-    <div style={{ fontFamily: "Arial, sans-serif", padding: "2rem", maxWidth: "800px", margin: "0 auto", lineHeight: "1.6" }}>
-      <h1 style={{ textAlign: "center", marginBottom: "2rem" }}>Politique de Retour</h1>
+    <div
+      style={{
+        fontFamily: "Arial, sans-serif",
+        padding: "2rem",
+        maxWidth: "800px",
+        margin: "0 auto",
+        lineHeight: "1.6",
+      }}
+    >
+      <h1 style={{ textAlign: "center", marginBottom: "2rem" }}>
+        {t("return.title")}
+      </h1>
 
       <section style={{ marginBottom: "1.5rem" }}>
-        <p>
-          Chez <strong>Numa</strong>, nous voulons que vous soyez entièrement satisfait(e) de vos achats. Si pour une raison quelconque
-          vous n’êtes pas satisfait(e) de votre commande, nous offrons une politique de retour simple et transparente.
-        </p>
+        <p>{t("return.intro")}</p>
       </section>
 
       <section style={{ marginBottom: "1.5rem" }}>
-        <h2>Conditions de retour</h2>
+        <h2>{t("return.conditionsTitle")}</h2>
         <ul style={{ paddingLeft: "1.5rem" }}>
-          <li>Les retours sont acceptés dans un délai de <strong>7 jours</strong> après la réception de votre commande.</li>
-          <li>Les articles doivent être dans leur état d’origine, non portés, non lavés et avec toutes les étiquettes attachées.</li>
-          <li>Les articles soldés ou personnalisés ne sont pas éligibles au retour.</li>
+          <li>{t("return.condition1")}</li>
+          <li>{t("return.condition2")}</li>
+          <li>{t("return.condition3")}</li>
         </ul>
       </section>
 
       <section style={{ marginBottom: "1.5rem" }}>
-        <h2>Processus de retour</h2>
+        <h2>{t("return.processTitle")}</h2>
         <ol style={{ paddingLeft: "1.5rem" }}>
-          <li>Contactez notre service client à <a href="mailto:numa7433@gmail.com">numa7433@gmail.com</a> ou via WhatsApp au <a href="https://wa.me/2250700247693" target="_blank" rel="noopener noreferrer">0700247693</a> pour notifier le retour.</li>
-          <li>Indiquez votre numéro de commande et le(s) article(s) à retourner.</li>
-          <li>Emballez soigneusement les articles et envoyez-les à notre adresse : Abidjan, Côte d’Ivoire.</li>
+          <li>
+            {t("return.process1")}{" "}
+            <a href="mailto:numa7433@gmail.com">numa7433@gmail.com</a>{" "}
+            {t("return.or")}{" "}
+            <a
+              href="https://wa.me/2250700247693"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              0700247693
+            </a>
+          </li>
+          <li>{t("return.process2")}</li>
+          <li>{t("return.process3")}</li>
         </ol>
       </section>
 
       <section style={{ marginBottom: "1.5rem" }}>
-        <h2>Remboursements</h2>
-        <p>
-          Une fois votre retour reçu et vérifié, nous vous informerons par email et procéderons au remboursement via le même moyen de paiement
-          utilisé lors de l’achat. Le remboursement sera effectué dans un délai de <strong>5 à 7 jours ouvrables</strong>.
-        </p>
+        <h2>{t("return.refundTitle")}</h2>
+        <p>{t("return.refundText")}</p>
       </section>
 
       <section style={{ marginBottom: "1.5rem" }}>
-        <h2>Articles endommagés ou incorrects</h2>
-        <p>
-          Si vous recevez un article endommagé ou incorrect, contactez immédiatement notre service client pour que nous puissions corriger le problème
-          rapidement, sans frais supplémentaires pour vous.
-        </p>
+        <h2>{t("return.issueTitle")}</h2>
+        <p>{t("return.issueText")}</p>
       </section>
 
       <section>
         <p style={{ fontStyle: "italic" }}>
-          Chez Numa, votre satisfaction est notre priorité. Nous nous engageons à rendre vos achats agréables, sûrs et sans stress.
+          {t("return.conclusion")}
         </p>
       </section>
     </div>

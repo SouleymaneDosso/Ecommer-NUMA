@@ -3,7 +3,7 @@ import styled from "styled-components";
 import { Link } from "react-router-dom";
 import { FiChevronRight } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
-
+import HeroModal from "../../components/HeroModal";
 /* ---------------------- STYLES ---------------------- */
 const Wrapper = styled.div`
   display: flex;
@@ -337,6 +337,8 @@ export default function Home() {
   const sliderDouble = [...heroProducts, ...heroProducts];
 
   return (
+     <>
+     <HeroModal apiUrl={import.meta.env.VITE_API_URL} />
     <Wrapper>
       {/* HERO */}
       <Hero>
@@ -428,5 +430,6 @@ export default function Home() {
             ))}
       </ProductGrid>
     </Wrapper>
+    </>
   );
 }

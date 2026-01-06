@@ -35,7 +35,6 @@ import PaiementSemiManuel from "./pages/PaiementSemiManuel";
 import Merci from "./pages/Merci";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
-import HeroModal from "./components/HeroModal";
 import Erreur from "./components/Erreur";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -51,7 +50,6 @@ const PublicLayout = ({ children }) => {
   return (
     <>
       <ScrollToTop />
-      <HeroModal apiUrl={import.meta.env.VITE_API_URL} />
       <Header />
       <main>{children}</main>
       <Footer />
