@@ -22,6 +22,7 @@ const ModalOverlay = styled.div`
   justify-content: center;
   z-index: 999;
   padding: 1rem;
+  overflow-y: auto; /* scroll si modal trop grand */
 `;
 
 /* =======================
@@ -29,15 +30,21 @@ const ModalOverlay = styled.div`
 ======================= */
 const ModalContent = styled.div`
   background: #fff;
-  width: min(92vw, 620px);
-  max-height: 90vh;
-  padding: 1.2rem;
+  width: min(92vw, 500px); /* largeur max sur mobile */
+  max-height: 85vh; /* modal visible sur mobile */
+  padding: 2rem 1.5rem 1.5rem 1.5rem; /* padding confortable */
   border-radius: 14px;
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  overflow-y: auto;
+  margin: auto; /* centre verticalement */
+  overflow: hidden;
+
+  @media (max-width: 480px) {
+    width: 90vw;
+    padding: 1.5rem 1rem;
+  }
 `;
 
 /* =======================
@@ -45,13 +52,26 @@ const ModalContent = styled.div`
 ======================= */
 const CloseButton = styled.button`
   position: absolute;
-  top: 10px;
-  right: 10px;
-  background: none;
+  top: 12px;
+  right: 12px;
+  background: rgba(0,0,0,0.05);
   border: none;
   font-size: 24px;
   cursor: pointer;
   color: #000;
+  z-index: 10;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  @media (max-width: 480px) {
+    width: 32px;
+    height: 32px;
+    font-size: 20px;
+  }
 `;
 
 /* =======================
@@ -60,12 +80,13 @@ const CloseButton = styled.button`
 const SliderContainer = styled.div`
   width: 100%;
   overflow: hidden;
+  display: flex;
+  justify-content: center; /* centre horizontalement */
 `;
 
 const SlideRow = styled.div`
   display: flex;
   gap: 12px;
-  width: max-content;
   animation: ${scroll} linear infinite;
   animation-duration: ${({ $duration }) => $duration}s;
 `;
@@ -74,15 +95,15 @@ const SlideRow = styled.div`
    Image
 ======================= */
 const Slide = styled.img`
-  width: clamp(160px, 60vw, 280px);
-  aspect-ratio: 3 / 4;
+  width: clamp(120px, 40vw, 200px); /* images plus petites sur mobile */
+  max-height: 60vh; /* limiter hauteur pour modal mobile */
   object-fit: cover;
   border-radius: 12px;
   flex-shrink: 0;
 
   @media (max-width: 480px) {
-    width: 72vw;
-    aspect-ratio: 4 / 5;
+    width: 70vw;
+    max-height: 50vh;
   }
 `;
 
@@ -96,6 +117,11 @@ const NewsletterLink = styled.a`
   text-decoration: underline;
   cursor: pointer;
   font-weight: 600;
+  font-size: 0.95rem;
+
+  @media (max-width: 480px) {
+    font-size: 0.9rem;
+  }
 `;
 
 /* =======================
