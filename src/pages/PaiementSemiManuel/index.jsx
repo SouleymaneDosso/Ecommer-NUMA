@@ -1,11 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import styled, { keyframes } from "styled-components";
 import { FaCheckCircle, FaRegCircle } from "react-icons/fa";
-import { useContext } from "react";
 import { PanierContext } from "../../Utils/Context";
 
-/* ===== ANIMATION ===== */
+/* ===== ANIMATIONS ===== */
 const spin = keyframes`to { transform: rotate(360deg); }`;
 
 /* ===== STYLES ===== */
@@ -192,7 +191,121 @@ const PaymentNumber = styled.div`
   font-size: 1.1rem;
 `;
 
-/* ===== COMPONENT ===== */
+/* ===== MODAL ===== */
+const ModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+`;
+
+const ModalContent = styled.div`
+  background: #fff;
+  padding: 2rem;
+  border-radius: 16px;
+  max-width: 500px;
+  width: 90%;
+`;
+
+const CloseButton = styled.button`
+  background: #f3f3f3;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 1.2rem;
+  float: right;
+  cursor: pointer;
+`;
+
+/* ===== MINI TELEPHONE MOCK RESPONSIVE ===== */
+const PhoneMock = styled.div`
+  background: #1e293b;
+  border-radius: 8vw; /* arrondi responsive */
+  width: 90%;
+  max-width: 300px;
+  aspect-ratio: 0.55; /* ratio approximatif téléphone */
+  padding: 4%;
+  color: #fff;
+  font-family: "Courier New", monospace;
+  margin: 1rem auto;
+  position: relative;
+`;
+
+const Screen = styled.div`
+  background: #f3f4f6;
+  color: #111827;
+  border-radius: 8%;
+  padding: 4%;
+  height: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+  font-size: 0.9rem;
+`;
+
+const SMSLine = styled.p`
+  margin: 0.3rem 0;
+  word-break: break-word; /* éviter débordement */
+`;
+
+function PaymentModal({ isOpen, onClose }) {
+  if (!isOpen) return null;
+
+  return (
+    <ModalOverlay>
+      <ModalContent>
+        <CloseButton onClick={onClose}>×</CloseButton>
+        <h2>Comment payer ?</h2>
+        <ol>
+          <li>Choisissez votre service de paiement : Orange Money ou Wave.</li>
+          <li>
+            Envoyez le montant total ou en plusieurs étapes depuis votre
+            téléphone.
+          </li>
+          <li>
+            Récupérez la preuve de paiement : votre{" "}
+            <strong>numéro de dépôt</strong>, le <strong>montant envoyé</strong>
+            , et l'<strong>ID unique</strong> généré par Orange/Wave (reçu par
+            SMS ou dans l'application).
+          </li>
+          <li>
+            Remplissez le formulaire sur notre site avec ces informations.
+          </li>
+          <li>
+            Après soumission, un message{" "}
+            <strong>“Vérification en cours”</strong> apparaîtra dans votre
+            espace compte.
+          </li>
+          <li>
+            Une fois validé, le statut sera mis à jour. Si le paiement est
+            rejeté, le remboursement intégral sera effectué.
+          </li>
+        </ol>
+
+        <h3>Exemple visuel de SMS :</h3>
+        <PhoneMock>
+          <Screen>
+            <SMSLine>De: Wave/Orange</SMSLine>
+            <SMSLine>Numéro de dépôt: 0700247693</SMSLine>
+            <SMSLine>Montant: 10 000 FCFA</SMSLine>
+            <SMSLine>ID transaction: 4F3A9B12</SMSLine>
+            <SMSLine>Date: 06/01/2026</SMSLine>
+          </Screen>
+        </PhoneMock>
+
+        <p>
+          L'<strong>ID transaction</strong> est unique et permet de vérifier
+          votre paiement.
+        </p>
+      </ModalContent>
+    </ModalOverlay>
+  );
+}
+
+/* ===== COMPONENT PRINCIPAL ===== */
 export default function PaiementSemiManuel() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -206,9 +319,11 @@ export default function PaiementSemiManuel() {
   const [service, setService] = useState("orange");
   const [step, setStep] = useState(1);
   const [token, setToken] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+
   const { toutSupprimer } = useContext(PanierContext);
 
-  // ✅ Sécuriser la page avec token
+  // Vérifier token
   useEffect(() => {
     const savedToken = localStorage.getItem("token");
     if (!savedToken) {
@@ -256,7 +371,7 @@ export default function PaiementSemiManuel() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // ✅ token sécurisé
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           step,
@@ -300,7 +415,14 @@ export default function PaiementSemiManuel() {
     <Page>
       <Title>Paiement Semi-Manuel</Title>
 
-      {/* WAVE & ORANGE */}
+      <Button
+        onClick={() => setModalOpen(true)}
+        style={{ marginBottom: "1rem" }}
+      >
+        Comment payer ?
+      </Button>
+      <PaymentModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
+
       <PaymentCards>
         <PaymentCard>
           <PaymentLogo src="/logosorange.png" alt="Orange Money" />
@@ -312,7 +434,6 @@ export default function PaiementSemiManuel() {
         </PaymentCard>
       </PaymentCards>
 
-      {/* Récapitulatif */}
       <Box>
         <h2>Récapitulatif de la commande</h2>
         {commande.panier.map((item) => (
@@ -335,7 +456,6 @@ export default function PaiementSemiManuel() {
         </Line>
       </Box>
 
-      {/* Formulaire */}
       <Box>
         <h2>Soumettre votre paiement</h2>
         <form onSubmit={handlePaiement}>
@@ -352,7 +472,7 @@ export default function PaiementSemiManuel() {
             onChange={(e) => setMontantEnvoye(e.target.value)}
           />
           <Input
-            placeholder="Référence du paiement"
+            placeholder="Référence / ID de paiement"
             value={reference}
             onChange={(e) => setReference(e.target.value)}
           />
@@ -373,7 +493,7 @@ export default function PaiementSemiManuel() {
               <option
                 key={p.step}
                 value={p.step}
-                disabled={p.status === "PAID"} // ✅ désactive les étapes déjà payées
+                disabled={p.status === "PAID"}
               >
                 Étape {p.step} {p.status === "PAID" ? "(Déjà payée)" : ""}
               </option>
@@ -413,7 +533,6 @@ export default function PaiementSemiManuel() {
         </form>
       </Box>
 
-      {/* Timeline des paiements */}
       <Box>
         <h2>Étapes de paiement</h2>
         <ProgressBar>
