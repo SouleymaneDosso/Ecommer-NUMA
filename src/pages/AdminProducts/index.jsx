@@ -215,6 +215,7 @@ function AdminProducts() {
   // ===============================
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (
       !title ||
       !description ||
@@ -225,6 +226,7 @@ function AdminProducts() {
       return;
     }
 
+    // Préparer l'objet stock par variation
     const stockObj = {};
     colors.forEach((color) => {
       stockObj[color] = {};
@@ -233,6 +235,9 @@ function AdminProducts() {
       });
     });
 
+    // -----------------------------
+    // FormData
+    // -----------------------------
     const formData = new FormData();
     formData.append("title", title);
     formData.append("description", description);
@@ -247,16 +252,15 @@ function AdminProducts() {
     formData.append("mainImageIndex", mainImageIndex);
     formData.append("imagesToDelete", JSON.stringify(imagesToDelete));
 
-    const allImages = [
-      ...existingImages,
-      ...newImages.map((file) => ({ file })),
-    ];
-    allImages.forEach((img) => {
-      if (img.file) formData.append("images", img.file);
-    });
+    // SEULEMENT les nouvelles images
+    newImages.forEach((file) => formData.append("images", file));
 
+    // -----------------------------
+    // Envoi vers le backend
+    // -----------------------------
     try {
       let res, data;
+
       if (editingProductId) {
         res = await fetch(
           `${import.meta.env.VITE_API_URL}/api/produits/${editingProductId}`,
@@ -280,6 +284,8 @@ function AdminProducts() {
         if (!res.ok) return alert(data.message || "Erreur lors de l'ajout");
         alert("Produit ajouté !");
       }
+
+      // Réinitialiser le formulaire et refetch
       resetForm();
       fetchProducts();
     } catch (err) {
