@@ -216,14 +216,14 @@ function AdminProducts() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // ✅ Vérification des champs obligatoires
     if (
       !title ||
       !description ||
       !price ||
       existingImages.length + newImages.length === 0
     ) {
-      alert("Tous les champs sont obligatoires !");
-      return;
+      return alert("Tous les champs sont obligatoires !");
     }
 
     // Préparer l'objet stock par variation
@@ -250,9 +250,11 @@ function AdminProducts() {
     formData.append("badge", badge);
     formData.append("hero", hero);
     formData.append("mainImageIndex", mainImageIndex);
+
+    // ✅ Images à supprimer
     formData.append("imagesToDelete", JSON.stringify(imagesToDelete));
 
-    // SEULEMENT les nouvelles images
+    // ✅ Nouvelles images
     newImages.forEach((file) => formData.append("images", file));
 
     // -----------------------------
@@ -270,46 +272,27 @@ function AdminProducts() {
             body: formData,
           }
         );
-        data = await res.json();
-        if (!res.ok)
-          return alert(data.message || "Erreur lors de la modification");
-        alert("Produit modifié !");
       } else {
         res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits`, {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
           body: formData,
         });
-        data = await res.json();
-        if (!res.ok) return alert(data.message || "Erreur lors de l'ajout");
-        alert("Produit ajouté !");
       }
 
-      // Réinitialiser le formulaire et refetch
+      data = await res.json();
+      if (!res.ok)
+        return alert(data.message || "Erreur lors de l'ajout ou modification");
+
+      alert(editingProductId ? "Produit modifié !" : "Produit ajouté !");
+
+      // Réinitialiser formulaire et refetch
       resetForm();
       fetchProducts();
     } catch (err) {
       console.error(err);
       alert("Erreur serveur");
     }
-  };
-
-  const resetForm = () => {
-    setTitle("");
-    setDescription("");
-    setPrice("");
-    setColors([]);
-    setSizes([]);
-    setStock({});
-    setExistingImages([]);
-    setImagesToDelete([]);
-    setNewImages([]);
-    setMainImageIndex(null);
-    setGenre("homme");
-    setCategorie("haut");
-    setBadge(null);
-    setHero(false);
-    setEditingProductId(null);
   };
 
   // ===============================
