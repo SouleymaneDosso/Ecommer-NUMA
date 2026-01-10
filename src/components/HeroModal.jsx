@@ -31,7 +31,7 @@ const ModalOverlay = styled.div`
 const ModalContent = styled.div`
   background: #fff;
   width: min(92vw, 500px); /* largeur max sur mobile */
-  max-height: 85vh; /* modal visible sur mobile */
+  max-height: 80vh; /* modal visible sur mobile */
   padding: 2rem 1.5rem 1.5rem 1.5rem; /* padding confortable */
   border-radius: 14px;
   position: relative;

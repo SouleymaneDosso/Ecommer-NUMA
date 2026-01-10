@@ -147,11 +147,15 @@ function AdminProducts() {
   // ===============================
   const handleNewImageChange = (e) => {
     const files = Array.from(e.target.files);
-    setNewImages(files);
+
+    setNewImages((prev) => [...prev, ...files]);
 
     if (mainImageIndex === null && existingImages.length + files.length > 0) {
       setMainImageIndex(0);
     }
+
+    // reset input pour permettre re-sélection
+    e.target.value = null;
   };
 
   // ===============================
