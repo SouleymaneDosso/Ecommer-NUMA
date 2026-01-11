@@ -127,6 +127,10 @@ function AdminProducts() {
   // FETCH PRODUITS
   // ===============================
   useEffect(() => {
+    if (!token) {
+      alert("Accès non autorisé");
+      return;
+    }
     fetchProducts();
   }, []);
 
@@ -148,13 +152,18 @@ function AdminProducts() {
   const handleNewImageChange = (e) => {
     const files = Array.from(e.target.files);
 
-    setNewImages((prev) => [...prev, ...files]);
+    const filesWithPreview = files.map((file) =>
+      Object.assign(file, {
+        preview: URL.createObjectURL(file),
+      })
+    );
+
+    setNewImages((prev) => [...prev, ...filesWithPreview]);
 
     if (mainImageIndex === null && existingImages.length + files.length > 0) {
       setMainImageIndex(0);
     }
 
-    // reset input pour permettre re-sélection
     e.target.value = null;
   };
 
@@ -194,21 +203,32 @@ function AdminProducts() {
   const handleDeleteNewImage = (idx) => {
     const globalIdx = existingImages.length + idx;
 
+    // 🔥 libération mémoire
+    URL.revokeObjectURL(newImages[idx].preview);
+
     const updatedNewImages = newImages.filter((_, i) => i !== idx);
     setNewImages(updatedNewImages);
 
     if (mainImageIndex === globalIdx) {
-      // image principale supprimée
       if (existingImages.length + updatedNewImages.length > 0) {
         setMainImageIndex(0);
       } else {
         setMainImageIndex(null);
       }
     } else if (mainImageIndex > globalIdx) {
-      // image supprimée avant l'image principale
       setMainImageIndex(mainImageIndex - 1);
     }
   };
+
+  useEffect(() => {
+    return () => {
+      newImages.forEach((img) => {
+        if (img.preview) {
+          URL.revokeObjectURL(img.preview);
+        }
+      });
+    };
+  }, [newImages]);
 
   // ===============================
   // SUBMIT PRODUIT
@@ -320,8 +340,12 @@ function AdminProducts() {
     setImagesToDelete([]);
     setNewImages([]);
 
-    const mainIdx = p.images?.findIndex((i) => i.isMain);
-    setMainImageIndex(mainIdx !== -1 ? mainIdx : 0);
+    if (p.images?.length > 0) {
+      const mainIdx = p.images.findIndex((i) => i.isMain);
+      setMainImageIndex(mainIdx !== -1 ? mainIdx : 0);
+    } else {
+      setMainImageIndex(null);
+    }
   };
 
   // ===============================
@@ -392,6 +416,31 @@ function AdminProducts() {
   // ===============================
   // RENDER
   // ===============================
+
+  const resetForm = () => {
+    newImages.forEach((img) => {
+      if (img.preview) {
+        URL.revokeObjectURL(img.preview);
+      }
+    });
+
+    setTitle("");
+    setDescription("");
+    setPrice("");
+    setColors([]);
+    setSizes([]);
+    setStock({});
+    setExistingImages([]);
+    setImagesToDelete([]);
+    setNewImages([]);
+    setMainImageIndex(null);
+    setGenre("homme");
+    setCategorie("haut");
+    setBadge(null);
+    setHero(false);
+    setEditingProductId(null);
+  };
+
   return (
     <Container>
       <Title>Admin Produits</Title>
@@ -500,6 +549,7 @@ function AdminProducts() {
                 $isMain={idx === mainImageIndex}
                 onClick={() => setMainImageIndex(idx)}
               />
+
               <Button
                 style={{
                   position: "absolute",
@@ -528,10 +578,11 @@ function AdminProducts() {
           {newImages.map((img, idx) => (
             <div key={idx} style={{ position: "relative" }}>
               <ImagePreview
-                src={URL.createObjectURL(img)}
+                src={img.preview}
                 $isMain={existingImages.length + idx === mainImageIndex}
                 onClick={() => setMainImageIndex(existingImages.length + idx)}
               />
+
               <Button
                 type="button"
                 style={{
