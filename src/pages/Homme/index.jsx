@@ -6,7 +6,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { LoaderWrapper, Loader } from "../../Utils/Rotate";
 import { ThemeContext } from "../../Utils/Context";
 import { keyframes } from "styled-components";
-/* ===== STYLES PAGE ===== */
+
 const PageWrapper = styled.main`
   padding: 2rem 4%;
   display: flex;
@@ -159,6 +159,9 @@ export default function Homme() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
+  const [filter, setFilter] = useState(() => {
+    return localStorage.getItem("filterHomme") || "tout";
+  });
 
   // Helper pour image principale
   const getMainImage = (p) =>
@@ -172,7 +175,7 @@ export default function Homme() {
       .then((res) => res.json())
       .then((data) => {
         const valid = data.filter(
-          (p) => p && p.images?.length && p.genre === "homme"
+          (p) => p && p.images?.length && p.genre === "homme",
         );
         setProducts(valid);
         // Preload images
@@ -184,8 +187,8 @@ export default function Homme() {
                 i.src = img.url;
                 i.onload = res;
                 i.onerror = res;
-              })
-          )
+              }),
+          ),
         );
         Promise.all(promises).then(() => setLoading(false));
       })
@@ -202,6 +205,10 @@ export default function Homme() {
     });
     setImageIndexes(initialIndexes);
   }, [products]);
+
+  useEffect(() => {
+    localStorage.setItem("filterHomme", filter);
+  }, [filter]);
 
   // Carousel automatique
   useEffect(() => {
@@ -227,7 +234,7 @@ export default function Homme() {
     })
       .then((res) => res.json())
       .then((data) =>
-        setFavorites(data.map((f) => f.productId?._id).filter(Boolean))
+        setFavorites(data.map((f) => f.productId?._id).filter(Boolean)),
       )
       .catch(console.error);
   }, [token]);
@@ -248,7 +255,7 @@ export default function Homme() {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ productId: id }),
-        }
+        },
       );
       const data = await res.json();
       if (res.ok) {
@@ -270,9 +277,42 @@ export default function Homme() {
   return (
     <PageWrapper onClick={() => setActiveCardId(null)} $isdark={$isdark}>
       <PageTitle>Collection Homme</PageTitle>
+      <div
+        style={{
+          display: "flex",
+          gap: "12px",
+          marginBottom: "20px",
+          flexWrap: "wrap",
+        }}
+      >
+        {["tout", "haut", "bas", "robe", "chaussure"].map((cat) => (
+          <button
+            key={cat}
+            onClick={() => setFilter(cat)}
+            style={{
+              padding: "8px 16px",
+              borderRadius: "20px",
+              border: "1px solid #000",
+              background: filter === cat ? "#000" : "transparent",
+              color: filter === cat ? "#fff" : "#000",
+              cursor: "pointer",
+              fontWeight: "600",
+            }}
+          >
+            {cat.toUpperCase()}
+          </button>
+        ))}
+      </div>
+
       <Grid>
         {products
-          .filter((p) => p && p._id) // filtrer les produits invalides
+          .filter(
+            (p) =>
+              p &&
+              p._id &&
+              (filter === "tout" ||
+                p.categorie?.toLowerCase().trim() === filter),
+          )
           .map((p) => {
             const pid = p._id;
             const isActive = activeCardId === pid;

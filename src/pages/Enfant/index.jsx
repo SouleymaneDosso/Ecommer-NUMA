@@ -146,6 +146,9 @@ export default function Enfant() {
   const [activeCardId, setActiveCardId] = useState(null);
   const [imageIndexes, setImageIndexes] = useState({});
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState(() => {
+    return localStorage.getItem("filterEnfant") || "tout";
+  });
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
@@ -153,13 +156,15 @@ export default function Enfant() {
     p.images?.find((img) => img.isMain)?.url ||
     p.images?.[0]?.url ||
     "/placeholder.jpg";
-
+  useEffect(() => {
+    localStorage.setItem("filterEnfant", filter);
+  }, [filter]);
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/api/produits`)
       .then((res) => res.json())
       .then((data) => {
         const valid = data.filter(
-          (p) => p && p._id && p.images?.length && p.genre === "enfant"
+          (p) => p && p._id && p.images?.length && p.genre === "enfant",
         );
         setProducts(valid);
 
@@ -171,8 +176,8 @@ export default function Enfant() {
                 i.src = img.url;
                 i.onload = res;
                 i.onerror = res;
-              })
-          )
+              }),
+          ),
         );
         Promise.all(promises).then(() => setLoading(false));
       })
@@ -201,7 +206,7 @@ export default function Enfant() {
     })
       .then((res) => res.json())
       .then((data) =>
-        setFavorites(data.map((f) => f.productId?._id).filter(Boolean))
+        setFavorites(data.map((f) => f.productId?._id).filter(Boolean)),
       )
       .catch(console.error);
   }, [token]);
@@ -232,7 +237,7 @@ export default function Enfant() {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ productId: id }),
-        }
+        },
       );
       const data = await res.json();
       if (res.ok) {
@@ -254,53 +259,87 @@ export default function Enfant() {
   return (
     <PageWrapper onClick={() => setActiveCardId(null)} $isdark={$isdark}>
       <PageTitle>Collection Enfant</PageTitle>
+      <div
+        style={{
+          display: "flex",
+          gap: "12px",
+          marginBottom: "20px",
+          flexWrap: "wrap",
+        }}
+      >
+        {["tout", "haut", "bas", "robe", "chaussure"].map((cat) => (
+          <button
+            key={cat}
+            onClick={() => setFilter(cat)}
+            style={{
+              padding: "8px 16px",
+              borderRadius: "20px",
+              border: "1px solid #000",
+              background: filter === cat ? "#000" : "transparent",
+              color: filter === cat ? "#fff" : "#000",
+              cursor: "pointer",
+              fontWeight: "600",
+            }}
+          >
+            {cat.toUpperCase()}
+          </button>
+        ))}
+      </div>
       <Grid>
-        {products.map((p) => {
-          const pid = p._id;
-          if (!pid) return null;
-          const isActive = activeCardId === pid;
-          const isFav = favorites.includes(pid);
+        {products
+          .filter(
+            (p) =>
+              p &&
+              p._id &&
+              (filter === "tout" ||
+                p.categorie?.toLowerCase().trim() === filter),
+          )
+          .map((p) => {
+            const pid = p._id;
+            if (!pid) return null;
+            const isActive = activeCardId === pid;
+            const isFav = favorites.includes(pid);
 
-          return (
-            <ProductCard
-              $isdark={$isdark}
-              key={pid}
-              onClick={(e) => {
-                e.stopPropagation();
-                setActiveCardId(isActive ? null : pid);
-              }}
-            >
-              <ProductImageWrapper>
-                <ProductImage
-                  src={p.images?.[imageIndexes[pid]]?.url || getMainImage(p)}
-                  alt={p.title}
-                />
+            return (
+              <ProductCard
+                $isdark={$isdark}
+                key={pid}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveCardId(isActive ? null : pid);
+                }}
+              >
+                <ProductImageWrapper>
+                  <ProductImage
+                    src={p.images?.[imageIndexes[pid]]?.url || getMainImage(p)}
+                    alt={p.title}
+                  />
 
-                {p.badge && <Badge type={p.badge}>{p.badge}</Badge>}
-                {isActive && (
-                  <ViewButton to={`/produit/${pid}`} $visible={true}>
-                    Voir produit
-                  </ViewButton>
-                )}
-              </ProductImageWrapper>
-              <CardContent>
-                <ProductTitle>{p.title}</ProductTitle>
-                <ActionWrapper>
-                  <ProductPrice>{p.price} FCFA</ProductPrice>
-                  <FavoriteButton
-                    $favorite={isFav}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleFavorite(pid);
-                    }}
-                  >
-                    {isFav ? <FaHeart /> : <FiHeart />}
-                  </FavoriteButton>
-                </ActionWrapper>
-              </CardContent>
-            </ProductCard>
-          );
-        })}
+                  {p.badge && <Badge type={p.badge}>{p.badge}</Badge>}
+                  {isActive && (
+                    <ViewButton to={`/produit/${pid}`} $visible={true}>
+                      Voir produit
+                    </ViewButton>
+                  )}
+                </ProductImageWrapper>
+                <CardContent>
+                  <ProductTitle>{p.title}</ProductTitle>
+                  <ActionWrapper>
+                    <ProductPrice>{p.price} FCFA</ProductPrice>
+                    <FavoriteButton
+                      $favorite={isFav}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleFavorite(pid);
+                      }}
+                    >
+                      {isFav ? <FaHeart /> : <FiHeart />}
+                    </FavoriteButton>
+                  </ActionWrapper>
+                </CardContent>
+              </ProductCard>
+            );
+          })}
       </Grid>
     </PageWrapper>
   );
