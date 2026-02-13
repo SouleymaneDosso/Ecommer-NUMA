@@ -368,7 +368,7 @@ export default function Home() {
       </Hero>
 
       {/* PROMO */}
-      <PromoBanner>{t("promoBanner")}</PromoBanner>
+      <PromoBanner>Code promo bientôt disponible</PromoBanner>
 
       {/* CATEGORIES */}
       <Categories>
