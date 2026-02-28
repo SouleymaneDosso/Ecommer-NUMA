@@ -2,92 +2,135 @@ import { useEffect, useState } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 
-// ---------- STYLES ----------
-const RecommendationsWrapper = styled.div`
-  margin-top: 3rem;
+/* =============================
+   GLOBAL WRAPPER
+============================= */
+
+const Section = styled.section`
+  width: 100%;
+  padding: 5rem 4rem;
+  background: #ffffff;
 `;
+
+const Container = styled.div`
+  max-width: 1400px;
+  margin: 0 auto;
+`;
+
+/* =============================
+   TITLE
+============================= */
+
+const Heading = styled.h2`
+  font-size: 1.4rem;
+  font-weight: 400;
+  letter-spacing: 2px;
+  margin-bottom: 3rem;
+  text-transform: uppercase;
+`;
+
+/* =============================
+   GRID
+============================= */
 
 const Grid = styled.div`
   display: grid;
-  gap: 2px;
-  grid-template-columns: repeat(3, 1fr);
-`;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 60px 40px;
 
-const RecommendationItem = styled.div`
-  position: relative; /* ✅ FIX CRUCIAL */
-  border-radius: 12px;
-  overflow: hidden;
-  background: #fff;
-  cursor: pointer;
-  transition: transform 0.35s ease, box-shadow 0.35s ease;
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
 
-  &:hover {
-    transform: translateY(-4px) scale(1.02);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
   }
 `;
 
+/* =============================
+   CARD
+============================= */
+
+const Card = styled.div`
+  cursor: pointer;
+  transition: transform 0.4s ease;
+
+  &:hover {
+    transform: translateY(-8px);
+  }
+`;
+
+/* =============================
+   IMAGE
+============================= */
+
 const ImageWrapper = styled.div`
-  position: relative; /* ✅ sécurité supplémentaire */
+  position: relative;
   width: 100%;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 3/4;
   overflow: hidden;
+  background: #f5f5f5;
 `;
 
 const Image = styled.img`
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.5s ease;
+  transition: transform 0.6s ease;
 
-  ${RecommendationItem}:hover & {
-    transform: scale(1.06);
+  ${Card}:hover & {
+    transform: scale(1.05);
   }
 `;
 
-const Overlay = styled.div`
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  padding: 0.8rem;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.65), transparent);
-  color: #fff;
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  pointer-events: none; /* empêche clic parasite */
-`;
-
-const Title = styled.h4`
-  font-size: 1.05rem;
-  font-weight: 700;
-  margin: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-`;
-
-const Price = styled.span`
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: black;
-`;
+/* =============================
+   BADGE
+============================= */
 
 const Badge = styled.span`
   position: absolute;
-  top: 8px;
-  left: 8px;
-  padding: 3px 8px;
-  border-radius: 10px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  background: ${({ type }) =>
-    type === "new" ? "#b9106a" : type === "promo" ? "#0be5f5" : "#000"};
-  color: #fff;
+  top: 14px;
+  left: 14px;
+  font-size: 0.65rem;
+  letter-spacing: 1px;
+  padding: 5px 10px;
+  border: 1px solid #111;
+  background: #ffffff;
+  color: #111;
 `;
 
-// ---------- COMPONENT ----------
+/* =============================
+   INFO
+============================= */
+
+const Info = styled.div`
+  margin-top: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+`;
+
+const ProductTitle = styled.h4`
+  font-size: 0.9rem;
+  font-weight: 400;
+  margin: 0;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+`;
+
+const Price = styled.span`
+  font-size: 0.9rem;
+  font-weight: 500;
+`;
+
+/* =============================
+   COMPONENT
+============================= */
+
 export default function Recommendations({ currentId }) {
   const [produits, setProduits] = useState([]);
   const navigate = useNavigate();
@@ -100,7 +143,9 @@ export default function Recommendations({ currentId }) {
         const res = await fetch(
           `${import.meta.env.VITE_API_URL}/api/produits/recommandations/${currentId}`
         );
+
         if (!res.ok) throw new Error("Erreur fetch recommandations");
+
         const data = await res.json();
         setProduits(data || []);
       } catch (err) {
@@ -113,36 +158,35 @@ export default function Recommendations({ currentId }) {
 
   if (!produits.length) return null;
 
-  const handleClick = (id) => navigate(`/produit/${id}`);
-
   return (
-    <RecommendationsWrapper>
-      <h3 style={{ fontSize: "1.8rem", fontWeight: 700, marginBottom: "1rem" }}>
-        Produits recommandés
-      </h3>
+    <Section>
+      <Container>
+        <Heading>Vous aimerez aussi</Heading>
 
-      <Grid>
-        {produits.map((p) => (
-          <RecommendationItem
-            key={p._id}
-            onClick={() => handleClick(p._id)}
-          >
-            <ImageWrapper>
-              <Image
-                src={p.images?.[0]?.url || "/placeholder.jpg"}
-                alt={p.title}
-              />
+        <Grid>
+          {produits.map((p) => (
+            <Card
+              key={p._id}
+              onClick={() => navigate(`/produit/${p._id}`)}
+            >
+              <ImageWrapper>
+                <Image
+                  src={p.images?.[0]?.url || "/placeholder.jpg"}
+                  alt={p.title}
+                />
+                {p.badge && (
+                  <Badge>{p.badge.toUpperCase()}</Badge>
+                )}
+              </ImageWrapper>
 
-              {p.badge && <Badge type={p.badge}>{p.badge}</Badge>}
-
-              <Overlay>
-                <Title>{p.title}</Title>
+              <Info>
+                <ProductTitle>{p.title}</ProductTitle>
                 <Price>{p.price.toLocaleString()} FCFA</Price>
-              </Overlay>
-            </ImageWrapper>
-          </RecommendationItem>
-        ))}
-      </Grid>
-    </RecommendationsWrapper>
+              </Info>
+            </Card>
+          ))}
+        </Grid>
+      </Container>
+    </Section>
   );
 }
