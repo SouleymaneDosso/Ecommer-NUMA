@@ -71,7 +71,7 @@ const Title = styled.h4`
 const Price = styled.span`
   font-size: 0.95rem;
   font-weight: 700;
-  color: #f59e0b;
+  color: black;
 `;
 
 const Badge = styled.span`
@@ -83,7 +83,7 @@ const Badge = styled.span`
   font-size: 0.7rem;
   font-weight: 700;
   background: ${({ type }) =>
-    type === "new" ? "#10b981" : type === "promo" ? "#f59e0b" : "#000"};
+    type === "new" ? "#b9106a" : type === "promo" ? "#0be5f5" : "#000"};
   color: #fff;
 `;
 

@@ -79,7 +79,7 @@ const UserName = styled.span`
 
 const Stars = styled.div`
   margin-top: 2px;
-  color: #f59e0b;
+  color: black;
   font-size: 0.9rem;
 `;
 
@@ -113,7 +113,7 @@ const Textarea = styled.textarea`
 
   &:focus {
     outline: none;
-    border-color: #007bff;
+    border-color: orange;
     box-shadow: 0 0 0 2px rgba(0,123,255,0.15);
   }
 `;
@@ -131,14 +131,14 @@ const Button = styled.button`
   padding: 10px 20px;
   border-radius: 8px;
   border: none;
-  background: #007bff;
+  background: black;
   color: #fff;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
 
   &:hover {
-    background: #0056b3;
+    background: black;
   }
 
   &:disabled {
