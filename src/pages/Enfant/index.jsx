@@ -1,11 +1,11 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useContext } from "react";
 import styled, { keyframes } from "styled-components";
 import { FiHeart, FiCheck } from "react-icons/fi";
 import { FaHeart } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { ThemeContext } from "../../Utils/Context";
 
-/* ================= ANIMATIONS ================= */
-
+/* ANIMATIONS */
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(15px); }
   to { opacity: 1; transform: translateY(0); }
@@ -16,12 +16,12 @@ const shimmer = keyframes`
   100% { background-position: 400px 0; }
 `;
 
-/* ================= STYLES ================= */
-
+/* STYLES */
 const PageWrapper = styled.main`
   padding: 3.6rem 6%;
-  background: #ffffff;
-  color: #111;
+  background: ${({ $isdark }) => ($isdark ? "#111" : "#fff")};
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
+  transition: background 0.3s ease, color 0.3s ease;
 `;
 
 const PageHeader = styled.div`
@@ -50,7 +50,7 @@ const ControlsWrapper = styled.div`
 const SearchInput = styled.input`
   padding: 10px 14px;
   border: 1px solid #dcdcdc;
-  font-size: 15px;
+  font-size: 16px;
   width: 220px;
   outline: none;
 
@@ -76,7 +76,8 @@ const FilterButton = styled.button`
   cursor: pointer;
   padding-bottom: 4px;
   border-bottom: ${({ $active }) =>
-    $active ? "2px solid #111" : "2px solid transparent"};
+    $active ? "2px solid currentColor" : "2px solid transparent"};
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
   font-weight: ${({ $active }) => ($active ? "600" : "400")};
   transition: 0.2s;
 
@@ -179,7 +180,8 @@ const ProductPrice = styled.div`
 const Gadget = styled.div`
   font-size: 0.5rem;
   padding: 3px 6px;
-  color: black;
+  background: #111;
+  color: white;
   letter-spacing: 1px;
   text-transform: uppercase;
 `;
@@ -215,11 +217,12 @@ const SkeletonCard = styled.div`
   animation: ${shimmer} 1.2s infinite linear;
 `;
 
-/* ================= COMPONENT ================= */
-
+/* COMPONENT */
 export default function Enfant() {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
+  const { theme } = useContext(ThemeContext);
+  const $isdark = theme === "light";
 
   const [products, setProducts] = useState([]);
   const [favorites, setFavorites] = useState([]);
@@ -230,7 +233,7 @@ export default function Enfant() {
   const [loading, setLoading] = useState(true);
   const [limit, setLimit] = useState(12);
 
-  /* CHARGER PRODUITS */
+  /* PRODUITS */
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/api/produits`)
       .then((res) => res.json())
@@ -326,7 +329,7 @@ export default function Enfant() {
   if (loading) return <SkeletonCard />;
 
   return (
-    <PageWrapper>
+    <PageWrapper $isdark={$isdark}>
       <PageHeader>
         <PageTitle>Collection Enfant</PageTitle>
 
@@ -342,6 +345,7 @@ export default function Enfant() {
               <FilterButton
                 key={cat}
                 $active={filter === cat}
+                $isdark={$isdark}
                 onClick={() => setFilter(cat)}
               >
                 {cat.toUpperCase()}

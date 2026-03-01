@@ -42,6 +42,16 @@ const StyledGlobalStyle = createGlobalStyle`
       $isDark ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.20)"};
     border-radius: 20px;
   }
+  ::-webkit-scrollbar-thumb:hover {
+    background: ${({ $isDark }) =>
+      $isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.35)"};
+  } 
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  } 
+input {
+  font-size: 16px;
+}
 `;
 
 function GlobalStyle() {
