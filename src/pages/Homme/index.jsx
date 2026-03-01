@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from "react";
 import styled, { keyframes } from "styled-components";
 import { FiHeart, FiCheck } from "react-icons/fi";
 import { FaHeart } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
 
 /* ================= ANIMATIONS ================= */
 
@@ -16,10 +15,10 @@ const shimmer = keyframes`
   100% { background-position: 400px 0; }
 `;
 
-/* ================= STYLES ================= */
+/* ================= STYLES GRID ZARA ================= */
 
 const PageWrapper = styled.main`
-  padding: 3rem 6%;
+  padding: 3rem 4%;
   background: #ffffff;
   color: #111;
 `;
@@ -34,28 +33,35 @@ const PageHeader = styled.div`
 `;
 
 const PageTitle = styled.h1`
-  font-size: 1.8rem;
+  font-size: 1.6rem;
   font-weight: 500;
-  letter-spacing: 2px;
+  letter-spacing: 1px;
   text-transform: uppercase;
+`;
+
+const SearchInput = styled.input`
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  font-size: 0.9rem;
+  width: 220px;
 `;
 
 const ControlsWrapper = styled.div`
   display: flex;
   align-items: center;
-  gap: 2rem;
+  gap: 1.5rem;
   flex-wrap: wrap;
 `;
 
 const FilterWrapper = styled.div`
   display: flex;
-  gap: 18px;
+  gap: 14px;
 `;
 
 const FilterButton = styled.button`
   background: none;
   border: none;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   letter-spacing: 1px;
   cursor: pointer;
   padding-bottom: 5px;
@@ -69,22 +75,14 @@ const FilterButton = styled.button`
   }
 `;
 
-const SortSelect = styled.select`
-  padding: 6px 10px;
-  font-size: 0.8rem;
-  border: 1px solid #ddd;
-  background: white;
-  cursor: pointer;
-`;
-
 const Grid = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 2rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.2rem;
 
-  @media (max-width: 1024px) {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.2rem;
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
   }
 `;
 
@@ -116,40 +114,39 @@ const ProductImage = styled.img`
 
 const Badge = styled.div`
   position: absolute;
-  top: 12px;
-  left: 12px;
-  padding: 5px 10px;
-  font-size: 0.7rem;
+  top: 8px;
+  left: 8px;
+  padding: 4px 7px;
+  font-size: 0.6rem;
   font-weight: 600;
-  background: ${({ type }) =>
-    type === "promo" ? "#111" : "#f3f3f3"};
-  color: ${({ type }) =>
-    type === "promo" ? "#fff" : "#111"};
+  background: white;
+  color: black;
   letter-spacing: 1px;
 `;
 
 const FavoriteButton = styled.button`
   position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 36px;
-  height: 36px;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   border: none;
-  background: rgba(255,255,255,0.9);
+  background: rgba(255,255,255,0.95);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  color: ${({ $favorite }) => ($favorite ? "#000" : "#777")};
 `;
 
 const CardContent = styled.div`
-  margin-top: 12px;
+  margin-top: 10px;
 `;
 
 const ProductTitle = styled.h2`
-  font-size: 0.9rem;
-  margin-bottom: 6px;
+  font-size: 0.85rem;
+  margin-bottom: 4px;
   font-weight: 400;
 `;
 
@@ -160,25 +157,35 @@ const PriceRow = styled.div`
 `;
 
 const ProductPrice = styled.div`
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 600;
 `;
 
 const Gadget = styled.div`
-  font-size: 0.7rem;
-  padding: 4px 8px;
+  font-size: 0.55rem;
+  padding: 3px 6px;
   background: #111;
   color: white;
   letter-spacing: 1px;
+  text-transform: uppercase;
 `;
 
 const Validation = styled.div`
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: #2e7d32;
   margin-top: 6px;
   display: flex;
   align-items: center;
   gap: 5px;
+`;
+
+const LoadMore = styled.button`
+  margin: 2rem auto 0;
+  padding: 10px 18px;
+  border: 1px solid #111;
+  background: #fff;
+  cursor: pointer;
+  font-weight: 500;
 `;
 
 const SkeletonCard = styled.div`
@@ -197,30 +204,30 @@ const SkeletonCard = styled.div`
 /* ================= COMPONENT ================= */
 
 export default function Homme() {
-  const navigate = useNavigate();
-
   const [products, setProducts] = useState([]);
+  const [favorites, setFavorites] = useState([]);
   const [imageIndexes, setImageIndexes] = useState({});
   const [filter, setFilter] = useState("tout");
   const [sort, setSort] = useState("default");
+  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [limit, setLimit] = useState(12);
 
+  const token = localStorage.getItem("token");
+
+  /* CHARGER PRODUITS */
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/api/produits`)
       .then((res) => res.json())
       .then((data) => {
-        const valid = data.filter(
-          (p) => p.images?.length && p.genre === "homme"
-        );
+        const valid = data.filter((p) => p.images?.length && p.genre === "homme");
 
         setProducts(valid);
 
         const indexes = {};
         valid.forEach((p) => {
-          const mainIndex =
-            p.images.findIndex((img) => img.isMain);
-          indexes[p._id] =
-            mainIndex >= 0 ? mainIndex : 0;
+          const mainIndex = p.images.findIndex((img) => img.isMain);
+          indexes[p._id] = mainIndex >= 0 ? mainIndex : 0;
         });
 
         setImageIndexes(indexes);
@@ -228,53 +235,90 @@ export default function Homme() {
       });
   }, []);
 
-  /* Rotation images */
+  /* FAVORIS */
+  useEffect(() => {
+    if (!token) return;
+
+    fetch(`${import.meta.env.VITE_API_URL}/api/favorites`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) =>
+        setFavorites(data.map((f) => f.productId?._id).filter(Boolean))
+      )
+      .catch(console.error);
+  }, [token]);
+
+  const toggleFavorite = async (id) => {
+    if (!token) return;
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/favorites/toggle`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ productId: id }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        if (data.active) setFavorites((prev) => [...prev, id]);
+        else setFavorites((prev) => prev.filter((f) => f !== id));
+      }
+    } catch (err) {
+      console.error("Erreur favoris :", err);
+    }
+  };
+
+  /* CAROUSEL */
   useEffect(() => {
     const interval = setInterval(() => {
       setImageIndexes((prev) => {
         const updated = { ...prev };
         products.forEach((p) => {
-          updated[p._id] =
-            ((prev[p._id] || 0) + 1) %
-            p.images.length;
+          updated[p._id] = ((prev[p._id] || 0) + 1) % p.images.length;
         });
         return updated;
       });
-    }, 1000);
+    }, 3000);
 
     return () => clearInterval(interval);
   }, [products]);
 
-  /* Filtrage + tri */
+  /* FILTRE + TRI + RECHERCHE */
   const filteredProducts = useMemo(() => {
     let filtered =
       filter === "tout"
         ? products
-        : products.filter(
-            (p) =>
-              p.categorie?.toLowerCase().trim() === filter
-          );
+        : products.filter((p) => p.categorie?.toLowerCase().trim() === filter);
 
-    if (sort === "asc")
-      filtered = [...filtered].sort(
-        (a, b) => a.price - b.price
-      );
-    if (sort === "desc")
-      filtered = [...filtered].sort(
-        (a, b) => b.price - a.price
+    if (search)
+      filtered = filtered.filter((p) =>
+        p.title.toLowerCase().includes(search.toLowerCase())
       );
 
-    return filtered;
-  }, [products, filter, sort]);
+    if (sort === "asc") filtered = [...filtered].sort((a, b) => a.price - b.price);
+    if (sort === "desc") filtered = [...filtered].sort((a, b) => b.price - a.price);
+
+    return filtered.slice(0, limit);
+  }, [products, filter, sort, search, limit]);
+
+  if (loading) return <SkeletonCard />;
 
   return (
     <PageWrapper>
       <PageHeader>
-        <PageTitle>
-          Collection Homme ({filteredProducts.length})
-        </PageTitle>
+        <PageTitle>Collection Homme</PageTitle>
 
         <ControlsWrapper>
+          <SearchInput
+            placeholder="Rechercher..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+
           <FilterWrapper>
             {["tout", "haut", "bas", "chaussure"].map((cat) => (
               <FilterButton
@@ -287,74 +331,64 @@ export default function Homme() {
             ))}
           </FilterWrapper>
 
-          <SortSelect
-            value={sort}
-            onChange={(e) => setSort(e.target.value)}
-          >
+          <select value={sort} onChange={(e) => setSort(e.target.value)}>
             <option value="default">Trier</option>
             <option value="asc">Prix croissant</option>
             <option value="desc">Prix décroissant</option>
-          </SortSelect>
+          </select>
         </ControlsWrapper>
       </PageHeader>
 
       <Grid>
-        {loading
-          ? Array(6).fill().map((_, i) => (
-              <SkeletonCard key={i} />
-            ))
-          : filteredProducts.map((p) => (
-              <ProductCard
-                key={p._id}
-                onClick={() =>
-                  navigate(`/produit/${p._id}`)
-                }
-              >
-                <ImageWrapper>
-                  {p.images.map((img, index) => (
-                    <ProductImage
-                      key={index}
-                      src={img.url}
-                      alt={p.title}
-                      loading="lazy"
-                      $active={
-                        imageIndexes[p._id] === index
-                      }
-                    />
-                  ))}
+        {filteredProducts.map((p) => {
+          const isFav = favorites.includes(p._id);
 
-                  {p.badge && (
-                    <Badge type={p.badge}>
-                      {p.badge.toUpperCase()}
-                    </Badge>
-                  )}
-                </ImageWrapper>
+          return (
+            <ProductCard key={p._id}>
+              <ImageWrapper>
+                {p.images.map((img, index) => (
+                  <ProductImage
+                    key={index}
+                    src={img.url}
+                    alt={p.title}
+                    loading="lazy"
+                    $active={imageIndexes[p._id] === index}
+                  />
+                ))}
 
-                <CardContent>
-                  <ProductTitle>
-                    {p.title}
-                  </ProductTitle>
+                {p.badge && <Badge>{p.badge}</Badge>}
 
-                  <PriceRow>
-                    <ProductPrice>
-                      {p.price} FCFA
-                    </ProductPrice>
+                <FavoriteButton
+                  $favorite={isFav}
+                  onClick={() => toggleFavorite(p._id)}
+                >
+                  {isFav ? <FaHeart /> : <FiHeart />}
+                </FavoriteButton>
+              </ImageWrapper>
 
-                    {p.gadget && (
-                      <Gadget>
-                        {p.gadget.toUpperCase()}
-                      </Gadget>
-                    )}
-                  </PriceRow>
+              <CardContent>
+                <ProductTitle>{p.title}</ProductTitle>
 
-                  <Validation>
-                    <FiCheck />
-                    Disponible
-                  </Validation>
-                </CardContent>
-              </ProductCard>
-            ))}
+                <PriceRow>
+                  <ProductPrice>{p.price} FCFA</ProductPrice>
+                  {p.gadget && <Gadget>{p.gadget}</Gadget>}
+                </PriceRow>
+
+                <Validation>
+                  <FiCheck />
+                  Disponible
+                </Validation>
+              </CardContent>
+            </ProductCard>
+          );
+        })}
       </Grid>
+
+      {filteredProducts.length >= limit && (
+        <LoadMore onClick={() => setLimit(limit + 12)}>
+          Voir plus
+        </LoadMore>
+      )}
     </PageWrapper>
   );
 }
