@@ -1,8 +1,9 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useContext } from "react";
 import styled, { keyframes } from "styled-components";
 import { FiHeart, FiCheck } from "react-icons/fi";
 import { FaHeart } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { ThemeContext } from "../../Utils/Context";
 
 /* ================= ANIMATIONS ================= */
 
@@ -16,12 +17,13 @@ const shimmer = keyframes`
   100% { background-position: 400px 0; }
 `;
 
-/* ================= STYLES PREMIUM ================= */
+/* ================= STYLES DARK MODE ================= */
 
 const PageWrapper = styled.main`
   padding: 3.8rem 6%;
-  background: #ffffff;
-  color: #111;
+  background: ${({ $isdark }) => ($isdark ? "#111" : "#fff")};
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
+  transition: background 0.3s ease, color 0.3s ease;
 `;
 
 const PageHeader = styled.div`
@@ -49,19 +51,28 @@ const ControlsWrapper = styled.div`
 
 const SearchInput = styled.input`
   padding: 10px 14px;
-  border: 1px solid #dcdcdc;
+  border: 1px solid ${({ $isdark }) => ($isdark ? "#444" : "#dcdcdc")};
+  background: ${({ $isdark }) => ($isdark ? "#222" : "#fff")};
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
   font-size: 16px;
   width: 230px;
   outline: none;
   transition: border 0.2s;
 
   &:focus {
-    border-color: #111;
+    border-color: ${({ $isdark }) => ($isdark ? "#666" : "#111")};
   }
 
   @media (max-width: 600px) {
     width: 100%;
   }
+`;
+
+const Select = styled.select`
+  padding: 8px;
+  background: ${({ $isdark }) => ($isdark ? "#222" : "#fff")};
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
+  border: 1px solid ${({ $isdark }) => ($isdark ? "#444" : "#ccc")};
 `;
 
 const FilterWrapper = styled.div`
@@ -77,8 +88,9 @@ const FilterButton = styled.button`
   cursor: pointer;
   padding-bottom: 4px;
   border-bottom: ${({ $active }) =>
-    $active ? "2px solid #111" : "2px solid transparent"};
+    $active ? "2px solid currentColor" : "2px solid transparent"};
   font-weight: ${({ $active }) => ($active ? "600" : "400")};
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
   transition: 0.25s;
 
   &:hover {
@@ -105,6 +117,9 @@ const ProductCard = styled.div`
   cursor: pointer;
   animation: ${fadeIn} 0.6s ease forwards;
   transition: transform 0.25s ease;
+  background: ${({ $isdark }) => ($isdark ? "#1a1a1a" : "#fff")};
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
+  border-radius: 8px;
 
   &:hover {
     transform: translateY(-4px);
@@ -116,7 +131,7 @@ const ImageWrapper = styled.div`
   width: 100%;
   aspect-ratio: 4/5;
   overflow: hidden;
-  background: #f6f6f6;
+  background: ${({ $isdark }) => ($isdark ? "#222" : "#f6f6f6")};
 `;
 
 const ProductImage = styled.img`
@@ -148,7 +163,7 @@ const FavoriteButton = styled.button`
   height: 32px;
   border-radius: 50%;
   border: none;
-  background: rgba(255,255,255,0.9);
+  background: rgba(255, 255, 255, 0.9);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -221,6 +236,8 @@ const SkeletonCard = styled.div`
 
 export default function Homme() {
   const navigate = useNavigate();
+  const { theme } = useContext(ThemeContext);
+  const $isdark = theme === "light";
 
   const [products, setProducts] = useState([]);
   const [favorites, setFavorites] = useState([]);
@@ -233,7 +250,6 @@ export default function Homme() {
 
   const token = localStorage.getItem("token");
 
-  /* CHARGER PRODUITS */
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/api/produits`)
       .then((res) => res.json())
@@ -256,7 +272,6 @@ export default function Homme() {
       .catch(console.error);
   }, []);
 
-  /* FAVORIS */
   useEffect(() => {
     if (!token) return;
 
@@ -293,7 +308,6 @@ export default function Homme() {
     }
   };
 
-  /* CAROUSEL */
   useEffect(() => {
     const interval = setInterval(() => {
       setImageIndexes((prev) => {
@@ -308,7 +322,6 @@ export default function Homme() {
     return () => clearInterval(interval);
   }, [products]);
 
-  /* FILTRE + TRI + RECHERCHE */
   const filteredProducts = useMemo(() => {
     let filtered =
       filter === "tout"
@@ -329,12 +342,13 @@ export default function Homme() {
   if (loading) return <SkeletonCard />;
 
   return (
-    <PageWrapper>
+    <PageWrapper $isdark={$isdark}>
       <PageHeader>
         <PageTitle>Collection Homme</PageTitle>
 
         <ControlsWrapper>
           <SearchInput
+            $isdark={$isdark}
             placeholder="Rechercher..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -345,6 +359,7 @@ export default function Homme() {
               <FilterButton
                 key={cat}
                 $active={filter === cat}
+                $isdark={$isdark}
                 onClick={() => setFilter(cat)}
               >
                 {cat.toUpperCase()}
@@ -352,11 +367,11 @@ export default function Homme() {
             ))}
           </FilterWrapper>
 
-          <select value={sort} onChange={(e) => setSort(e.target.value)}>
+          <Select $isdark={$isdark} value={sort} onChange={(e) => setSort(e.target.value)}>
             <option value="default">Trier</option>
             <option value="asc">Prix croissant</option>
             <option value="desc">Prix décroissant</option>
-          </select>
+          </Select>
         </ControlsWrapper>
       </PageHeader>
 
@@ -367,9 +382,10 @@ export default function Homme() {
           return (
             <ProductCard
               key={p._id}
+              $isdark={$isdark}
               onClick={() => navigate(`/produit/${p._id}`)}
             >
-              <ImageWrapper>
+              <ImageWrapper $isdark={$isdark}>
                 {p.images.map((img, index) => (
                   <ProductImage
                     key={index}

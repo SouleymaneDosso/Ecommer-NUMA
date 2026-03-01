@@ -134,8 +134,7 @@ const Badge = styled.div`
   padding: 3px 6px;
   font-size: 0.5rem;
   font-weight: 600;
-  background: #111;
-  color: #fff;
+  color: black;
   letter-spacing: 1px;
   text-transform: uppercase;
 `;
