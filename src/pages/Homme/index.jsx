@@ -197,7 +197,7 @@ const SkeletonCard = styled.div`
 
 /* ================= COMPONENT ================= */
 
-export default function Femme() {
+export default function Enfant() {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
@@ -208,28 +208,27 @@ export default function Femme() {
   const [sort, setSort] = useState("default");
   const [loading, setLoading] = useState(true);
 
-  /* FETCH PRODUITS */
+  /* CHARGER PRODUITS */
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/api/produits`)
       .then((res) => res.json())
       .then((data) => {
         const valid = data.filter(
-          (p) => p.images?.length && p.genre === "femme"
+          (p) => p.images?.length && p.genre === "enfant"
         );
 
         setProducts(valid);
 
         const indexes = {};
         valid.forEach((p) => {
-          const mainIndex =
-            p.images.findIndex((img) => img.isMain);
-          indexes[p._id] =
-            mainIndex >= 0 ? mainIndex : 0;
+          const mainIndex = p.images.findIndex((img) => img.isMain);
+          indexes[p._id] = mainIndex >= 0 ? mainIndex : 0;
         });
 
         setImageIndexes(indexes);
         setTimeout(() => setLoading(false), 600);
-      });
+      })
+      .catch(console.error);
   }, []);
 
   /* FAVORIS */
@@ -275,7 +274,7 @@ export default function Femme() {
     }
   };
 
-  /* ROTATION IMAGES */
+  /* CAROUSEL */
   useEffect(() => {
     const interval = setInterval(() => {
       setImageIndexes((prev) => {
@@ -286,12 +285,12 @@ export default function Femme() {
         });
         return updated;
       });
-    }, 1000);
+    }, 3000);
 
     return () => clearInterval(interval);
   }, [products]);
 
-  /* FILTRAGE + TRI */
+  /* FILTRE + TRI */
   const filteredProducts = useMemo(() => {
     let filtered =
       filter === "tout"
@@ -324,7 +323,7 @@ export default function Femme() {
     <PageWrapper>
       <PageHeader>
         <PageTitle>
-          Collection Femme ({filteredProducts.length})
+          Collection Enfant ({filteredProducts.length})
         </PageTitle>
 
         <ControlsWrapper>
@@ -371,9 +370,7 @@ export default function Femme() {
                     src={img.url}
                     alt={p.title}
                     loading="lazy"
-                    $active={
-                      imageIndexes[p._id] === index
-                    }
+                    $active={imageIndexes[p._id] === index}
                   />
                 ))}
 
