@@ -2,11 +2,12 @@ import { useState, useEffect, useMemo } from "react";
 import styled, { keyframes } from "styled-components";
 import { FiHeart, FiCheck } from "react-icons/fi";
 import { FaHeart } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 /* ================= ANIMATIONS ================= */
 
 const fadeIn = keyframes`
-  from { opacity: 0; transform: translateY(15px); }
+  from { opacity: 0; transform: translateY(18px); }
   to { opacity: 1; transform: translateY(0); }
 `;
 
@@ -15,10 +16,10 @@ const shimmer = keyframes`
   100% { background-position: 400px 0; }
 `;
 
-/* ================= STYLES GRID ZARA ================= */
+/* ================= STYLES PREMIUM ================= */
 
 const PageWrapper = styled.main`
-  padding: 3rem 4%;
+  padding: 3.8rem 6%;
   background: #ffffff;
   color: #111;
 `;
@@ -27,72 +28,86 @@ const PageHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2.5rem;
+  margin-bottom: 3rem;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 1.2rem;
 `;
 
 const PageTitle = styled.h1`
-  font-size: 1.6rem;
+  font-size: 1.55rem;
   font-weight: 500;
   letter-spacing: 1px;
   text-transform: uppercase;
 `;
 
-const SearchInput = styled.input`
-  padding: 8px 12px;
-  border: 1px solid #ccc;
-  font-size: 0.9rem;
-  width: 220px;
-`;
-
 const ControlsWrapper = styled.div`
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1.6rem;
   flex-wrap: wrap;
+`;
+
+const SearchInput = styled.input`
+  padding: 10px 14px;
+  border: 1px solid #dcdcdc;
+  font-size: 16px;
+  width: 230px;
+  outline: none;
+  transition: border 0.2s;
+
+  &:focus {
+    border-color: #111;
+  }
+
+  @media (max-width: 600px) {
+    width: 100%;
+  }
 `;
 
 const FilterWrapper = styled.div`
   display: flex;
-  gap: 14px;
+  gap: 12px;
 `;
 
 const FilterButton = styled.button`
   background: none;
   border: none;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   letter-spacing: 1px;
   cursor: pointer;
-  padding-bottom: 5px;
+  padding-bottom: 4px;
   border-bottom: ${({ $active }) =>
     $active ? "2px solid #111" : "2px solid transparent"};
   font-weight: ${({ $active }) => ($active ? "600" : "400")};
-  transition: 0.3s;
+  transition: 0.25s;
 
   &:hover {
-    opacity: 0.6;
+    opacity: 0.7;
   }
 `;
 
 const Grid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 1.2rem;
+  gap: 1.4rem;
 
-  @media (min-width: 1024px) {
+  @media (min-width: 900px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  @media (min-width: 1200px) {
     grid-template-columns: repeat(4, 1fr);
-    gap: 2rem;
+    gap: 2.2rem;
   }
 `;
 
 const ProductCard = styled.div`
   cursor: pointer;
   animation: ${fadeIn} 0.6s ease forwards;
-  transition: box-shadow 0.3s ease;
+  transition: transform 0.25s ease;
 
   &:hover {
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    transform: translateY(-4px);
   }
 `;
 
@@ -101,6 +116,7 @@ const ImageWrapper = styled.div`
   width: 100%;
   aspect-ratio: 4/5;
   overflow: hidden;
+  background: #f6f6f6;
 `;
 
 const ProductImage = styled.img`
@@ -109,19 +125,19 @@ const ProductImage = styled.img`
   height: 100%;
   object-fit: cover;
   opacity: ${({ $active }) => ($active ? 1 : 0)};
-  transition: opacity 0.5s ease-in-out;
+  transition: opacity 0.4s ease;
 `;
 
 const Badge = styled.div`
   position: absolute;
   top: 8px;
   left: 8px;
-  padding: 4px 7px;
-  font-size: 0.6rem;
+  padding: 3px 6px;
+  font-size: 0.5rem;
   font-weight: 600;
-  background: white;
   color: black;
   letter-spacing: 1px;
+  text-transform: uppercase;
 `;
 
 const FavoriteButton = styled.button`
@@ -132,7 +148,7 @@ const FavoriteButton = styled.button`
   height: 32px;
   border-radius: 50%;
   border: none;
-  background: rgba(255,255,255,0.95);
+  background: rgba(255,255,255,0.9);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -145,9 +161,9 @@ const CardContent = styled.div`
 `;
 
 const ProductTitle = styled.h2`
-  font-size: 0.85rem;
-  margin-bottom: 4px;
+  font-size: 0.82rem;
   font-weight: 400;
+  margin-bottom: 6px;
 `;
 
 const PriceRow = styled.div`
@@ -162,7 +178,7 @@ const ProductPrice = styled.div`
 `;
 
 const Gadget = styled.div`
-  font-size: 0.55rem;
+  font-size: 0.52rem;
   padding: 3px 6px;
   background: #111;
   color: white;
@@ -180,8 +196,8 @@ const Validation = styled.div`
 `;
 
 const LoadMore = styled.button`
-  margin: 2rem auto 0;
-  padding: 10px 18px;
+  margin: 2.8rem auto 0;
+  padding: 11px 20px;
   border: 1px solid #111;
   background: #fff;
   cursor: pointer;
@@ -204,6 +220,8 @@ const SkeletonCard = styled.div`
 /* ================= COMPONENT ================= */
 
 export default function Homme() {
+  const navigate = useNavigate();
+
   const [products, setProducts] = useState([]);
   const [favorites, setFavorites] = useState([]);
   const [imageIndexes, setImageIndexes] = useState({});
@@ -220,7 +238,9 @@ export default function Homme() {
     fetch(`${import.meta.env.VITE_API_URL}/api/produits`)
       .then((res) => res.json())
       .then((data) => {
-        const valid = data.filter((p) => p.images?.length && p.genre === "homme");
+        const valid = data.filter(
+          (p) => p.images?.length && p.genre === "homme"
+        );
 
         setProducts(valid);
 
@@ -231,8 +251,9 @@ export default function Homme() {
         });
 
         setImageIndexes(indexes);
-        setTimeout(() => setLoading(false), 600);
-      });
+        setTimeout(() => setLoading(false), 500);
+      })
+      .catch(console.error);
   }, []);
 
   /* FAVORIS */
@@ -282,7 +303,7 @@ export default function Homme() {
         });
         return updated;
       });
-    }, 3000);
+    }, 3200);
 
     return () => clearInterval(interval);
   }, [products]);
@@ -344,7 +365,10 @@ export default function Homme() {
           const isFav = favorites.includes(p._id);
 
           return (
-            <ProductCard key={p._id}>
+            <ProductCard
+              key={p._id}
+              onClick={() => navigate(`/produit/${p._id}`)}
+            >
               <ImageWrapper>
                 {p.images.map((img, index) => (
                   <ProductImage
@@ -360,7 +384,10 @@ export default function Homme() {
 
                 <FavoriteButton
                   $favorite={isFav}
-                  onClick={() => toggleFavorite(p._id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleFavorite(p._id);
+                  }}
                 >
                   {isFav ? <FaHeart /> : <FiHeart />}
                 </FavoriteButton>
