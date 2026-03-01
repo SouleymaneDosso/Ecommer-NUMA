@@ -11,6 +11,7 @@ const Wrapper = styled.section`
   margin-top: 5rem;
   padding-top: 3rem;
   border-top: 1px solid #eee;
+  width: 100%;
 `;
 
 const Heading = styled.h3`
@@ -34,6 +35,7 @@ const CommentCard = styled.div`
 const Avatar = styled.div`
   width: 44px;
   height: 44px;
+  min-width: 44px;
   border-radius: 50%;
   background: #f4f4f4;
   display: flex;
@@ -44,6 +46,7 @@ const Avatar = styled.div`
 
 const Content = styled.div`
   flex: 1;
+  min-width: 0;
 `;
 
 const TopRow = styled.div`
@@ -70,7 +73,7 @@ const Stars = styled.div`
 
 const Message = styled.p`
   margin-top: 8px;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   line-height: 1.6;
   color: #444;
 `;
@@ -84,20 +87,28 @@ const Form = styled.form`
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  width: 100%;
 
-  @media (min-width: 600px) {
+  @media (min-width: 768px) {
     flex-direction: row;
-    align-items: flex-start;
+    align-items: stretch;
   }
 `;
 
-const Textarea = styled.textarea`
+const InputContainer = styled.div`
   flex: 1;
+  width: 100%;
+`;
+
+const Textarea = styled.textarea`
+  width: 100%;
+  box-sizing: border-box;
   border: 1px solid #ddd;
   padding: 14px;
-  font-size: 0.9rem;
+  font-size: 16px; /* IMPORTANT anti-zoom mobile */
   resize: vertical;
-  min-height: 90px;
+  min-height: 100px;
+  background: #fff;
 
   &:focus {
     outline: none;
@@ -108,10 +119,12 @@ const Textarea = styled.textarea`
 const StarSelector = styled.div`
   display: flex;
   gap: 6px;
-  margin-top: 6px;
+  margin-top: 10px;
 `;
 
 const Button = styled.button`
+  min-width: 140px;
+  white-space: nowrap;
   padding: 14px 24px;
   border: 1px solid #111;
   background: #111;
@@ -189,7 +202,6 @@ export default function Comments({ commentaires = [], produitId, userId }) {
     <Wrapper>
       <Heading>Commentaires ({commentList.length})</Heading>
 
-      {/* LISTE COMMENTAIRES */}
       {commentList.map((c, i) => (
         <CommentCard key={i}>
           <Avatar>
@@ -220,18 +232,16 @@ export default function Comments({ commentaires = [], produitId, userId }) {
 
       {/* FORMULAIRE */}
       <Form onSubmit={handleSubmit}>
-        <div style={{ flex: 1 }}>
+        <InputContainer>
           <Textarea
             placeholder="Écrire un commentaire..."
             value={texte}
             onChange={(e) => setTexte(e.target.value)}
           />
 
-          {/* ÉTOILES INTERACTIVES */}
           <StarSelector>
             {[...Array(5)].map((_, index) => {
               const ratingValue = index + 1;
-
               return (
                 <FiStar
                   key={index}
@@ -249,7 +259,7 @@ export default function Comments({ commentaires = [], produitId, userId }) {
               );
             })}
           </StarSelector>
-        </div>
+        </InputContainer>
 
         <Button type="submit" disabled={loading}>
           {loading ? "Envoi..." : "Publier"}

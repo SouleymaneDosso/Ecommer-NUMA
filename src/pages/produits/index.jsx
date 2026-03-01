@@ -41,7 +41,7 @@ const ProductDetails = styled.div`
   min-width: 300px;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.2rem;
 `;
 
 const ProductTitle = styled.h1`
@@ -52,10 +52,6 @@ const ProductTitle = styled.h1`
 const ProductPrice = styled.span`
   font-size: 1.4rem;
   font-weight: 700;
-`;
-
-const Description = styled.p`
-  font-size: 1rem;
 `;
 
 const Badge = styled.span`
@@ -87,6 +83,7 @@ export default function Produit() {
           `${import.meta.env.VITE_API_URL}/api/produits/${id}`
         );
         if (!res.ok) throw new Error("Erreur fetch produit");
+
         const data = await res.json();
         setProduit(data);
         setSelectedSize(data.tailles?.[0] || null);
@@ -96,6 +93,7 @@ export default function Produit() {
         setLoading(false);
       }
     }
+
     fetchProduit();
   }, [id]);
 
@@ -133,6 +131,27 @@ export default function Produit() {
       ]
     : [];
 
+  // MESSAGE WHATSAPP DYNAMIQUE
+  const message = `
+Bonjour 👋
+
+Je souhaite commander ce produit :
+
+🛍 Produit : ${produit.title}
+💰 Prix : ${produit.price} FCFA
+🎨 Couleur : ${selectedColor || "Non spécifiée"}
+📏 Taille : ${selectedSize || "Non spécifiée"}
+🔢 Quantité : ${quantity}
+
+🔗 Lien : ${window.location.origin}/produit/${produit._id}
+
+Merci.
+`;
+
+  const whatsappLink = `https://wa.me/2250700247693?text=${encodeURIComponent(
+    message
+  )}`;
+
   return (
     <PageWrapper>
       <BackLink onClick={() => window.history.back()}>
@@ -154,9 +173,15 @@ export default function Produit() {
           </div>
 
           <ProductPrice>{produit.price} FCFA</ProductPrice>
+
           <ProductDescription
             description={produit.description}
             quantity={quantity}
+            productName={produit.title}
+            price={produit.price}
+            selectedColor={selectedColor}
+            selectedSize={selectedSize}
+            productUrl={`${window.location.origin}/produit/${produit._id}`}
           />
 
           <AddToCartBar

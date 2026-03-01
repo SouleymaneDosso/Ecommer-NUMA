@@ -229,7 +229,7 @@ export default function ProductImages({ images = [] }) {
             title={item.title}
             ref={(el) => (slidesRef.current[i] = el)}
           >
-            <LogoOverlay>PRADA</LogoOverlay>
+            <LogoOverlay>NUMA</LogoOverlay>
             <ProductImage
               src={item.url}
               alt={item.title || `Produit ${i + 1}`}
