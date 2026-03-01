@@ -1,234 +1,257 @@
-import { useState, useEffect, useContext } from "react";
-import styled from "styled-components";
-import { FiHeart } from "react-icons/fi";
+import { useState, useEffect, useMemo } from "react";
+import styled, { keyframes } from "styled-components";
+import { FiHeart, FiCheck } from "react-icons/fi";
 import { FaHeart } from "react-icons/fa";
-import { Link, useNavigate } from "react-router-dom";
-import { LoaderWrapper, Loader } from "../../Utils/Rotate";
-import { ThemeContext } from "../../Utils/Context";
-import { keyframes } from "styled-components";
-/* ===== STYLES PAGE ===== */
+import { useNavigate } from "react-router-dom";
+
+/* ================= ANIMATIONS ================= */
+
+const fadeIn = keyframes`
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
+
+const shimmer = keyframes`
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+`;
+
+/* ================= STYLES ================= */
+
 const PageWrapper = styled.main`
-  padding: 2rem 4%;
+  padding: 3rem 6%;
+  background: #ffffff;
+  color: #111;
+`;
+
+const PageHeader = styled.div`
   display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  background: ${({ $isdark }) => ($isdark ? "#111" : "#fff")};
-  color: ${({ $isdark }) => ($isdark ? "#fff" : "#000")};
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
 `;
+
 const PageTitle = styled.h1`
-  font-size: 2rem;
-  font-weight: 700;
+  font-size: 1.8rem;
+  font-weight: 500;
+  letter-spacing: 2px;
+  text-transform: uppercase;
 `;
+
+const ControlsWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+`;
+
+const FilterWrapper = styled.div`
+  display: flex;
+  gap: 18px;
+`;
+
+const FilterButton = styled.button`
+  background: none;
+  border: none;
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+  cursor: pointer;
+  padding-bottom: 5px;
+  border-bottom: ${({ $active }) =>
+    $active ? "2px solid #111" : "2px solid transparent"};
+  font-weight: ${({ $active }) => ($active ? "600" : "400")};
+  transition: 0.3s;
+
+  &:hover {
+    opacity: 0.6;
+  }
+`;
+
+const SortSelect = styled.select`
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  border: 1px solid #ddd;
+  background: white;
+  cursor: pointer;
+`;
+
 const Grid = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-  @media (max-width: 768px) {
+  gap: 2rem;
+
+  @media (max-width: 1024px) {
     grid-template-columns: repeat(2, 1fr);
+    gap: 1.2rem;
   }
 `;
+
 const ProductCard = styled.div`
-  position: relative;
-  border-radius: 5px;
-  overflow: hidden;
-  background: ${({ $isdark }) => ($isdark ? "#1e1e1e" : "#fff")};
-  box-shadow: ${({ $isdark }) =>
-    $isdark ? "0 4px 20px rgba(0,0,0,0.3)" : "0 4px 20px rgba(0,0,0,0.05)"};
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 16px;
+  cursor: pointer;
+  animation: ${fadeIn} 0.6s ease forwards;
+  transition: box-shadow 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  }
 `;
-const ProductImageWrapper = styled.div`
+
+const ImageWrapper = styled.div`
   position: relative;
   width: 100%;
-  padding-top: 100%;
+  aspect-ratio: 4/5;
   overflow: hidden;
 `;
+
 const ProductImage = styled.img`
   position: absolute;
-  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  opacity: ${({ $active }) => ($active ? 1 : 0)};
+  transition: opacity 0.5s ease-in-out;
 `;
+
 const Badge = styled.div`
   position: absolute;
   top: 12px;
   left: 12px;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: white;
-  background-color: ${({ type }) => (type === "new" ? "#2563eb" : "#ef4444")};
-  text-transform: uppercase;
-`;
-const CardContent = styled.div`
-  padding: 12px 14px;
-`;
-const ProductTitle = styled.h2`
-  font-size: 1rem;
+  padding: 5px 10px;
+  font-size: 0.7rem;
   font-weight: 600;
+  background: ${({ type }) =>
+    type === "promo" ? "#111" : "#f3f3f3"};
+  color: ${({ type }) =>
+    type === "promo" ? "#fff" : "#111"};
+  letter-spacing: 1px;
 `;
-const ProductPrice = styled.span`
-  font-size: 0.95rem;
-  font-weight: 700;
+
+const FavoriteButton = styled.button`
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: ${({ $favorite }) => ($favorite ? "#ef4444" : "#aaa")};
 `;
-const ActionWrapper = styled.div`
+
+const CardContent = styled.div`
+  margin-top: 12px;
+`;
+
+const ProductTitle = styled.h2`
+  font-size: 0.9rem;
+  margin-bottom: 6px;
+  font-weight: 400;
+`;
+
+const PriceRow = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
 `;
-const ViewButton = styled(Link)`
-  position: absolute;
-  bottom: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 6px 12px;
-  border-radius: 8px;
-  text-decoration: none;
+
+const ProductPrice = styled.div`
+  font-size: 1rem;
   font-weight: 600;
-  font-size: 0.85rem;
-  background: #007bff;
+`;
+
+const Gadget = styled.div`
+  font-size: 0.7rem;
+  padding: 4px 8px;
+  background: #111;
   color: white;
-  opacity: ${({ $visible }) => ($visible ? 1 : 0)};
-  pointer-events: ${({ $visible }) => ($visible ? "auto" : "none")};
-  transition: all 0.3s ease;
-`;
-const pop = keyframes`
-  0% { transform: scale(1); }
-  30% { transform: scale(1.4); }
-  50% { transform: scale(0.9); }
-  70% { transform: scale(1.2); }
-  100% { transform: scale(1); }
-`;
-const burst = keyframes`
-  0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
-  100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+  letter-spacing: 1px;
 `;
 
-const FavoriteButton = styled.button`
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font-size: 1.5rem;
-  color: ${({ $favorite }) => ($favorite ? "#ef4444" : "#aaa")};
-  transition:
-    color 0.3s ease,
-    transform 0.3s ease;
-
-  &:active {
-    animation: ${pop} 0.5s ease forwards;
-  }
-  position: relative;
-  overflow: visible;
-
-  &:active::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 100px;
-    height: 100px;
-    background: radial-gradient(circle, #ef4444 20%, transparent 20%);
-    border-radius: 50%;
-    transform: translate(-50%, -50%) scale(0);
-    animation: ${burst} 0.5s forwards;
-  }
+const Validation = styled.div`
+  font-size: 0.75rem;
+  color: #2e7d32;
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 `;
 
-/* ===== COMPONENT ===== */
+const SkeletonCard = styled.div`
+  aspect-ratio: 4/5;
+  background: linear-gradient(
+    to right,
+    #f0f0f0 0%,
+    #e0e0e0 20%,
+    #f0f0f0 40%,
+    #f0f0f0 100%
+  );
+  background-size: 800px 100%;
+  animation: ${shimmer} 1.2s infinite linear;
+`;
+
+/* ================= COMPONENT ================= */
+
 export default function Femme() {
-  const { theme } = useContext(ThemeContext);
-  const $isdark = theme === "light";
-  const [products, setProducts] = useState([]);
-  const [favorites, setFavorites] = useState([]);
-  const [activeCardId, setActiveCardId] = useState(null);
-  const [imageIndexes, setImageIndexes] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState(() => {
-    return localStorage.getItem("filterFemme") || "tout";
-  });
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
-  const getMainImage = (p) =>
-    p.images?.find((img) => img.isMain)?.url ||
-    p.images?.[0]?.url ||
-    "/placeholder.jpg";
+  const [products, setProducts] = useState([]);
+  const [favorites, setFavorites] = useState([]);
+  const [imageIndexes, setImageIndexes] = useState({});
+  const [filter, setFilter] = useState("tout");
+  const [sort, setSort] = useState("default");
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    localStorage.setItem("filterFemme", filter);
-  }, [filter]);
-
+  /* FETCH PRODUITS */
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/api/produits`)
       .then((res) => res.json())
       .then((data) => {
         const valid = data.filter(
-          (p) => p && p._id && p.images?.length && p.genre === "femme",
+          (p) => p.images?.length && p.genre === "femme"
         );
+
         setProducts(valid);
 
-        const promises = valid.flatMap((p) =>
-          p.images.map(
-            (img) =>
-              new Promise((res) => {
-                const i = new Image();
-                i.src = img.url;
-                i.onload = res;
-                i.onerror = res;
-              }),
-          ),
-        );
-        Promise.all(promises).then(() => setLoading(false));
-      })
-      .catch(console.error);
+        const indexes = {};
+        valid.forEach((p) => {
+          const mainIndex =
+            p.images.findIndex((img) => img.isMain);
+          indexes[p._id] =
+            mainIndex >= 0 ? mainIndex : 0;
+        });
+
+        setImageIndexes(indexes);
+        setTimeout(() => setLoading(false), 600);
+      });
   }, []);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setImageIndexes((prev) => {
-        const updated = { ...prev };
-        products.forEach((p) => {
-          if (!p?._id) return;
-          const current = prev[p._id] || 0;
-          updated[p._id] = (current + 1) % (p.images?.length || 1);
-        });
-        return updated;
-      });
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [products]);
-
+  /* FAVORIS */
   useEffect(() => {
     if (!token) return;
+
     fetch(`${import.meta.env.VITE_API_URL}/api/favorites`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
       .then((data) =>
-        setFavorites(data.map((f) => f.productId?._id).filter(Boolean)),
+        setFavorites(data.map((f) => f.productId?._id).filter(Boolean))
       )
       .catch(console.error);
   }, [token]);
-
-  useEffect(() => {
-    if (!products.length) return;
-    const initialIndexes = {};
-    products.forEach((p) => {
-      if (!p?._id) return;
-      const mainIndex = p.images?.findIndex((img) => img.isMain);
-      initialIndexes[p._id] = mainIndex >= 0 ? mainIndex : 0;
-    });
-    setImageIndexes(initialIndexes);
-  }, [products]);
 
   const toggleFavorite = async (id) => {
     if (!token) {
       navigate("/compte");
       return;
     }
+
     try {
       const res = await fetch(
         `${import.meta.env.VITE_API_URL}/api/favorites/toggle`,
@@ -239,8 +262,9 @@ export default function Femme() {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ productId: id }),
-        },
+        }
       );
+
       const data = await res.json();
       if (res.ok) {
         if (data.active) setFavorites((prev) => [...prev, id]);
@@ -251,98 +275,143 @@ export default function Femme() {
     }
   };
 
+  /* ROTATION IMAGES */
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setImageIndexes((prev) => {
+        const updated = { ...prev };
+        products.forEach((p) => {
+          updated[p._id] =
+            ((prev[p._id] || 0) + 1) % p.images.length;
+        });
+        return updated;
+      });
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [products]);
+
+  /* FILTRAGE + TRI */
+  const filteredProducts = useMemo(() => {
+    let filtered =
+      filter === "tout"
+        ? products
+        : products.filter(
+            (p) =>
+              p.categorie?.toLowerCase().trim() === filter
+          );
+
+    if (sort === "asc")
+      filtered = [...filtered].sort(
+        (a, b) => a.price - b.price
+      );
+    if (sort === "desc")
+      filtered = [...filtered].sort(
+        (a, b) => b.price - a.price
+      );
+
+    return filtered;
+  }, [products, filter, sort]);
+
   if (loading)
     return (
-      <LoaderWrapper>
-        <Loader />
-      </LoaderWrapper>
+      <div style={{ padding: "3rem" }}>
+        <SkeletonCard />
+      </div>
     );
 
   return (
-    <PageWrapper onClick={() => setActiveCardId(null)} $isdark={$isdark}>
-      <PageTitle>Collection Femme</PageTitle>
-      <div
-        style={{
-          display: "flex",
-          gap: "12px",
-          marginBottom: "20px",
-          flexWrap: "wrap",
-        }}
-      >
-        {["tout", "haut", "bas", "robe", "chaussure"].map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setFilter(cat)}
-            style={{
-              padding: "8px 16px",
-              borderRadius: "20px",
-              border: "1px solid #000",
-              background: filter === cat ? "#000" : "transparent",
-              color: filter === cat ? "#fff" : "#000",
-              cursor: "pointer",
-              fontWeight: "600",
-            }}
+    <PageWrapper>
+      <PageHeader>
+        <PageTitle>
+          Collection Femme ({filteredProducts.length})
+        </PageTitle>
+
+        <ControlsWrapper>
+          <FilterWrapper>
+            {["tout", "haut", "bas", "robe", "chaussure"].map(
+              (cat) => (
+                <FilterButton
+                  key={cat}
+                  $active={filter === cat}
+                  onClick={() => setFilter(cat)}
+                >
+                  {cat.toUpperCase()}
+                </FilterButton>
+              )
+            )}
+          </FilterWrapper>
+
+          <SortSelect
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
           >
-            {cat.toUpperCase()}
-          </button>
-        ))}
-      </div>
+            <option value="default">Trier</option>
+            <option value="asc">Prix croissant</option>
+            <option value="desc">Prix décroissant</option>
+          </SortSelect>
+        </ControlsWrapper>
+      </PageHeader>
+
       <Grid>
-        {products
-          .filter(
-            (p) =>
-              p &&
-              p._id &&
-              (filter === "tout" ||
-                p.categorie?.toLowerCase().trim() === filter),
-          )
+        {filteredProducts.map((p) => {
+          const isFav = favorites.includes(p._id);
 
-          .map((p) => {
-            const pid = p._id;
-            if (!pid) return null;
-            const isActive = activeCardId === pid;
-            const isFav = favorites.includes(pid);
-
-            return (
-              <ProductCard
-                $isdark={$isdark}
-                key={pid}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setActiveCardId(isActive ? null : pid);
-                }}
-              >
-                <ProductImageWrapper>
+          return (
+            <ProductCard
+              key={p._id}
+              onClick={() =>
+                navigate(`/produit/${p._id}`)
+              }
+            >
+              <ImageWrapper>
+                {p.images.map((img, index) => (
                   <ProductImage
-                    src={p.images?.[imageIndexes[pid]]?.url || getMainImage(p)}
+                    key={index}
+                    src={img.url}
                     alt={p.title}
+                    loading="lazy"
+                    $active={
+                      imageIndexes[p._id] === index
+                    }
                   />
+                ))}
 
-                  {p.badge && <Badge type={p.badge}>{p.badge}</Badge>}
-                  {isActive && (
-                    <ViewButton to={`/produit/${pid}`} $visible={true}>
-                      Voir produit
-                    </ViewButton>
+                {p.badge && (
+                  <Badge type={p.badge}>
+                    {p.badge.toUpperCase()}
+                  </Badge>
+                )}
+
+                <FavoriteButton
+                  $favorite={isFav}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleFavorite(p._id);
+                  }}
+                >
+                  {isFav ? <FaHeart /> : <FiHeart />}
+                </FavoriteButton>
+              </ImageWrapper>
+
+              <CardContent>
+                <ProductTitle>{p.title}</ProductTitle>
+
+                <PriceRow>
+                  <ProductPrice>{p.price} FCFA</ProductPrice>
+                  {p.gadget && (
+                    <Gadget>{p.gadget.toUpperCase()}</Gadget>
                   )}
-                </ProductImageWrapper>
-                <CardContent>
-                  <ProductTitle>{p.title}</ProductTitle>
-                  <ActionWrapper>
-                    <ProductPrice>{p.price} FCFA</ProductPrice>
-                    <FavoriteButton
-                      $favorite={isFav}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleFavorite(pid);
-                      }}
-                    >
-                      {isFav ? <FaHeart /> : <FiHeart />}
-                    </FavoriteButton>
-                  </ActionWrapper>
-                </CardContent>
-              </ProductCard>
-            );
-          })}
+                </PriceRow>
+
+                <Validation>
+                  <FiCheck />
+                  Disponible
+                </Validation>
+              </CardContent>
+            </ProductCard>
+          );
+        })}
       </Grid>
     </PageWrapper>
   );
