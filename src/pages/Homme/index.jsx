@@ -20,7 +20,7 @@ const shimmer = keyframes`
 /* ================= STYLES DARK MODE ================= */
 
 const PageWrapper = styled.main`
-  padding: 3.8rem 6%;
+  padding-bottom: 3.8rem 6%;
   background: ${({ $isdark }) => ($isdark ? "#111" : "#fff")};
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
   transition: background 0.3s ease, color 0.3s ease;
@@ -101,20 +101,22 @@ const FilterButton = styled.button`
 const Grid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 1.4rem;
+  gap: 0.rem;
 
   @media (min-width: 900px) {
     grid-template-columns: repeat(3, 1fr);
+    gap: 0.1rem;
   }
 
   @media (min-width: 1200px) {
     grid-template-columns: repeat(4, 1fr);
-    gap: 2.2rem;
+    gap: 0.1rem;
   }
 `;
 
 const ProductCard = styled.div`
   cursor: pointer;
+  width: 100%;
   animation: ${fadeIn} 0.6s ease forwards;
   transition: transform 0.25s ease;
   background: ${({ $isdark }) => ($isdark ? "#1a1a1a" : "#fff")};

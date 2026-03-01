@@ -18,7 +18,7 @@ const shimmer = keyframes`
 
 /* STYLES */
 const PageWrapper = styled.main`
-  padding: 3.6rem 6%;
+  padding-bottom: 3.6rem 6%;
   background: ${({ $isdark }) => ($isdark ? "#111" : "#fff")};
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
   transition: background 0.3s ease, color 0.3s ease;
@@ -89,7 +89,7 @@ const FilterButton = styled.button`
 const Grid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 1.4rem;
+ 
 
   @media (min-width: 900px) {
     grid-template-columns: repeat(3, 1fr);
