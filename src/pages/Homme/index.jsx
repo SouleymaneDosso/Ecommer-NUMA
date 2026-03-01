@@ -141,7 +141,6 @@ const FavoriteButton = styled.button`
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: ${({ $favorite }) => ($favorite ? "#ef4444" : "#aaa")};
 `;
 
 const CardContent = styled.div`
@@ -197,100 +196,56 @@ const SkeletonCard = styled.div`
 
 /* ================= COMPONENT ================= */
 
-export default function Enfant() {
+export default function Homme() {
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
 
   const [products, setProducts] = useState([]);
-  const [favorites, setFavorites] = useState([]);
   const [imageIndexes, setImageIndexes] = useState({});
   const [filter, setFilter] = useState("tout");
   const [sort, setSort] = useState("default");
   const [loading, setLoading] = useState(true);
 
-  /* CHARGER PRODUITS */
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/api/produits`)
       .then((res) => res.json())
       .then((data) => {
         const valid = data.filter(
-          (p) => p.images?.length && p.genre === "enfant"
+          (p) => p.images?.length && p.genre === "homme"
         );
 
         setProducts(valid);
 
         const indexes = {};
         valid.forEach((p) => {
-          const mainIndex = p.images.findIndex((img) => img.isMain);
-          indexes[p._id] = mainIndex >= 0 ? mainIndex : 0;
+          const mainIndex =
+            p.images.findIndex((img) => img.isMain);
+          indexes[p._id] =
+            mainIndex >= 0 ? mainIndex : 0;
         });
 
         setImageIndexes(indexes);
         setTimeout(() => setLoading(false), 600);
-      })
-      .catch(console.error);
+      });
   }, []);
 
-  /* FAVORIS */
-  useEffect(() => {
-    if (!token) return;
-
-    fetch(`${import.meta.env.VITE_API_URL}/api/favorites`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
-      .then((data) =>
-        setFavorites(data.map((f) => f.productId?._id).filter(Boolean))
-      )
-      .catch(console.error);
-  }, [token]);
-
-  const toggleFavorite = async (id) => {
-    if (!token) {
-      navigate("/compte");
-      return;
-    }
-
-    try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/favorites/toggle`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ productId: id }),
-        }
-      );
-
-      const data = await res.json();
-      if (res.ok) {
-        if (data.active) setFavorites((prev) => [...prev, id]);
-        else setFavorites((prev) => prev.filter((f) => f !== id));
-      }
-    } catch (err) {
-      console.error("Erreur favoris :", err);
-    }
-  };
-
-  /* CAROUSEL */
+  /* Rotation images */
   useEffect(() => {
     const interval = setInterval(() => {
       setImageIndexes((prev) => {
         const updated = { ...prev };
         products.forEach((p) => {
           updated[p._id] =
-            ((prev[p._id] || 0) + 1) % p.images.length;
+            ((prev[p._id] || 0) + 1) %
+            p.images.length;
         });
         return updated;
       });
-    }, 3000);
+    }, 1000);
 
     return () => clearInterval(interval);
   }, [products]);
 
-  /* FILTRE + TRI */
+  /* Filtrage + tri */
   const filteredProducts = useMemo(() => {
     let filtered =
       filter === "tout"
@@ -312,33 +267,24 @@ export default function Enfant() {
     return filtered;
   }, [products, filter, sort]);
 
-  if (loading)
-    return (
-      <div style={{ padding: "3rem" }}>
-        <SkeletonCard />
-      </div>
-    );
-
   return (
     <PageWrapper>
       <PageHeader>
         <PageTitle>
-          Collection Enfant ({filteredProducts.length})
+          Collection Homme ({filteredProducts.length})
         </PageTitle>
 
         <ControlsWrapper>
           <FilterWrapper>
-            {["tout", "haut", "bas", "robe", "chaussure"].map(
-              (cat) => (
-                <FilterButton
-                  key={cat}
-                  $active={filter === cat}
-                  onClick={() => setFilter(cat)}
-                >
-                  {cat.toUpperCase()}
-                </FilterButton>
-              )
-            )}
+            {["tout", "haut", "bas", "chaussure"].map((cat) => (
+              <FilterButton
+                key={cat}
+                $active={filter === cat}
+                onClick={() => setFilter(cat)}
+              >
+                {cat.toUpperCase()}
+              </FilterButton>
+            ))}
           </FilterWrapper>
 
           <SortSelect
@@ -353,62 +299,61 @@ export default function Enfant() {
       </PageHeader>
 
       <Grid>
-        {filteredProducts.map((p) => {
-          const isFav = favorites.includes(p._id);
+        {loading
+          ? Array(6).fill().map((_, i) => (
+              <SkeletonCard key={i} />
+            ))
+          : filteredProducts.map((p) => (
+              <ProductCard
+                key={p._id}
+                onClick={() =>
+                  navigate(`/produit/${p._id}`)
+                }
+              >
+                <ImageWrapper>
+                  {p.images.map((img, index) => (
+                    <ProductImage
+                      key={index}
+                      src={img.url}
+                      alt={p.title}
+                      loading="lazy"
+                      $active={
+                        imageIndexes[p._id] === index
+                      }
+                    />
+                  ))}
 
-          return (
-            <ProductCard
-              key={p._id}
-              onClick={() =>
-                navigate(`/produit/${p._id}`)
-              }
-            >
-              <ImageWrapper>
-                {p.images.map((img, index) => (
-                  <ProductImage
-                    key={index}
-                    src={img.url}
-                    alt={p.title}
-                    loading="lazy"
-                    $active={imageIndexes[p._id] === index}
-                  />
-                ))}
-
-                {p.badge && (
-                  <Badge type={p.badge}>
-                    {p.badge.toUpperCase()}
-                  </Badge>
-                )}
-
-                <FavoriteButton
-                  $favorite={isFav}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleFavorite(p._id);
-                  }}
-                >
-                  {isFav ? <FaHeart /> : <FiHeart />}
-                </FavoriteButton>
-              </ImageWrapper>
-
-              <CardContent>
-                <ProductTitle>{p.title}</ProductTitle>
-
-                <PriceRow>
-                  <ProductPrice>{p.price} FCFA</ProductPrice>
-                  {p.gadget && (
-                    <Gadget>{p.gadget.toUpperCase()}</Gadget>
+                  {p.badge && (
+                    <Badge type={p.badge}>
+                      {p.badge.toUpperCase()}
+                    </Badge>
                   )}
-                </PriceRow>
+                </ImageWrapper>
 
-                <Validation>
-                  <FiCheck />
-                  Disponible
-                </Validation>
-              </CardContent>
-            </ProductCard>
-          );
-        })}
+                <CardContent>
+                  <ProductTitle>
+                    {p.title}
+                  </ProductTitle>
+
+                  <PriceRow>
+                    <ProductPrice>
+                      {p.price} FCFA
+                    </ProductPrice>
+
+                    {p.gadget && (
+                      <Gadget>
+                        {p.gadget.toUpperCase()}
+                      </Gadget>
+                    )}
+                  </PriceRow>
+
+                  <Validation>
+                    <FiCheck />
+                    Disponible
+                  </Validation>
+                </CardContent>
+              </ProductCard>
+            ))}
       </Grid>
     </PageWrapper>
   );
