@@ -2,8 +2,12 @@ import styled from "styled-components";
 import { useContext, useEffect, useState } from "react";
 import { PanierContext } from "../Utils/Context";
 import { useNavigate } from "react-router-dom";
+import { FiCheck } from "react-icons/fi";
 
-// ---------- COLOR MAP ----------
+/* ============================
+   COLOR MAP
+============================ */
+
 const colorMap = {
   blanc: "#ffffff",
   noir: "#000000",
@@ -30,91 +34,112 @@ const colorMap = {
   gold: "#ffd700",
 };
 
-// ---------- STYLES ----------
+/* ============================
+   STYLES
+============================ */
+
 const ActionWrapper = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  margin-top: 1.5rem;
+  gap: 1.2rem;
+  margin-top: 1.8rem;
 `;
 
 const Row = styled.div`
   display: flex;
-  gap: 0.75rem;
-  align-items: center;
+  gap: 0.7rem;
   flex-wrap: wrap;
 `;
 
 const Label = styled.span`
   font-weight: 600;
   font-size: 0.9rem;
+  letter-spacing: 0.2px;
 `;
 
 const ColorCircle = styled.button`
-  width: 30px;
-  height: 30px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  border: ${({ $active }) => ($active ? "2px solid #000" : "1px solid #ccc")};
+  border: ${({ $active }) => ($active ? "2px solid #000" : "1px solid #ddd")};
   background: ${({ color }) => color};
   cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
   opacity: ${({ disabled }) => (disabled ? 0.4 : 1)};
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: scale(1.05);
+  }
 `;
 
 const SizeButton = styled.button`
-  padding: 10px;
-  min-width: 44px;
-  border-radius: 6px;
-  border: ${({ $active }) => ($active ? "2px solid #000" : "1px solid #ccc")};
-  background: ${({ disabled }) => (disabled ? "#f5f5f5" : "#fff")};
+  padding: 10px 14px;
+  min-width: 48px;
+  border-radius: 8px;
+  border: ${({ $active }) => ($active ? "2px solid #000" : "1px solid #ddd")};
+  background: ${({ disabled }) => (disabled ? "#f7f7f7" : "#fff")};
   cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
   font-weight: 600;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: ${({ disabled }) => (disabled ? "#f7f7f7" : "#000")};
+    color: ${({ disabled }) => (disabled ? "#555" : "#fff")};
+  }
 `;
 
 const QuantitySelect = styled.select`
-  width: 80px;
+  width: 90px;
   padding: 8px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-weight: 600;
 `;
 
 const AddButton = styled.button`
   padding: 12px 24px;
-  border-radius: 10px;
+  border-radius: 12px;
   border: none;
   background: ${({ disabled }) => (disabled ? "#ccc" : "#000")};
   color: white;
   font-weight: 600;
   cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
+  transition: 0.2s;
+
+  &:hover {
+    background: ${({ disabled }) => (disabled ? "#ccc" : "#111")};
+  }
 `;
 
 const StockInfo = styled.span`
   font-size: 0.85rem;
-  color: #444;
-`;
-
-/* ---------- MODAL ---------- */
-const Overlay = styled.div`
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 9998;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  color: ${({ $available }) => ($available ? "#444" : "#c0392b")};
 `;
 
 const Modal = styled.div`
   background: #fff;
   padding: 2rem;
-  border-radius: 14px;
+  border-radius: 16px;
   width: 90%;
   max-width: 420px;
-  z-index: 9999;
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
   text-align: center;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
 `;
 
-// ---------- COMPONENT ----------
+const Overlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9998;
+`;
+
+/* ============================
+   COMPONENT
+============================ */
+
 export default function AddToCartBar({
   produit,
   selectedColor,
@@ -132,7 +157,7 @@ export default function AddToCartBar({
 
   const stockDisponible =
     selectedColor && selectedSize
-      ? (stockParVariation?.[selectedColor]?.[selectedSize] ?? 0)
+      ? stockParVariation?.[selectedColor]?.[selectedSize] ?? 0
       : 0;
 
   useEffect(() => {
@@ -140,10 +165,10 @@ export default function AddToCartBar({
     else if (quantity > stockDisponible) setQuantity(stockDisponible);
   }, [stockDisponible]);
 
-  const disabled = !selectedColor || !selectedSize || stockDisponible === 0;
+  const canOrder = selectedColor && selectedSize && stockDisponible > 0;
 
   const handleAddToCart = () => {
-    if (disabled) return;
+    if (!canOrder) return;
 
     ajouterPanier({
       id: `${produit._id}_${selectedColor}_${selectedSize}`,
@@ -154,7 +179,7 @@ export default function AddToCartBar({
       quantite: quantity,
       couleur: selectedColor,
       taille: selectedSize,
-      stockDisponible: stockDisponible,
+      stockDisponible,
     });
 
     setShowModal(true);
@@ -166,76 +191,94 @@ export default function AddToCartBar({
   return (
     <ActionWrapper>
       {/* COULEURS */}
-      <Label>Couleur</Label>
-      <Row>
-        {produit.couleurs.map((color) => (
-          <ColorCircle
-            key={color}
-            color={parseColor(color)}
-            $active={selectedColor === color}
-            onClick={() => {
-              setSelectedColor(color);
-              setSelectedSize(null);
-            }}
-          />
-        ))}
-      </Row>
+      <div>
+        <Label>Couleur</Label>
+        <Row>
+          {produit.couleurs.map((color) => {
+            const available = stockParVariation?.[color];
+            return (
+              <ColorCircle
+                key={color}
+                color={parseColor(color)}
+                $active={selectedColor === color}
+                disabled={!available}
+                onClick={() => {
+                  if (available) {
+                    setSelectedColor(color);
+                    setSelectedSize(null);
+                  }
+                }}
+              />
+            );
+          })}
+        </Row>
+      </div>
 
       {/* TAILLES */}
-      <Label>Taille</Label>
-      <Row>
-        {produit.tailles.map((size) => {
-          const stock = stockParVariation?.[selectedColor]?.[size] ?? 0;
-          return (
-            <SizeButton
-              key={size}
-              $active={selectedSize === size}
-              disabled={!selectedColor || stock === 0}
-              onClick={() => setSelectedSize(size)}
-            >
-              {size}
-            </SizeButton>
-          );
-        })}
-      </Row>
+      <div>
+        <Label>Taille</Label>
+        <Row>
+          {produit.tailles.map((size) => {
+            const stock = stockParVariation?.[selectedColor]?.[size] ?? 0;
+            const available = stock > 0;
+
+            return (
+              <SizeButton
+                key={size}
+                $active={selectedSize === size}
+                disabled={!selectedColor || !available}
+                onClick={() => setSelectedSize(size)}
+              >
+                {size}
+              </SizeButton>
+            );
+          })}
+        </Row>
+      </div>
 
       {/* QUANTITÉ */}
-      <Label>Quantité</Label>
-      <Row>
-        <QuantitySelect
-          value={quantity}
-          disabled={disabled}
-          onChange={(e) => setQuantity(Number(e.target.value))}
-        >
-          {Array.from({ length: stockDisponible }, (_, i) => i + 1).map((q) => (
-            <option key={q} value={q}>
-              {q}
-            </option>
-          ))}
-        </QuantitySelect>
+      <div>
+        <Label>Quantité</Label>
+        <Row>
+          <QuantitySelect
+            value={quantity}
+            disabled={!canOrder}
+            onChange={(e) => setQuantity(Number(e.target.value))}
+          >
+            {Array.from({ length: stockDisponible }, (_, i) => i + 1).map(
+              (q) => (
+                <option key={q} value={q}>
+                  {q}
+                </option>
+              )
+            )}
+          </QuantitySelect>
 
-        <AddButton disabled={disabled} onClick={handleAddToCart}>
-          Ajouter au panier
-        </AddButton>
-      </Row>
-      <StockInfo>
+          <AddButton disabled={!canOrder} onClick={handleAddToCart}>
+            Ajouter au panier
+          </AddButton>
+        </Row>
+      </div>
+
+      <StockInfo $available={stockDisponible > 0}>
         {!selectedColor || !selectedSize
-          ? "Sélectionnez une couleur et une taille"
+          ? "Sélectionnez couleur et taille"
           : stockDisponible > 0
-            ? `Stock disponible : ${stockDisponible}`
-            : "Stock épuisé"}
+          ? `Stock disponible : ${stockDisponible}`
+          : "Stock épuisé"}
       </StockInfo>
 
       {/* MODAL */}
       {showModal && (
         <Overlay onClick={() => setShowModal(false)}>
           <Modal onClick={(e) => e.stopPropagation()}>
-            <h3>✅ Produit ajouté au panier</h3>
-            <p style={{ margin: "1rem 0", color: "#555" }}>{produit.title}</p>
+            <FiCheck size={32} color="black" />
+            <h3 style={{ marginTop: "0.8rem" }}>Produit ajouté au panier</h3>
+            <p style={{ margin: "1rem 0", color: "#555" }}>
+              {produit.title}
+            </p>
 
-            <div
-              style={{ display: "flex", gap: "10px", justifyContent: "center" }}
-            >
+            <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
               <button
                 onClick={() => navigate("/panier")}
                 style={{
@@ -262,7 +305,7 @@ export default function AddToCartBar({
                   fontWeight: 600,
                 }}
               >
-                Continuer mes achats
+                Continuer
               </button>
             </div>
           </Modal>

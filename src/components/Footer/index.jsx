@@ -449,13 +449,6 @@ export default function Footer() {
       <NewsletterSection id="newsletterSection">
         <NewsletterTitle>Inscrivez-vous à notre newsletter</NewsletterTitle>
         <NewsletterForm onSubmit={handleNewsletterSubmit}>
-          <NameInput
-            type="text"
-            placeholder="Votre nom"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            $isdark={$isdark}
-          />
           <EmailInput
             type="email"
             placeholder="Votre email"
