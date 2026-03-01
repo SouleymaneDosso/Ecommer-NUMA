@@ -9,44 +9,43 @@ import Recommendations from "../../components/Recommendations";
 import { LoaderWrapper, Loader } from "../../Utils/Rotate";
 import ProductDescription from "../../components/ProductDescription";
 
-// ---------- STYLES ----------
+// ---------- STYLES (minimaliste & pro) ----------
 const PageWrapper = styled.main`
-  padding: 2rem 4%;
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
+  padding: 2rem 5%;
 `;
 
 const BackLink = styled.button`
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
   border: none;
-  background: #f5f5f5;
-  color: #007bff;
+  background: transparent;
+  color: #333;
   font-weight: 600;
-  padding: 8px 14px;
-  border-radius: 8px;
   cursor: pointer;
+  margin-bottom: 1.5rem;
+
+  &:hover {
+    color: #000;
+  }
 `;
 
 const ProductWrapper = styled.div`
-  display: flex;
-  gap: 2rem;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2.5rem;
 `;
 
 const ProductDetails = styled.div`
-  flex: 1;
-  min-width: 300px;
   display: flex;
   flex-direction: column;
-  gap: 1.2rem;
+  gap: 1rem;
 `;
 
 const ProductTitle = styled.h1`
-  font-size: 1.8rem;
+  font-size: 1.9rem;
   font-weight: 700;
+  margin: 0;
 `;
 
 const ProductPrice = styled.span`
@@ -58,11 +57,10 @@ const Badge = styled.span`
   background: ${({ type }) =>
     type === "new" ? "#10b981" : type === "promo" ? "#f59e0b" : "transparent"};
   color: white;
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-size: 0.8rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
   font-weight: 600;
-  align-self: flex-start;
 `;
 
 // ---------- COMPONENT ----------
@@ -75,7 +73,6 @@ export default function Produit() {
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
 
-  // fetch produit
   useEffect(() => {
     async function fetchProduit() {
       try {
@@ -107,13 +104,11 @@ export default function Produit() {
 
   if (!produit) return null;
 
-  // calcule stock disponible
   const stockDisponible =
     selectedColor && selectedSize
       ? (produit.stockParVariation?.[selectedColor]?.[selectedSize] ?? 0)
       : 0;
 
-  // couleurs disponibles selon taille sélectionnée
   const availableColors = selectedSize
     ? produit.couleurs.filter(
         (c) => produit.stockParVariation?.[c]?.[selectedSize] > 0
@@ -131,7 +126,6 @@ export default function Produit() {
       ]
     : [];
 
-  // MESSAGE WHATSAPP DYNAMIQUE
   const message = `
 Bonjour 👋
 
@@ -155,7 +149,7 @@ Merci.
   return (
     <PageWrapper>
       <BackLink onClick={() => window.history.back()}>
-        <FiArrowLeft size={20} />
+        <FiArrowLeft size={18} />
         Retour
       </BackLink>
 

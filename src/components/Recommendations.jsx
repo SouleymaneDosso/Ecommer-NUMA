@@ -8,12 +8,12 @@ import { useNavigate } from "react-router-dom";
 
 const Section = styled.section`
   width: 100%;
-  padding: 5rem 4rem;
+ 
   background: #ffffff;
 `;
 
 const Container = styled.div`
-  max-width: 1400px;
+  width: 100%;
   margin: 0 auto;
 `;
 

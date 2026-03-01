@@ -5,331 +5,340 @@ import { FaHeart } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { ThemeContext } from "../../Utils/Context";
 
-/* ANIMATIONS */
-const fadeIn = keyframes`
-  from { opacity: 0; transform: translateY(15px); }
-  to { opacity: 1; transform: translateY(0); }
-`;
+// const fadeIn = keyframes`
+//   from { opacity: 0; transform: translateY(15px); }
+//   to { opacity: 1; transform: translateY(0); }
+// `;
 
-const shimmer = keyframes`
-  0% { background-position: -400px 0; }
-  100% { background-position: 400px 0; }
-`;
+// const shimmer = keyframes`
+//   0% { background-position: -400px 0; }
+//   100% { background-position: 400px 0; }
+// `;
 
-/* STYLES */
-const PageWrapper = styled.main`
-  padding-bottom: 3.6rem 6%;
-  background: ${({ $isdark }) => ($isdark ? "#111" : "#fff")};
-  color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
-  transition: background 0.3s ease, color 0.3s ease;
-`;
 
-const PageHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2.6rem;
-  flex-wrap: wrap;
-  gap: 1rem;
-`;
+// const PageWrapper = styled.main`
+//   padding-bottom: 3.6rem 6%;
+//   background: ${({ $isdark }) => ($isdark ? "#111" : "#fff")};
+//   color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
+//   transition: background 0.3s ease, color 0.3s ease;
+// `;
 
-const PageTitle = styled.h1`
-  font-size: 1.6rem;
-  font-weight: 500;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-`;
+// const PageHeader = styled.div`
+//   display: flex;
+//   justify-content: space-between;
+//   align-items: center;
+//   margin-bottom: 2.6rem;
+//   flex-wrap: wrap;
+//   gap: 1rem;
+// `;
 
-const ControlsWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 1.4rem;
-  flex-wrap: wrap;
-`;
+// const PageTitle = styled.h1`
+//   font-size: 1.6rem;
+//   font-weight: 500;
+//   letter-spacing: 1px;
+//   text-transform: uppercase;
+// `;
 
-const SearchInput = styled.input`
-  padding: 10px 14px;
-  border: 1px solid #dcdcdc;
-  font-size: 16px;
-  width: 220px;
-  outline: none;
+// const ControlsWrapper = styled.div`
+//   display: flex;
+//   align-items: center;
+//   gap: 1.4rem;
+//   flex-wrap: wrap;
+// `;
 
-  &:focus {
-    border-color: #111;
-  }
+// const SearchInput = styled.input`
+//   padding: 10px 14px;
+//   border: 1px solid #dcdcdc;
+//   font-size: 16px;
+//   width: 220px;
+//   outline: none;
 
-  @media (max-width: 600px) {
-    width: 100%;
-  }
-`;
+//   &:focus {
+//     border-color: #111;
+//   }
 
-const FilterWrapper = styled.div`
-  display: flex;
-  gap: 10px;
-`;
+//   @media (max-width: 600px) {
+//     width: 100%;
+//   }
+// `;
 
-const FilterButton = styled.button`
-  background: none;
-  border: none;
-  font-size: 0.7rem;
-  letter-spacing: 1px;
-  cursor: pointer;
-  padding-bottom: 4px;
-  border-bottom: ${({ $active }) =>
-    $active ? "2px solid currentColor" : "2px solid transparent"};
-  color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
-  font-weight: ${({ $active }) => ($active ? "600" : "400")};
-  transition: 0.2s;
+// const FilterWrapper = styled.div`
+//   display: flex;
+//   gap: 10px;
+// `;
 
-  &:hover {
-    opacity: 0.7;
-  }
-`;
+// const FilterButton = styled.button`
+//   background: none;
+//   border: none;
+//   font-size: 0.7rem;
+//   letter-spacing: 1px;
+//   cursor: pointer;
+//   padding-bottom: 4px;
+//   border-bottom: ${({ $active }) =>
+//     $active ? "2px solid currentColor" : "2px solid transparent"};
+//   color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
+//   font-weight: ${({ $active }) => ($active ? "600" : "400")};
+//   transition: 0.2s;
 
-const Grid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+//   &:hover {
+//     opacity: 0.7;
+//   }
+// `;
+
+// const Grid = styled.div`
+//   display: grid;
+//   grid-template-columns: repeat(2, 1fr);
  
 
-  @media (min-width: 900px) {
-    grid-template-columns: repeat(3, 1fr);
-  }
+//   @media (min-width: 900px) {
+//     grid-template-columns: repeat(3, 1fr);
+//   }
 
-  @media (min-width: 1200px) {
-    grid-template-columns: repeat(4, 1fr);
-  }
-`;
+//   @media (min-width: 1200px) {
+//     grid-template-columns: repeat(4, 1fr);
+//   }
+// `;
 
-const ProductCard = styled.div`
-  cursor: pointer;
-  animation: ${fadeIn} 0.6s ease forwards;
-  transition: transform 0.2s;
+// const ProductCard = styled.div`
+//   cursor: pointer;
+//   animation: ${fadeIn} 0.6s ease forwards;
+//   transition: transform 0.2s;
 
-  &:hover {
-    transform: translateY(-4px);
-  }
-`;
+//   &:hover {
+//     transform: translateY(-4px);
+//   }
+// `;
 
-const ImageWrapper = styled.div`
-  position: relative;
-  width: 100%;
-  aspect-ratio: 4/5;
-  overflow: hidden;
-  background: #f7f7f7;
-`;
+// const ImageWrapper = styled.div`
+//   position: relative;
+//   width: 100%;
+//   aspect-ratio: 4/5;
+//   overflow: hidden;
+//   background: #f7f7f7;
+// `;
 
-const ProductImage = styled.img`
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: ${({ $active }) => ($active ? 1 : 0)};
-  transition: opacity 0.4s ease;
-`;
+// const ProductImage = styled.img`
+//   position: absolute;
+//   width: 100%;
+//   height: 100%;
+//   object-fit: cover;
+//   opacity: ${({ $active }) => ($active ? 1 : 0)};
+//   transition: opacity 0.4s ease;
+// `;
 
-const Badge = styled.div`
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  padding: 3px 6px;
-  font-size: 0.5rem;
-  font-weight: 600;
-  color: black;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-`;
+// const Badge = styled.div`
+//   position: absolute;
+//   top: 8px;
+//   left: 8px;
+//   padding: 3px 6px;
+//   font-size: 0.5rem;
+//   font-weight: 600;
+//   color: black;
+//   letter-spacing: 1px;
+//   text-transform: uppercase;
+// `;
 
-const FavoriteButton = styled.button`
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(255, 255, 255, 0.9);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: ${({ $favorite }) => ($favorite ? "#000" : "#777")};
-`;
+// const FavoriteButton = styled.button`
+//   position: absolute;
+//   top: 8px;
+//   right: 8px;
+//   width: 32px;
+//   height: 32px;
+//   border-radius: 50%;
+//   border: none;
+//   background: rgba(255, 255, 255, 0.9);
+//   display: flex;
+//   align-items: center;
+//   justify-content: center;
+//   cursor: pointer;
+//   color: ${({ $favorite }) => ($favorite ? "#000" : "#777")};
+// `;
 
-const CardContent = styled.div`
-  margin-top: 10px;
-`;
+// const CardContent = styled.div`
+//   margin-top: 10px;
+// `;
 
-const ProductTitle = styled.h2`
-  font-size: 0.8rem;
-  font-weight: 400;
-  margin-bottom: 6px;
-`;
+// const ProductTitle = styled.h2`
+//   font-size: 0.8rem;
+//   font-weight: 400;
+//   margin-bottom: 6px;
+// `;
 
-const PriceRow = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-`;
+// const PriceRow = styled.div`
+//   display: flex;
+//   justify-content: space-between;
+//   align-items: center;
+// `;
 
-const ProductPrice = styled.div`
-  font-size: 0.95rem;
-  font-weight: 600;
-`;
+// const ProductPrice = styled.div`
+//   font-size: 0.95rem;
+//   font-weight: 600;
+// `;
 
-const Gadget = styled.div`
-  font-size: 0.5rem;
-  padding: 3px 6px;
-  background: #111;
-  color: white;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-`;
+// const Gadget = styled.div`
+//   font-size: 0.5rem;
+//   padding: 3px 6px;
+//   background: #111;
+//   color: white;
+//   letter-spacing: 1px;
+//   text-transform: uppercase;
+// `;
 
-const Validation = styled.div`
-  font-size: 0.7rem;
-  color: #2e7d32;
-  margin-top: 6px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-`;
+// const Validation = styled.div`
+//   font-size: 0.7rem;
+//   color: #2e7d32;
+//   margin-top: 6px;
+//   display: flex;
+//   align-items: center;
+//   gap: 5px;
+// `;
 
-const LoadMore = styled.button`
-  margin: 2.6rem auto 0;
-  padding: 11px 20px;
-  border: 1px solid #111;
-  background: #fff;
-  cursor: pointer;
-  font-weight: 500;
-`;
+// const LoadMore = styled.button`
+//   margin: 2.6rem auto 0;
+//   padding: 11px 20px;
+//   border: 1px solid #111;
+//   background: #fff;
+//   cursor: pointer;
+//   font-weight: 500;
+// `;
 
-const SkeletonCard = styled.div`
-  aspect-ratio: 4/5;
-  background: linear-gradient(
-    to right,
-    #f0f0f0 0%,
-    #e0e0e0 20%,
-    #f0f0f0 40%,
-    #f0f0f0 100%
-  );
-  background-size: 800px 100%;
-  animation: ${shimmer} 1.2s infinite linear;
-`;
+// const SkeletonCard = styled.div`
+//   aspect-ratio: 4/5;
+//   background: linear-gradient(
+//     to right,
+//     #f0f0f0 0%,
+//     #e0e0e0 20%,
+//     #f0f0f0 40%,
+//     #f0f0f0 100%
+//   );
+//   background-size: 800px 100%;
+//   animation: ${shimmer} 1.2s infinite linear;
+// `;
 
-/* COMPONENT */
+const Avertissement = styled.h1`
+display: flex;
+align-items: center;
+justify-content: center;
+
+`
+
+
 export default function Enfant() {
-  const navigate = useNavigate();
-  const token = localStorage.getItem("token");
-  const { theme } = useContext(ThemeContext);
-  const $isdark = theme === "light";
+  // const navigate = useNavigate();
+  // const token = localStorage.getItem("token");
+  // const { theme } = useContext(ThemeContext);
+  // const $isdark = theme === "light";
 
-  const [products, setProducts] = useState([]);
-  const [favorites, setFavorites] = useState([]);
-  const [imageIndexes, setImageIndexes] = useState({});
-  const [filter, setFilter] = useState("tout");
-  const [sort, setSort] = useState("default");
-  const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [limit, setLimit] = useState(12);
+  // const [products, setProducts] = useState([]);
+  // const [favorites, setFavorites] = useState([]);
+  // const [imageIndexes, setImageIndexes] = useState({});
+  // const [filter, setFilter] = useState("tout");
+  // const [sort, setSort] = useState("default");
+  // const [search, setSearch] = useState("");
+  // const [loading, setLoading] = useState(true);
+  // const [limit, setLimit] = useState(12);
 
-  /* PRODUITS */
-  useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL}/api/produits`)
-      .then((res) => res.json())
-      .then((data) => {
-        const valid = data.filter(
-          (p) => p.images?.length && p.genre === "enfant"
-        );
+  // /* PRODUITS */
+  // useEffect(() => {
+  //   fetch(`${import.meta.env.VITE_API_URL}/api/produits`)
+  //     .then((res) => res.json())
+  //     .then((data) => {
+  //       const valid = data.filter(
+  //         (p) => p.images?.length && p.genre === "enfant"
+  //       );
 
-        setProducts(valid);
+  //       setProducts(valid);
 
-        const indexes = {};
-        valid.forEach((p) => {
-          const mainIndex = p.images.findIndex((img) => img.isMain);
-          indexes[p._id] = mainIndex >= 0 ? mainIndex : 0;
-        });
+  //       const indexes = {};
+  //       valid.forEach((p) => {
+  //         const mainIndex = p.images.findIndex((img) => img.isMain);
+  //         indexes[p._id] = mainIndex >= 0 ? mainIndex : 0;
+  //       });
 
-        setImageIndexes(indexes);
-        setTimeout(() => setLoading(false), 500);
-      })
-      .catch(console.error);
-  }, []);
+  //       setImageIndexes(indexes);
+  //       setTimeout(() => setLoading(false), 500);
+  //     })
+  //     .catch(console.error);
+  // }, []);
 
-  /* FAVORIS */
-  useEffect(() => {
-    if (!token) return;
+  // /* FAVORIS */
+  // useEffect(() => {
+  //   if (!token) return;
 
-    fetch(`${import.meta.env.VITE_API_URL}/api/favorites`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
-      .then((data) =>
-        setFavorites(data.map((f) => f.productId?._id).filter(Boolean))
-      )
-      .catch(console.error);
-  }, [token]);
+  //   fetch(`${import.meta.env.VITE_API_URL}/api/favorites`, {
+  //     headers: { Authorization: `Bearer ${token}` },
+  //   })
+  //     .then((res) => res.json())
+  //     .then((data) =>
+  //       setFavorites(data.map((f) => f.productId?._id).filter(Boolean))
+  //     )
+  //     .catch(console.error);
+  // }, [token]);
 
-  const toggleFavorite = async (id) => {
-    if (!token) return;
+  // const toggleFavorite = async (id) => {
+  //   if (!token) return;
 
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/favorites/toggle`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ productId: id }),
-      });
+  //   try {
+  //     const res = await fetch(`${import.meta.env.VITE_API_URL}/api/favorites/toggle`, {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //       body: JSON.stringify({ productId: id }),
+  //     });
 
-      const data = await res.json();
-      if (res.ok) {
-        if (data.active) setFavorites((prev) => [...prev, id]);
-        else setFavorites((prev) => prev.filter((f) => f !== id));
-      }
-    } catch (err) {
-      console.error("Erreur favoris :", err);
-    }
-  };
+  //     const data = await res.json();
+  //     if (res.ok) {
+  //       if (data.active) setFavorites((prev) => [...prev, id]);
+  //       else setFavorites((prev) => prev.filter((f) => f !== id));
+  //     }
+  //   } catch (err) {
+  //     console.error("Erreur favoris :", err);
+  //   }
+  // };
 
-  /* CAROUSEL */
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setImageIndexes((prev) => {
-        const updated = { ...prev };
-        products.forEach((p) => {
-          updated[p._id] = ((prev[p._id] || 0) + 1) % p.images.length;
-        });
-        return updated;
-      });
-    }, 3200);
+  // /* CAROUSEL */
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     setImageIndexes((prev) => {
+  //       const updated = { ...prev };
+  //       products.forEach((p) => {
+  //         updated[p._id] = ((prev[p._id] || 0) + 1) % p.images.length;
+  //       });
+  //       return updated;
+  //     });
+  //   }, 3200);
 
-    return () => clearInterval(interval);
-  }, [products]);
+  //   return () => clearInterval(interval);
+  // }, [products]);
 
-  /* FILTRE + TRI + RECHERCHE */
-  const filteredProducts = useMemo(() => {
-    let filtered =
-      filter === "tout"
-        ? products
-        : products.filter((p) => p.categorie?.toLowerCase().trim() === filter);
+  // /* FILTRE + TRI + RECHERCHE */
+  // const filteredProducts = useMemo(() => {
+  //   let filtered =
+  //     filter === "tout"
+  //       ? products
+  //       : products.filter((p) => p.categorie?.toLowerCase().trim() === filter);
 
-    if (search)
-      filtered = filtered.filter((p) =>
-        p.title.toLowerCase().includes(search.toLowerCase())
-      );
+  //   if (search)
+  //     filtered = filtered.filter((p) =>
+  //       p.title.toLowerCase().includes(search.toLowerCase())
+  //     );
 
-    if (sort === "asc") filtered = [...filtered].sort((a, b) => a.price - b.price);
-    if (sort === "desc") filtered = [...filtered].sort((a, b) => b.price - a.price);
+  //   if (sort === "asc") filtered = [...filtered].sort((a, b) => a.price - b.price);
+  //   if (sort === "desc") filtered = [...filtered].sort((a, b) => b.price - a.price);
 
-    return filtered.slice(0, limit);
-  }, [products, filter, sort, search, limit]);
+  //   return filtered.slice(0, limit);
+  // }, [products, filter, sort, search, limit]);
 
-  if (loading) return <SkeletonCard />;
+  // if (loading) return <SkeletonCard />;
 
   return (
-    <PageWrapper $isdark={$isdark}>
-      <PageHeader>
+  <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
+    <Avertissement>Les produits pour enfants ne sont pas encore disponibles...</Avertissement>
+  </div>
+    // <PageWrapper $isdark={$isdark}
+      /* <PageHeader>
         <PageTitle>Collection Enfant</PageTitle>
 
         <ControlsWrapper>
@@ -412,7 +421,7 @@ export default function Enfant() {
         <LoadMore onClick={() => setLimit(limit + 12)}>
           Voir plus
         </LoadMore>
-      )}
-    </PageWrapper>
+      )} */
+    // </PageWrapper>
   );
 }
