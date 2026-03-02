@@ -5,7 +5,7 @@ import { ThemeContext } from "../../Utils/Context";
 import { useNavigate } from "react-router-dom";
 
 /* ==========================
-   FIX GLOBAL MOBILE
+   STYLES
 ========================== */
 
 const Page = styled.main`
@@ -103,11 +103,32 @@ const Summary = styled.aside`
 ========================== */
 
 const villesCI = [
-  "Abidjan","Bouaké","Daloa","Yamoussoukro","San-Pédro","Korhogo",
-  "Man","Gagnoa","Abengourou","Bondoukou","Soubré","Divo",
-  "Anyama","Bingerville","Grand-Bassam","Issia","Tiassalé",
-  "Oumé","Toumodi","Dimbokro","Sinfra","Adzopé",
-  "Ferkessédougou","Séguéla","Guiglo","Danané",
+  "Abidjan",
+  "Bouaké",
+  "Daloa",
+  "Yamoussoukro",
+  "San-Pédro",
+  "Korhogo",
+  "Man",
+  "Gagnoa",
+  "Abengourou",
+  "Bondoukou",
+  "Soubré",
+  "Divo",
+  "Anyama",
+  "Bingerville",
+  "Grand-Bassam",
+  "Issia",
+  "Tiassalé",
+  "Oumé",
+  "Toumodi",
+  "Dimbokro",
+  "Sinfra",
+  "Adzopé",
+  "Ferkessédougou",
+  "Séguéla",
+  "Guiglo",
+  "Danané",
 ];
 
 /* ==========================
@@ -129,7 +150,7 @@ export default function PageCheckout() {
   const codePostal = "00225";
   const pays = "Côte d'Ivoire";
 
-  // ✅ Ajout choix paiement
+  // paiement
   const [modePaiement, setModePaiement] = useState("full"); // full / installments
   const [servicePaiement, setServicePaiement] = useState("orange");
   const [loading, setLoading] = useState(false);
@@ -166,10 +187,10 @@ export default function PageCheckout() {
     const commande = {
       client: { nom, prenom, adresse, ville, codePostal, pays },
       panier: panierBackend,
-      modePaiement,       // full ou installments
-      servicePaiement,     // orange ou wave
+      modePaiement,
+      servicePaiement,
       fraisLivraison,
-      total
+      total,
     };
 
     try {
@@ -205,6 +226,9 @@ export default function PageCheckout() {
     );
   }
 
+  const montantParMois = modePaiement === "installments" ? Math.ceil(total / 3) : total;
+  const peutTroisFois = total >= 3000; // condition minimale (ajustable)
+
   return (
     <Page $isdark={$isdark}>
       <Title>Checkout</Title>
@@ -214,23 +238,42 @@ export default function PageCheckout() {
           <h2>Adresse de livraison</h2>
 
           <form onSubmit={handlePaiement}>
-            <Input placeholder="Nom" value={nom} onChange={(e) => setNom(e.target.value)} />
-            <Input placeholder="Prénom" value={prenom} onChange={(e) => setPrenom(e.target.value)} />
-            <Input placeholder="Adresse" value={adresse} onChange={(e) => setAdresse(e.target.value)} />
+            <Input
+              $isdark={$isdark}
+              placeholder="Nom"
+              value={nom}
+              onChange={(e) => setNom(e.target.value)}
+            />
+            <Input
+              $isdark={$isdark}
+              placeholder="Prénom"
+              value={prenom}
+              onChange={(e) => setPrenom(e.target.value)}
+            />
+            <Input
+              $isdark={$isdark}
+              placeholder="Adresse"
+              value={adresse}
+              onChange={(e) => setAdresse(e.target.value)}
+            />
 
-            <Select value={ville} onChange={(e) => setVille(e.target.value)}>
+            <Select
+              $isdark={$isdark}
+              value={ville}
+              onChange={(e) => setVille(e.target.value)}
+            >
               <option value="">Choisir votre ville</option>
               {villesCI.map((v) => (
-                <option key={v} value={v}>{v}</option>
+                <option key={v} value={v}>
+                  {v}
+                </option>
               ))}
             </Select>
 
-            <Input value={codePostal} disabled />
-            <Input value={pays} disabled />
+            <Input $isdark={$isdark} value={codePostal} disabled />
+            <Input $isdark={$isdark} value={pays} disabled />
 
-            {/* ==========================
-               MODE DE PAIEMENT
-            ========================== */}
+            {/* MODE DE PAIEMENT */}
             <h3>Mode de paiement</h3>
             <RadioGroup>
               <RadioLabel>
@@ -251,14 +294,18 @@ export default function PageCheckout() {
                   value="installments"
                   checked={modePaiement === "installments"}
                   onChange={(e) => setModePaiement(e.target.value)}
+                  disabled={!peutTroisFois}
                 />
                 Paiement en 3 fois
+                {!peutTroisFois && (
+                  <small style={{ color: "red", marginLeft: "6px" }}>
+                    (minimum 3000 FCFA)
+                  </small>
+                )}
               </RadioLabel>
             </RadioGroup>
 
-            {/* ==========================
-               SERVICE DE PAIEMENT
-            ========================== */}
+            {/* SERVICE */}
             <h3>Service de paiement</h3>
             <RadioGroup>
               <RadioLabel>
@@ -284,6 +331,12 @@ export default function PageCheckout() {
               </RadioLabel>
             </RadioGroup>
 
+            {modePaiement === "installments" && (
+              <p>
+                Paiement en 3 fois : <strong>{montantParMois.toLocaleString()} FCFA</strong> par mois
+              </p>
+            )}
+
             <Button type="submit" disabled={loading}>
               {loading ? "Envoi..." : "Valider la commande"}
             </Button>
@@ -295,15 +348,21 @@ export default function PageCheckout() {
 
           {ajouter.map((item) => (
             <div key={item.id}>
-              {item.nom} x {item.quantite} — {(item.prix * item.quantite).toLocaleString()} FCFA
+              {item.nom} x {item.quantite} —{" "}
+              {(item.prix * item.quantite).toLocaleString()} FCFA
             </div>
           ))}
 
           <div>
-            Livraison : {fraisLivraison === 0 ? "Gratuite" : `${fraisLivraison.toLocaleString()} FCFA`}
+            Livraison :{" "}
+            {fraisLivraison === 0
+              ? "Gratuite"
+              : `${fraisLivraison.toLocaleString()} FCFA`}
           </div>
 
-          <div><strong>Total : {total.toLocaleString()} FCFA</strong></div>
+          <div>
+            <strong>Total : {total.toLocaleString()} FCFA</strong>
+          </div>
         </Summary>
       </Grid>
     </Page>
