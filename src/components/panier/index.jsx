@@ -5,11 +5,17 @@ import { Link, useNavigate } from "react-router-dom";
 import { FiMinus, FiPlus, FiTrash2 } from "react-icons/fi";
 
 /* ================== STYLES ================== */
+
 const Page = styled.main`
   max-width: 1200px;
   margin: 3rem auto;
   padding: 0 4%;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+  @media (max-width: 768px) {
+    margin: 1.5rem auto;
+    padding: 0 5%;
+  }
 `;
 
 const Title = styled.h1`
@@ -17,12 +23,18 @@ const Title = styled.h1`
   font-weight: 400;
   letter-spacing: 2px;
   margin-bottom: 3rem;
+
+  @media (max-width: 768px) {
+    font-size: 1.8rem;
+    margin-bottom: 2rem;
+  }
 `;
 
 const Grid = styled.div`
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 3rem;
+
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
   }
@@ -41,12 +53,22 @@ const Item = styled.div`
   align-items: center;
   border-bottom: 1px solid #e5e5e5;
   padding-bottom: 2rem;
+
+  @media (max-width: 600px) {
+    grid-template-columns: 90px 1fr auto;
+    gap: 1rem;
+  }
 `;
 
 const Image = styled.img`
   width: 120px;
   height: 150px;
   object-fit: cover;
+
+  @media (max-width: 600px) {
+    width: 90px;
+    height: 120px;
+  }
 `;
 
 const Info = styled.div`
@@ -65,7 +87,6 @@ const Name = styled.h3`
 const Meta = styled.span`
   font-size: 0.85rem;
   color: #555;
-  text-transform: capitalize;
 `;
 
 const Price = styled.span`
@@ -86,9 +107,7 @@ const QtyBtn = styled.button`
   width: 28px;
   height: 28px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+
   &:disabled {
     opacity: 0.3;
     cursor: not-allowed;
@@ -98,34 +117,44 @@ const QtyBtn = styled.button`
 const Qty = styled.span`
   min-width: 20px;
   text-align: center;
-  font-size: 0.9rem;
 `;
 
 const StockHint = styled.span`
   font-size: 0.75rem;
   color: #888;
-  margin-top: 4px;
 `;
 
 const Remove = styled.button`
   border: none;
   background: transparent;
   cursor: pointer;
-  color: #000;
 `;
 
 /* ===== SUMMARY ===== */
+
 const Summary = styled.aside`
   border: 1px solid #e5e5e5;
   padding: 2rem;
   height: fit-content;
+
+  @media (max-width: 768px) {
+    padding: 1.5rem;
+  }
+`;
+
+const Select = styled.select`
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 0.95rem;
 `;
 
 const Line = styled.div`
   display: flex;
   justify-content: space-between;
   margin-bottom: 1rem;
-  font-size: 0.9rem;
 `;
 
 const Total = styled(Line)`
@@ -141,12 +170,12 @@ const PayButton = styled.button`
   border: none;
   background: #000;
   color: white;
-  font-size: 0.9rem;
-  letter-spacing: 2px;
   cursor: pointer;
-  text-transform: uppercase;
-  &:hover {
-    background: #111;
+  border-radius: 8px;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 `;
 
@@ -157,8 +186,7 @@ const Clear = styled.button`
   border: 1px solid #000;
   background: transparent;
   cursor: pointer;
-  text-transform: uppercase;
-  font-size: 0.8rem;
+  border-radius: 8px;
 `;
 
 const Empty = styled.div`
@@ -169,21 +197,46 @@ const Empty = styled.div`
 const Back = styled(Link)`
   display: inline-block;
   margin-top: 2rem;
-  color: #000;
   text-decoration: none;
-  border-bottom: 1px solid #000;
+  border-bottom: 1px solid black;
 `;
 
 /* ================== COMPONENT ================== */
+
 export default function PagePanierZara() {
   const navigate = useNavigate();
-  const { ajouter, supprimer, augmenter, diminuer, toutSupprimer } =
-    useContext(PanierContext);
 
-  const total = ajouter.reduce(
-    (acc, item) => acc + item.prix * item.quantite,
-    0
-  );
+  const {
+    ajouter,
+    supprimer,
+    augmenter,
+    diminuer,
+    toutSupprimer,
+    villeLivraison,
+    setVilleLivraison,
+    sousTotal,
+    fraisLivraison,
+    total,
+  } = useContext(PanierContext);
+
+  const estAbidjan =
+    villeLivraison === "Abidjan";
+
+  const estCommune =
+    [
+      "Cocody",
+      "Bingerville",
+      "Plateau",
+      "Adjamé",
+      "Treichville",
+      "Marcory",
+      "Attécoubé",
+      "Yopougon",
+      "Abobo",
+      "Koumassi",
+      "Port-Bouët",
+      "Anyama",
+    ].includes(villeLivraison);
 
   if (ajouter.length === 0) {
     return (
@@ -214,10 +267,7 @@ export default function PagePanierZara() {
                 <Price>{item.prix.toLocaleString()} FCFA</Price>
 
                 <Quantity>
-                  <QtyBtn
-                    onClick={() => diminuer(item.id)}
-                    disabled={item.quantite <= 1}
-                  >
+                  <QtyBtn onClick={() => diminuer(item.id)} disabled={item.quantite <= 1}>
                     <FiMinus size={12} />
                   </QtyBtn>
 
@@ -243,14 +293,66 @@ export default function PagePanierZara() {
 
         {/* SUMMARY */}
         <Summary>
+          {/* VILLE */}
+          <Select
+            value={villeLivraison}
+            onChange={(e) => setVilleLivraison(e.target.value)}
+          >
+            <option value="">Choisir votre ville</option>
+            <option>Abidjan</option>
+            <option>Bouaké</option>
+            <option>Daloa</option>
+            <option>Yamoussoukro</option>
+            <option>San-Pédro</option>
+            <option>Korhogo</option>
+            <option>Man</option>
+            <option>Gagnoa</option>
+            <option>Abengourou</option>
+            <option>Bondoukou</option>
+            <option>Soubré</option>
+            <option>Divo</option>
+          </Select>
+
+          {/* COMMUNE (si Abidjan) */}
+          {estAbidjan && (
+            <Select
+              value={estCommune ? villeLivraison : ""}
+              onChange={(e) => setVilleLivraison(e.target.value)}
+            >
+              <option value="">Choisir votre commune</option>
+              <option>Cocody</option>
+              <option>Bingerville</option>
+              <option>Plateau</option>
+              <option>Adjamé</option>
+              <option>Treichville</option>
+              <option>Marcory</option>
+              <option>Attécoubé</option>
+              <option>Yopougon</option>
+              <option>Abobo</option>
+              <option>Koumassi</option>
+              <option>Port-Bouët</option>
+              <option>Anyama</option>
+            </Select>
+          )}
+
+          {!estAbidjan && villeLivraison && (
+            <p style={{ fontSize: "0.9rem", color: "#555" }}>
+              Livraison hors Abidjan : retrait du colis en gare.
+            </p>
+          )}
+
           <Line>
             <span>Sous-total</span>
-            <span>{total.toLocaleString()} FCFA</span>
+            <span>{sousTotal.toLocaleString()} FCFA</span>
           </Line>
 
           <Line>
             <span>Livraison</span>
-            <span>Gratuite</span>
+            <span>
+              {fraisLivraison === 0
+                ? "Gratuite"
+                : `${fraisLivraison.toLocaleString()} FCFA`}
+            </span>
           </Line>
 
           <Total>
@@ -258,14 +360,17 @@ export default function PagePanierZara() {
             <span>{total.toLocaleString()} FCFA</span>
           </Total>
 
-          {/* Composant Paiement Wave */}
-          <PayButton onClick={() => navigate("/checkout")}>
+          <PayButton
+            disabled={!villeLivraison}
+            onClick={() => navigate("/checkout")}
+          >
             Passer au paiement
           </PayButton>
 
           <Clear onClick={toutSupprimer}>Vider le panier</Clear>
         </Summary>
       </Grid>
+
       <Back to="/">← Retour boutique</Back>
     </Page>
   );

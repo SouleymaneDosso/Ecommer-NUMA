@@ -1,66 +1,90 @@
 import { useContext, useState, useEffect } from "react";
 import styled from "styled-components";
 import * as Context from "../../Utils/Context";
+import { ThemeContext } from "../../Utils/Context";
 import { useNavigate } from "react-router-dom";
 
-/* ===== STYLES ===== */
+/* ==========================
+   STYLES MODERNES + DARK MODE
+========================== */
+
 const Page = styled.main`
-  max-width: 1000px;
-  margin: 2rem auto;
-  padding: 0 1rem;
-  font-family: "Inter", sans-serif;
+  max-width: 1100px;
+  margin: 3rem auto;
+  padding: 0 1.5rem;
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+
+  background: ${({ $isdark }) => ($isdark ? "#0f0f0f" : "#f7f7f7")};
+  color: ${({ $isdark }) => ($isdark ? "#f5f5f5" : "#111")};
+  min-height: 100vh;
+  transition:
+    background 0.3s ease,
+    color 0.3s ease;
 `;
 
 const Title = styled.h1`
-  font-size: 2rem;
-  margin-bottom: 2rem;
-  font-weight: 700;
+  font-size: clamp(2rem, 4vw, 2.4rem);
+  font-weight: 600;
+  margin-bottom: 2.5rem;
 `;
 
 const Grid = styled.div`
   display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 2rem;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 2.5rem;
 
-  @media (max-width: 768px) {
+  @media (max-width: 900px) {
     grid-template-columns: 1fr;
-    gap: 1.5rem;
   }
 `;
 
 const Section = styled.section`
-  background: #f8f9ff;
-  padding: 2rem;
-  border-radius: 16px;
-`;
-
-const FieldGroup = styled.div`
-  margin-bottom: 1.2rem;
+  background: ${({ $isdark }) => ($isdark ? "#181818" : "#ffffff")};
+  border: 1px solid ${({ $isdark }) => ($isdark ? "#2a2a2a" : "#e5e5e5")};
+  border-radius: 18px;
+  padding: 2.2rem;
+  box-shadow: ${({ $isdark }) =>
+    $isdark ? "0 12px 30px rgba(0,0,0,0.6)" : "0 6px 18px rgba(0,0,0,0.04)"};
 `;
 
 const Input = styled.input`
   width: 100%;
-  padding: 14px;
-  margin-bottom: 1rem;
-  border-radius: 10px;
-  border: 1px solid #d1d5db;
-  font-size: 16px;
-  line-height: 1.4;
-  box-sizing: border-box;
-  background: #fff;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid ${({ $isdark }) => ($isdark ? "#333" : "#dcdcdc")};
+  background: ${({ $isdark }) => ($isdark ? "#222" : "#fff")};
+  color: inherit;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
 
   &:focus {
+    border-color: #111;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
     outline: none;
-    border-color: #6366f1;
-    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
   }
+`;
+
+const Select = styled.select`
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid ${({ $isdark }) => ($isdark ? "#333" : "#dcdcdc")};
+  background: ${({ $isdark }) => ($isdark ? "#222" : "#fff")};
+  color: inherit;
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
 `;
 
 const RadioGroup = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
-  margin: 0.5rem 0 1.5rem;
+  margin: 0.8rem 0 1.5rem;
 `;
 
 const RadioLabel = styled.label`
@@ -73,67 +97,85 @@ const RadioLabel = styled.label`
 const Button = styled.button`
   width: 100%;
   padding: 14px;
-  border-radius: 12px;
+  border-radius: 14px;
   border: none;
-  background: linear-gradient(135deg, #4f46e5, #6366f1);
-  color: #fff;
+  background: linear-gradient(135deg, black, #6366f1);
+  color: white;
   font-weight: 600;
-  font-size: 1rem;
   cursor: pointer;
-  margin-top: 1rem;
+  transition: transform 0.15s ease;
 
-  &:active {
-    transform: scale(0.98);
+  &:hover {
+    transform: translateY(-2px);
   }
 
   &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+    opacity: 0.5;
   }
 `;
 
-const Summary = styled.div`
-  background: #fff;
+const Summary = styled.aside`
+  background: ${({ $isdark }) => ($isdark ? "#181818" : "#fff")};
+  border: 1px solid ${({ $isdark }) => ($isdark ? "#2a2a2a" : "#e5e5e5")};
+  border-radius: 18px;
   padding: 2rem;
-  border-radius: 16px;
-  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.05);
-
-  @media (min-width: 769px) {
-    position: sticky;
-    top: 2rem;
-  }
+  box-shadow: ${({ $isdark }) =>
+    $isdark ? "0 12px 30px rgba(0,0,0,0.6)" : "0 6px 18px rgba(0,0,0,0.04)"};
+  position: sticky;
+  top: 2rem;
 `;
 
-const Line = styled.div`
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-`;
+/* ==========================
+   LISTE VILLES CI
+========================== */
+const villesCI = [
+  "Abidjan",
+  "Bouaké",
+  "Daloa",
+  "Yamoussoukro",
+  "San-Pédro",
+  "Korhogo",
+  "Man",
+  "Gagnoa",
+  "Abengourou",
+  "Bondoukou",
+  "Soubré",
+  "Divo",
+  "Anyama",
+  "Bingerville",
+  "Grand-Bassam",
+  "Issia",
+  "Tiassalé",
+  "Oumé",
+  "Toumodi",
+  "Dimbokro",
+  "Sinfra",
+  "Adzopé",
+  "Ferkessédougou",
+  "Séguéla",
+  "Guiglo",
+  "Danané",
+];
 
-const Total = styled(Line)`
-  font-weight: 700;
-  font-size: 1.1rem;
-`;
-
-const ProductItem = styled.div`
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.8rem;
-`;
-
-/* ===== COMPONENT ===== */
+/* ==========================
+   COMPONENT
+========================== */
 export default function PageCheckout() {
-  const { ajouter } = useContext(Context.PanierContext);
+  const { ajouter, fraisLivraison, total } = useContext(Context.PanierContext);
+  const { theme } = useContext(ThemeContext);
+  const $isdark = theme === "light";
+
   const navigate = useNavigate();
 
   const [nom, setNom] = useState("");
   const [prenom, setPrenom] = useState("");
   const [adresse, setAdresse] = useState("");
   const [ville, setVille] = useState("");
-  const [codePostal, setCodePostal] = useState("");
-  const [pays, setPays] = useState("");
-  const [modePaiement, setModePaiement] = useState("full"); // full ou installments
-  const [servicePaiement, setServicePaiement] = useState("orange"); // orange ou wave
+  const codePostal = "00225";
+  const pays = "Côte d'Ivoire";
+
+  const [modePaiement, setModePaiement] = useState("full");
+  const [servicePaiement, setServicePaiement] = useState("orange");
   const [loading, setLoading] = useState(false);
 
   const [token, setToken] = useState(null);
@@ -152,21 +194,20 @@ export default function PageCheckout() {
     e.preventDefault();
 
     if (!token) {
-      alert("Vous devez être connecté pour passer la commande.");
+      alert("Vous devez être connecté.");
       navigate("/login");
       return;
     }
 
-    if (!nom || !prenom || !adresse || !ville || !codePostal || !pays) {
-      alert("Veuillez remplir tous les champs.");
+    if (!nom || !prenom || !adresse || !ville) {
+      alert("Remplissez tous les champs.");
       return;
     }
 
     setLoading(true);
 
-    // Préparer le panier pour backend
     const panierBackend = ajouter.map((item) => ({
-      produitId: item.id.split("_")[0], // 🔹 prend seulement l'ID Mongo valide
+      produitId: item.id.split("_")[0],
       quantite: item.quantite,
       couleur: item.couleur || "",
       taille: item.taille || "",
@@ -177,6 +218,8 @@ export default function PageCheckout() {
       panier: panierBackend,
       modePaiement,
       servicePaiement,
+      fraisLivraison,
+      total
     };
 
     try {
@@ -192,7 +235,7 @@ export default function PageCheckout() {
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.message || "Erreur lors de la commande");
+        alert(data.message || "Erreur");
         return;
       }
 
@@ -207,70 +250,61 @@ export default function PageCheckout() {
 
   if (ajouter.length === 0) {
     return (
-      <Page>
+      <Page $isdark={$isdark}>
         <h2>Votre panier est vide</h2>
       </Page>
     );
   }
 
   return (
-    <Page>
+    <Page $isdark={$isdark}>
       <Title>Checkout</Title>
 
       <Grid>
-        <Section>
+        <Section $isdark={$isdark}>
           <h2>Adresse de livraison</h2>
 
           <form onSubmit={handlePaiement}>
-            <FieldGroup>
-              <Input
-                placeholder="Nom"
-                value={nom}
-                onChange={(e) => setNom(e.target.value)}
-              />
-            </FieldGroup>
-            <FieldGroup>
-              <Input
-                placeholder="Prénom"
-                value={prenom}
-                onChange={(e) => setPrenom(e.target.value)}
-              />
-            </FieldGroup>
-            <FieldGroup>
-              <Input
-                placeholder="Adresse"
-                value={adresse}
-                onChange={(e) => setAdresse(e.target.value)}
-              />
-            </FieldGroup>
-            <FieldGroup>
-              <Input
-                placeholder="Ville"
-                value={ville}
-                onChange={(e) => setVille(e.target.value)}
-              />
-            </FieldGroup>
-            <FieldGroup>
-              <Input
-                placeholder="Code postal"
-                value={codePostal}
-                onChange={(e) => setCodePostal(e.target.value)}
-              />
-            </FieldGroup>
-            <FieldGroup>
-              <Input
-                placeholder="Pays"
-                value={pays}
-                onChange={(e) => setPays(e.target.value)}
-              />
-            </FieldGroup>
+            <Input
+              $isdark={$isdark}
+              placeholder="Nom"
+              value={nom}
+              onChange={(e) => setNom(e.target.value)}
+            />
+            <Input
+              $isdark={$isdark}
+              placeholder="Prénom"
+              value={prenom}
+              onChange={(e) => setPrenom(e.target.value)}
+            />
+            <Input
+              $isdark={$isdark}
+              placeholder="Adresse"
+              value={adresse}
+              onChange={(e) => setAdresse(e.target.value)}
+            />
+
+            <Select
+              $isdark={$isdark}
+              value={ville}
+              onChange={(e) => setVille(e.target.value)}
+            >
+              <option value="">Choisir votre ville</option>
+              {villesCI.map((v) => (
+                <option key={v} value={v}>
+                  {v}
+                </option>
+              ))}
+            </Select>
+
+            <Input $isdark={$isdark} value={codePostal} disabled />
+            <Input $isdark={$isdark} value={pays} disabled />
 
             <h3>Mode de paiement</h3>
             <RadioGroup>
               <RadioLabel>
                 <input
                   type="radio"
-                  name="modePaiement"
                   value="full"
                   checked={modePaiement === "full"}
                   onChange={(e) => setModePaiement(e.target.value)}
@@ -280,7 +314,6 @@ export default function PageCheckout() {
               <RadioLabel>
                 <input
                   type="radio"
-                  name="modePaiement"
                   value="installments"
                   checked={modePaiement === "installments"}
                   onChange={(e) => setModePaiement(e.target.value)}
@@ -294,7 +327,6 @@ export default function PageCheckout() {
               <RadioLabel>
                 <input
                   type="radio"
-                  name="servicePaiement"
                   value="orange"
                   checked={servicePaiement === "orange"}
                   onChange={(e) => setServicePaiement(e.target.value)}
@@ -304,7 +336,6 @@ export default function PageCheckout() {
               <RadioLabel>
                 <input
                   type="radio"
-                  name="servicePaiement"
                   value="wave"
                   checked={servicePaiement === "wave"}
                   onChange={(e) => setServicePaiement(e.target.value)}
@@ -319,42 +350,24 @@ export default function PageCheckout() {
           </form>
         </Section>
 
-        <Summary>
+        <Summary $isdark={$isdark}>
           <h2>Récapitulatif</h2>
 
           {ajouter.map((item) => (
-            <ProductItem key={item.id}>
-              <span>
-                {item.nom} x {item.quantite}
-              </span>
-              <span>{(item.prix * item.quantite).toLocaleString()} FCFA</span>
-            </ProductItem>
+            <div key={item.id}>
+              {item.nom} x {item.quantite} —{" "}
+              {(item.prix * item.quantite).toLocaleString()} FCFA
+            </div>
           ))}
 
-          <Line>
-            <span>Sous-total</span>
-            <span>
-              {ajouter
-                .reduce((acc, item) => acc + item.prix * item.quantite, 0)
-                .toLocaleString()}{" "}
-              FCFA
-            </span>
-          </Line>
+          <div>
+            Livraison :{" "}
+            {fraisLivraison === 0
+              ? "Gratuite"
+              : `${fraisLivraison.toLocaleString()} FCFA`}
+          </div>
 
-          <Line>
-            <span>Livraison</span>
-            <span>Gratuite</span>
-          </Line>
-
-          <Total>
-            <span>Total</span>
-            <span>
-              {ajouter
-                .reduce((acc, item) => acc + item.prix * item.quantite, 0)
-                .toLocaleString()}{" "}
-              FCFA
-            </span>
-          </Total>
+          <div>Total : {total.toLocaleString()} FCFA</div>
         </Summary>
       </Grid>
     </Page>

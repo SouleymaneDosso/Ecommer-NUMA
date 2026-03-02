@@ -77,20 +77,32 @@ export const Panier = ({ children }) => {
     }
   });
 
+  const [villeLivraison, setVilleLivraison] = useState(() => {
+    try {
+      return localStorage.getItem("villeLivraison") || "";
+    } catch {
+      return "";
+    }
+  });
+
   /* ================== ACTIONS ================== */
 
-  // Ajouter un produit au panier
   const ajouterPanier = (produit) => {
     setAjouter((prev) => {
       const exist = prev.find((p) => p.id === produit.id);
 
       if (exist) {
-        // Si le produit existe déjà, on additionne les quantités
         const newQuantite = exist.quantite + produit.quantite;
-        // On ne peut pas dépasser le stock disponible
+
         return prev.map((p) =>
           p.id === produit.id
-            ? { ...p, quantite: newQuantite > p.stockDisponible ? p.stockDisponible : newQuantite }
+            ? {
+                ...p,
+                quantite:
+                  newQuantite > p.stockDisponible
+                    ? p.stockDisponible
+                    : newQuantite,
+              }
             : p
         );
       }
@@ -99,23 +111,26 @@ export const Panier = ({ children }) => {
     });
   };
 
-  // Supprimer un produit du panier
   const supprimer = (id) => {
     setAjouter((prev) => prev.filter((p) => p.id !== id));
   };
 
-  // Augmenter la quantité (bloquée par stock disponible)
   const augmenter = (id) => {
     setAjouter((prev) =>
       prev.map((p) =>
         p.id === id
-          ? { ...p, quantite: p.quantite < p.stockDisponible ? p.quantite + 1 : p.quantite }
+          ? {
+              ...p,
+              quantite:
+                p.quantite < p.stockDisponible
+                  ? p.quantite + 1
+                  : p.quantite,
+            }
           : p
       )
     );
   };
 
-  // Diminuer la quantité (minimum 1)
   const diminuer = (id) => {
     setAjouter((prev) =>
       prev.map((p) =>
@@ -126,13 +141,63 @@ export const Panier = ({ children }) => {
     );
   };
 
-  // Vider le panier
   const toutSupprimer = () => setAjouter([]);
 
+  /* ================== CALCULS LIVRAISON ================== */
+
+  const sousTotal = ajouter.reduce(
+    (acc, item) => acc + item.prix * item.quantite,
+    0
+  );
+
+  const nombreProduits = ajouter.reduce(
+    (acc, item) => acc + item.quantite,
+    0
+  );
+
+  let fraisLivraison = 0;
+
+  const zonesProche = ["Cocody", "Bingerville"];
+  const zonesMoyenne = [
+    "Plateau",
+    "Adjamé",
+    "Treichville",
+    "Marcory",
+    "Attécoubé",
+  ];
+  const zonesLoin = [
+    "Yopougon",
+    "Abobo",
+    "Koumassi",
+    "Port-Bouët",
+    "Anyama",
+  ];
+
+  if (villeLivraison) {
+    if (zonesProche.includes(villeLivraison)) {
+      // À Abidjan
+      fraisLivraison = nombreProduits >= 2 ? 0 : 1500;
+    } else if (zonesMoyenne.includes(villeLivraison)) {
+      fraisLivraison = nombreProduits >= 2 ? 0 : 2000;
+    } else if (zonesLoin.includes(villeLivraison)) {
+      fraisLivraison = nombreProduits >= 2 ? 0 : 3000;
+    } else {
+      // Hors Abidjan
+      fraisLivraison = nombreProduits >= 2 ? 2000 : 4000;
+    }
+  }
+
+  const total = sousTotal + fraisLivraison;
+
   /* ================== PERSISTENCE ================== */
+
   useEffect(() => {
     localStorage.setItem("panier", JSON.stringify(ajouter));
   }, [ajouter]);
+
+  useEffect(() => {
+    localStorage.setItem("villeLivraison", villeLivraison);
+  }, [villeLivraison]);
 
   return (
     <PanierContext.Provider
@@ -143,6 +208,11 @@ export const Panier = ({ children }) => {
         augmenter,
         diminuer,
         toutSupprimer,
+        villeLivraison,
+        setVilleLivraison,
+        sousTotal,
+        fraisLivraison,
+        total,
       }}
     >
       {children}
