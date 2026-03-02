@@ -155,7 +155,7 @@ function AdminProducts() {
     const filesWithPreview = files.map((file) =>
       Object.assign(file, {
         preview: URL.createObjectURL(file),
-      })
+      }),
     );
 
     setNewImages((prev) => [...prev, ...filesWithPreview]);
@@ -182,7 +182,7 @@ function AdminProducts() {
   // ===============================
   const handleDeleteExistingImage = (publicId, idx) => {
     const updatedImages = existingImages.filter(
-      (img) => img.publicId !== publicId
+      (img) => img.publicId !== publicId,
     );
     setExistingImages(updatedImages);
     setImagesToDelete([...imagesToDelete, publicId]);
@@ -267,7 +267,9 @@ function AdminProducts() {
     formData.append("stockParVariation", JSON.stringify(stockObj));
     formData.append("genre", genre);
     formData.append("categorie", categorie);
-    formData.append("badge", badge);
+    if (badge !== null) {
+      formData.append("badge", badge);
+    }
     formData.append("hero", hero);
     formData.append("mainImageIndex", mainImageIndex);
 
@@ -290,7 +292,7 @@ function AdminProducts() {
             method: "PUT",
             headers: { Authorization: `Bearer ${token}` },
             body: formData,
-          }
+          },
         );
       } else {
         res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits`, {
@@ -359,7 +361,7 @@ function AdminProducts() {
         {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       const data = await res.json();
       if (res.ok) {
@@ -384,7 +386,7 @@ function AdminProducts() {
         {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       const data = await res.json();
@@ -399,11 +401,11 @@ function AdminProducts() {
             ? {
                 ...p,
                 commentaires: p.commentaires.filter(
-                  (c) => c._id.toString() !== commentaireId.toString()
+                  (c) => c._id.toString() !== commentaireId.toString(),
                 ),
               }
-            : p
-        )
+            : p,
+        ),
       );
 
       alert("Commentaire supprimé !");
