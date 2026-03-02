@@ -17,8 +17,6 @@ const Page = styled.main`
   background: ${({ $isdark }) => ($isdark ? "#0f0f0f" : "#f7f7f7")};
   color: ${({ $isdark }) => ($isdark ? "#f5f5f5" : "#111")};
   min-height: 100vh;
-
-  -webkit-text-size-adjust: 100%;
 `;
 
 const Title = styled.h1`
@@ -50,15 +48,8 @@ const Input = styled.input`
   border: 1px solid ${({ $isdark }) => ($isdark ? "#333" : "#dcdcdc")};
   background: ${({ $isdark }) => ($isdark ? "#222" : "#fff")};
   color: inherit;
-
-  font-size: 16px; /* 🔥 FIX ANTI ZOOM */
+  font-size: 16px;
   margin-bottom: 1rem;
-
-  &:focus {
-    outline: none;
-    border-color: #6366f1;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
-  }
 `;
 
 const Select = styled.select`
@@ -68,16 +59,14 @@ const Select = styled.select`
   border: 1px solid ${({ $isdark }) => ($isdark ? "#333" : "#dcdcdc")};
   background: ${({ $isdark }) => ($isdark ? "#222" : "#fff")};
   color: inherit;
-
-  font-size: 16px; /* 🔥 FIX ANTI ZOOM */
+  font-size: 16px;
   margin-bottom: 1rem;
 `;
 
 const RadioGroup = styled.div`
   display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin: 0.8rem 0 1.5rem;
+  gap: 1.2rem;
+  margin: 1rem 0;
 `;
 
 const RadioLabel = styled.label`
@@ -95,8 +84,8 @@ const Button = styled.button`
   background: linear-gradient(135deg, black, #6366f1);
   color: white;
   font-weight: 600;
-  font-size: 16px;
   cursor: pointer;
+  margin-top: 1rem;
 
   &:disabled {
     opacity: 0.6;
@@ -107,10 +96,6 @@ const Summary = styled.aside`
   background: ${({ $isdark }) => ($isdark ? "#181818" : "#fff")};
   border-radius: 18px;
   padding: 2rem;
-
-  @media (max-width: 900px) {
-    margin-top: 2rem;
-  }
 `;
 
 /* ==========================
@@ -134,7 +119,6 @@ export default function PageCheckout() {
   const { theme } = useContext(ThemeContext);
 
   const $isdark = theme === "light";
-
   const navigate = useNavigate();
 
   const [nom, setNom] = useState("");
@@ -145,7 +129,8 @@ export default function PageCheckout() {
   const codePostal = "00225";
   const pays = "Côte d'Ivoire";
 
-  const [modePaiement, setModePaiement] = useState("full");
+  // ✅ Ajout choix paiement
+  const [modePaiement, setModePaiement] = useState("full"); // full / installments
   const [servicePaiement, setServicePaiement] = useState("orange");
   const [loading, setLoading] = useState(false);
 
@@ -181,8 +166,8 @@ export default function PageCheckout() {
     const commande = {
       client: { nom, prenom, adresse, ville, codePostal, pays },
       panier: panierBackend,
-      modePaiement,
-      servicePaiement,
+      modePaiement,       // full ou installments
+      servicePaiement,     // orange ou wave
       fraisLivraison,
       total
     };
@@ -229,19 +214,75 @@ export default function PageCheckout() {
           <h2>Adresse de livraison</h2>
 
           <form onSubmit={handlePaiement}>
-            <Input $isdark={$isdark} placeholder="Nom" value={nom} onChange={(e) => setNom(e.target.value)} />
-            <Input $isdark={$isdark} placeholder="Prénom" value={prenom} onChange={(e) => setPrenom(e.target.value)} />
-            <Input $isdark={$isdark} placeholder="Adresse" value={adresse} onChange={(e) => setAdresse(e.target.value)} />
+            <Input placeholder="Nom" value={nom} onChange={(e) => setNom(e.target.value)} />
+            <Input placeholder="Prénom" value={prenom} onChange={(e) => setPrenom(e.target.value)} />
+            <Input placeholder="Adresse" value={adresse} onChange={(e) => setAdresse(e.target.value)} />
 
-            <Select $isdark={$isdark} value={ville} onChange={(e) => setVille(e.target.value)}>
+            <Select value={ville} onChange={(e) => setVille(e.target.value)}>
               <option value="">Choisir votre ville</option>
               {villesCI.map((v) => (
                 <option key={v} value={v}>{v}</option>
               ))}
             </Select>
 
-            <Input $isdark={$isdark} value={codePostal} disabled />
-            <Input $isdark={$isdark} value={pays} disabled />
+            <Input value={codePostal} disabled />
+            <Input value={pays} disabled />
+
+            {/* ==========================
+               MODE DE PAIEMENT
+            ========================== */}
+            <h3>Mode de paiement</h3>
+            <RadioGroup>
+              <RadioLabel>
+                <input
+                  type="radio"
+                  name="mode"
+                  value="full"
+                  checked={modePaiement === "full"}
+                  onChange={(e) => setModePaiement(e.target.value)}
+                />
+                Paiement en 1 fois
+              </RadioLabel>
+
+              <RadioLabel>
+                <input
+                  type="radio"
+                  name="mode"
+                  value="installments"
+                  checked={modePaiement === "installments"}
+                  onChange={(e) => setModePaiement(e.target.value)}
+                />
+                Paiement en 3 fois
+              </RadioLabel>
+            </RadioGroup>
+
+            {/* ==========================
+               SERVICE DE PAIEMENT
+            ========================== */}
+            <h3>Service de paiement</h3>
+            <RadioGroup>
+              <RadioLabel>
+                <input
+                  type="radio"
+                  name="service"
+                  value="orange"
+                  checked={servicePaiement === "orange"}
+                  onChange={(e) => setServicePaiement(e.target.value)}
+                />
+                Orange Money
+              </RadioLabel>
+
+              <RadioLabel>
+                <input
+                  type="radio"
+                  name="service"
+                  value="wave"
+                  checked={servicePaiement === "wave"}
+                  onChange={(e) => setServicePaiement(e.target.value)}
+                />
+                Wave
+              </RadioLabel>
+            </RadioGroup>
 
             <Button type="submit" disabled={loading}>
               {loading ? "Envoi..." : "Valider la commande"}
