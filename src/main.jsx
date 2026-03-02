@@ -1,7 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-
+import { useEffect } from "react";
 import GlobalStyle from "./GlobaleStyle";
 import { ToggleTheme } from "./Utils/Context";
 import { Panier } from "./Utils/Context";
@@ -56,13 +56,20 @@ const PublicLayout = ({ children }) => {
     </>
   );
 };
+const SEO = () => {
+  useEffect(() => {
+    document.title = "numa.luxe - Boutique de vêtements en ligne";
+  }, []);
 
+  return null;
+};
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <Router>
       <ToggleTheme>
         <Panier>
           <GlobalStyle />
+          <SEO />
           <Routes>
             {/* Pages publiques */}
             <Route
