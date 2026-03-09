@@ -1,435 +1,340 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import styled from "styled-components";
 import { Link } from "react-router-dom";
-import { FiChevronRight } from "react-icons/fi";
-import { useTranslation } from "react-i18next";
-import HeroModal from "../../components/HeroModal";
-/* ---------------------- STYLES ---------------------- */
-const Wrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 80px;
-  padding-bottom: 100px;
+
+/* ---------------- PAGE ---------------- */
+
+const Page = styled.div`
+display:flex;
+flex-direction:column;
+gap:80px;
+padding-bottom:80px;
+font-family:Inter, sans-serif;
 `;
 
-const Hero = styled.div`
-  width: 100%;
-  height: 75vh;
-  position: relative;
-  overflow: hidden;
+/* ---------------- HERO ---------------- */
+
+const Hero = styled.section`
+height:90vh;
+position:relative;
+overflow:hidden;
 `;
 
-const HeroSlide = styled.div`
-  position: absolute;
-  inset: 0;
-  background-size: cover;
-  background-position: center;
-  opacity: ${({ $active }) => ($active ? 1 : 0)};
-  transition: opacity 1s ease-in-out;
+const HeroImg = styled.img`
+width:100%;
+height:100%;
+object-fit:cover;
 `;
 
 const HeroOverlay = styled.div`
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.35);
+position:absolute;
+inset:0;
+background:linear-gradient(
+to bottom,
+rgba(0,0,0,0.1),
+rgba(0,0,0,0.6)
+);
 `;
 
 const HeroText = styled.div`
-  position: absolute;
-  top: 50%;
-  left: 60px;
-  transform: translateY(-50%);
-  color: white;
-  z-index: 3;
-  max-width: 500px;
+position:absolute;
+bottom:80px;
+left:60px;
+color:white;
+max-width:400px;
 
-  h1 {
-    font-size: 3rem;
-  }
-  p {
-    margin-top: 12px;
-    font-size: 1.2rem;
-  }
+h1{
+font-size:3rem;
+font-weight:600;
+letter-spacing:-1px;
+}
+
+p{
+margin-top:10px;
+opacity:.9;
+}
+
+a{
+display:inline-block;
+margin-top:20px;
+padding:12px 24px;
+background:white;
+color:black;
+text-decoration:none;
+font-weight:500;
+}
 `;
 
-const HeroButton = styled(Link)`
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 22px;
-  padding: 12px 24px;
-  background: #fff;
-  color: #000;
-  font-weight: 600;
-  border-radius: 8px;
-  text-decoration: none;
+/* ---------------- COLLECTIONS ---------------- */
+
+const Collections = styled.section`
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:12px;
+padding:0 20px;
+
+@media(max-width:768px){
+grid-template-columns:1fr;
+}
 `;
 
-const PromoBanner = styled.div`
-  padding: 18px;
-  background: linear-gradient(90deg, #ff4e4e, #ff7d36);
-  text-align: center;
-  font-size: 1.3rem;
-  font-weight: bold;
-  color: white;
+const CollectionCard = styled.div`
+position:relative;
+overflow:hidden;
+border-radius:12px;
+
+img{
+width:100%;
+height:450px;
+object-fit:cover;
+transition:transform .6s;
+}
+
+&:hover img{
+transform:scale(1.08);
+}
+
+a{
+position:absolute;
+bottom:30px;
+left:30px;
+background:white;
+padding:12px 22px;
+text-decoration:none;
+color:black;
+font-weight:500;
+}
 `;
 
-const Categories = styled.div`
-  display: flex;
-  justify-content: center;
-  gap: 24px;
-  flex-wrap: wrap;
-`;
-
-const CategoryCard = styled(Link)`
-  text-decoration: none;
-  color: inherit;
-  text-align: center;
-  width: 120px;
-
-  img {
-    width: 90px;
-    height: 90px;
-    object-fit: cover;
-    border-radius: 32px;
-  }
-
-  p {
-    margin-top: 1px;
-    font-weight: bold;
-  }
-`;
-
-const SkeletonImage = styled.div`
-  width: ${({ width }) => width || "120px"};
-  height: ${({ height }) => height || "120px"};
-  border-radius: 16px;
-  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 37%, #e5e7eb 63%);
-  background-size: 400% 100%;
-  animation: shimmer 1.4s ease infinite;
-
-  @keyframes shimmer {
-    0% {
-      background-position: 100% 0;
-    }
-    100% {
-      background-position: -100% 0;
-    }
-  }
-`;
-
-const SliderContainer = styled.div`
-  width: 100%;
-  height: 380px;
-  overflow: hidden;
-`;
-
-const SlideRow = styled.div`
-  display: flex;
-  height: 100%;
-  width: max-content;
-  animation: slide linear infinite;
-  animation-duration: ${({ $duration }) => $duration}s;
-
-  @keyframes slide {
-    from {
-      transform: translate3d(0, 0, 0);
-    }
-    to {
-      transform: translate3d(-50%, 0, 0);
-    }
-  }
-`;
-
-const Slide = styled.div`
-  width: 420px;
-  height: 100%;
-  background-size: cover;
-  background-position: center;
-  flex-shrink: 0;
-`;
+/* ---------------- PRODUITS ---------------- */
 
 const SectionTitle = styled.h2`
-  font-size: 2rem;
-  margin-left: 20px;
+text-align:center;
+font-weight:600;
+font-size:1.8rem;
 `;
 
-const HorizontalScroll = styled.div`
-  display: flex;
-  gap: 16px;
-  overflow-x: auto;
-  padding: 20px;
+const Products = styled.section`
+max-width:1100px;
+margin:auto;
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:20px;
+padding:0 20px;
+
+@media(max-width:900px){
+grid-template-columns:repeat(2,1fr);
+}
+
+@media(max-width:500px){
+grid-template-columns:1fr;
+}
 `;
 
-const CardHorizontal = styled(Link)`
-  min-width: 220px;
-  text-decoration: none;
-  color: inherit;
-
-  img {
-    width: 100%;
-    height: 260px;
-    object-fit: cover;
-    border-radius: 12px;
-  }
-
-  p {
-    text-align: center;
-    font-weight: 600;
-  }
+const ProductCard = styled(Link)`
+text-decoration:none;
+color:black;
+display:flex;
+flex-direction:column;
+gap:8px;
 `;
 
-const ProductGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 24px;
-  padding: 20px;
+const ProductImg = styled.img`
+width:100%;
+height:260px;
+object-fit:cover;
+border-radius:10px;
+
+transition:transform .3s;
+
+${ProductCard}:hover &{
+transform:scale(1.05);
+}
 `;
 
-const Card = styled(Link)`
-  text-decoration: none;
-  color: inherit;
-
-  img {
-    width: 100%;
-    height: 260px;
-    object-fit: cover;
-    border-radius: 12px;
-  }
-
-  p {
-    font-weight: 600;
-    padding: 6px;
-  }
+const Title = styled.p`
+font-size:.95rem;
+font-weight:500;
 `;
 
-/* ---------------------- COMPONENT ---------------------- */
-export default function Home() {
-  const [nouveautes, setNouveautes] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [activeSlide, setActiveSlide] = useState(0);
-  const [imagesLoaded, setImagesLoaded] = useState(false);
-  const [categoryImages, setCategoryImages] = useState({
-    homme: null,
-    femme: null,
-    enfant: null,
-  });
-  const [sliderDuration, setSliderDuration] = useState(
-    window.innerWidth < 768 ? 18 : 30
-  );
+const Price = styled.p`
+font-size:.9rem;
+color:#666;
+`;
 
-  const { t } = useTranslation();
+/* ---------------- BANNER ---------------- */
 
-  /* ---------------------- HELPERS ---------------------- */
-  const getFullImageUrl = (url) => {
-    if (!url) return null;
-    return url.startsWith("http")
-      ? url
-      : `${import.meta.env.VITE_API_URL}${url}`;
-  };
+const Banner = styled.section`
+height:380px;
+background:#111;
+color:white;
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+text-align:center;
 
-  const getMainImage = (product) => {
-    if (!product?.images?.length) return null;
-    const mainImg =
-      product.images.find((img) => img.isMain) || product.images[0];
-    return getFullImageUrl(mainImg.url);
-  };
+h2{
+font-size:2rem;
+margin-bottom:10px;
+}
 
-  /* ---------------------- FETCH PRODUITS ---------------------- */
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits`);
-        const data = await res.json();
-        setProducts(Array.isArray(data) ? data : []);
-        const getFirstImageByGenre = (genre) => {
-          const prod = data.find(
-            (p) => p.genre?.toLowerCase() === genre && p.images?.length
-          );
-          return getMainImage(prod);
-        };
+p{
+opacity:.8;
+}
 
-        setCategoryImages({
-          homme: getFirstImageByGenre("homme"),
-          femme: getFirstImageByGenre("femme"),
-          enfant: getFirstImageByGenre("enfant"),
-        });
-      } catch (err) {
-        console.error("Erreur fetch produits:", err);
-      }
-    };
-    fetchProducts();
-  }, []);
+a{
+margin-top:20px;
+padding:12px 24px;
+background:white;
+color:black;
+text-decoration:none;
+}
+`;
 
-  /* ---------------------- HERO PRODUCTS ---------------------- */
-  const heroProducts = useMemo(
-    () => products.filter((p) => p.hero),
-    [products]
-  );
+/* ---------------- COMPONENT ---------------- */
 
-  const normalProducts = useMemo(
-    () => products.filter((p) => !p.hero),
-    [products]
-  );
+export default function Home(){
 
-  useEffect(() => {
-    const fetchProductsForNew = async () => {
-      try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits`);
-        const data = await res.json();
-        if (Array.isArray(data)) {
-          const now = new Date();
-          const days = 7; // nombre de jours pour considérer un produit "nouveau"
-          const newProducts = data.filter((p) => {
-            const createdAt = new Date(p.createdAt);
-            const diffDays = (now - createdAt) / (1000 * 60 * 60 * 24);
-            return diffDays <= days;
-          });
-          setNouveautes(newProducts);
-        } else {
-          setNouveautes([]);
-        }
-      } catch (err) {
-        console.error("Erreur fetch nouveautés:", err);
-        setNouveautes([]);
-      }
-    };
-    fetchProductsForNew();
-  }, []);
+const [products,setProducts] = useState([])
 
-  /* ---------------------- PRELOAD HERO IMAGES ---------------------- */
-  useEffect(() => {
-    if (!heroProducts.length) return;
-    const preloadImages = async () => {
-      const promises = heroProducts.map(
-        (p) =>
-          new Promise((res) => {
-            const img = new Image();
-            img.src = getMainImage(p);
-            img.onload = res;
-            img.onerror = res;
-          })
-      );
-      await Promise.all(promises);
-      setImagesLoaded(true);
-    };
-    preloadImages();
-  }, [heroProducts]);
+useEffect(()=>{
 
-  /* ---------------------- HERO AUTOPLAY ---------------------- */
-  useEffect(() => {
-    if (!heroProducts.length) return;
-    const interval = setInterval(
-      () => setActiveSlide((s) => (s + 1) % heroProducts.length),
-      3500
-    );
-    return () => clearInterval(interval);
-  }, [heroProducts]);
+fetch(`${import.meta.env.VITE_API_URL}/api/produits`)
+.then(res=>res.json())
+.then(data=>setProducts(data))
 
-  /* ---------------------- SLIDER RESPONSIVE ---------------------- */
-  useEffect(() => {
-    const handleResize = () =>
-      setSliderDuration(window.innerWidth < 768 ? 18 : 30);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+},[])
 
-  const sliderDouble = [...heroProducts, ...heroProducts];
+const img = (p)=>{
+if(!p.images?.length) return ""
+const url = p.images[0].url
+return url.startsWith("http")
+? url
+: `${import.meta.env.VITE_API_URL}${url}`
+}
 
-  return (
-     <>
-     <HeroModal apiUrl={import.meta.env.VITE_API_URL} />
-    <Wrapper>
-      {/* HERO */}
-      <Hero>
-        {imagesLoaded
-          ? heroProducts.map((p, i) => (
-              <HeroSlide
-                key={p._id}
-                $active={i === activeSlide}
-                style={{ backgroundImage: `url('${getMainImage(p)}')` }}
-              />
-            ))
-          : Array.from({ length: 3 }).map((_, i) => (
-              <HeroSlide
-                key={i}
-                $active={i === 0}
-                style={{ background: "#ccc" }}
-              />
-            ))}
-        <HeroOverlay />
-        <HeroText>
-          <h1>{t("heroTitle")}</h1>
-          <p>{t("heroSubtitle")}</p>
-          <HeroButton to="/collections">
-            {t("heroButton")} <FiChevronRight />
-          </HeroButton>
-        </HeroText>
-      </Hero>
+const hero = products.find(p=>p.hero)
 
-      {/* PROMO */}
-      <PromoBanner>Code promo bientôt disponible</PromoBanner>
+const homme = products.find(p=>p.genre?.trim().toLowerCase()==="homme")
 
-      {/* CATEGORIES */}
-      <Categories>
-        {["homme", "femme", "enfant"].map((cat) => (
-          <CategoryCard key={cat} to={`/${cat}`}>
-            {categoryImages[cat] ? (
-              <img src={categoryImages[cat]} alt={cat} loading="lazy" />
-            ) : (
-              <SkeletonImage />
-            )}
-            <p>{t(`${cat.charAt(0).toUpperCase() + cat.slice(1)}`)}</p>
-          </CategoryCard>
-        ))}
-      </Categories>
+const femme = products.find(p=>p.genre?.trim().toLowerCase()==="femme")
 
-      {/* SLIDER */}
-      <SliderContainer>
-        <SlideRow $duration={sliderDuration}>
-          {sliderDouble.map((p, i) => (
-            <Slide
-              key={`${p._id}-${i}`}
-              style={{ backgroundImage: `url('${getMainImage(p)}')` }}
-            />
-          ))}
-        </SlideRow>
-      </SliderContainer>
+const populaires = products.slice(0,4)
 
-      {/* NOUVEAUTÉS */}
-      <SectionTitle>{t("newArrivals")}</SectionTitle>
-      <HorizontalScroll>
-        {Array.isArray(nouveautes) && nouveautes.length > 0
-          ? nouveautes.map((p) => (
-              <CardHorizontal key={p._id} to={`/produit/${p._id}`}>
-                <img src={getMainImage(p)} loading="lazy" alt={p.title} />
-                <p>
-                  {p.title} – {p.price} FCFA
-                </p>
-              </CardHorizontal>
-            ))
-          : Array.from({ length: 4 }).map((_, i) => (
-              <SkeletonImage key={i} width="220px" height="260px" />
-            ))}
-      </HorizontalScroll>
+return(
 
-      {/* PRODUITS */}
-      <SectionTitle>{t("forYou")}</SectionTitle>
-      <ProductGrid>
-        {normalProducts.length > 0
-          ? normalProducts.map((p) => (
-              <Card key={p._id} to={`/produit/${p._id}`}>
-                <img src={getMainImage(p)} loading="lazy" alt={p.title} />
-                <p>
-                  {p.title} – {p.price} FCFA
-                </p>
-              </Card>
-            ))
-          : Array.from({ length: 6 }).map((_, i) => (
-              <SkeletonImage key={i} width="260px" height="260px" />
-            ))}
-      </ProductGrid>
-    </Wrapper>
-    </>
-  );
+<Page>
+
+{/* HERO */}
+
+{hero && (
+
+<Hero>
+
+<HeroImg src={img(hero)} />
+
+<HeroOverlay/>
+
+<HeroText>
+
+<h1>Nouvelle Collection</h1>
+
+<p>
+Découvrez nos vêtements modernes
+pensés pour le style et le confort.
+</p>
+
+<Link to="/collections">
+Découvrir
+</Link>
+
+</HeroText>
+
+</Hero>
+
+)}
+
+{/* COLLECTIONS */}
+
+<Collections>
+
+{homme && (
+
+<CollectionCard>
+
+<img src={img(homme)} />
+
+<Link to="/homme">
+Collection Homme
+</Link>
+
+</CollectionCard>
+
+)}
+
+{femme && (
+
+<CollectionCard>
+
+<img src={img(femme)} />
+
+<Link to="/femme">
+Collection Femme
+</Link>
+
+</CollectionCard>
+
+)}
+
+</Collections>
+
+{/* PRODUITS */}
+
+<SectionTitle>
+Produits populaires
+</SectionTitle>
+
+<Products>
+
+{populaires.map(p=>(
+
+<ProductCard
+key={p._id}
+to={`/produit/${p._id}`}
+>
+
+<ProductImg src={img(p)} />
+
+<Title>{p.titre}</Title>
+
+<Price>{p.prix} FCFA</Price>
+
+</ProductCard>
+
+))}
+
+</Products>
+
+{/* BANNER */}
+
+<Banner>
+
+<h2>Style moderne & qualité</h2>
+
+<p>
+Des vêtements conçus pour durer
+et pour vous accompagner chaque jour.
+</p>
+
+<Link to="/collections">
+Explorer la collection
+</Link>
+
+</Banner>
+
+</Page>
+
+)
+
 }
