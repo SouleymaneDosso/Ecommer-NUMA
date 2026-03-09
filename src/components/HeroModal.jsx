@@ -1,18 +1,18 @@
 import { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
-import { FiX } from "react-icons/fi";
 
-/* =======================
-   Animation horizontale
-======================= */
-const scroll = keyframes`
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+/* ======================= Animations ====================== */
+const fadeIn = keyframes`
+  from { opacity: 0; }
+  to { opacity: 1; }
 `;
 
-/* =======================
-   Overlay
-======================= */
+const scaleIn = keyframes`
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+`;
+
+/* ======================= Overlay ====================== */
 const ModalOverlay = styled.div`
   position: fixed;
   inset: 0;
@@ -22,34 +22,24 @@ const ModalOverlay = styled.div`
   justify-content: center;
   z-index: 999;
   padding: 1rem;
-  overflow-y: auto; /* scroll si modal trop grand */
+  animation: ${fadeIn} 0.3s ease forwards;
 `;
 
-/* =======================
-   Modal
-======================= */
+/* ======================= Modal ====================== */
 const ModalContent = styled.div`
   background: #fff;
-  width: min(92vw, 500px); /* largeur max sur mobile */
-  max-height: 80vh; /* modal visible sur mobile */
-  padding: 2rem 1.5rem 1.5rem 1.5rem; /* padding confortable */
+  width: min(90vw, 400px);
+  padding: 2rem 1.5rem;
   border-radius: 14px;
+  text-align: center;
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  margin: auto; /* centre verticalement */
-  overflow: hidden;
-
-  @media (max-width: 480px) {
-    width: 90vw;
-    padding: 1.5rem 1rem;
-  }
+  animation: ${scaleIn} 0.4s ease forwards;
 `;
 
-/* =======================
-   Close button
-======================= */
+/* ======================= Close button ====================== */
 const CloseButton = styled.button`
   position: absolute;
   top: 12px;
@@ -59,148 +49,69 @@ const CloseButton = styled.button`
   font-size: 24px;
   cursor: pointer;
   color: #000;
-  z-index: 10;
   border-radius: 50%;
   width: 36px;
   height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-
-  @media (max-width: 480px) {
-    width: 32px;
-    height: 32px;
-    font-size: 20px;
-  }
 `;
 
-/* =======================
-   Slider
-======================= */
-const SliderContainer = styled.div`
-  width: 100%;
-  overflow: hidden;
-  display: flex;
-  justify-content: center; /* centre horizontalement */
-`;
-
-const SlideRow = styled.div`
-  display: flex;
-  gap: 12px;
-  animation: ${scroll} linear infinite;
-  animation-duration: ${({ $duration }) => $duration}s;
-`;
-
-/* =======================
-   Image
-======================= */
-const Slide = styled.img`
-  width: clamp(120px, 40vw, 200px); /* images plus petites sur mobile */
-  max-height: 60vh; /* limiter hauteur pour modal mobile */
-  object-fit: cover;
-  border-radius: 12px;
-  flex-shrink: 0;
-
-  @media (max-width: 480px) {
-    width: 70vw;
-    max-height: 50vh;
-  }
-`;
-
-/* =======================
-   Newsletter link
-======================= */
+/* ======================= Newsletter link ====================== */
 const NewsletterLink = styled.a`
-  margin-top: 12px;
-  text-align: center;
-  color: #000;
   text-decoration: underline;
-  cursor: pointer;
+  color: #000;
   font-weight: 600;
-  font-size: 0.95rem;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: opacity 0.2s;
 
-  @media (max-width: 480px) {
-    font-size: 0.9rem;
+  &:hover {
+    opacity: 0.8;
   }
 `;
 
-/* =======================
-   Component
-======================= */
-export default function HeroModal({ apiUrl }) {
+/* ======================= Component ====================== */
+export default function NewsletterModal() {
   const [modalVisible, setModalVisible] = useState(false);
-  const [heroImages, setHeroImages] = useState([]);
 
   useEffect(() => {
-    const seen = localStorage.getItem("seenHeroModal");
+    const seen = localStorage.getItem("seenNewsletterModal");
     const subscribed = localStorage.getItem("newsletterSubscribed");
 
     if (!seen && !subscribed) {
-      setModalVisible(true);
+      // délai avant affichage du modal (1,5s)
+      const timer = setTimeout(() => {
+        setModalVisible(true);
+      }, 1500);
+
+      return () => clearTimeout(timer);
     }
-
-    const fetchHeroImages = async () => {
-      try {
-        const res = await fetch(`${apiUrl}/api/produits`);
-        const data = await res.json();
-
-        if (Array.isArray(data)) {
-          const heroes = data.filter((p) => p.hero).slice(0, 6);
-
-          const images = heroes
-            .map((p) => {
-              const mainImg =
-                p.images?.find((img) => img.isMain) || p.images?.[0];
-              if (!mainImg) return null;
-              return mainImg.url.startsWith("http")
-                ? mainImg.url
-                : `${apiUrl}${mainImg.url}`;
-            })
-            .filter(Boolean);
-
-          // duplication pour animation infinie
-          setHeroImages([...images, ...images]);
-        }
-      } catch (err) {
-        console.error("Erreur chargement images hero :", err);
-      }
-    };
-
-    fetchHeroImages();
-  }, [apiUrl]);
+  }, []);
 
   const handleClose = () => {
-    localStorage.setItem("seenHeroModal", "true");
+    localStorage.setItem("seenNewsletterModal", "true");
     setModalVisible(false);
   };
 
   const handleNewsletterClick = () => {
-    localStorage.setItem("seenHeroModal", "true");
+    localStorage.setItem("seenNewsletterModal", "true");
     document
       .getElementById("newsletterSection")
       ?.scrollIntoView({ behavior: "smooth" });
     setModalVisible(false);
   };
 
-  if (!heroImages.length) return null;
+  if (!modalVisible) return null;
 
   return (
     <ModalOverlay $visible={modalVisible}>
       <ModalContent>
-        <CloseButton onClick={handleClose}>
-          <FiX />
-        </CloseButton>
-
-        <SliderContainer>
-          <SlideRow $duration={20}>
-            {heroImages.map((img, i) => (
-              <Slide key={i} src={img} alt={`hero-${i}`} loading="lazy" />
-            ))}
-          </SlideRow>
-        </SliderContainer>
-
+        <CloseButton onClick={handleClose}>×</CloseButton>
+        <h2>Bienvenue sur notre application !</h2>
+        <p>Inscrivez-vous à notre newsletter pour recevoir nos nouveautés et offres exclusives.</p>
         <NewsletterLink onClick={handleNewsletterClick}>
-          Inscrivez-vous à notre newsletter pour ne rien rater des nouveautés
+          S’inscrire à la newsletter
         </NewsletterLink>
       </ModalContent>
     </ModalOverlay>

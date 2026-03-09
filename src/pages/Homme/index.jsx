@@ -102,6 +102,8 @@ const Grid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 0.rem;
+ 
+
 
   @media (min-width: 900px) {
     grid-template-columns: repeat(3, 1fr);
@@ -122,6 +124,7 @@ const ProductCard = styled.div`
   background: ${({ $isdark }) => ($isdark ? "#1a1a1a" : "#fff")};
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
   border-radius: 8px;
+  
 
   &:hover {
     transform: translateY(-4px);
@@ -134,6 +137,7 @@ const ImageWrapper = styled.div`
   aspect-ratio: 4/5;
   overflow: hidden;
   background: ${({ $isdark }) => ($isdark ? "#222" : "#f6f6f6")};
+  margin-bottom: 0.8rem;
 `;
 
 const ProductImage = styled.img`

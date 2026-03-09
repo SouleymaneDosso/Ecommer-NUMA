@@ -45,6 +45,7 @@ const HeroText = styled.div`
   transform: translateY(-50%);
   color: white;
   max-width: 500px;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.5);
 
   h1 {
     font-size: 3rem;
@@ -60,7 +61,8 @@ const HeroBtn = styled(Link)`
   color: black;
   font-weight: bold;
   text-decoration: none;
-  transition: transform 0.3s;
+  transition: transform 0.3s, box-shadow 0.3s;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
   &:hover {
     transform: scale(1.05);
   }
@@ -82,7 +84,7 @@ const SwitchBtn = styled.div`
   transition: border 0.3s;
 `;
 
-/* SCROLL PRODUCTS */
+/* SCROLL PRODUCTS HORIZONTAUX */
 const ScrollWrapper = styled.div`
   position: relative;
 `;
@@ -168,7 +170,7 @@ const Skeleton = styled.div`
   }
 `;
 
-/* ------------------- CAROUSEL VERTICAL ------------------- */
+/* ------------------- CAROUSEL HORIZONTAL FULL SCREEN ------------------- */
 const CarouselWrapper = styled.div`
   position: relative;
   width: 100%;
@@ -178,14 +180,14 @@ const CarouselWrapper = styled.div`
 
 const CarouselInner = styled.div`
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   height: 100%;
-  overflow-y: scroll;
-  scroll-snap-type: y mandatory;
+  overflow-x: scroll;
+  scroll-snap-type: x mandatory;
   scroll-behavior: smooth;
 
   &::-webkit-scrollbar {
-    width: 6px;
+    height: 6px;
   }
   &::-webkit-scrollbar-thumb {
     background: #ccc;
@@ -194,27 +196,30 @@ const CarouselInner = styled.div`
 `;
 
 const CarouselImage = styled.img`
+  width: 100vw;
   height: 100vh;
-  width: 100%;
   object-fit: cover;
   scroll-snap-align: start;
+  transition: transform 0.5s ease, filter 0.5s ease;
+  &:hover {
+    transform: scale(1.02);
+  }
 `;
 
 const Dots = styled.div`
   position: absolute;
-  right: 20px;
-  top: 50%;
-  transform: translateY(-50%);
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 `;
 
 const Dot = styled.div`
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: ${(p) => (p.active ? "white" : "rgba(255,255,255,0.5)")};
+  background: ${(p) => (p.active ? "#000" : "rgba(0,0,0,0.5)")};
   transition: background 0.3s;
   cursor: pointer;
 `;
@@ -239,6 +244,7 @@ const GenderBtn = styled(Link)`
   text-decoration: none;
   font-weight: bold;
   z-index: 2;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
 `;
 
 /* ------------------- COMPONENT ------------------- */
@@ -249,7 +255,7 @@ function GenderCarousel({ images, link, text, paragraph }) {
   const handleScroll = () => {
     if (!carouselRef.current) return;
     const index = Math.round(
-      carouselRef.current.scrollTop / carouselRef.current.clientHeight
+      carouselRef.current.scrollLeft / carouselRef.current.clientWidth
     );
     setActive(index);
   };
@@ -257,7 +263,7 @@ function GenderCarousel({ images, link, text, paragraph }) {
   const scrollTo = (i) => {
     if (!carouselRef.current) return;
     carouselRef.current.scrollTo({
-      top: i * carouselRef.current.clientHeight,
+      left: i * carouselRef.current.clientWidth,
       behavior: "smooth",
     });
   };
@@ -343,29 +349,37 @@ export default function HomePremium() {
       </Switch>
 
       {/* PRODUITS HORIZONTAUX */}
-      <ScrollWrapper>
-        <Scroll>
-          {products.length === 0
-            ? Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} />)
-            : products
-                .filter((p) => p.genre?.toLowerCase() === genre)
-                .slice(0, 4)
-                .map((p) => (
-                  <Card key={p._id}>
-                    <ProductLink to={`/produit/${p._id}`}>
-                      <ProductImg src={img(p)} alt={p.title} data-lazy />
-                      <Title>{p.title}</Title>
-                      <Price>{p.price} FCFA</Price>
-                    </ProductLink>
-                    <CartBtn>
-                      <FiShoppingCart />
-                    </CartBtn>
-                  </Card>
-                ))}
-        </Scroll>
-      </ScrollWrapper>
+     <ScrollWrapper>
+  <Scroll>
+    {products.length === 0
+      ? Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} />)
+      : products
+          .filter((p) => p.genre?.toLowerCase() === genre)
+          .slice(0, 4)
+          .map((p) => (
+            <Card key={p._id}>
+              <ProductLink to={`/produit/${p._id}`}>
+                <ProductImg
+                  src={img(p)}
+                  alt={p.title}
+                  onLoad={(e) => {
+                    e.currentTarget.style.filter = "blur(0)";
+                    e.currentTarget.style.opacity = 1;
+                  }}
+                  style={{ filter: "blur(10px)", opacity: 0 }}
+                />
+                <Title>{p.title}</Title>
+                <Price>{p.price} FCFA</Price>
+              </ProductLink>
+              <CartBtn>
+                <FiShoppingCart />
+              </CartBtn>
+            </Card>
+          ))}
+  </Scroll>
+</ScrollWrapper>
 
-      {/* CAROUSEL VERTICAL HOMME */}
+      {/* CAROUSEL HORIZONTAL HOMME */}
       <GenderCarousel
         images={products.filter((p) => p.genre?.toLowerCase() === "homme").slice(0, 5).map(img)}
         link="/homme"
@@ -373,7 +387,7 @@ export default function HomePremium() {
         paragraph="Nos vêtements hommes sont les meilleurs sur le marché des pièces authentiques à des prix accessibles"
       />
 
-      {/* CAROUSEL VERTICAL FEMME */}
+      {/* CAROUSEL HORIZONTAL FEMME */}
       <GenderCarousel
         images={products.filter((p) => p.genre?.toLowerCase() === "femme").slice(0, 5).map(img)}
         link="/femme"
