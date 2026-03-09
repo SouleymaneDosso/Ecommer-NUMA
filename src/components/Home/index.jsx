@@ -1,340 +1,385 @@
-import { useEffect, useState } from "react";
-import styled from "styled-components";
+import { useEffect, useState, useRef, useMemo } from "react";
+import styled, { keyframes } from "styled-components";
 import { Link } from "react-router-dom";
+import { FiShoppingCart } from "react-icons/fi";
 
-/* ---------------- PAGE ---------------- */
-
-const Page = styled.div`
-display:flex;
-flex-direction:column;
-gap:80px;
-padding-bottom:80px;
-font-family:Inter, sans-serif;
+/* ------------------- STYLES ------------------- */
+const Wrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 100px;
+  padding-bottom: 120px;
 `;
 
-/* ---------------- HERO ---------------- */
-
-const Hero = styled.section`
-height:90vh;
-position:relative;
-overflow:hidden;
+/* HERO */
+const Hero = styled.div`
+  height: 75vh;
+  position: relative;
+  overflow: hidden;
 `;
 
-const HeroImg = styled.img`
-width:100%;
-height:100%;
-object-fit:cover;
+const fadeIn = keyframes`
+  from {opacity:0;}
+  to {opacity:1;}
 `;
 
-const HeroOverlay = styled.div`
-position:absolute;
-inset:0;
-background:linear-gradient(
-to bottom,
-rgba(0,0,0,0.1),
-rgba(0,0,0,0.6)
-);
+const Slide = styled.div`
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: ${(p) => (p.$active ? 1 : 0)};
+  transition: opacity 1s ease-in-out;
+`;
+
+const Overlay = styled.div`
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
 `;
 
 const HeroText = styled.div`
-position:absolute;
-bottom:80px;
-left:60px;
-color:white;
-max-width:400px;
+  position: absolute;
+  top: 50%;
+  left: 70px;
+  transform: translateY(-50%);
+  color: white;
+  max-width: 500px;
 
-h1{
-font-size:3rem;
-font-weight:600;
-letter-spacing:-1px;
-}
-
-p{
-margin-top:10px;
-opacity:.9;
-}
-
-a{
-display:inline-block;
-margin-top:20px;
-padding:12px 24px;
-background:white;
-color:black;
-text-decoration:none;
-font-weight:500;
-}
+  h1 {
+    font-size: 3rem;
+    animation: ${fadeIn} 1.2s ease forwards;
+  }
 `;
 
-/* ---------------- COLLECTIONS ---------------- */
-
-const Collections = styled.section`
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:12px;
-padding:0 20px;
-
-@media(max-width:768px){
-grid-template-columns:1fr;
-}
+const HeroBtn = styled(Link)`
+  display: inline-block;
+  margin-top: 20px;
+  padding: 14px 26px;
+  background: white;
+  color: black;
+  font-weight: bold;
+  text-decoration: none;
+  transition: transform 0.3s;
+  &:hover {
+    transform: scale(1.05);
+  }
 `;
 
-const CollectionCard = styled.div`
-position:relative;
-overflow:hidden;
-border-radius:12px;
-
-img{
-width:100%;
-height:450px;
-object-fit:cover;
-transition:transform .6s;
-}
-
-&:hover img{
-transform:scale(1.08);
-}
-
-a{
-position:absolute;
-bottom:30px;
-left:30px;
-background:white;
-padding:12px 22px;
-text-decoration:none;
-color:black;
-font-weight:500;
-}
+/* SWITCH */
+const Switch = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  font-size: 1.5rem;
+  font-weight: bold;
 `;
 
-/* ---------------- PRODUITS ---------------- */
-
-const SectionTitle = styled.h2`
-text-align:center;
-font-weight:600;
-font-size:1.8rem;
+const SwitchBtn = styled.div`
+  cursor: pointer;
+  border-bottom: ${(p) => (p.$active ? "3px solid black" : "none")};
+  padding-bottom: 6px;
+  transition: border 0.3s;
 `;
 
-const Products = styled.section`
-max-width:1100px;
-margin:auto;
-display:grid;
-grid-template-columns:repeat(4,1fr);
-gap:20px;
-padding:0 20px;
-
-@media(max-width:900px){
-grid-template-columns:repeat(2,1fr);
-}
-
-@media(max-width:500px){
-grid-template-columns:1fr;
-}
+/* SCROLL PRODUCTS */
+const ScrollWrapper = styled.div`
+  position: relative;
 `;
 
-const ProductCard = styled(Link)`
-text-decoration:none;
-color:black;
-display:flex;
-flex-direction:column;
-gap:8px;
+const Scroll = styled.div`
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+  padding: 20px;
+  scroll-behavior: smooth;
+
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 3px;
+  }
+`;
+
+const Card = styled.div`
+  min-width: 230px;
+  position: relative;
+  animation: ${fadeIn} 0.8s ease forwards;
+`;
+
+const ProductLink = styled(Link)`
+  text-decoration: none;
+  color: inherit;
 `;
 
 const ProductImg = styled.img`
-width:100%;
-height:260px;
-object-fit:cover;
-border-radius:10px;
-
-transition:transform .3s;
-
-${ProductCard}:hover &{
-transform:scale(1.05);
-}
+  width: 100%;
+  height: 270px;
+  object-fit: cover;
+  border-radius: 10px;
+  transition: transform 0.4s, filter 0.5s;
+  filter: blur(10px);
+  opacity: 0;
 `;
 
 const Title = styled.p`
-font-size:.95rem;
-font-weight:500;
+  text-align: center;
+  font-weight: 600;
+  margin-top: 8px;
 `;
 
 const Price = styled.p`
-font-size:.9rem;
-color:#666;
+  text-align: center;
+  color: #555;
 `;
 
-/* ---------------- BANNER ---------------- */
+const CartBtn = styled.button`
+  position: absolute;
+  bottom: 80px;
+  right: 10px;
+  background: black;
+  color: white;
+  border: none;
+  padding: 8px;
+  opacity: 0;
+  cursor: pointer;
 
-const Banner = styled.section`
-height:380px;
-background:#111;
-color:white;
-display:flex;
-flex-direction:column;
-align-items:center;
-justify-content:center;
-text-align:center;
-
-h2{
-font-size:2rem;
-margin-bottom:10px;
-}
-
-p{
-opacity:.8;
-}
-
-a{
-margin-top:20px;
-padding:12px 24px;
-background:white;
-color:black;
-text-decoration:none;
-}
+  ${Card}:hover & {
+    opacity: 1;
+  }
 `;
 
-/* ---------------- COMPONENT ---------------- */
+const Skeleton = styled.div`
+  width: 230px;
+  height: 270px;
+  background: linear-gradient(90deg, #eee, #f5f5f5, #eee);
+  background-size: 400%;
+  animation: shine 1.3s infinite;
 
-export default function Home(){
+  @keyframes shine {
+    0% {
+      background-position: 100%;
+    }
+    100% {
+      background-position: -100%;
+    }
+  }
+`;
 
-const [products,setProducts] = useState([])
+/* ------------------- CAROUSEL VERTICAL ------------------- */
+const CarouselWrapper = styled.div`
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+`;
 
-useEffect(()=>{
+const CarouselInner = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
 
-fetch(`${import.meta.env.VITE_API_URL}/api/produits`)
-.then(res=>res.json())
-.then(data=>setProducts(data))
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 3px;
+  }
+`;
 
-},[])
+const CarouselImage = styled.img`
+  height: 100vh;
+  width: 100%;
+  object-fit: cover;
+  scroll-snap-align: start;
+`;
 
-const img = (p)=>{
-if(!p.images?.length) return ""
-const url = p.images[0].url
-return url.startsWith("http")
-? url
-: `${import.meta.env.VITE_API_URL}${url}`
+const Dots = styled.div`
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+const Dot = styled.div`
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: ${(p) => (p.active ? "white" : "rgba(255,255,255,0.5)")};
+  transition: background 0.3s;
+  cursor: pointer;
+`;
+
+const GenderText = styled.p`
+  text-align: center;
+  margin: 20px 0;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+  font-size: 1.1rem;
+`;
+
+/* ------------------- GENDER BUTTON ------------------- */
+const GenderBtn = styled(Link)`
+  position: absolute;
+  bottom: 30px;
+  left: 30px;
+  background: black;
+  color: white;
+  padding: 14px 26px;
+  text-decoration: none;
+  font-weight: bold;
+  z-index: 2;
+`;
+
+/* ------------------- COMPONENT ------------------- */
+function GenderCarousel({ images, link, text, paragraph }) {
+  const [active, setActive] = useState(0);
+  const carouselRef = useRef(null);
+
+  const handleScroll = () => {
+    if (!carouselRef.current) return;
+    const index = Math.round(
+      carouselRef.current.scrollTop / carouselRef.current.clientHeight
+    );
+    setActive(index);
+  };
+
+  const scrollTo = (i) => {
+    if (!carouselRef.current) return;
+    carouselRef.current.scrollTo({
+      top: i * carouselRef.current.clientHeight,
+      behavior: "smooth",
+    });
+  };
+
+  return (
+    <>
+      <CarouselWrapper>
+        <CarouselInner ref={carouselRef} onScroll={handleScroll}>
+          {images.map((imgUrl, i) => (
+            <CarouselImage key={i} src={imgUrl} alt={`Collection image ${i + 1}`} />
+          ))}
+        </CarouselInner>
+        <Dots>
+          {images.map((_, i) => (
+            <Dot key={i} active={i === active} onClick={() => scrollTo(i)} />
+          ))}
+        </Dots>
+        <GenderBtn to={link}>{text}</GenderBtn>
+      </CarouselWrapper>
+      <GenderText>{paragraph}</GenderText>
+    </>
+  );
 }
 
-const hero = products.find(p=>p.hero)
+/* ------------------- MAIN HOME COMPONENT ------------------- */
+export default function HomePremium() {
+  const [products, setProducts] = useState([]);
+  const [genre, setGenre] = useState("homme");
+  const [slide, setSlide] = useState(0);
 
-const homme = products.find(p=>p.genre?.trim().toLowerCase()==="homme")
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits`);
+        const data = await res.json();
+        setProducts(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchProducts();
+  }, []);
 
-const femme = products.find(p=>p.genre?.trim().toLowerCase()==="femme")
+  const heroProducts = useMemo(() => products.filter((p) => p.hero), [products]);
 
-const populaires = products.slice(0,4)
+  useEffect(() => {
+    if (heroProducts.length === 0) return;
+    const interval = setInterval(
+      () => setSlide((s) => (s + 1) % heroProducts.length),
+      3500
+    );
+    return () => clearInterval(interval);
+  }, [heroProducts]);
 
-return(
+  const img = (p) => {
+    if (!p?.images?.length) return "";
+    const url = p.images[0].url;
+    return url.startsWith("http") ? url : `${import.meta.env.VITE_API_URL}${url}`;
+  };
 
-<Page>
+  return (
+    <Wrapper>
+      {/* HERO */}
+      <Hero>
+        {heroProducts.map((p, i) => (
+          <Slide key={p._id} $active={i === slide} style={{ backgroundImage: `url(${img(p)})` }} />
+        ))}
+        <Overlay />
+        <HeroText>
+          <h1>Nouvelle Collection</h1>
+          <HeroBtn to="/collections">Découvrir</HeroBtn>
+        </HeroText>
+      </Hero>
 
-{/* HERO */}
+      {/* SWITCH PRODUITS H/F */}
+      <Switch>
+        <SwitchBtn $active={genre === "homme"} onClick={() => setGenre("homme")}>
+          Homme
+        </SwitchBtn>
+        <SwitchBtn $active={genre === "femme"} onClick={() => setGenre("femme")}>
+          Femme
+        </SwitchBtn>
+      </Switch>
 
-{hero && (
+      {/* PRODUITS HORIZONTAUX */}
+      <ScrollWrapper>
+        <Scroll>
+          {products.length === 0
+            ? Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} />)
+            : products
+                .filter((p) => p.genre?.toLowerCase() === genre)
+                .slice(0, 4)
+                .map((p) => (
+                  <Card key={p._id}>
+                    <ProductLink to={`/produit/${p._id}`}>
+                      <ProductImg src={img(p)} alt={p.title} data-lazy />
+                      <Title>{p.title}</Title>
+                      <Price>{p.price} FCFA</Price>
+                    </ProductLink>
+                    <CartBtn>
+                      <FiShoppingCart />
+                    </CartBtn>
+                  </Card>
+                ))}
+        </Scroll>
+      </ScrollWrapper>
 
-<Hero>
+      {/* CAROUSEL VERTICAL HOMME */}
+      <GenderCarousel
+        images={products.filter((p) => p.genre?.toLowerCase() === "homme").slice(0, 5).map(img)}
+        link="/homme"
+        text="Voir Homme"
+        paragraph="Nos vêtements hommes sont les meilleurs sur le marché des pièces authentiques à des prix accessibles"
+      />
 
-<HeroImg src={img(hero)} />
-
-<HeroOverlay/>
-
-<HeroText>
-
-<h1>Nouvelle Collection</h1>
-
-<p>
-Découvrez nos vêtements modernes
-pensés pour le style et le confort.
-</p>
-
-<Link to="/collections">
-Découvrir
-</Link>
-
-</HeroText>
-
-</Hero>
-
-)}
-
-{/* COLLECTIONS */}
-
-<Collections>
-
-{homme && (
-
-<CollectionCard>
-
-<img src={img(homme)} />
-
-<Link to="/homme">
-Collection Homme
-</Link>
-
-</CollectionCard>
-
-)}
-
-{femme && (
-
-<CollectionCard>
-
-<img src={img(femme)} />
-
-<Link to="/femme">
-Collection Femme
-</Link>
-
-</CollectionCard>
-
-)}
-
-</Collections>
-
-{/* PRODUITS */}
-
-<SectionTitle>
-Produits populaires
-</SectionTitle>
-
-<Products>
-
-{populaires.map(p=>(
-
-<ProductCard
-key={p._id}
-to={`/produit/${p._id}`}
->
-
-<ProductImg src={img(p)} />
-
-<Title>{p.titre}</Title>
-
-<Price>{p.prix} FCFA</Price>
-
-</ProductCard>
-
-))}
-
-</Products>
-
-{/* BANNER */}
-
-<Banner>
-
-<h2>Style moderne & qualité</h2>
-
-<p>
-Des vêtements conçus pour durer
-et pour vous accompagner chaque jour.
-</p>
-
-<Link to="/collections">
-Explorer la collection
-</Link>
-
-</Banner>
-
-</Page>
-
-)
-
+      {/* CAROUSEL VERTICAL FEMME */}
+      <GenderCarousel
+        images={products.filter((p) => p.genre?.toLowerCase() === "femme").slice(0, 5).map(img)}
+        link="/femme"
+        text="Voir Femme"
+        paragraph="Nos vêtements femmes sont les meilleurs sur le marché des pièces authentiques à des prix accessibles"
+      />
+    </Wrapper>
+  );
 }
