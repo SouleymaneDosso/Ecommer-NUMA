@@ -267,7 +267,7 @@ const PremiumGenreLink = styled(Link)`
   font-size: 1.15rem;
   text-decoration: none;
   color: #fff;
-  background: linear-gradient(135deg, #ff7e5f, #feb47b); /* joli gradient */
+  background: linear-gradient(135deg, black, #feb47b); /* joli gradient */
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   transition: all 0.3s ease;

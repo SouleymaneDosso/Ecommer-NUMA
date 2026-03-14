@@ -351,9 +351,9 @@ export default function Header() {
             <IconButton onClick={toggleTheme} $isdark={$isdark}>
               {$isdark ? <FiMoon size={18} /> : <FiSun size={18} />}
             </IconButton>
-            <IconButton onClick={toggleLangue} $isdark={$isdark}>
+            {/* <IconButton onClick={toggleLangue} $isdark={$isdark}>
               {i18n.language === "fr" ? "FR" : "EN"}
-            </IconButton>
+            </IconButton> */}
 
             <NavLink to="/compte" $isdark={$isdark}><FiUser /></NavLink>
 
