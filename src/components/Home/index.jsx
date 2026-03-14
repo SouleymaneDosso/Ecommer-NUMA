@@ -280,8 +280,8 @@ const PremiumGenreLink = styled(Link)`
   }
 
   &.active {
-    background: linear-gradient(135deg, #6a11cb, #2575fc); /* couleur active différente */
-    box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+    background: linear-gradient(135deg, black, black); /* couleur active différente */
+    box-shadow: 0 6px 16px rgb(8, 1, 1);
   }
 
   /* Optionnel : effet de survol “glow” */
