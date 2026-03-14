@@ -5,17 +5,17 @@ import { FiX, FiArrowUp, FiSend, FiFacebook, FiInstagram, FiChevronDown } from "
 import { ThemeContext } from "../../Utils/Context";
 import { useTranslation } from "react-i18next";
 
-/* -------------------- Animations -------------------- */
+const API = import.meta.env.VITE_API_URL;
+
+/* ---------------- Animations ---------------- */
 const fadeIn = keyframes`
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from { opacity: 0; } to { opacity: 1; }
 `;
 const scaleIn = keyframes`
-  from { transform: scale(0.8); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; }
 `;
 
-/* -------------------- Styled Components -------------------- */
+/* ---------------- Styled Components ---------------- */
 const FooterWrapper = styled.footer`
   background: ${({ $isdark }) => ($isdark ? "#000" : "#f4f4f4")};
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#000")};
@@ -70,17 +70,30 @@ const SubmitButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
   font-size: 14px;
+  transition: all 0.3s ease;
   &:hover { background: #333; }
   &:disabled { opacity: 0.6; cursor: not-allowed; }
   svg { margin-left: 6px; font-size: 18px; }
 `;
 
-const StatusMessage = styled.p`
-  font-size: 0.9rem;
-  color: ${({ $success }) => ($success ? "green" : "red")};
-  margin-top: 0.5rem;
+const Spinner = styled.div`
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #000;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  animation: spin 0.6s linear infinite;
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
+
+const ConfirmationText = styled.span`
+  color: green;
+  font-weight: 600;
+  margin-left: 10px;
 `;
 
 const Section = styled.div`
@@ -150,7 +163,6 @@ const BottomText = styled.div`
   text-align: center;
   font-size: 0.85rem;
   color: ${({ $isdark }) => ($isdark ? "#aaa" : "#555")};
-  transition: color 0.35s ease;
 `;
 
 const ScrollTopButton = styled.button`
@@ -172,6 +184,7 @@ const ScrollTopButton = styled.button`
   &:hover { background: #333; }
 `;
 
+/* ---------------- Modals ---------------- */
 const ModalOverlay = styled.div`
   position: fixed;
   inset: 0;
@@ -218,7 +231,6 @@ const NewsletterLink = styled.a`
   text-decoration: underline;
   font-weight: 600;
   cursor: pointer;
-  &:hover { opacity: 0.8; }
 `;
 
 const ButtonGroup = styled.div`
@@ -245,7 +257,7 @@ const RejectButton = styled(ConsentButton)`
   color: #000;
 `;
 
-/* -------------------- Footer Component -------------------- */
+/* ---------------- Component ---------------- */
 export default function Footer() {
   const { theme } = useContext(ThemeContext);
   const $isdark = theme === "light";
@@ -256,27 +268,28 @@ export default function Footer() {
   const sectionRefs = useRef([]);
   const [scrollVisible, setScrollVisible] = useState(false);
 
-  const [cookieVisible, setCookieVisible] = useState(false);
-  const [newsletterVisible, setNewsletterVisible] = useState(false);
-
+  // newsletter state
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState({ message: "", success: null });
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
-  // -------------------- Initial checks --------------------
+  // modals
+  const [newsletterVisible, setNewsletterVisible] = useState(false);
+  const [cookieVisible, setCookieVisible] = useState(false);
+
+  /* ---------------- Initial checks ---------------- */
   useEffect(() => {
-    const newsletterSeen = localStorage.getItem("seenNewsletterModal");
-    const newsletterSubscribed = localStorage.getItem("newsletterSubscribed");
     const cookieConsent = document.cookie.includes("marketingConsent");
-
     if (!cookieConsent) {
-      setCookieVisible(true);
-    } else if (!newsletterSeen && !newsletterSubscribed) {
-      const timer = setTimeout(() => setNewsletterVisible(true), 1500);
-      return () => clearTimeout(timer);
+      setCookieVisible(true); // cookie popup d'abord
+    } else {
+      const newsletterSeen = localStorage.getItem("seenNewsletterModal");
+      const newsletterSubscribed = localStorage.getItem("newsletterSubscribed");
+      if (!newsletterSeen && !newsletterSubscribed) setTimeout(() => setNewsletterVisible(true), 1500);
     }
   }, []);
 
-  // -------------------- Scroll observer --------------------
+  /* ---------------- Scroll observer ---------------- */
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -297,56 +310,52 @@ export default function Footer() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // -------------------- Handlers --------------------
-  const handleCookieConsent = async (accepted) => {
-    document.cookie = `marketingConsent=${accepted}; path=/; max-age=${60*60*24*365}`;
+  /* ---------------- Newsletter submit ---------------- */
+  const handleNewsletterSubmit = async (e) => {
+    e.preventDefault();
+    if (!email) return;
+    setLoading(true);
+    setSuccess(false);
     try {
-      await fetch(`${import.meta.env.VITE_API_URL}/api/cookies/consent`, {
+      const res = await fetch(`${API}/api/newsletter`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ marketingConsent: accepted }),
+        body: JSON.stringify({ email }),
       });
-    } catch (err) { console.error(err); }
-    setCookieVisible(false);
-    if (accepted) {
-      const newsletterSeen = localStorage.getItem("seenNewsletterModal");
-      const newsletterSubscribed = localStorage.getItem("newsletterSubscribed");
-      if (!newsletterSeen && !newsletterSubscribed) {
-        setTimeout(() => setNewsletterVisible(true), 500);
+      const data = await res.json();
+      if (res.ok) {
+        localStorage.setItem("newsletterSubscribed", "true");
+        setSuccess(true);
+        setEmail("");
+      } else {
+        alert(data.message || "Erreur");
       }
+    } catch (err) {
+      console.error(err);
+      alert("Erreur serveur");
+    } finally {
+      setLoading(false);
     }
   };
 
+  /* ---------------- Modals handlers ---------------- */
   const handleCloseNewsletter = () => {
     localStorage.setItem("seenNewsletterModal", "true");
     setNewsletterVisible(false);
   };
 
-  const handleSubmitNewsletter = async (e) => {
-    e.preventDefault();
-    const cookieConsent = document.cookie.includes("marketingConsent");
-    if (!cookieConsent) {
-      setStatus({ message: "Veuillez accepter les cookies avant l'envoi.", success: false });
-      return;
-    }
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/newsletter`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-      if (!res.ok) throw new Error("Erreur lors de l'inscription");
-      setStatus({ message: "Inscription réussie ✅", success: true });
-      setEmail("");
-      localStorage.setItem("newsletterSubscribed", "true");
-      setNewsletterVisible(false);
-    } catch (err) {
-      setStatus({ message: err.message || "Erreur lors de l'inscription", success: false });
+  const handleCookieConsent = (accepted) => {
+    document.cookie = `marketingConsent=${accepted}; path=/; max-age=${60*60*24*365}`;
+    setCookieVisible(false);
+    if (accepted) {
+      // après acceptation cookie, on montre la newsletter
+      const newsletterSeen = localStorage.getItem("seenNewsletterModal");
+      const newsletterSubscribed = localStorage.getItem("newsletterSubscribed");
+      if (!newsletterSeen && !newsletterSubscribed) setTimeout(() => setNewsletterVisible(true), 500);
     }
   };
 
-  // -------------------- Footer sections --------------------
+  /* ---------------- Footer sections ---------------- */
   const sections = [
     {
       title: t("about"),
@@ -375,41 +384,63 @@ export default function Footer() {
 
   return (
     <FooterWrapper $isdark={$isdark}>
+      {/* Newsletter Footer */}
       <NewsletterSection id="newsletterSection">
         <NewsletterTitle>Inscrivez-vous à notre newsletter</NewsletterTitle>
-        <NewsletterForm onSubmit={handleSubmitNewsletter}>
+        <NewsletterForm onSubmit={handleNewsletterSubmit}>
           <EmailInput
             type="email"
             placeholder="Votre email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             $isdark={$isdark}
-            required
           />
-          <SubmitButton type="submit"><FiSend /></SubmitButton>
+          <SubmitButton type="submit" disabled={loading}>
+            {loading ? <Spinner /> : <>Envoyer <FiSend /></>}
+          </SubmitButton>
+          {success && <ConfirmationText>✅ Email envoyé !</ConfirmationText>}
         </NewsletterForm>
-        {status.message && <StatusMessage $success={status.success}>{status.message}</StatusMessage>}
       </NewsletterSection>
 
+      {/* Footer Links */}
       {sections.map((sec, i) => (
-        <Section key={i} $visible={visible.includes(i.toString())} ref={el => (sectionRefs.current[i] = el)} data-index={i}>
+        <Section
+          key={i}
+          $visible={visible.includes(i.toString())}
+          ref={(el) => (sectionRefs.current[i] = el)}
+          data-index={i}
+        >
           <TitleButton onClick={() => setOpenIndex(openIndex === i ? null : i)}>
             {sec.title} <FiChevronDown style={{ transform: openIndex === i ? "rotate(180deg)" : "rotate(0)" }} />
           </TitleButton>
           <LinksContainer $open={openIndex === i}>
             {sec.links.map((link, j) =>
-              link.to ? <FooterLink key={j} to={link.to} $isdark={$isdark}>{link.text}</FooterLink>
-              : <IconWrapper key={j} href={link.href} $isdark={$isdark}>{link.icon}</IconWrapper>
+              link.to ? (
+                <FooterLink key={j} to={link.to} $isdark={$isdark}>
+                  {link.text}
+                </FooterLink>
+              ) : (
+                <IconWrapper key={j} href={link.href} $isdark={$isdark}>
+                  {link.icon}
+                </IconWrapper>
+              )
             )}
           </LinksContainer>
         </Section>
       ))}
 
       <FooterExtras $isdark={$isdark}>
-        <BottomText $isdark={$isdark}>&copy; {new Date().getFullYear()} NUMA. {t("fashion")}</BottomText>
+        <BottomText $isdark={$isdark}>
+          &copy; {new Date().getFullYear()} NUMA. {t("fashion")}
+        </BottomText>
       </FooterExtras>
 
-      <ScrollTopButton $visible={scrollVisible} onClick={() => window.scrollTo({ top:0, behavior:"smooth" })}><FiArrowUp /></ScrollTopButton>
+      <ScrollTopButton
+        $visible={scrollVisible}
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      >
+        <FiArrowUp />
+      </ScrollTopButton>
 
       {/* Newsletter Modal */}
       <ModalOverlay $visible={newsletterVisible}>
@@ -417,14 +448,21 @@ export default function Footer() {
           <CloseButton onClick={handleCloseNewsletter}><FiX /></CloseButton>
           <h2>Bienvenue sur notre application !</h2>
           <p>Inscrivez-vous à notre newsletter pour recevoir nos nouveautés et offres exclusives.</p>
-          <NewsletterLink href="/newsletter">S’inscrire à la newsletter</NewsletterLink>
+          <NewsletterLink
+            onClick={() => {
+              document.getElementById("newsletterSection")?.scrollIntoView({ behavior: "smooth" });
+              setNewsletterVisible(false);
+            }}
+          >
+            S’inscrire à la newsletter
+          </NewsletterLink>
         </ModalContent>
       </ModalOverlay>
 
       {/* Cookie Modal */}
       <ModalOverlay $visible={cookieVisible}>
         <ModalContent>
-          <CloseButton onClick={() => setCookieVisible(false)}><FiX /></CloseButton>
+          <CloseButton onClick={() => setCookieVisible(false)} />
           <h2>Cookies et consentement</h2>
           <p>Nous utilisons des cookies pour améliorer votre expérience et envoyer des emails marketing.</p>
           <ButtonGroup>
