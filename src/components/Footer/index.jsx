@@ -84,10 +84,7 @@ const Spinner = styled.div`
   width: 16px;
   height: 16px;
   animation: spin 0.6s linear infinite;
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
+  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 `;
 
 const ConfirmationText = styled.span`
@@ -184,7 +181,6 @@ const ScrollTopButton = styled.button`
   &:hover { background: #333; }
 `;
 
-/* ---------------- Modals ---------------- */
 const ModalOverlay = styled.div`
   position: fixed;
   inset: 0;
@@ -252,12 +248,13 @@ const AcceptButton = styled(ConsentButton)`
   background: #000;
   color: #fff;
 `;
+
 const RejectButton = styled(ConsentButton)`
   background: #e5e5e5;
   color: #000;
 `;
 
-/* ---------------- Component ---------------- */
+/* ---------------- Footer Component ---------------- */
 export default function Footer() {
   const { theme } = useContext(ThemeContext);
   const $isdark = theme === "light";
@@ -268,28 +265,37 @@ export default function Footer() {
   const sectionRefs = useRef([]);
   const [scrollVisible, setScrollVisible] = useState(false);
 
-  // newsletter state
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // modals
   const [newsletterVisible, setNewsletterVisible] = useState(false);
   const [cookieVisible, setCookieVisible] = useState(false);
 
-  /* ---------------- Initial checks ---------------- */
+  // ---------------- Initial consent check ----------------
   useEffect(() => {
-    const cookieConsent = document.cookie.includes("marketingConsent");
-    if (!cookieConsent) {
-      setCookieVisible(true); // cookie popup d'abord
-    } else {
-      const newsletterSeen = localStorage.getItem("seenNewsletterModal");
-      const newsletterSubscribed = localStorage.getItem("newsletterSubscribed");
-      if (!newsletterSeen && !newsletterSubscribed) setTimeout(() => setNewsletterVisible(true), 1500);
-    }
+    const checkConsent = async () => {
+      try {
+        const res = await fetch(`${API}/api/cookies/consent`, {
+          method: "GET",
+          credentials: "include",
+        });
+        const data = await res.json();
+        if (!data.marketingConsent) setCookieVisible(true);
+        else {
+          const newsletterSeen = localStorage.getItem("seenNewsletterModal");
+          const newsletterSubscribed = localStorage.getItem("newsletterSubscribed");
+          if (!newsletterSeen && !newsletterSubscribed)
+            setTimeout(() => setNewsletterVisible(true), 1500);
+        }
+      } catch (err) {
+        console.error(err);
+        setCookieVisible(true);
+      }
+    };
+    checkConsent();
   }, []);
 
-  /* ---------------- Scroll observer ---------------- */
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -310,26 +316,34 @@ export default function Footer() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  /* ---------------- Newsletter submit ---------------- */
+  // ---------------- Newsletter submit ----------------
   const handleNewsletterSubmit = async (e) => {
     e.preventDefault();
     if (!email) return;
     setLoading(true);
     setSuccess(false);
+
+    const consentRes = await fetch(`${API}/api/cookies/consent`, { method: "GET", credentials: "include" });
+    const consentData = await consentRes.json();
+    if (!consentData.marketingConsent) {
+      alert("Vous devez accepter de recevoir des emails marketing.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch(`${API}/api/newsletter`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
+        credentials: "include",
       });
       const data = await res.json();
       if (res.ok) {
         localStorage.setItem("newsletterSubscribed", "true");
         setSuccess(true);
         setEmail("");
-      } else {
-        alert(data.message || "Erreur");
-      }
+      } else alert(data.message || "Erreur");
     } catch (err) {
       console.error(err);
       alert("Erreur serveur");
@@ -338,128 +352,75 @@ export default function Footer() {
     }
   };
 
-  /* ---------------- Modals handlers ---------------- */
   const handleCloseNewsletter = () => {
     localStorage.setItem("seenNewsletterModal", "true");
     setNewsletterVisible(false);
   };
 
-  const handleCookieConsent = (accepted) => {
-    document.cookie = `marketingConsent=${accepted}; path=/; max-age=${60*60*24*365}`;
-    setCookieVisible(false);
-    if (accepted) {
-      // après acceptation cookie, on montre la newsletter
-      const newsletterSeen = localStorage.getItem("seenNewsletterModal");
-      const newsletterSubscribed = localStorage.getItem("newsletterSubscribed");
-      if (!newsletterSeen && !newsletterSubscribed) setTimeout(() => setNewsletterVisible(true), 500);
+  const handleCookieConsent = async (accepted) => {
+    try {
+      const res = await fetch(`${API}/api/cookies/consent`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ marketingConsent: accepted }),
+        credentials: "include",
+      });
+      if (!res.ok) return console.error("Erreur consent");
+      setCookieVisible(false);
+      if (accepted) {
+        const newsletterSeen = localStorage.getItem("seenNewsletterModal");
+        const newsletterSubscribed = localStorage.getItem("newsletterSubscribed");
+        if (!newsletterSeen && !newsletterSubscribed)
+          setTimeout(() => setNewsletterVisible(true), 500);
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
-  /* ---------------- Footer sections ---------------- */
   const sections = [
-    {
-      title: t("about"),
-      links: [
-        { text: t("ourStory"), to: "/apropo" },
-        { text: t("faq"), to: "/faq" },
-        { text: t("contact"), to: "/contact" },
-      ],
-    },
-    {
-      title: t("services"),
-      links: [
-        { text: t("returnPolicy"), to: "/politiqueretour" },
-        { text: t("shipping"), to: "/livraison" },
-        { text: t("terms"), to: "/conditionUtilisation" },
-      ],
-    },
-    {
-      title: t("social"),
-      links: [
-        { text: "Facebook", href: "https://www.facebook.com", icon: <FiFacebook /> },
-        { text: "Instagram", href: "https://www.instagram.com", icon: <FiInstagram /> },
-      ],
-    },
+    { title: t("about"), links: [{ text: t("ourStory"), to: "/apropo" }, { text: t("faq"), to: "/faq" }, { text: t("contact"), to: "/contact" }] },
+    { title: t("services"), links: [{ text: t("returnPolicy"), to: "/politiqueretour" }, { text: t("shipping"), to: "/livraison" }, { text: t("terms"), to: "/conditionUtilisation" }] },
+    { title: t("social"), links: [{ text: "Facebook", href: "https://www.facebook.com", icon: <FiFacebook /> }, { text: "Instagram", href: "https://www.instagram.com", icon: <FiInstagram /> }] },
   ];
 
   return (
     <FooterWrapper $isdark={$isdark}>
-      {/* Newsletter Footer */}
       <NewsletterSection id="newsletterSection">
         <NewsletterTitle>Inscrivez-vous à notre newsletter</NewsletterTitle>
         <NewsletterForm onSubmit={handleNewsletterSubmit}>
-          <EmailInput
-            type="email"
-            placeholder="Votre email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            $isdark={$isdark}
-          />
-          <SubmitButton type="submit" disabled={loading}>
-            {loading ? <Spinner /> : <>Envoyer <FiSend /></>}
-          </SubmitButton>
+          <EmailInput type="email" placeholder="Votre email" value={email} onChange={(e) => setEmail(e.target.value)} $isdark={$isdark} />
+          <SubmitButton type="submit" disabled={loading}>{loading ? <Spinner /> : <>Envoyer <FiSend /></>}</SubmitButton>
           {success && <ConfirmationText>✅ Email envoyé !</ConfirmationText>}
         </NewsletterForm>
       </NewsletterSection>
 
-      {/* Footer Links */}
       {sections.map((sec, i) => (
-        <Section
-          key={i}
-          $visible={visible.includes(i.toString())}
-          ref={(el) => (sectionRefs.current[i] = el)}
-          data-index={i}
-        >
+        <Section key={i} $visible={visible.includes(i.toString())} ref={(el) => (sectionRefs.current[i] = el)} data-index={i}>
           <TitleButton onClick={() => setOpenIndex(openIndex === i ? null : i)}>
             {sec.title} <FiChevronDown style={{ transform: openIndex === i ? "rotate(180deg)" : "rotate(0)" }} />
           </TitleButton>
           <LinksContainer $open={openIndex === i}>
-            {sec.links.map((link, j) =>
-              link.to ? (
-                <FooterLink key={j} to={link.to} $isdark={$isdark}>
-                  {link.text}
-                </FooterLink>
-              ) : (
-                <IconWrapper key={j} href={link.href} $isdark={$isdark}>
-                  {link.icon}
-                </IconWrapper>
-              )
-            )}
+            {sec.links.map((link, j) => link.to ? <FooterLink key={j} to={link.to} $isdark={$isdark}>{link.text}</FooterLink> : <IconWrapper key={j} href={link.href} $isdark={$isdark}>{link.icon}</IconWrapper>)}
           </LinksContainer>
         </Section>
       ))}
 
       <FooterExtras $isdark={$isdark}>
-        <BottomText $isdark={$isdark}>
-          &copy; {new Date().getFullYear()} NUMA. {t("fashion")}
-        </BottomText>
+        <BottomText $isdark={$isdark}>&copy; {new Date().getFullYear()} NUMA. {t("fashion")}</BottomText>
       </FooterExtras>
 
-      <ScrollTopButton
-        $visible={scrollVisible}
-        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-      >
-        <FiArrowUp />
-      </ScrollTopButton>
+      <ScrollTopButton $visible={scrollVisible} onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}><FiArrowUp /></ScrollTopButton>
 
-      {/* Newsletter Modal */}
       <ModalOverlay $visible={newsletterVisible}>
         <ModalContent>
           <CloseButton onClick={handleCloseNewsletter}><FiX /></CloseButton>
-          <h2>Bienvenue sur notre application !</h2>
-          <p>Inscrivez-vous à notre newsletter pour recevoir nos nouveautés et offres exclusives.</p>
-          <NewsletterLink
-            onClick={() => {
-              document.getElementById("newsletterSection")?.scrollIntoView({ behavior: "smooth" });
-              setNewsletterVisible(false);
-            }}
-          >
-            S’inscrire à la newsletter
-          </NewsletterLink>
+          <h2>Bienvenue !</h2>
+          <p>Inscrivez-vous à notre newsletter pour recevoir nos nouveautés.</p>
+          <NewsletterLink onClick={() => { document.getElementById("newsletterSection")?.scrollIntoView({ behavior: "smooth" }); setNewsletterVisible(false); }}>S’inscrire</NewsletterLink>
         </ModalContent>
       </ModalOverlay>
 
-      {/* Cookie Modal */}
       <ModalOverlay $visible={cookieVisible}>
         <ModalContent>
           <CloseButton onClick={() => setCookieVisible(false)} />
