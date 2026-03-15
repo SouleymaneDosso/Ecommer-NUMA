@@ -109,26 +109,21 @@ const ScrollWrapper = styled.div`
 
 const Scroll = styled.div`
   display: flex;
-  gap: 15px;
   overflow-x: auto;
-  padding: 20px 0;
   scroll-behavior: smooth;
 
   &::-webkit-scrollbar {
     height: 6px;
   }
   &::-webkit-scrollbar-thumb {
-    background: #ccc;
-    border-radius: 3px;
   }
 `;
 
 const Card = styled.div`
-  min-width: 230px;
+  width: 100%;
   position: relative;
   flex-shrink: 0;
-  background: white;
-  border-radius: 12px;
+
   overflow: hidden;
   cursor: pointer;
   animation: ${fadeUp} 0.5s ease forwards;
@@ -149,8 +144,7 @@ const ProductLink = styled(Link)`
 
 const ProductImg = styled.img`
   width: 100%;
-  height: 270px;
-  object-fit: cover;
+  height: auto;
   transition: transform 0.4s, filter 0.5s, opacity 0.5s;
   filter: blur(10px);
   opacity: 0;
