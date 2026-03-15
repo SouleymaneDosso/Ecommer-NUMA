@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import styled, { keyframes } from "styled-components";
 import { Link } from "react-router-dom";
 import { FiShoppingCart, FiChevronLeft, FiChevronRight } from "react-icons/fi";
-
+import { FaArrowRight } from "react-icons/fa";
 // ===============================
 // ANIMATIONS
 // ===============================
@@ -49,7 +49,7 @@ const Slide = styled.div`
 const Overlay = styled.div`
   position: absolute;
   inset: 0;
-  background: rgba(0,0,0,0.35);
+  background: rgba(0, 0, 0, 0.35);
 `;
 
 const HeroText = styled.div`
@@ -59,7 +59,7 @@ const HeroText = styled.div`
   transform: translateY(-50%);
   color: white;
   max-width: 500px;
-  text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 
   h1 {
     font-size: 3rem;
@@ -75,8 +75,10 @@ const HeroBtn = styled(Link)`
   color: black;
   font-weight: bold;
   text-decoration: none;
-  transition: transform 0.3s, box-shadow 0.3s;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  transition:
+    transform 0.3s,
+    box-shadow 0.3s;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
   &:hover {
     transform: scale(1.05);
   }
@@ -116,6 +118,8 @@ const Scroll = styled.div`
     height: 6px;
   }
   &::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius:10px;
   }
 `;
 
@@ -145,7 +149,10 @@ const ProductLink = styled(Link)`
 const ProductImg = styled.img`
   width: 100%;
   height: auto;
-  transition: transform 0.4s, filter 0.5s, opacity 0.5s;
+  transition:
+    transform 0.4s,
+    filter 0.5s,
+    opacity 0.5s;
   filter: blur(10px);
   opacity: 0;
 
@@ -205,7 +212,7 @@ const CarouselSlide = styled.div`
   flex-shrink: 0;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 `;
 
 const SlideImg = styled.img`
@@ -222,7 +229,7 @@ const SlideText = styled.div`
   position: absolute;
   bottom: 15px;
   left: 15px;
-  background: rgba(0,0,0,0.4);
+  background: rgba(0, 0, 0, 0.4);
   padding: 8px 12px;
   color: white;
   font-weight: bold;
@@ -252,64 +259,90 @@ const Description = styled.p`
   margin: 0 auto;
   line-height: 1.5;
 `;
-
-
-const PremiumGenreLink = styled(Link)`
-  padding: 12px 24px;
-  margin: 0 10px;
-  font-weight: 700;
-  font-size: 1.15rem;
-  text-decoration: none;
-  color: #fff;
-  background: linear-gradient(135deg, black, #feb47b); /* joli gradient */
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  transition: all 0.3s ease;
+const FeatureCard = styled.div`
   position: relative;
+  width: 100%;
+  max-width: 600px;
+  aspect-ratio: 1/1;
+  margin: 40px auto;
   overflow: hidden;
+  cursor: pointer;
+`;
+
+const FeatureImg = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+`;
+
+const FeatureOverlay = styled.div`
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.55),
+    rgba(0, 0, 0, 0.15),
+    transparent
+  );
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 30px;
+  color: white;
+`;
+
+const FeatureText = styled.p`
+  font-size: 1.2rem;
+  font-weight: 500;
+  margin-bottom: 12px;
+  max-width: 300px;
+`;
+
+const FeatureLink = styled(Link)`
+  color: white;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 
   &:hover {
-    transform: translateY(-3px) scale(1.05);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.25);
-  }
-
-  &.active {
-    background: linear-gradient(135deg, black, black); /* couleur active différente */
-    box-shadow: 0 6px 16px rgb(8, 1, 1);
-  }
-
-  /* Optionnel : effet de survol “glow” */
-  &::after {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
-    opacity: 0;
-    transition: opacity 0.4s ease;
-  }
-
-  &:hover::after {
-    opacity: 1;
+    transform: translateX(5px);
+    transition: transform 0.3s;
   }
 `;
 
 // ===============================
 // CAROUSEL COMPONENT
 // ===============================
-function SwipeCarousel({ products, categorie, genre, autoplay = true, delay = 4000 }) {
-  const filtered = useMemo(() =>
-    products.filter(p => p.genre?.toLowerCase() === genre && p.categorie?.toLowerCase() === categorie)
-  , [products, categorie, genre]);
+function SwipeCarousel({
+  products,
+  categorie,
+  genre,
+  autoplay = true,
+  delay = 4000,
+}) {
+  const filtered = useMemo(
+    () =>
+      products.filter(
+        (p) =>
+          p.genre?.toLowerCase() === genre &&
+          p.categorie?.toLowerCase() === categorie,
+      ),
+    [products, categorie, genre],
+  );
 
   const [current, setCurrent] = useState(0);
 
   // Autoplay
   useEffect(() => {
     if (!autoplay || filtered.length < 2) return;
-    const interval = setInterval(() => setCurrent((c) => (c + 1) % filtered.length), delay);
+    const interval = setInterval(
+      () => setCurrent((c) => (c + 1) % filtered.length),
+      delay,
+    );
     return () => clearInterval(interval);
   }, [filtered, autoplay, delay]);
 
@@ -318,12 +351,19 @@ function SwipeCarousel({ products, categorie, genre, autoplay = true, delay = 40
 
   if (!filtered.length) return null;
 
-  const imgUrl = (p) => p.images?.[0]?.url.startsWith("http") ? p.images[0].url : `${import.meta.env.VITE_API_URL}${p.images[0].url}`;
+  const imgUrl = (p) =>
+    p.images?.[0]?.url.startsWith("http")
+      ? p.images[0].url
+      : `${import.meta.env.VITE_API_URL}${p.images[0].url}`;
 
   return (
     <CarouselWrapper>
-      <Arrow left onClick={prev}><FiChevronLeft /></Arrow>
-      <Arrow onClick={next}><FiChevronRight /></Arrow>
+      <Arrow left onClick={prev}>
+        <FiChevronLeft />
+      </Arrow>
+      <Arrow onClick={next}>
+        <FiChevronRight />
+      </Arrow>
       <CarouselTrack style={{ transform: `translateX(-${current * 100}%)` }}>
         {filtered.map((p) => (
           <CarouselSlide key={p._id}>
@@ -357,22 +397,35 @@ export default function HomePremium() {
     fetchProducts();
   }, []);
 
-  const heroProducts = useMemo(() => products.filter((p) => p.hero), [products]);
+  const heroProducts = useMemo(
+    () => products.filter((p) => p.hero),
+    [products],
+  );
 
   useEffect(() => {
     if (!heroProducts.length) return;
-    const interval = setInterval(() => setSlide((s) => (s + 1) % heroProducts.length), 3500);
+    const interval = setInterval(
+      () => setSlide((s) => (s + 1) % heroProducts.length),
+      3500,
+    );
     return () => clearInterval(interval);
   }, [heroProducts]);
 
-  const getImg = (p) => p.images?.[0]?.url.startsWith("http") ? p.images[0].url : `${import.meta.env.VITE_API_URL}${p.images[0].url}`;
+  const getImg = (p) =>
+    p.images?.[0]?.url.startsWith("http")
+      ? p.images[0].url
+      : `${import.meta.env.VITE_API_URL}${p.images[0].url}`;
 
   return (
     <Wrapper>
       {/* HERO */}
       <Hero>
         {heroProducts.map((p, i) => (
-          <Slide key={p._id} $active={i === slide} style={{ backgroundImage: `url(${getImg(p)})` }} />
+          <Slide
+            key={p._id}
+            $active={i === slide}
+            style={{ backgroundImage: `url(${getImg(p)})` }}
+          />
         ))}
         <Overlay />
         <HeroText>
@@ -383,47 +436,93 @@ export default function HomePremium() {
 
       {/* SWITCH H/F */}
       <GenreSwitch>
-        <GenreBtn active={genre === "homme"} onClick={() => setGenre("homme")}>Homme</GenreBtn>
-        <GenreBtn active={genre === "femme"} onClick={() => setGenre("femme")}>Femme</GenreBtn>
+        <GenreBtn active={genre === "homme"} onClick={() => setGenre("homme")}>
+          Homme
+        </GenreBtn>
+        <GenreBtn active={genre === "femme"} onClick={() => setGenre("femme")}>
+          Femme
+        </GenreBtn>
       </GenreSwitch>
 
       {/* PRODUITS HORIZONTAUX */}
       <ScrollWrapper>
         <Scroll>
-          {products.filter(p => p.genre?.toLowerCase() === genre).slice(0, 6).map(p => (
-            <Card key={p._id}>
-              <ProductLink to={`/produit/${p._id}`}>
-                <ProductImg
-                  src={getImg(p)}
-                  alt={p.title}
-                  onLoad={(e) => {
-                    e.currentTarget.style.filter = "blur(0)";
-                    e.currentTarget.style.opacity = 1;
-                  }}
-                />
-                <Title>{p.title}</Title>
-                <Price>{p.price} FCFA</Price>
-              </ProductLink>
-              <CartBtn>
-                <FiShoppingCart />
-              </CartBtn>
-            </Card>
-          ))}
+          {products
+            .filter((p) => p.genre?.toLowerCase() === genre)
+            .slice(0, 6)
+            .map((p) => (
+              <Card key={p._id}>
+                <ProductLink to={`/produit/${p._id}`}>
+                  <ProductImg
+                    src={getImg(p)}
+                    alt={p.title}
+                    onLoad={(e) => {
+                      e.currentTarget.style.filter = "blur(0)";
+                      e.currentTarget.style.opacity = 1;
+                    }}
+                  />
+                  <Title>{p.title}</Title>
+                  <Price>{p.price} FCFA</Price>
+                </ProductLink>
+                <CartBtn>
+                  <FiShoppingCart />
+                </CartBtn>
+              </Card>
+            ))}
         </Scroll>
       </ScrollWrapper>
 
       {/* COLLECTIONS HAUT / BAS */}
-      <PremiumGenreLink to={"/homme"}>homme</PremiumGenreLink>
+
       <Description>
-        Notre collection homme rassemble des pièces uniques de haute qualité, confectionnées par des professionnels de la mode.
+        Notre collection homme rassemble des pièces uniques de haute qualité,
+        confectionnées par des professionnels de la mode.
       </Description>
+               {products
+        .filter((p) => p.genre?.toLowerCase() === "homme")
+        .slice(0, 1)
+        .map((p) => (
+          <FeatureCard key={p._id}>
+            <FeatureImg src={getImg(p)} alt={p.title} />
+
+            <FeatureOverlay>
+              <FeatureText>
+                Du l'art de la confection à l'excellence du design.
+              </FeatureText>
+
+              <FeatureLink to="/homme">
+                Pour lui <FaArrowRight />
+              </FeatureLink>
+            </FeatureOverlay>
+          </FeatureCard>
+        ))}
       <SwipeCarousel products={products} categorie="haut" genre="homme" />
       <SwipeCarousel products={products} categorie="bas" genre="homme" />
-      
-          <PremiumGenreLink to={"/femme"}>femme</PremiumGenreLink>
+   
+
+     
       <Description>
-        Notre collection femme est une ode à l'élégance et à la diversité, offrant des pièces qui célèbrent la féminité sous toutes ses formes.
+        Notre collection femme est une ode à l'élégance et à la diversité,
+        offrant des pièces qui célèbrent la féminité sous toutes ses formes.
       </Description>
+         {products
+        .filter((p) => p.genre?.toLowerCase() === "femme")
+        .slice(0, 1)
+        .map((p) => (
+          <FeatureCard key={p._id}>
+            <FeatureImg src={getImg(p)} alt={p.title} />
+
+            <FeatureOverlay>
+              <FeatureText>
+                L'élégance féminine réinventée à travers des créations uniques.
+              </FeatureText>
+
+              <FeatureLink to="/femme">
+                Pour elle <FaArrowRight />
+              </FeatureLink>
+            </FeatureOverlay>
+          </FeatureCard>
+        ))}
       <SwipeCarousel products={products} categorie="haut" genre="femme" />
       <SwipeCarousel products={products} categorie="bas" genre="femme" />
     </Wrapper>
