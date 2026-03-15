@@ -3,6 +3,8 @@ import styled, { keyframes } from "styled-components";
 import { Link } from "react-router-dom";
 import { FiShoppingCart, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { FaArrowRight } from "react-icons/fa";
+import { ThemeContext } from "../../Utils/Context";
+import { useContext } from "react";
 // ===============================
 // ANIMATIONS
 // ===============================
@@ -24,7 +26,8 @@ const Wrapper = styled.div`
   flex-direction: column;
   gap: 80px;
   padding-bottom: 120px;
-  background: #fafafa;
+  background: ${({ $isDark }) => ($isDark ? "#111" : "#fff")};
+  color: ${({ $isDark }) => ($isDark ? "#f8fafc" : "#111")};
 `;
 
 // ===============================
@@ -231,7 +234,7 @@ const SlideText = styled.div`
   left: 15px;
   background: rgba(0, 0, 0, 0.4);
   padding: 8px 12px;
-  color: white;
+  color: ${({ $isDark }) => ($isDark ? "#f8fafc" : "#111")};
   font-weight: bold;
   border-radius: 5px;
 `;
@@ -241,7 +244,7 @@ const Arrow = styled.div`
   top: 50%;
   transform: translateY(-50%);
   font-size: 2rem;
-  color: white;
+  color: ${({ $isDark }) => ($isDark ? "#f8fafc" : "#111")};
   cursor: pointer;
   z-index: 10;
   ${(p) => (p.left ? "left: 5px;" : "right: 5px;")}
@@ -313,6 +316,14 @@ const FeatureLink = styled(Link)`
     transition: transform 0.3s;
   }
 `;
+const FeatureTitle = styled.h2`
+  text-align: center;
+  font-size: 1.8rem;
+  margin-top: 20px;
+  text-decoration: underline;
+  text-underline-offset: 6px;
+  text-decoration-thickness: 2px;
+`;
 
 // ===============================
 // CAROUSEL COMPONENT
@@ -383,6 +394,8 @@ export default function HomePremium() {
   const [products, setProducts] = useState([]);
   const [genre, setGenre] = useState("homme");
   const [slide, setSlide] = useState(0);
+  const { theme } = useContext(ThemeContext);
+  const $isDark = theme === "light";
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -417,7 +430,7 @@ export default function HomePremium() {
       : `${import.meta.env.VITE_API_URL}${p.images[0].url}`;
 
   return (
-    <Wrapper>
+    <Wrapper   $isDark={$isDark}>
       {/* HERO */}
       <Hero>
         {heroProducts.map((p, i) => (
@@ -496,6 +509,7 @@ export default function HomePremium() {
             </FeatureOverlay>
           </FeatureCard>
         ))}
+        <FeatureTitle>Tendance Homme</FeatureTitle>
       <SwipeCarousel products={products} categorie="haut" genre="homme" />
       <SwipeCarousel products={products} categorie="bas" genre="homme" />
    
@@ -523,7 +537,8 @@ export default function HomePremium() {
             </FeatureOverlay>
           </FeatureCard>
         ))}
-      <SwipeCarousel products={products} categorie="haut" genre="femme" />
+         <FeatureTitle>Tendance Femme</FeatureTitle>
+      <SwipeCarousel products={products} categorie="haut" genre="femme"  />
       <SwipeCarousel products={products} categorie="bas" genre="femme" />
     </Wrapper>
   );
