@@ -177,6 +177,7 @@ Merci.
             selectedSize={selectedSize}
             productUrl={`${window.location.origin}/produit/${produit._id}`}
           />
+        
 
           <AddToCartBar
             produit={produit}

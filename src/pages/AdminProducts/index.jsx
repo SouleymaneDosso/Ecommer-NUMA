@@ -120,7 +120,14 @@ function AdminProducts() {
   const [badge, setBadge] = useState(null);
   const [hero, setHero] = useState(false);
   const [editingProductId, setEditingProductId] = useState(null);
-
+  const [details, setDetails] = useState({
+    matiere: "",
+    poids: "",
+    coupe: "",
+    saison: "",
+    entretien: "",
+    paysFabrication: "",
+  });
   const token = localStorage.getItem("adminToken");
 
   // ===============================
@@ -279,6 +286,7 @@ function AdminProducts() {
     // ✅ Nouvelles images
     newImages.forEach((file) => formData.append("images", file));
 
+    formData.append("details", JSON.stringify(details));
     // -----------------------------
     // Envoi vers le backend
     // -----------------------------
@@ -341,7 +349,14 @@ function AdminProducts() {
     setExistingImages(p.images || []);
     setImagesToDelete([]);
     setNewImages([]);
-
+    setDetails({
+      matiere: p.details?.matiere || "",
+      poids: p.details?.poids || "",
+      coupe: p.details?.coupe || "",
+      saison: p.details?.saison || "",
+      entretien: p.details?.entretien || "",
+      paysFabrication: p.details?.paysFabrication || "",
+    });
     if (p.images?.length > 0) {
       const mainIdx = p.images.findIndex((i) => i.isMain);
       setMainImageIndex(mainIdx !== -1 ? mainIdx : 0);
@@ -441,6 +456,14 @@ function AdminProducts() {
     setBadge(null);
     setHero(false);
     setEditingProductId(null);
+    setDetails({
+      matiere: "",
+      poids: "",
+      coupe: "",
+      saison: "",
+      entretien: "",
+      paysFabrication: "",
+    });
   };
 
   return (
@@ -516,6 +539,55 @@ function AdminProducts() {
           value={sizes.join(",")}
           onChange={(e) =>
             setSizes(e.target.value.split(",").map((s) => s.trim()))
+          }
+        />
+        {/* DETAILS PRODUIT */}
+        <Input
+          type="text"
+          placeholder="Matière"
+          value={details.matiere}
+          onChange={(e) =>
+            setDetails((prev) => ({ ...prev, matiere: e.target.value }))
+          }
+        />
+        <Input
+          type="text"
+          placeholder="Poids"
+          value={details.poids}
+          onChange={(e) =>
+            setDetails((prev) => ({ ...prev, poids: e.target.value }))
+          }
+        />
+        <Input
+          type="text"
+          placeholder="Coupe"
+          value={details.coupe}
+          onChange={(e) =>
+            setDetails((prev) => ({ ...prev, coupe: e.target.value }))
+          }
+        />
+        <Input
+          type="text"
+          placeholder="Saison"
+          value={details.saison}
+          onChange={(e) =>
+            setDetails((prev) => ({ ...prev, saison: e.target.value }))
+          }
+        />
+        <Input
+          type="text"
+          placeholder="Entretien"
+          value={details.entretien}
+          onChange={(e) =>
+            setDetails((prev) => ({ ...prev, entretien: e.target.value }))
+          }
+        />
+        <Input
+          type="text"
+          placeholder="Pays de fabrication"
+          value={details.paysFabrication}
+          onChange={(e) =>
+            setDetails((prev) => ({ ...prev, paysFabrication: e.target.value }))
           }
         />
 
