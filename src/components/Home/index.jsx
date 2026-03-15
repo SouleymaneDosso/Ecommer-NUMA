@@ -320,9 +320,6 @@ const FeatureTitle = styled.h2`
   text-align: center;
   font-size: 1.8rem;
   margin-top: 20px;
-  text-decoration: underline;
-  text-underline-offset: 6px;
-  text-decoration-thickness: 2px;
 `;
 
 // ===============================
