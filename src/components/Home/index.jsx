@@ -34,7 +34,7 @@ const Wrapper = styled.div`
 // HERO
 // ===============================
 const Hero = styled.div`
-  height: 75vh;
+  height: 90vh;
   position: relative;
   overflow: hidden;
 `;
@@ -46,7 +46,6 @@ const Slide = styled.div`
   background-position: center;
   opacity: ${(p) => (p.$active ? 1 : 0)};
   transition: opacity 1s ease-in-out;
-  filter: blur(1px) brightness(0.85);
 `;
 
 const Overlay = styled.div`
@@ -58,14 +57,12 @@ const Overlay = styled.div`
 const HeroText = styled.div`
   position: absolute;
   top: 50%;
-  left: 50px;
+  left: 100px;
   transform: translateY(-50%);
   color: white;
   max-width: 500px;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-
   h1 {
-    font-size: 3rem;
+    font-size: 2.5rem;
     animation: ${fadeIn} 1.2s ease forwards;
   }
 `;
@@ -81,7 +78,6 @@ const HeroBtn = styled(Link)`
   transition:
     transform 0.3s,
     box-shadow 0.3s;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
   &:hover {
     transform: scale(1.05);
   }
@@ -109,7 +105,7 @@ const GenreBtn = styled.div`
 // PRODUITS HORIZONTAUX
 // ===============================
 const ScrollWrapper = styled.div`
-  padding: 0 40px;
+  padding: 0px;
 `;
 
 const Scroll = styled.div`
@@ -118,7 +114,7 @@ const Scroll = styled.div`
   scroll-behavior: smooth;
 
   &::-webkit-scrollbar {
-    height: 6px;
+    height: 8 px;
   }
   &::-webkit-scrollbar-thumb {
   background: #ccc;
@@ -150,13 +146,14 @@ const ProductLink = styled(Link)`
 `;
 
 const ProductImg = styled.img`
-  width: 100%;
-  height: auto;
+ 
+width: 100%;
+height: 100%;
+object-fit: cover
   transition:
     transform 0.4s,
     filter 0.5s,
     opacity 0.5s;
-  filter: blur(10px);
   opacity: 0;
 
   &:hover {
@@ -185,7 +182,7 @@ const CartBtn = styled.button`
   padding: 8px;
   opacity: 0;
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: 5px;
 
   ${Card}:hover & {
     opacity: 1;
@@ -198,34 +195,26 @@ const CartBtn = styled.button`
 const CarouselWrapper = styled.div`
   position: relative;
   width: 100%;
-  max-width: 600px;
-  margin: 20px auto;
   overflow: hidden;
 `;
 
 const CarouselTrack = styled.div`
   display: flex;
   transition: transform 0.5s ease;
+  width: 100%;
 `;
 
 const CarouselSlide = styled.div`
-  min-width: 80%;
-  margin: 0 10%;
-  position: relative;
+  width: 100%;
   flex-shrink: 0;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  position: relative;
 `;
 
 const SlideImg = styled.img`
   width: 100%;
-  height: 350px;
+  height: 100%;
   object-fit: cover;
-  transition: transform 0.5s ease;
-  &:hover {
-    transform: scale(1.05);
-  }
+  display: block;
 `;
 
 const SlideText = styled.div`
@@ -265,9 +254,6 @@ const Description = styled.p`
 const FeatureCard = styled.div`
   position: relative;
   width: 100%;
-  max-width: 600px;
-  aspect-ratio: 1/1;
-  margin: 40px auto;
   overflow: hidden;
   cursor: pointer;
 `;
@@ -276,7 +262,6 @@ const FeatureImg = styled.img`
   width: 100%;
   height: 100%;
   object-fit: cover;
-  display: block;
 `;
 
 const FeatureOverlay = styled.div`

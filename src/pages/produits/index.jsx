@@ -8,7 +8,7 @@ import Comments from "../../components/Comments";
 import Recommendations from "../../components/Recommendations";
 import { LoaderWrapper, Loader } from "../../Utils/Rotate";
 import ProductDescription from "../../components/ProductDescription";
-
+import ProductDetailsInfo from "../../components/ProductDetailsInfo";
 // ---------- STYLES (minimaliste & pro) ----------
 const PageWrapper = styled.main`
   padding: 2rem 5%;
@@ -155,48 +155,47 @@ Merci.
 
       <ProductWrapper>
         <ProductImages images={orderedImages} />
+<ProductDetails>
+  <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+    <ProductTitle>{produit.title}</ProductTitle>
+    {(produit.badge || produit.isNew) && (
+      <Badge type={produit.badge || (produit.isNew ? "new" : null)}>
+        {produit.badge || (produit.isNew ? "Nouveau" : "")}
+      </Badge>
+    )}
+  </div>
 
-        <ProductDetails>
-          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-            <ProductTitle>{produit.title}</ProductTitle>
-            {(produit.badge || produit.isNew) && (
-              <Badge type={produit.badge || (produit.isNew ? "new" : null)}>
-                {produit.badge || (produit.isNew ? "Nouveau" : "")}
-              </Badge>
-            )}
-          </div>
+  <ProductPrice>{produit.price} FCFA</ProductPrice>
 
-          <ProductPrice>{produit.price} FCFA</ProductPrice>
+ <ProductDescription
+  description={produit.description}
+  quantity={quantity}
+  productName={produit.title}
+  price={produit.price}
+  selectedColor={selectedColor}
+  selectedSize={selectedSize}
+  productUrl={`${window.location.origin}/produit/${produit._id}`}
+/>
+<ProductDetailsInfo details={produit.details} />
 
-          <ProductDescription
-            description={produit.description}
-            quantity={quantity}
-            productName={produit.title}
-            price={produit.price}
-            selectedColor={selectedColor}
-            selectedSize={selectedSize}
-            productUrl={`${window.location.origin}/produit/${produit._id}`}
-          />
-        
+  <AddToCartBar
+    produit={produit}
+    selectedColor={selectedColor}
+    setSelectedColor={setSelectedColor}
+    selectedSize={selectedSize}
+    setSelectedSize={setSelectedSize}
+    quantity={quantity}
+    setQuantity={setQuantity}
+  />
 
-          <AddToCartBar
-            produit={produit}
-            selectedColor={selectedColor}
-            setSelectedColor={setSelectedColor}
-            selectedSize={selectedSize}
-            setSelectedSize={setSelectedSize}
-            quantity={quantity}
-            setQuantity={setQuantity}
-          />
+  <Comments
+    commentaires={produit.commentaires}
+    produitId={produit._id}
+    userId={localStorage.getItem("userId")}
+  />
 
-          <Comments
-            commentaires={produit.commentaires}
-            produitId={produit._id}
-            userId={localStorage.getItem("userId")}
-          />
-
-          <Recommendations currentId={produit._id} />
-        </ProductDetails>
+  <Recommendations currentId={produit._id} />
+</ProductDetails>
       </ProductWrapper>
     </PageWrapper>
   );
