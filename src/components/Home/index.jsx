@@ -1,8 +1,44 @@
 import { useState, useEffect, useMemo, useContext, useRef } from "react";
 import styled, { keyframes } from "styled-components";
 import { Link } from "react-router-dom";
-import { FaArrowRight, FaTruck, FaUndo, FaHeadset } from "react-icons/fa";
+import { FaArrowRight } from "react-icons/fa";
 import { ThemeContext } from "../../Utils/Context";
+import { FaTruck, FaShieldAlt, FaUndo } from "react-icons/fa";
+// ===============================
+// SCROLL REVEAL COMPONENT
+// ===============================
+function RevealOnScroll({ children }) {
+  const ref = useRef(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+        }
+      },
+      { threshold: 0.2 },
+    );
+
+    if (ref.current) observer.observe(ref.current);
+
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0px)" : "translateY(40px)",
+        transition: "all 0.8s ease",
+      }}
+    >
+      {children}
+    </div>
+  );
+}
 
 // ===============================
 // ANIMATIONS
@@ -17,6 +53,48 @@ const fadeIn = keyframes`
   to {opacity:1;}
 `;
 
+const BenefitsSection = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 60px;
+  padding: 40px 20px;
+  flex-wrap: wrap;
+`;
+
+const BenefitCard = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 220px;
+  gap: 12px;
+  transition: transform 0.3s ease;
+
+  &:hover {
+    transform: translateY(-8px);
+  }
+`;
+
+const BenefitIcon = styled.div`
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  color: white;
+`;
+
+const BenefitTitle = styled.div`
+  font-weight: bold;
+  font-size: 1.1rem;
+`;
+
+const BenefitText = styled.div`
+  font-size: 0.9rem;
+  opacity: 0.8;
+`;
 // ===============================
 // WRAPPERS
 // ===============================
@@ -60,14 +138,9 @@ const HeroText = styled.div`
   transform: translateY(-50%);
   color: white;
   max-width: 500px;
-  opacity: 0;
-  animation: ${fadeIn} 1.2s forwards;
-  animation-delay: 0.3s;
-  &.visible {
-    opacity: 1;
-  }
   h1 {
     font-size: 2.5rem;
+    animation: ${fadeIn} 1.2s ease forwards;
   }
 `;
 
@@ -79,7 +152,7 @@ const HeroBtn = styled(Link)`
   color: black;
   font-weight: bold;
   text-decoration: none;
-  transition: transform 0.3s, box-shadow 0.3s;
+  transition: transform 0.3s;
   &:hover {
     transform: scale(1.05);
   }
@@ -94,31 +167,12 @@ const FeatureCard = styled.div`
   overflow: hidden;
   cursor: pointer;
   padding: 0 5%;
-  opacity: 0;
-  transform: translateY(40px);
-  transition: all 0.8s ease;
-  &.visible {
-    opacity: 1;
-    transform: translateY(0);
-  }
-`;
-
-const FeatureImgWrapper = styled.div`
-  width: 100%;
-  height: 100%;
-  background: #e0e0e0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 `;
 
 const FeatureImg = styled.img`
   width: 100%;
   height: 100%;
   object-fit: cover;
-  display: block;
-  opacity: ${(p) => (p.loaded ? 1 : 0)};
-  transition: opacity 0.5s ease;
 `;
 
 const FeatureOverlay = styled.div`
@@ -159,9 +213,6 @@ const FeatureLink = styled(Link)`
   }
 `;
 
-// ===============================
-// DESCRIPTION
-// ===============================
 const Description = styled.p`
   text-align: center;
   font-weight: 500;
@@ -169,13 +220,6 @@ const Description = styled.p`
   max-width: 900px;
   margin: 0 auto;
   line-height: 1.5;
-  opacity: 0;
-  transform: translateY(40px);
-  transition: all 0.8s ease;
-  &.visible {
-    opacity: 1;
-    transform: translateY(0);
-  }
 `;
 
 // ===============================
@@ -195,23 +239,12 @@ const CarouselSlide = styled.div`
   padding: 20px 0;
 `;
 
-const SlideImgWrapper = styled.div`
+const SlideImg = styled.img`
   width: 300px;
   height: 400px;
-  background: #e0e0e0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-
-const SlideImg = styled.img`
-  width: 100%;
-  height: 100%;
   display: block;
   margin: 0 auto;
   object-fit: cover;
-  opacity: ${(p) => (p.loaded ? 1 : 0)};
-  transition: opacity 0.5s ease;
 `;
 
 const Dot = styled.div`
@@ -220,7 +253,9 @@ const Dot = styled.div`
   border-radius: 50%;
   background: ${(p) => (p.active ? "#111" : "#ccc")};
   cursor: pointer;
-  transition: background 0.3s, transform 0.3s;
+  transition:
+    background 0.3s,
+    transform 0.3s;
   transform: scale(${(p) => (p.active ? 1.3 : 1)});
 `;
 
@@ -229,13 +264,6 @@ const CarouselContainer = styled.div`
   width: 100%;
   overflow: hidden;
   margin-bottom: 70px;
-  opacity: 0;
-  transform: translateY(40px);
-  transition: all 0.8s ease;
-  &.visible {
-    opacity: 1;
-    transform: translateY(0);
-  }
 `;
 
 const ProgressDotsWrapper = styled.div`
@@ -263,124 +291,18 @@ const SlidePriceText = styled.div`
   margin-top: 4px;
 `;
 
-// ===============================
-// ICÔNES AVANTAGES
-// ===============================
-const IconsSection = styled.div`
-  display: flex;
-  justify-content: center;
-  gap: 60px;
-  padding: 60px 20px;
-  flex-wrap: wrap;
-  opacity: 0;
-  transform: translateY(40px);
-  transition: all 0.8s ease;
-  &.visible {
-    opacity: 1;
-    transform: translateY(0);
-  }
-`;
-
-const IconCard = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-  color: ${({ $isDark }) => ($isDark ? "#f8fafc" : "#111")};
-  text-align: center;
-`;
-
-const IconLabel = styled.p`
-  font-weight: bold;
-  font-size: 1rem;
-`;
-
-// ===============================
-// AVIS CLIENTS
-// ===============================
-const ReviewsSection = styled.div`
-  padding: 80px 20px;
-  background: ${({ $isDark }) => ($isDark ? "#1a1a1a" : "#f9f9f9")};
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 40px;
-  opacity: 0;
-  transform: translateY(40px);
-  transition: all 0.8s ease;
-  &.visible {
-    opacity: 1;
-    transform: translateY(0);
-  }
-`;
-
-const ReviewsTitle = styled.h2`
-  font-size: 2rem;
-  font-weight: bold;
-  color: ${({ $isDark }) => ($isDark ? "#f8fafc" : "#111")};
-  text-align: center;
-`;
-
-const ReviewCards = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 24px;
-  justify-content: center;
-`;
-
-const ReviewCard = styled.div`
-  background: ${({ $isDark }) => ($isDark ? "#222" : "#fff")};
-  color: ${({ $isDark }) => ($isDark ? "#f8fafc" : "#111")};
-  padding: 24px;
-  border-radius: 12px;
-  max-width: 320px;
-  box-shadow: ${({ $isDark }) =>
-    $isDark
-      ? "0 4px 12px rgba(0,0,0,0.5)"
-      : "0 4px 12px rgba(0,0,0,0.1)"};
-  opacity: 0;
-  transform: translateY(40px);
-  animation: ${fadeUp} 1s forwards;
-`;
-
-const StarsWrapper = styled.div`
-  display: flex;
-  gap: 4px;
-  margin-bottom: 12px;
-`;
-
-const Star = styled.span`
-  color: #facc15; /* jaune étoile */
-  font-size: 18px;
-`;
-
-const ReviewText = styled.p`
-  font-size: 0.95rem;
-  line-height: 1.4;
-  font-style: italic;
-`;
-
-const Reviewer = styled.p`
-  margin-top: 12px;
-  font-weight: bold;
-  font-size: 0.9rem;
-  text-align: right;
-`;
-
-// ===============================
-// DOT CAROUSEL COMPONENT
-// ===============================
 function DotCarousel({ products, delay = 4000, $isDark }) {
   const filtered = useMemo(() => products.slice(0, 6), [products]);
   const slides = filtered.length ? [...filtered, filtered[0]] : [];
 
   const [current, setCurrent] = useState(0);
   const [transition, setTransition] = useState(true);
-  const [loadedImgs, setLoadedImgs] = useState({});
 
   useEffect(() => {
     if (filtered.length < 2) return;
-    const interval = setInterval(() => setCurrent((c) => c + 1), delay);
+    const interval = setInterval(() => {
+      setCurrent((c) => c + 1);
+    }, delay);
     return () => clearInterval(interval);
   }, [filtered, delay]);
 
@@ -395,42 +317,42 @@ function DotCarousel({ products, delay = 4000, $isDark }) {
 
   useEffect(() => {
     if (!transition) {
-      setTimeout(() => setTransition(true), 50);
+      setTimeout(() => {
+        setTransition(true);
+      }, 50);
     }
   }, [transition]);
 
-  const imgUrl = (p) =>
-    p.images?.[0]?.url.startsWith("http")
+  const imgUrl = (p) => {
+    if (!p.images || !p.images.length) return "";
+    return p.images[0].url.startsWith("http")
       ? p.images[0].url
       : `${import.meta.env.VITE_API_URL}${p.images[0].url}`;
+  };
 
   return (
-    <CarouselContainer className="visible">
-      <CarouselTrack
-        style={{
-          transform: `translateX(-${current * 100}%)`,
-          transition: transition ? "transform 0.5s ease" : "none",
-        }}
-      >
-        {slides.map((p, i) => (
-          <CarouselSlide key={i}>
-            <SlideImgWrapper>
-              <SlideImg
-                src={imgUrl(p)}
-                alt={p.title}
-                loaded={loadedImgs[i]}
-                onLoad={() =>
-                  setLoadedImgs((prev) => ({ ...prev, [i]: true }))
-                }
-              />
-            </SlideImgWrapper>
-            <SlideInfo>
-              <SlideTitleText $isDark={$isDark}>{p.title}</SlideTitleText>
-              <SlidePriceText $isDark={$isDark}>{p.price} FCFA</SlidePriceText>
-            </SlideInfo>
-          </CarouselSlide>
-        ))}
-      </CarouselTrack>
+    <div>
+      <CarouselContainer>
+        <CarouselTrack
+          style={{
+            transform: `translateX(-${current * 100}%)`,
+            transition: transition ? "transform 0.5s ease" : "none",
+          }}
+        >
+          {slides.map((p, i) => (
+            <CarouselSlide key={i}>
+              <SlideImg src={imgUrl(p)} alt={p.title} />
+              <SlideInfo>
+                <SlideTitleText $isDark={$isDark}>{p.title}</SlideTitleText>
+                <SlidePriceText $isDark={$isDark}>
+                  {p.price} FCFA
+                </SlidePriceText>
+              </SlideInfo>
+            </CarouselSlide>
+          ))}
+        </CarouselTrack>
+      </CarouselContainer>
+
       <ProgressDotsWrapper>
         {filtered.map((_, i) => (
           <Dot
@@ -440,7 +362,7 @@ function DotCarousel({ products, delay = 4000, $isDark }) {
           />
         ))}
       </ProgressDotsWrapper>
-    </CarouselContainer>
+    </div>
   );
 }
 
@@ -452,9 +374,6 @@ export default function HomePremium() {
   const [slide, setSlide] = useState(0);
   const { theme } = useContext(ThemeContext);
   const $isDark = theme === "light";
-
-  const [loadedFeatureImgs, setLoadedFeatureImgs] = useState({});
-  const sectionRefs = useRef([]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -469,142 +388,125 @@ export default function HomePremium() {
     fetchProducts();
   }, []);
 
-  const heroProducts = useMemo(() => products.filter((p) => p.hero), [products]);
+  const heroProducts = useMemo(
+    () => products.filter((p) => p.hero),
+    [products],
+  );
 
   useEffect(() => {
     if (!heroProducts.length) return;
-    const interval = setInterval(() => setSlide((s) => (s + 1) % heroProducts.length), 3500);
+    const interval = setInterval(
+      () => setSlide((s) => (s + 1) % heroProducts.length),
+      3500,
+    );
     return () => clearInterval(interval);
   }, [heroProducts]);
 
   const getImg = (p) =>
-    p.images?.[0]?.url.startsWith("http") ? p.images[0].url : `${import.meta.env.VITE_API_URL}${p.images[0].url}`;
-
-  const reviews = [
-    { text: "Très satisfait ! Qualité exceptionnelle et livraison rapide.", name: "Awa D.", stars: 5 },
-    { text: "Le design est incroyable, je recommande vivement NUMA Premium.", name: "Souleymane K.", stars: 5 },
-    { text: "Excellent service et produits de haute qualité.", name: "Fatou B.", stars: 4 },
-  ];
-
-  // ===============================
-  // SCROLL REVEAL
-  // ===============================
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) entry.target.classList.add("visible");
-        });
-      },
-      { threshold: 0.15 }
-    );
-
-    sectionRefs.current.forEach((el) => {
-      if (el) observer.observe(el);
-    });
-
-    return () => {
-      sectionRefs.current.forEach((el) => {
-        if (el) observer.unobserve(el);
-      });
-    };
-  }, [sectionRefs, products]);
+    p.images?.[0]?.url.startsWith("http")
+      ? p.images[0].url
+      : `${import.meta.env.VITE_API_URL}${p.images[0].url}`;
 
   return (
     <Wrapper $isDark={$isDark}>
       {/* HERO */}
-      <Hero ref={(el) => (sectionRefs.current[0] = el)}>
+      <Hero>
         {heroProducts.map((p, i) => (
-          <Slide key={p._id} $active={i === slide} style={{ backgroundImage: `url(${getImg(p)})` }} />
+          <Slide
+            key={p._id}
+            $active={i === slide}
+            style={{ backgroundImage: `url(${getImg(p)})` }}
+          />
         ))}
         <Overlay />
-        <HeroText className="visible">
+        <HeroText>
           <h1>Nouvelle Collection 2026</h1>
           <HeroBtn to="/collections">Découvrir</HeroBtn>
         </HeroText>
       </Hero>
 
-      {/* COLLECTION HOMME */}
-      {products.filter((p) => p.genre?.toLowerCase() === "homme").slice(0, 1).map((p, i) => (
-        <FeatureCard
-          key={p._id}
-          ref={(el) => (sectionRefs.current[1] = el)}
-        >
-          <FeatureImgWrapper>
-            <FeatureImg
-              src={getImg(p)}
-              loaded={loadedFeatureImgs[i]}
-              onLoad={() => setLoadedFeatureImgs((prev) => ({ ...prev, [i]: true }))}
-            />
-          </FeatureImgWrapper>
-          <FeatureOverlay>
-            <FeatureText>Du l'art de la confection à l'excellence du design.</FeatureText>
-            <FeatureLink to="/homme">Pour lui <FaArrowRight /></FeatureLink>
-          </FeatureOverlay>
-        </FeatureCard>
-      ))}
-
-      {/* COLLECTION FEMME */}
-      {products.filter((p) => p.genre?.toLowerCase() === "femme").slice(0, 1).map((p, i) => (
-        <FeatureCard
-          key={p._id}
-          ref={(el) => (sectionRefs.current[2] = el)}
-        >
-          <FeatureImgWrapper>
-            <FeatureImg
-              src={getImg(p)}
-              loaded={loadedFeatureImgs[i]}
-              onLoad={() => setLoadedFeatureImgs((prev) => ({ ...prev, [i]: true }))}
-            />
-          </FeatureImgWrapper>
-          <FeatureOverlay>
-            <FeatureText>L'élégance féminine réinventée à travers des créations uniques.</FeatureText>
-            <FeatureLink to="/femme">Pour elle <FaArrowRight /></FeatureLink>
-          </FeatureOverlay>
-        </FeatureCard>
-      ))}
-
-      {/* DOT CAROUSEL */}
-      <div ref={(el) => (sectionRefs.current[3] = el)}>
-        <DotCarousel products={products} delay={3500} $isDark={$isDark} />
-      </div>
-
-      {/* ICONS AVANTAGES */}
-      <IconsSection ref={(el) => (sectionRefs.current[4] = el)}>
-        <IconCard $isDark={$isDark}>
-          <FaTruck size={48} color="#facc15" />
-          <IconLabel>Livraison Gratuite</IconLabel>
-        </IconCard>
-        <IconCard $isDark={$isDark}>
-          <FaUndo size={48} color="#34d399" />
-          <IconLabel>Retour Facile</IconLabel>
-        </IconCard>
-        <IconCard $isDark={$isDark}>
-          <FaHeadset size={48} color="#60a5fa" />
-          <IconLabel>Support 24/7</IconLabel>
-        </IconCard>
-      </IconsSection>
-
-      {/* AVIS CLIENTS */}
-      <ReviewsSection ref={(el) => (sectionRefs.current[5] = el)} $isDark={$isDark}>
-        <ReviewsTitle $isDark={$isDark}>Avis Clients</ReviewsTitle>
-        <ReviewCards>
-          {reviews.map((r, i) => (
-            <ReviewCard key={i} style={{ animationDelay: `${i * 0.2}s` }} $isDark={$isDark}>
-              <StarsWrapper>
-                {Array.from({ length: r.stars }).map((_, idx) => <Star key={idx}>★</Star>)}
-              </StarsWrapper>
-              <ReviewText>"{r.text}"</ReviewText>
-              <Reviewer>- {r.name}</Reviewer>
-            </ReviewCard>
+      <RevealOnScroll>
+        {products
+          .filter((p) => p.genre?.toLowerCase() === "homme")
+          .slice(0, 1)
+          .map((p) => (
+            <FeatureCard key={p._id}>
+              <FeatureImg src={getImg(p)} alt={p.title} />
+              <FeatureOverlay>
+                <FeatureText>
+                  Du l'art de la confection à l'excellence du design.
+                </FeatureText>
+                <FeatureLink to="/homme">
+                  Pour lui <FaArrowRight />
+                </FeatureLink>
+              </FeatureOverlay>
+            </FeatureCard>
           ))}
-        </ReviewCards>
-      </ReviewsSection>
+      </RevealOnScroll>
 
-      {/* COLLECTION DESCRIPTION */}
-      <Description ref={(el) => (sectionRefs.current[6] = el)}>
-        NUMA Premium offre des pièces uniques avec un design raffiné, des matériaux de qualité supérieure et une expérience de mode exclusive.
-      </Description>
+      <RevealOnScroll>
+        {products
+          .filter((p) => p.genre?.toLowerCase() === "femme")
+          .slice(0, 1)
+          .map((p) => (
+            <FeatureCard key={p._id}>
+              <FeatureImg src={getImg(p)} alt={p.title} />
+              <FeatureOverlay>
+                <FeatureText>
+                  L'élégance féminine réinventée à travers des créations
+                  uniques.
+                </FeatureText>
+                <FeatureLink to="/femme">
+                  Pour elle <FaArrowRight />
+                </FeatureLink>
+              </FeatureOverlay>
+            </FeatureCard>
+          ))}
+      </RevealOnScroll>
+
+      <RevealOnScroll>
+        <DotCarousel products={products} delay={3500} $isDark={$isDark} />
+      </RevealOnScroll>
+
+      <RevealOnScroll>
+        <RevealOnScroll>
+          <RevealOnScroll>
+            <BenefitsSection>
+              <BenefitCard>
+                <BenefitIcon style={{ background: "#2563eb" }}>
+                  <FaTruck />
+                </BenefitIcon>
+                <BenefitTitle>Livraison gratuite</BenefitTitle>
+                <BenefitText>
+                  Livraison offerte sur toutes vos commandes.
+                </BenefitText>
+              </BenefitCard>
+
+              <BenefitCard>
+                <BenefitIcon style={{ background: "#16a34a" }}>
+                  <FaShieldAlt />
+                </BenefitIcon>
+                <BenefitTitle>Paiement sécurisé</BenefitTitle>
+                <BenefitText>
+                  Transactions protégées et 100% sécurisées.
+                </BenefitText>
+              </BenefitCard>
+
+              <BenefitCard>
+                <BenefitIcon style={{ background: "#ea580c" }}>
+                  <FaUndo />
+                </BenefitIcon>
+                <BenefitTitle>Retour facile</BenefitTitle>
+                <BenefitText>Retour possible sous 7 jours.</BenefitText>
+              </BenefitCard>
+            </BenefitsSection>
+          </RevealOnScroll>
+        </RevealOnScroll>
+        <Description>
+          NUMA Premium offre des pièces uniques avec un design raffiné, des
+          matériaux de qualité supérieure et une expérience de mode exclusive.
+        </Description>
+      </RevealOnScroll>
     </Wrapper>
   );
 }
