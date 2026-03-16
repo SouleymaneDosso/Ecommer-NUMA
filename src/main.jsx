@@ -1,6 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route,useLocation  } from "react-router-dom";
 import { useEffect } from "react";
 import GlobalStyle from "./GlobaleStyle";
 import { ToggleTheme } from "./Utils/Context";
@@ -47,9 +47,12 @@ import "./i18n";
 
 // --- Layout pour les pages publiques ---
 const PublicLayout = ({ children }) => {
+  const location = useLocation();
+  const heroPage = location.pathname === "/";
   return (
     <>
       <ScrollToTop />
+      <GlobalStyle heroPage={heroPage} />
       <Header />
       <main>{children}</main>
       <Footer />
@@ -301,5 +304,5 @@ createRoot(document.getElementById("root")).render(
         </Panier>
       </ToggleTheme>
     </Router>
-  </StrictMode>
+  </StrictMode>,
 );

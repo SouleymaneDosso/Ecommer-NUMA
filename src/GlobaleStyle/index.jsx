@@ -2,8 +2,9 @@ import { createGlobalStyle } from "styled-components";
 import { ThemeContext } from "../Utils/Context";
 import { useContext } from "react";
 
-const StyledGlobalStyle = createGlobalStyle`
+const HEADER_HEIGHT = 70;
 
+const StyledGlobalStyle = createGlobalStyle`
   *, *::before, *::after {
     margin: 0;
     padding: 0;
@@ -17,18 +18,21 @@ const StyledGlobalStyle = createGlobalStyle`
   }
 
   body {
-    min-height: 100vh;
-    overflow-x: hidden;
-    
-    background: ${({ $isDark }) =>
-      $isDark
-        ? "linear-gradient(145deg, #111, #111 60%, #111)"
-        : "linear-gradient(145deg, #ffffff, #f5f5f7 60%, #e8eaed)"};
+  min-height: 100vh;
+  overflow-x: hidden;
 
-    color: ${({ $isDark }) => ($isDark ? "#f8fafc" : "#111")};
+  /* padding-top seulement si ce n'est pas la page hero */
+  padding-top: ${({ $hero }) => ($hero ? "0" : `${HEADER_HEIGHT}px`)};
 
-    transition: background 0.45s ease, color 0.35s ease;
-  }
+  background: ${({ $isDark }) =>
+    $isDark
+      ? "linear-gradient(145deg, #111, #111 60%, #111)"
+      : "linear-gradient(145deg, #ffffff, #f5f5f7 60%, #e8eaed)"};
+
+  color: ${({ $isDark }) => ($isDark ? "#f8fafc" : "#111")};
+
+  transition: background 0.45s ease, color 0.35s ease, padding-top 0.3s ease;
+}
 
   ::selection {
     background: ${({ $isDark }) => ($isDark ? "#3b82f6" : "#2563eb")};
@@ -36,7 +40,6 @@ const StyledGlobalStyle = createGlobalStyle`
   }
 
   /* Scrollbar */
-
   ::-webkit-scrollbar {
     width: 8px;
   }
@@ -63,15 +66,14 @@ const StyledGlobalStyle = createGlobalStyle`
   input {
     font-size: 16px;
   }
-
 `;
 
-function GlobalStyle() {
+function GlobalStyle({ heroPage }) {
   const { theme } = useContext(ThemeContext);
 
   const isDarkMode = theme === "light";
 
-  return <StyledGlobalStyle $isDark={isDarkMode} />;
+  return <StyledGlobalStyle $isDark={isDarkMode} $hero={heroPage} />;
 }
 
 export default GlobalStyle;
