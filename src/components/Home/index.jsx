@@ -74,12 +74,13 @@ const HeroBtn = styled(Link)`
   color: black;
   font-weight: bold;
   text-decoration: none;
-  transition: transform 0.3s, box-shadow 0.3s;
+  transition:
+    transform 0.3s,
+    box-shadow 0.3s;
   &:hover {
     transform: scale(1.05);
   }
 `;
-
 
 // ===============================
 // FEATURE CARDS
@@ -136,12 +137,6 @@ const FeatureLink = styled(Link)`
   }
 `;
 
-const FeatureTitle = styled.h2`
-  text-align: center;
-  font-size: 1.8rem;
-  margin-top: 20px;
-`;
-
 const Description = styled.p`
   text-align: center;
   font-weight: 500;
@@ -154,11 +149,6 @@ const Description = styled.p`
 // ===============================
 // DOT CAROUSEL
 // ===============================
-const CarouselWrapper = styled.div`
-  position: relative;
-  width: 100%;
-  overflow: hidden;
-`;
 
 const CarouselTrack = styled.div`
   display: flex;
@@ -169,21 +159,17 @@ const CarouselTrack = styled.div`
 const CarouselSlide = styled.div`
   width: 100%;
   flex-shrink: 0;
-  position: relative;
+  display: flex;
+  flex-direction: column; 
+    align-items: center;  
+  padding: 20px 0; 
 `;
 
 const SlideImg = styled.img`
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  width: 300px;       
+  height: 400px;      
   display: block;
-`;
-
-const ProgressDots = styled.div`
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 12px;
+  margin: 0 auto;   
 `;
 
 const Dot = styled.div`
@@ -192,26 +178,55 @@ const Dot = styled.div`
   border-radius: 50%;
   background: ${(p) => (p.active ? "#111" : "#ccc")};
   cursor: pointer;
-  transition: background 0.3s, transform 0.3s;
+  transition:
+    background 0.3s,
+    transform 0.3s;
   transform: scale(${(p) => (p.active ? 1.3 : 1)});
 `;
 
-function DotCarousel({ products, categorie, genre, delay = 4000 }) {
-  const filtered = useMemo(
-    () =>
-      products.filter(
-        (p) =>
-          p.genre?.toLowerCase() === genre &&
-          p.categorie?.toLowerCase() === categorie
-      ),
-    [products, categorie, genre]
-  );
+const CarouselContainer = styled.div`
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  margin-bottom: 70px;
+`;
+
+const ProgressDotsWrapper = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px; /* espace entre images et les dots */
+`;
+
+const SlideInfo = styled.div`
+  text-align: left;
+  margin-top: 8px; /* espace entre l'image et le texte */
+  padding: 0 10px;
+`;
+
+const SlideTitleText = styled.div`
+  font-weight: bold;
+  font-size: 1rem;
+  color: #111; /* texte noir */
+`;
+
+const SlidePriceText = styled.div`
+  font-size: 0.9rem;
+  color: #111; /* texte noir */
+  margin-top: 4px;
+`;
+
+function DotCarousel({ products, delay = 4000 }) {
+  const filtered = useMemo(() => products.slice(0, 6), [products]); // prend juste 6 images
 
   const [current, setCurrent] = useState(0);
 
   useEffect(() => {
     if (filtered.length < 2) return;
-    const interval = setInterval(() => setCurrent((c) => (c + 1) % filtered.length), delay);
+    const interval = setInterval(
+      () => setCurrent((c) => (c + 1) % filtered.length),
+      delay,
+    );
     return () => clearInterval(interval);
   }, [filtered, delay]);
 
@@ -224,21 +239,26 @@ function DotCarousel({ products, categorie, genre, delay = 4000 }) {
 
   return (
     <div>
-      <CarouselWrapper>
+      <CarouselContainer>
         <CarouselTrack style={{ transform: `translateX(-${current * 100}%)` }}>
           {filtered.map((p) => (
             <CarouselSlide key={p._id}>
               <SlideImg src={imgUrl(p)} alt={p.title} />
+              
+              <SlideInfo>
+                <SlideTitleText>{p.title}</SlideTitleText>
+                <SlidePriceText>{p.price} FCFA</SlidePriceText>
+              </SlideInfo>
             </CarouselSlide>
           ))}
         </CarouselTrack>
-      </CarouselWrapper>
+      </CarouselContainer>
 
-      <ProgressDots>
+      <ProgressDotsWrapper>
         {filtered.map((_, i) => (
           <Dot key={i} active={i === current} onClick={() => setCurrent(i)} />
         ))}
-      </ProgressDots>
+      </ProgressDotsWrapper>
     </div>
   );
 }
@@ -265,13 +285,16 @@ export default function HomePremium() {
     fetchProducts();
   }, []);
 
-  const heroProducts = useMemo(() => products.filter((p) => p.hero), [products]);
+  const heroProducts = useMemo(
+    () => products.filter((p) => p.hero),
+    [products],
+  );
 
   useEffect(() => {
     if (!heroProducts.length) return;
     const interval = setInterval(
       () => setSlide((s) => (s + 1) % heroProducts.length),
-      3500
+      3500,
     );
     return () => clearInterval(interval);
   }, [heroProducts]);
@@ -316,8 +339,7 @@ export default function HomePremium() {
           </FeatureCard>
         ))}
 
-
-         {products
+      {products
         .filter((p) => p.genre?.toLowerCase() === "femme")
         .slice(0, 1)
         .map((p) => (
@@ -333,13 +355,12 @@ export default function HomePremium() {
             </FeatureOverlay>
           </FeatureCard>
         ))}
-      <DotCarousel products={products} categorie="haut" genre="homme" />
-      <DotCarousel products={products} categorie="bas" genre="homme" />
+      <DotCarousel products={products} delay={3500} />
 
       {/* COLLECTION FEMME */}
       <Description>
-        NUMA a pour objectif d'apporter plus d'originalité et de classe a la mode.
-        avec des pieces uniques et des vetements soignés.
+        NUMA Premium offre des pièces uniques avec un design raffiné, des
+        matériaux de qualité supérieure et une expérience de mode exclusive.
       </Description>
     </Wrapper>
   );
