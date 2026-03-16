@@ -21,11 +21,6 @@ from { opacity:0; transform:translateY(-20px); }
 to { opacity:1; transform:translateY(0); }
 `;
 
-const linkAppear = keyframes`
-from { opacity:0; transform:translateY(10px); }
-to { opacity:1; transform:translateY(0); }
-`;
-
 const HeaderWrapper = styled.header`
   position: fixed;
   top: ${({ $show }) => ($show ? "0" : `-${HEADER_HEIGHT}px`)};
@@ -39,20 +34,14 @@ const HeaderWrapper = styled.header`
   justify-content: space-between;
   padding: 0 1rem;
 
-  transition:
-    top 0.35s ease,
-    background 0.3s ease,
-    color 0.3s ease;
-
-  /* plus de blur */
-  /* backdrop-filter: blur(10px); */
+  transition: top 0.35s ease, background 0.3s ease, color 0.3s ease;
 
   background: ${({ $isdark, $hero, $scrolled }) =>
     $hero && !$scrolled
       ? "transparent"
       : $isdark
-        ? "rgba(0,0,0,0.92)"
-        : "rgba(255,255,255,0.92)"};
+      ? "rgba(0,0,0,0.92)"
+      : "rgba(255,255,255,0.92)"};
 
   box-shadow: ${({ $scrolled }) =>
     $scrolled ? "0 6px 28px rgba(0,0,0,0.08)" : "none"};
@@ -142,7 +131,6 @@ const MobileMenu = styled.div`
   position: fixed;
   top: 0;
   left: 0;
-
   width: 100%;
   height: 100vh;
 
@@ -154,16 +142,11 @@ const MobileMenu = styled.div`
   background: ${({ $isdark }) =>
     $isdark ? "rgba(0,0,0,0.96)" : "rgba(255,255,255,0.98)"};
 
-  animation: ${fadeSlide} 0.35s ease;
+  transform: ${({ $open }) => ($open ? "translateY(0)" : "translateY(-100%)")};
+  opacity: ${({ $open }) => ($open ? 1 : 0)};
+  transition: transform 0.35s ease, opacity 0.35s ease;
 
   z-index: 10000;
-
-  /* Gestion ouverture/fermeture */
-  opacity: ${({ $open }) => ($open ? 1 : 0)};
-  visibility: ${({ $open }) => ($open ? "visible" : "hidden")};
-  transition:
-    opacity 0.35s ease,
-    visibility 0.35s ease;
 `;
 
 const MenuLink = styled(Link)`
@@ -172,26 +155,11 @@ const MenuLink = styled(Link)`
   text-decoration: none;
   color: inherit;
   margin: 12px 0;
-  opacity: 0;
-  animation: ${linkAppear} 0.4s forwards;
 
-  &:nth-child(1) {
-    animation-delay: 0.05s;
-  }
-  &:nth-child(2) {
-    animation-delay: 0.12s;
-  }
-  &:nth-child(3) {
-    animation-delay: 0.18s;
-  }
-  &:nth-child(4) {
-    animation-delay: 0.24s;
-  }
-  &:nth-child(5) {
-    animation-delay: 0.3s;
-  }
-
-  transition: transform 0.2s ease;
+  transform: ${({ $open }) => ($open ? "translateY(0)" : "translateY(10px)")};
+  opacity: ${({ $open }) => ($open ? 1 : 0)};
+  transition: transform 0.3s ease ${({ $delay }) => $delay}s,
+    opacity 0.3s ease ${({ $delay }) => $delay}s;
 
   &:hover {
     transform: scale(1.1);
@@ -236,18 +204,23 @@ export default function Header() {
   const [showHeader, setShowHeader] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
+  // Blocage du scroll quand le menu est ouvert
   useEffect(() => {
     if (menuOpen) {
-      document.body.style.overflow = "hidden"; // bloque le scroll
+      const scrollY = window.scrollY;
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = "100%";
     } else {
-      document.body.style.overflow = ""; // rétablit le scroll
+      const scrollY = -parseInt(document.body.style.top || "0");
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.width = "";
+      window.scrollTo(0, scrollY);
     }
-
-    // Cleanup au cas où le composant se démonte
-    return () => {
-      document.body.style.overflow = "";
-    };
   }, [menuOpen]);
+
+  // Header qui disparaît à scroll
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
@@ -336,19 +309,19 @@ export default function Header() {
           <FiX />
         </CloseButton>
 
-        <MenuLink to="/" onClick={() => setMenuOpen(false)}>
+        <MenuLink to="/" $open={menuOpen} $delay={0.05} onClick={() => setMenuOpen(false)}>
           {t("home")}
         </MenuLink>
-        <MenuLink to="/collections" onClick={() => setMenuOpen(false)}>
+        <MenuLink to="/collections" $open={menuOpen} $delay={0.12} onClick={() => setMenuOpen(false)}>
           {t("collections")}
         </MenuLink>
-        <MenuLink to="/new" onClick={() => setMenuOpen(false)}>
+        <MenuLink to="/new" $open={menuOpen} $delay={0.18} onClick={() => setMenuOpen(false)}>
           {t("new")}
         </MenuLink>
-        <MenuLink to="/promo" onClick={() => setMenuOpen(false)}>
+        <MenuLink to="/promo" $open={menuOpen} $delay={0.24} onClick={() => setMenuOpen(false)}>
           {t("deals")}
         </MenuLink>
-        <MenuLink to="/apropo" onClick={() => setMenuOpen(false)}>
+        <MenuLink to="/apropo" $open={menuOpen} $delay={0.3} onClick={() => setMenuOpen(false)}>
           {t("about")}
         </MenuLink>
       </MobileMenu>
