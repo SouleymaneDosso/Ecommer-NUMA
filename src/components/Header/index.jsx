@@ -8,7 +8,7 @@ import {
   FiX,
   FiHeart,
   FiSearch,
-  FiMenu
+  FiMenu,
 } from "react-icons/fi";
 import { useContext, useState, useEffect } from "react";
 import { ThemeContext, PanierContext } from "../../Utils/Context";
@@ -39,7 +39,10 @@ const HeaderWrapper = styled.header`
   justify-content: space-between;
   padding: 0 1rem;
 
-  transition: top 0.35s ease, background 0.3s ease, color 0.3s ease;
+  transition:
+    top 0.35s ease,
+    background 0.3s ease,
+    color 0.3s ease;
 
   /* plus de blur */
   /* backdrop-filter: blur(10px); */
@@ -48,8 +51,8 @@ const HeaderWrapper = styled.header`
     $hero && !$scrolled
       ? "transparent"
       : $isdark
-      ? "rgba(0,0,0,0.92)"
-      : "rgba(255,255,255,0.92)"};
+        ? "rgba(0,0,0,0.92)"
+        : "rgba(255,255,255,0.92)"};
 
   box-shadow: ${({ $scrolled }) =>
     $scrolled ? "0 6px 28px rgba(0,0,0,0.08)" : "none"};
@@ -91,7 +94,7 @@ const IconButton = styled.button`
   justify-content: center;
 
   cursor: pointer;
-  transition: transform .15s ease;
+  transition: transform 0.15s ease;
 
   &:hover {
     transform: scale(1.1);
@@ -132,7 +135,7 @@ const SearchInput = styled.input`
   border: 1px solid #ccc;
   outline: none;
 
-  transition: all .25s ease;
+  transition: all 0.25s ease;
 `;
 
 const MobileMenu = styled.div`
@@ -143,8 +146,7 @@ const MobileMenu = styled.div`
   width: 100%;
   height: 100vh;
 
-  display: ${({ $open }) => ($open ? "flex" : "none")};
-
+  display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
@@ -152,12 +154,16 @@ const MobileMenu = styled.div`
   background: ${({ $isdark }) =>
     $isdark ? "rgba(0,0,0,0.96)" : "rgba(255,255,255,0.98)"};
 
-  /* plus de blur */
-  /* backdrop-filter: blur(12px); */
-
-  animation: ${fadeSlide} .35s ease;
+  animation: ${fadeSlide} 0.35s ease;
 
   z-index: 10000;
+
+  /* Gestion ouverture/fermeture */
+  opacity: ${({ $open }) => ($open ? 1 : 0)};
+  visibility: ${({ $open }) => ($open ? "visible" : "hidden")};
+  transition:
+    opacity 0.35s ease,
+    visibility 0.35s ease;
 `;
 
 const MenuLink = styled(Link)`
@@ -167,15 +173,25 @@ const MenuLink = styled(Link)`
   color: inherit;
   margin: 12px 0;
   opacity: 0;
-  animation: ${linkAppear} .4s forwards;
+  animation: ${linkAppear} 0.4s forwards;
 
-  &:nth-child(1){animation-delay:.05s}
-  &:nth-child(2){animation-delay:.12s}
-  &:nth-child(3){animation-delay:.18s}
-  &:nth-child(4){animation-delay:.24s}
-  &:nth-child(5){animation-delay:.30s}
+  &:nth-child(1) {
+    animation-delay: 0.05s;
+  }
+  &:nth-child(2) {
+    animation-delay: 0.12s;
+  }
+  &:nth-child(3) {
+    animation-delay: 0.18s;
+  }
+  &:nth-child(4) {
+    animation-delay: 0.24s;
+  }
+  &:nth-child(5) {
+    animation-delay: 0.3s;
+  }
 
-  transition: transform .2s ease;
+  transition: transform 0.2s ease;
 
   &:hover {
     transform: scale(1.1);
@@ -197,7 +213,6 @@ const CloseButton = styled.button`
 `;
 
 export default function Header() {
-
   const { theme, themeToglle, ToggleTheme } = useContext(ThemeContext || {});
   const { ajouter } = useContext(PanierContext);
 
@@ -211,131 +226,132 @@ export default function Header() {
 
   const heroPage = location.pathname === "/";
 
-  const totalItems = ajouter.reduce((acc,item)=>acc+item.quantite,0);
+  const totalItems = ajouter.reduce((acc, item) => acc + item.quantite, 0);
 
-  const [scrolled,setScrolled] = useState(false);
-  const [menuOpen,setMenuOpen] = useState(false);
-  const [searchOpen,setSearchOpen] = useState(false);
-  const [query,setQuery] = useState("");
+  const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery] = useState("");
 
-  const [showHeader,setShowHeader] = useState(true);
-  const [lastScrollY,setLastScrollY] = useState(0);
+  const [showHeader, setShowHeader] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
 
-  useEffect(()=>{
+  useEffect(() => {
+    if (menuOpen) {
+      document.body.style.overflow = "hidden"; // bloque le scroll
+    } else {
+      document.body.style.overflow = ""; // rétablit le scroll
+    }
 
-    const handleScroll = ()=>{
-
+    // Cleanup au cas où le composant se démonte
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [menuOpen]);
+  useEffect(() => {
+    const handleScroll = () => {
       const currentScrollY = window.scrollY;
 
       setScrolled(currentScrollY > 80);
 
-      if(currentScrollY > lastScrollY && currentScrollY > 120){
+      if (currentScrollY > lastScrollY && currentScrollY > 120) {
         setShowHeader(false);
-      }else{
+      } else {
         setShowHeader(true);
       }
 
       setLastScrollY(currentScrollY);
-
     };
 
-    window.addEventListener("scroll",handleScroll);
+    window.addEventListener("scroll", handleScroll);
 
-    return ()=> window.removeEventListener("scroll",handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [lastScrollY]);
 
-  },[lastScrollY]);
-
-  const handleSearch = (e)=>{
-
+  const handleSearch = (e) => {
     e.preventDefault();
 
-    if(!query.trim()) return;
+    if (!query.trim()) return;
 
     navigate(`/search?q=${encodeURIComponent(query)}`);
 
     setQuery("");
     setSearchOpen(false);
-
   };
 
   return (
-
     <>
-
       <HeaderWrapper
         $isdark={$isdark}
         $hero={heroPage}
         $scrolled={scrolled}
         $show={showHeader}
       >
-
         <HeaderTop>
-
           <Logo to="/">NUMA</Logo>
 
           <Actions>
-
             <IconButton onClick={toggleTheme}>
-              {$isdark ? <FiMoon/> : <FiSun/>}
+              {$isdark ? <FiMoon /> : <FiSun />}
             </IconButton>
 
             <SearchWrapper>
-
-              <IconButton onClick={()=>setSearchOpen(prev=>!prev)}>
-                <FiSearch/>
+              <IconButton onClick={() => setSearchOpen((prev) => !prev)}>
+                <FiSearch />
               </IconButton>
 
               <form onSubmit={handleSearch}>
-
                 <SearchInput
                   $open={searchOpen}
                   type="text"
                   placeholder={t("searchProducts")}
                   value={query}
-                  onChange={(e)=>setQuery(e.target.value)}
+                  onChange={(e) => setQuery(e.target.value)}
                 />
-
               </form>
-
             </SearchWrapper>
 
             <IconButton as={Link} to="/compte">
-              <FiUser/>
+              <FiUser />
             </IconButton>
 
-            <IconButton as={Link} to="/panier" style={{position:"relative"}}>
-              <FiShoppingBag/>
-              {totalItems>0 && <CartCount>{totalItems}</CartCount>}
+            <IconButton as={Link} to="/panier" style={{ position: "relative" }}>
+              <FiShoppingBag />
+              {totalItems > 0 && <CartCount>{totalItems}</CartCount>}
             </IconButton>
 
             <IconButton as={Link} to="/favoris">
-              <FiHeart/>
+              <FiHeart />
             </IconButton>
 
-            <IconButton onClick={()=>setMenuOpen(prev=>!prev)}>
-              {menuOpen ? <FiX/> : <FiMenu/>}
+            <IconButton onClick={() => setMenuOpen((prev) => !prev)}>
+              {menuOpen ? <FiX /> : <FiMenu />}
             </IconButton>
-
           </Actions>
-
         </HeaderTop>
-
       </HeaderWrapper>
 
       <MobileMenu $open={menuOpen} $isdark={$isdark}>
-
-        <CloseButton $isdark={$isdark} onClick={()=>setMenuOpen(false)}>
-          <FiX/>
+        <CloseButton $isdark={$isdark} onClick={() => setMenuOpen(false)}>
+          <FiX />
         </CloseButton>
 
-        <MenuLink to="/" onClick={()=>setMenuOpen(false)}>{t("home")}</MenuLink>
-        <MenuLink to="/collections" onClick={()=>setMenuOpen(false)}>{t("collections")}</MenuLink>
-        <MenuLink to="/new" onClick={()=>setMenuOpen(false)}>{t("new")}</MenuLink>
-        <MenuLink to="/promo" onClick={()=>setMenuOpen(false)}>{t("deals")}</MenuLink>
-        <MenuLink to="/apropo" onClick={()=>setMenuOpen(false)}>{t("about")}</MenuLink>
-
+        <MenuLink to="/" onClick={() => setMenuOpen(false)}>
+          {t("home")}
+        </MenuLink>
+        <MenuLink to="/collections" onClick={() => setMenuOpen(false)}>
+          {t("collections")}
+        </MenuLink>
+        <MenuLink to="/new" onClick={() => setMenuOpen(false)}>
+          {t("new")}
+        </MenuLink>
+        <MenuLink to="/promo" onClick={() => setMenuOpen(false)}>
+          {t("deals")}
+        </MenuLink>
+        <MenuLink to="/apropo" onClick={() => setMenuOpen(false)}>
+          {t("about")}
+        </MenuLink>
       </MobileMenu>
-
     </>
   );
 }
