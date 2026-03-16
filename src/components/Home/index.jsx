@@ -486,9 +486,10 @@ export default function HomePremium() {
                 <BenefitIcon style={{ background: "#16a34a" }}>
                   <FaShieldAlt />
                 </BenefitIcon>
-                <BenefitTitle>Paiement sécurisé</BenefitTitle>
+                <BenefitTitle>Paiement  en credit</BenefitTitle>
                 <BenefitText>
                   Transactions protégées et 100% sécurisées.
+                  whatsapp: 0700Z47693
                 </BenefitText>
               </BenefitCard>
 
