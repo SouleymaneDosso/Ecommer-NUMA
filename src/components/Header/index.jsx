@@ -17,9 +17,9 @@ import { useTranslation } from "react-i18next";
 const HEADER_HEIGHT = 70;
 
 /* ===== ANIMATIONS ===== */
-const slideMenu = keyframes`
-from { transform: translateY(-20px); opacity: 0; }
-to { transform: translateY(0); opacity: 1; }
+const fadeSlide = keyframes`
+from { opacity: 0; transform: translateY(-20px); }
+to { opacity: 1; transform: translateY(0); }
 `;
 
 const linkAppear = keyframes`
@@ -40,20 +40,18 @@ const HeaderWrapper = styled.header`
   justify-content: space-between;
   padding: 0 1rem;
   transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
-  background: ${({ $isdark, $scrolled, $hero }) =>
+
+  background: ${({ $isdark, $hero }) =>
     $hero
       ? "transparent"
-      : $scrolled
-        ? $isdark
-          ? "rgba(0,0,0,0.85)"
-          : "#fff"
-        : $isdark
-          ? "rgba(0,0,0,0.85)"
-          : "#fff"};
-  box-shadow: ${({ $scrolled, $hero }) =>
-    !$hero && $scrolled ? "0 6px 28px rgba(0,0,0,0.1)" : "none"};
-  color: ${({ $isdark, $scrolled }) =>
-    $scrolled ? ($isdark ? "#fff" : "#111") : "#fff"};
+      : $isdark
+        ? "rgba(0,0,0,0.95)"
+        : "#fff"};
+
+  box-shadow: ${({ $hero }) =>
+    !$hero && "0 6px 28px rgba(0,0,0,0.08)"};
+
+  color: ${({ $isdark }) => $isdark ? "#fff" : "#111"};
 `;
 
 const HeaderTop = styled.div`
@@ -146,8 +144,8 @@ const MobileMenu = styled.div`
   background: ${({ $isdark }) =>
     $isdark ? "rgba(0,0,0,0.96)" : "rgba(255,255,255,0.98)"};
   backdrop-filter: blur(12px);
-  animation: ${slideMenu} 0.35s ease;
-  z-index: 10000; 
+  animation: ${fadeSlide} 0.35s ease;
+  z-index: 10000;
 `;
 
 const MenuLink = styled(Link)`
@@ -197,7 +195,7 @@ export default function Header() {
   const location = useLocation();
   const totalItems = ajouter.reduce((acc, item) => acc + item.quantite, 0);
 
-  const heroPage = location.pathname === "/"; // si page hero
+  const heroPage = location.pathname === "/"; 
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 100);
@@ -205,7 +203,7 @@ export default function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  /* Bloquer scroll quand menu ouvert */
+  // Bloquer scroll quand menu ouvert et restaurer correctement
   useEffect(() => {
     if (menuOpen) {
       const scrollY = window.scrollY;
@@ -215,16 +213,13 @@ export default function Header() {
       document.body.style.right = "0";
       document.body.style.overflow = "hidden";
     } else {
-      const top = document.body.style.top;
+      const scrollY = -parseInt(document.body.style.top || "0");
       document.body.style.position = "";
       document.body.style.top = "";
       document.body.style.left = "";
       document.body.style.right = "";
       document.body.style.overflow = "";
-      if (top) {
-        const scrollPosition = parseInt(top.replace("-", "").replace("px", ""), 10);
-        window.scrollTo(0, scrollPosition);
-      }
+      window.scrollTo(0, scrollY);
     }
   }, [menuOpen]);
 
@@ -282,7 +277,7 @@ export default function Header() {
         </HeaderTop>
       </HeaderWrapper>
 
-      {!heroPage && <Spacer />} {/* espace pour ne pas couvrir le contenu sur autres pages */}
+      {!heroPage && <Spacer />} 
 
       {/* MENU MOBILE */}
       <MobileMenu $open={menuOpen} $isdark={$isdark}>
