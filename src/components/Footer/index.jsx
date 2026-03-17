@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useContext } from "react";
 import { Link } from "react-router-dom";
 import styled, { keyframes } from "styled-components";
-import { FiX, FiArrowUp, FiSend, FiFacebook, FiInstagram, FiChevronDown } from "react-icons/fi";
+import { FiArrowUp, FiSend, FiFacebook, FiInstagram, FiChevronDown } from "react-icons/fi";
 import { ThemeContext } from "../../Utils/Context";
 import { useTranslation } from "react-i18next";
 
@@ -11,6 +11,7 @@ const API = import.meta.env.VITE_API_URL;
 const fadeIn = keyframes`
   from { opacity: 0; } to { opacity: 1; }
 `;
+
 const scaleIn = keyframes`
   from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; }
 `;
@@ -181,77 +182,60 @@ const ScrollTopButton = styled.button`
   &:hover { background: #333; }
 `;
 
-const ModalOverlay = styled.div`
+/* ---------------- Cookie Banner Minimaliste ---------------- */
+const CookieBanner = styled.div`
   position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.55);
-  display: ${({ $visible }) => ($visible ? "flex" : "none")};
-  align-items: center;
-  justify-content: center;
-  z-index: 999;
-  animation: ${fadeIn} 0.3s ease forwards;
-`;
-
-const ModalContent = styled.div`
-  background: #fff;
-  width: min(90vw, 400px);
-  padding: 2rem 1.5rem;
-  border-radius: 14px;
-  text-align: center;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%) translateY(${({ $visible }) => ($visible ? "0" : "120%")});
+  width: min(95vw, 420px);
+  background: #111;
+  color: #fff;
+  border-radius: 12px 12px 0 0;
+  padding: 1.5rem 1.5rem 1rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  position: relative;
-  animation: ${scaleIn} 0.4s ease forwards;
-`;
-
-const CloseButton = styled.button`
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  background: rgba(0,0,0,0.05);
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
-  display: flex;
   align-items: center;
-  justify-content: center;
-  color: #000;
+  text-align: center;
+  box-shadow: 0 -4px 15px rgba(0,0,0,0.25);
+  opacity: ${({ $visible }) => ($visible ? 1 : 0)};
+  transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.5s ease;
+  z-index: 20000;
 `;
 
-const NewsletterLink = styled.a`
-  color: #000;
-  text-decoration: underline;
-  font-weight: 600;
-  cursor: pointer;
+const CookieTextMinimal = styled.p`
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.4;
 `;
 
-const ButtonGroup = styled.div`
+const CookieButtonsColumn = styled.div`
   display: flex;
-  gap: 1rem;
-  justify-content: center;
+  flex-direction: column;
+  gap: 0.8rem;
+  width: 100%;
 `;
 
-const ConsentButton = styled.button`
-  padding: 0.6rem 1.2rem;
+const CookieButtonMinimal = styled.button`
+  padding: 0.65rem 1.2rem;
   border-radius: 8px;
-  border: none;
-  cursor: pointer;
   font-weight: 600;
-  transition: 0.3s all;
+  cursor: pointer;
+  border: none;
+  transition: all 0.25s ease;
 `;
 
-const AcceptButton = styled(ConsentButton)`
-  background: #000;
+const AcceptCookieMinimal = styled(CookieButtonMinimal)`
+  background: #28c76f;
   color: #fff;
+  &:hover { background: #1fae41; }
 `;
 
-const RejectButton = styled(ConsentButton)`
+const RejectCookieMinimal = styled(CookieButtonMinimal)`
   background: #e5e5e5;
-  color: #000;
+  color: #111;
+  &:hover { background: #ccc; }
 `;
 
 /* ---------------- Footer Component ---------------- */
@@ -272,7 +256,6 @@ export default function Footer() {
   const [newsletterVisible, setNewsletterVisible] = useState(false);
   const [cookieVisible, setCookieVisible] = useState(false);
 
-  // ---------------- Initial consent check ----------------
   useEffect(() => {
     const checkConsent = async () => {
       try {
@@ -316,7 +299,6 @@ export default function Footer() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // ---------------- Newsletter submit ----------------
   const handleNewsletterSubmit = async (e) => {
     e.preventDefault();
     if (!email) return;
@@ -412,26 +394,16 @@ export default function Footer() {
 
       <ScrollTopButton $visible={scrollVisible} onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}><FiArrowUp /></ScrollTopButton>
 
-      <ModalOverlay $visible={newsletterVisible}>
-        <ModalContent>
-          <CloseButton onClick={handleCloseNewsletter}><FiX /></CloseButton>
-          <h2>Bienvenue !</h2>
-          <p>Inscrivez-vous à notre newsletter pour recevoir nos nouveautés.</p>
-          <NewsletterLink onClick={() => { document.getElementById("newsletterSection")?.scrollIntoView({ behavior: "smooth" }); setNewsletterVisible(false); }}>S’inscrire</NewsletterLink>
-        </ModalContent>
-      </ModalOverlay>
-
-      <ModalOverlay $visible={cookieVisible}>
-        <ModalContent>
-          <CloseButton onClick={() => setCookieVisible(false)} />
-          <h2>Cookies et consentement</h2>
-          <p>Nous utilisons des cookies pour améliorer votre expérience et envoyer des emails marketing.</p>
-          <ButtonGroup>
-            <AcceptButton onClick={() => handleCookieConsent(true)}>Accepter</AcceptButton>
-            <RejectButton onClick={() => handleCookieConsent(false)}>Refuser</RejectButton>
-          </ButtonGroup>
-        </ModalContent>
-      </ModalOverlay>
+      {/* Cookie Banner */}
+      <CookieBanner $visible={cookieVisible}>
+        <CookieTextMinimal>
+          Nous utilisons des cookies pour améliorer votre expérience et envoyer des emails marketing.
+        </CookieTextMinimal>
+        <CookieButtonsColumn>
+          <AcceptCookieMinimal onClick={() => handleCookieConsent(true)}>Accepter</AcceptCookieMinimal>
+          <RejectCookieMinimal onClick={() => handleCookieConsent(false)}>Refuser</RejectCookieMinimal>
+        </CookieButtonsColumn>
+      </CookieBanner>
     </FooterWrapper>
   );
 }
