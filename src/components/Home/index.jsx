@@ -290,7 +290,46 @@ const SlidePriceText = styled.div`
   color: ${({ $isDark }) => ($isDark ? "#f8fafc" : "#111")};
   margin-top: 4px;
 `;
+// ===============================
+// BIENTÔT DISPONIBLE STYLED
+// ===============================
+const ComingSoonSection = styled.div`
+  text-align: center;
+  padding: 60px 20px;
+  background: ${({ $isDark }) => ($isDark ? "#1a1a1a" : "#f9f9f9")};
+  color: ${({ $isDark }) => ($isDark ? "#f8fafc" : "#111")};
 
+  h3 {
+    font-size: 2rem;
+    margin-bottom: 30px;
+    font-weight: bold;
+    animation: ${fadeUp} 1s ease forwards;
+  }
+
+  .images-wrapper {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+
+  .images-wrapper img {
+    width: 300px;
+    max-width: 90%;
+    border-radius: 12px;
+    object-fit: cover;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+    transition:
+      transform 0.3s,
+      box-shadow 0.3s;
+    cursor: pointer;
+
+    &:hover {
+      transform: scale(1.05);
+      box-shadow: 0 15px 25px rgba(0, 0, 0, 0.25);
+    }
+  }
+`;
 function DotCarousel({ products, delay = 4000, $isDark }) {
   const filtered = useMemo(() => products.slice(0, 6), [products]);
   const slides = filtered.length ? [...filtered, filtered[0]] : [];
@@ -486,10 +525,10 @@ export default function HomePremium() {
                 <BenefitIcon style={{ background: "#16a34a" }}>
                   <FaShieldAlt />
                 </BenefitIcon>
-                <BenefitTitle>Paiement  en credit</BenefitTitle>
+                <BenefitTitle>Paiement en credit</BenefitTitle>
                 <BenefitText>
-                  Transactions protégées et 100% sécurisées.
-                  whatsapp: 0700247693
+                  Transactions protégées et 100% sécurisées. whatsapp:
+                  0700247693
                 </BenefitText>
               </BenefitCard>
 
@@ -507,6 +546,21 @@ export default function HomePremium() {
           NUMA Premium offre des pièces uniques avec un design raffiné, des
           matériaux de qualité supérieure et une expérience de mode exclusive.
         </Description>
+        <RevealOnScroll>
+          <ComingSoonSection $isDark={$isDark}>
+            <h3>Bientôt disponible</h3>
+            <div className="images-wrapper">
+              <img
+                src="/WhatsApp Image 2026-03-17 at 01.10.21 (1).jpeg"
+                alt="bientot disponible 1"
+              />
+              <img
+                src="/WhatsApp Image 2026-03-17 at 01.10.21.jpeg"
+                alt="bientot disponible 2"
+              />
+            </div>
+          </ComingSoonSection>
+        </RevealOnScroll>
       </RevealOnScroll>
     </Wrapper>
   );
