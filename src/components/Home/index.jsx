@@ -310,23 +310,19 @@ const ComingSoonSection = styled.div`
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
-    gap: 20px;
+    gap: 40px;
   }
 
   .images-wrapper img {
     width: 300px;
     max-width: 90%;
-    border-radius: 12px;
     object-fit: cover;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
     transition:
       transform 0.3s,
-      box-shadow 0.3s;
     cursor: pointer;
 
     &:hover {
       transform: scale(1.05);
-      box-shadow: 0 15px 25px rgba(0, 0, 0, 0.25);
     }
   }
 `;
