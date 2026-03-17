@@ -18,7 +18,7 @@ const scaleIn = keyframes`
 
 /* ---------------- Styled Components ---------------- */
 const FooterWrapper = styled.footer`
-  background: ${({ $isdark }) => ($isdark ? "#000" : "#f4f4f4")};
+  background: ${({ $isdark }) => ($isdark ? "#000" : "#fff")};
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#000")};
   padding: 3rem 2rem 2rem;
   display: flex;
@@ -52,7 +52,7 @@ const NewsletterForm = styled.form`
 const EmailInput = styled.input`
   flex: 1;
   padding: 14px 16px;
-  border-radius: 8px;
+  border-radius: 0;
   border: 1px solid ${({ $isdark }) => ($isdark ? "#222" : "#ccc")};
   background: ${({ $isdark }) => ($isdark ? "#111" : "#fff")};
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#000")};
@@ -62,7 +62,7 @@ const EmailInput = styled.input`
 
 const SubmitButton = styled.button`
   padding: 0 16px;
-  border-radius: 8px;
+  border-radius: 0;
   background: #000;
   color: #fff;
   font-weight: 600;
@@ -142,8 +142,7 @@ const IconWrapper = styled.a`
   justify-content: center;
   width: 38px;
   height: 38px;
-  border-radius: 50%;
-  background: ${({ $isdark }) => ($isdark ? "#111" : "#e5e7eb")};
+  background: ${({ $isdark }) => ($isdark ? "#111" : "#f0f0f0")};
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#000")};
   font-size: 18px;
 `;
@@ -152,7 +151,7 @@ const FooterExtras = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  border-top: 1px solid ${({ $isdark }) => ($isdark ? "#111" : "#d1d5db")};
+  border-top: 1px solid ${({ $isdark }) => ($isdark ? "#111" : "#ccc")};
   padding-top: 1.5rem;
   align-items: center;
 `;
@@ -170,7 +169,7 @@ const ScrollTopButton = styled.button`
   background: #000;
   color: white;
   border: none;
-  border-radius: 50%;
+  border-radius: 0;
   width: 50px;
   height: 50px;
   cursor: pointer;
@@ -182,16 +181,21 @@ const ScrollTopButton = styled.button`
   &:hover { background: #333; }
 `;
 
-/* ---------------- Cookie Banner Minimaliste ---------------- */
+/* ---------------- Cookie Banner carré avec rebond ---------------- */
+const bounceUp = keyframes`
+  0%   { transform: translateX(-50%) translateY(120%); }
+  60%  { transform: translateX(-50%) translateY(-10%); }
+  80%  { transform: translateX(-50%) translateY(5%); }
+  100% { transform: translateX(-50%) translateY(0); }
+`;
+
 const CookieBanner = styled.div`
   position: fixed;
   bottom: 0;
   left: 50%;
-  transform: translateX(-50%) translateY(${({ $visible }) => ($visible ? "0" : "120%")});
   width: min(95vw, 420px);
-  background: #111;
+  background: #000;
   color: #fff;
-  border-radius: 12px 12px 0 0;
   padding: 1.5rem 1.5rem 1rem;
   display: flex;
   flex-direction: column;
@@ -200,8 +204,8 @@ const CookieBanner = styled.div`
   text-align: center;
   box-shadow: 0 -4px 15px rgba(0,0,0,0.25);
   opacity: ${({ $visible }) => ($visible ? 1 : 0)};
-  transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.5s ease;
   z-index: 20000;
+  animation: ${({ $visible }) => ($visible ? bounceUp : "none")} 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 `;
 
 const CookieTextMinimal = styled.p`
@@ -219,7 +223,6 @@ const CookieButtonsColumn = styled.div`
 
 const CookieButtonMinimal = styled.button`
   padding: 0.65rem 1.2rem;
-  border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
   border: none;
@@ -227,17 +230,16 @@ const CookieButtonMinimal = styled.button`
 `;
 
 const AcceptCookieMinimal = styled(CookieButtonMinimal)`
-  background: #28c76f;
-  color: #fff;
-  &:hover { background: #1fae41; }
+  background: #fff;
+  color: #000;
+  &:hover { background: #f0f0f0; }
 `;
 
 const RejectCookieMinimal = styled(CookieButtonMinimal)`
-  background: #e5e5e5;
-  color: #111;
-  &:hover { background: #ccc; }
+  background: #000;
+  color: #fff;
+  &:hover { background: #111; }
 `;
-
 /* ---------------- Footer Component ---------------- */
 export default function Footer() {
   const { theme } = useContext(ThemeContext);
@@ -394,7 +396,7 @@ export default function Footer() {
 
       <ScrollTopButton $visible={scrollVisible} onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}><FiArrowUp /></ScrollTopButton>
 
-      {/* Cookie Banner */}
+      {/* Cookie Banner carré noir/blanc */}
       <CookieBanner $visible={cookieVisible}>
         <CookieTextMinimal>
           Nous utilisons des cookies pour améliorer votre expérience et envoyer des emails marketing.

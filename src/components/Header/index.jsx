@@ -210,7 +210,7 @@ const CloseButton = styled.button`
 const TopBarWrapper = styled.div`
   width: 100%;
   height: ${TOPBAR_HEIGHT}px;
-  background: linear-gradient(90deg, #1fae41, #28c76f); /* joli dégradé vert */
+  background: linear-gradient(90deg, black, black); 
   color: #fff;
   display: flex;
   justify-content: center; /* centre le texte */
