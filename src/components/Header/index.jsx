@@ -346,7 +346,7 @@ export default function Header() {
       <TopBarWrapper className={closingTopBar ? "closing" : ""}>
         <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
           💳
-          <Link to="/paiement-3x">Paiement en 3 fois</Link>: réservez, payez à
+          <Link to="/paiement-3x">Paiement en 3 tranches</Link>: réservez, payez à
           votre rythme !
         </span>
         <CloseTopBar onClick={handleCloseTopBar}>×</CloseTopBar>

@@ -455,7 +455,7 @@ export default function HomePremium() {
         ))}
         <Overlay />
         <HeroText>
-          <h1>Nouvelle Collection 2026</h1>
+          <h1>NOUVELLE COLLECTION CHEZ NUMA</h1>
           <HeroBtn to="/collections">Découvrir</HeroBtn>
         </HeroText>
       </Hero>
