@@ -133,13 +133,13 @@ const Overlay = styled.div`
 
 const HeroText = styled.div`
   position: absolute;
-  top: 50%;
-  left: 100px;
+  top: 60%;
+  left: 98px;
   transform: translateY(-50%);
   color: white;
   max-width: 500px;
   h1 {
-    font-size: 2.5rem;
+    font-size: 2.1rem;
     animation: ${fadeIn} 1.2s ease forwards;
   }
 `;
