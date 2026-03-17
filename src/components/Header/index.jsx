@@ -15,15 +15,32 @@ import { ThemeContext, PanierContext } from "../../Utils/Context";
 import { useTranslation } from "react-i18next";
 
 const HEADER_HEIGHT = 70;
+const TOPBAR_HEIGHT = 40; // ✅ Défini
 
+// Animation fade + slide pour le menu entier
 const fadeSlide = keyframes`
-from { opacity:0; transform:translateY(-20px); }
+from { opacity:0; transform:translateY(-30px); }
 to { opacity:1; transform:translateY(0); }
 `;
 
+// Animation fade + slide pour les liens
+const linkSlide = keyframes`
+from { opacity:0; transform:translateY(15px); }
+to { opacity:1; transform:translateY(0); }
+`;
+
+// Animation TopBar slide out
+const topBarSlideOut = keyframes`
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-100%); }
+`;
+
+// ================= Styled Components =================
+
 const HeaderWrapper = styled.header`
   position: fixed;
-  top: ${({ $show }) => ($show ? "0" : `-${HEADER_HEIGHT}px`)};
+  top: ${({ $show, $topOffset }) =>
+    $show ? `${$topOffset}px` : `-${HEADER_HEIGHT}px`};
   left: 0;
   width: 100%;
   height: ${HEADER_HEIGHT}px;
@@ -34,14 +51,17 @@ const HeaderWrapper = styled.header`
   justify-content: space-between;
   padding: 0 1rem;
 
-  transition: top 0.35s ease, background 0.3s ease, color 0.3s ease;
+  transition:
+    top 0.35s ease,
+    background 0.3s ease,
+    color 0.3s ease;
 
   background: ${({ $isdark, $hero, $scrolled }) =>
     $hero && !$scrolled
       ? "transparent"
       : $isdark
-      ? "rgba(0,0,0,0.92)"
-      : "rgba(255,255,255,0.92)"};
+        ? "rgba(0,0,0,0.92)"
+        : "rgba(255,255,255,0.92)"};
 
   box-shadow: ${({ $scrolled }) =>
     $scrolled ? "0 6px 28px rgba(0,0,0,0.08)" : "none"};
@@ -144,7 +164,11 @@ const MobileMenu = styled.div`
 
   transform: ${({ $open }) => ($open ? "translateY(0)" : "translateY(-100%)")};
   opacity: ${({ $open }) => ($open ? 1 : 0)};
-  transition: transform 0.35s ease, opacity 0.35s ease;
+  transition:
+    transform 0.35s ease,
+    opacity 0.35s ease;
+
+  animation: ${fadeSlide} 0.35s ease;
 
   z-index: 10000;
 `;
@@ -154,12 +178,14 @@ const MenuLink = styled(Link)`
   font-weight: 600;
   text-decoration: none;
   color: inherit;
-  margin: 12px 0;
+  margin: 30px 0;
 
-  transform: ${({ $open }) => ($open ? "translateY(0)" : "translateY(10px)")};
+  transform: ${({ $open }) => ($open ? "translateY(0)" : "translateY(15px)")};
   opacity: ${({ $open }) => ($open ? 1 : 0)};
-  transition: transform 0.3s ease ${({ $delay }) => $delay}s,
+  transition:
+    transform 0.3s ease ${({ $delay }) => $delay}s,
     opacity 0.3s ease ${({ $delay }) => $delay}s;
+  animation: ${({ $open }) => ($open ? linkSlide : "none")} 0.35s forwards;
 
   &:hover {
     transform: scale(1.1);
@@ -180,20 +206,81 @@ const CloseButton = styled.button`
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#000")};
 `;
 
-export default function Header() {
-  const { theme, themeToglle, ToggleTheme } = useContext(ThemeContext || {});
-  const { ajouter } = useContext(PanierContext);
+// ================= TopBar =================
+const TopBarWrapper = styled.div`
+  width: 100%;
+  height: ${TOPBAR_HEIGHT}px;
+  background: linear-gradient(90deg, #1fae41, #28c76f); /* joli dégradé vert */
+  color: #fff;
+  display: flex;
+  justify-content: center; /* centre le texte */
+  align-items: center;
+  font-weight: 500;
+  font-size: 0.95rem;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10001;
+  padding: 0 1rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  transition:
+    transform 0.35s ease,
+    opacity 0.35s ease;
+  animation: ${fadeSlide} 0.35s ease;
 
-  const toggleTheme = themeToglle ?? ToggleTheme ?? (() => {});
+  /* Flex pour aligner texte et lien correctement */
+  a {
+    color: #fff;
+    text-decoration: underline;
+    margin: 0 4px;
+    font-weight: 600;
+    transition: color 0.25s;
+  }
+
+  a:hover {
+    color: #d4f7d1; /* léger survol */
+  }
+
+  &.closing {
+    animation: ${topBarSlideOut} 0.35s forwards;
+  }
+
+  /* Responsivité: petit texte sur mobile */
+  @media (max-width: 768px) {
+    font-size: 0.85rem;
+  }
+`;
+
+const CloseTopBar = styled.button`
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 20px;
+  cursor: pointer;
+  position: absolute;
+  right: 16px;
+  transition: transform 0.2s;
+  &:hover {
+    transform: scale(1.2);
+  }
+`;
+
+// ================= Header Component =================
+export default function Header() {
+  const themeContext = useContext(ThemeContext);
+  const panierContext = useContext(PanierContext);
+
+  const theme = themeContext?.theme ?? "dark";
+  const toggleTheme =
+    themeContext?.themeToglle ?? themeContext?.ToggleTheme ?? (() => {});
+  const ajouter = panierContext?.ajouter ?? [];
   const $isdark = theme === "light";
 
   const { t } = useTranslation();
-
   const navigate = useNavigate();
   const location = useLocation();
 
   const heroPage = location.pathname === "/";
-
   const totalItems = ajouter.reduce((acc, item) => acc + item.quantite, 0);
 
   const [scrolled, setScrolled] = useState(false);
@@ -203,8 +290,15 @@ export default function Header() {
 
   const [showHeader, setShowHeader] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [showTopBar, setShowTopBar] = useState(true);
+  const [closingTopBar, setClosingTopBar] = useState(false);
 
-  // Blocage du scroll quand le menu est ouvert
+  const handleCloseTopBar = () => {
+    setClosingTopBar(true);
+    setTimeout(() => setShowTopBar(false), 350);
+  };
+
+  // Bloquer scroll quand menu ouvert
   useEffect(() => {
     if (menuOpen) {
       const scrollY = window.scrollY;
@@ -224,7 +318,6 @@ export default function Header() {
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-
       setScrolled(currentScrollY > 80);
 
       if (currentScrollY > lastScrollY && currentScrollY > 120) {
@@ -237,28 +330,35 @@ export default function Header() {
     };
 
     window.addEventListener("scroll", handleScroll);
-
     return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScrollY]);
 
   const handleSearch = (e) => {
     e.preventDefault();
-
     if (!query.trim()) return;
-
     navigate(`/search?q=${encodeURIComponent(query)}`);
-
     setQuery("");
     setSearchOpen(false);
   };
 
   return (
     <>
+      <TopBarWrapper className={closingTopBar ? "closing" : ""}>
+        <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+          💳
+          <Link to="/paiement-3x">Paiement en 3 fois</Link>: réservez, payez à
+          votre rythme !
+        </span>
+        <CloseTopBar onClick={handleCloseTopBar}>×</CloseTopBar>
+      </TopBarWrapper>
+
+      {/* Header */}
       <HeaderWrapper
         $isdark={$isdark}
         $hero={heroPage}
         $scrolled={scrolled}
         $show={showHeader}
+        $topOffset={showTopBar ? TOPBAR_HEIGHT : 0} // ✅ décalage sous TopBar
       >
         <HeaderTop>
           <Logo to="/">NUMA</Logo>
@@ -267,22 +367,6 @@ export default function Header() {
             <IconButton onClick={toggleTheme}>
               {$isdark ? <FiMoon /> : <FiSun />}
             </IconButton>
-
-            <SearchWrapper>
-              <IconButton onClick={() => setSearchOpen((prev) => !prev)}>
-                <FiSearch />
-              </IconButton>
-
-              <form onSubmit={handleSearch}>
-                <SearchInput
-                  $open={searchOpen}
-                  type="text"
-                  placeholder={t("searchProducts")}
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                />
-              </form>
-            </SearchWrapper>
 
             <IconButton as={Link} to="/compte">
               <FiUser />
@@ -297,6 +381,22 @@ export default function Header() {
               <FiHeart />
             </IconButton>
 
+            <SearchWrapper>
+              <IconButton onClick={() => setSearchOpen((prev) => !prev)}>
+                <FiSearch />
+              </IconButton>
+
+              <form onSubmit={handleSearch}>
+                <SearchInput
+                  $open={searchOpen}
+                  type="text"
+                  placeholder={t?.("searchProducts") ?? "Search products"}
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                />
+              </form>
+            </SearchWrapper>
+
             <IconButton onClick={() => setMenuOpen((prev) => !prev)}>
               {menuOpen ? <FiX /> : <FiMenu />}
             </IconButton>
@@ -304,25 +404,51 @@ export default function Header() {
         </HeaderTop>
       </HeaderWrapper>
 
+      {/* Menu mobile */}
       <MobileMenu $open={menuOpen} $isdark={$isdark}>
         <CloseButton $isdark={$isdark} onClick={() => setMenuOpen(false)}>
           <FiX />
         </CloseButton>
 
-        <MenuLink to="/" $open={menuOpen} $delay={0.05} onClick={() => setMenuOpen(false)}>
-          {t("home")}
+        <MenuLink
+          to="/"
+          $open={menuOpen}
+          $delay={0.05}
+          onClick={() => setMenuOpen(false)}
+        >
+          {t?.("home") ?? "Home"}
         </MenuLink>
-        <MenuLink to="/collections" $open={menuOpen} $delay={0.12} onClick={() => setMenuOpen(false)}>
-          {t("collections")}
+        <MenuLink
+          to="/collections"
+          $open={menuOpen}
+          $delay={0.12}
+          onClick={() => setMenuOpen(false)}
+        >
+          {t?.("collections") ?? "Collections"}
         </MenuLink>
-        <MenuLink to="/new" $open={menuOpen} $delay={0.18} onClick={() => setMenuOpen(false)}>
-          {t("new")}
+        <MenuLink
+          to="/new"
+          $open={menuOpen}
+          $delay={0.18}
+          onClick={() => setMenuOpen(false)}
+        >
+          {t?.("new") ?? "New"}
         </MenuLink>
-        <MenuLink to="/promo" $open={menuOpen} $delay={0.24} onClick={() => setMenuOpen(false)}>
-          {t("deals")}
+        <MenuLink
+          to="/promo"
+          $open={menuOpen}
+          $delay={0.24}
+          onClick={() => setMenuOpen(false)}
+        >
+          {t?.("deals") ?? "Deals"}
         </MenuLink>
-        <MenuLink to="/apropo" $open={menuOpen} $delay={0.3} onClick={() => setMenuOpen(false)}>
-          {t("about")}
+        <MenuLink
+          to="/apropo"
+          $open={menuOpen}
+          $delay={0.3}
+          onClick={() => setMenuOpen(false)}
+        >
+          {t?.("about") ?? "About"}
         </MenuLink>
       </MobileMenu>
     </>

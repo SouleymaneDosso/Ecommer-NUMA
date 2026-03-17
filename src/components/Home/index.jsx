@@ -489,7 +489,7 @@ export default function HomePremium() {
                 <BenefitTitle>Paiement  en credit</BenefitTitle>
                 <BenefitText>
                   Transactions protégées et 100% sécurisées.
-                  whatsapp: 0700Z47693
+                  whatsapp: 0700247693
                 </BenefitText>
               </BenefitCard>
 

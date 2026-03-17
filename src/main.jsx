@@ -42,7 +42,7 @@ import AdminLayout from "./pages/AdminLayout";
 import AdminProducts from "./pages/AdminProducts";
 import AdminCommandes from "./pages/AdminCommande";
 import AdminPaiements from "./pages/AdminPaiements";
-
+import PaiementTroisFois from "./pages/paiement-3x";
 import "./i18n";
 
 // --- Layout pour les pages publiques ---
@@ -107,11 +107,20 @@ createRoot(document.getElementById("root")).render(
                 </PublicLayout>
               }
             />
+
             <Route
               path="/collections"
               element={
                 <PublicLayout>
                   <Collection />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/paiement-3x"
+              element={
+                <PublicLayout>
+                  <PaiementTroisFois />
                 </PublicLayout>
               }
             />
