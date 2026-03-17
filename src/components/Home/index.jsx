@@ -134,7 +134,7 @@ const Overlay = styled.div`
 const HeroText = styled.div`
   position: absolute;
   top: 60%;
-  left: 98px;
+  left: 96px;
   transform: translateY(-50%);
   color: white;
   max-width: 500px;

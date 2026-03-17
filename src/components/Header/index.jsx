@@ -152,7 +152,7 @@ const MobileMenu = styled.div`
   top: 0;
   left: 0;
   width: 100%;
-  height: 100vh;
+  height: 90vh;
 
   display: flex;
   flex-direction: column;
@@ -174,11 +174,12 @@ const MobileMenu = styled.div`
 `;
 
 const MenuLink = styled(Link)`
-  font-size: 1.6rem;
+  font-size: 1.2rem;
   font-weight: 600;
   text-decoration: none;
   color: inherit;
-  margin: 30px 0;
+  margin: 20px 0;
+  
 
   transform: ${({ $open }) => ($open ? "translateY(0)" : "translateY(15px)")};
   opacity: ${({ $open }) => ($open ? 1 : 0)};
@@ -190,7 +191,7 @@ const MenuLink = styled(Link)`
   &:hover {
     transform: scale(1.1);
   }
-`;
+`; 
 
 const CloseButton = styled.button`
   position: absolute;
@@ -200,8 +201,9 @@ const CloseButton = styled.button`
   background: none;
   border: none;
 
-  font-size: 28px;
+  font-size: 25px;
   cursor: pointer;
+  
 
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#000")};
 `;
@@ -210,7 +212,7 @@ const CloseButton = styled.button`
 const TopBarWrapper = styled.div`
   width: 100%;
   height: ${TOPBAR_HEIGHT}px;
-  background: linear-gradient(90deg, black, black); 
+  background: linear-gradient(90deg, black, black);
   color: #fff;
   display: flex;
   justify-content: center; /* centre le texte */
@@ -346,8 +348,8 @@ export default function Header() {
       <TopBarWrapper className={closingTopBar ? "closing" : ""}>
         <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
           💳
-          <Link to="/paiement-3x">Paiement en 3 tranches</Link>: réservez, payez à
-          votre rythme !
+          <Link to="/paiement-3x">Paiement en 3 tranches</Link>: réservez, payez
+          à votre rythme !
         </span>
         <CloseTopBar onClick={handleCloseTopBar}>×</CloseTopBar>
       </TopBarWrapper>
@@ -425,6 +427,22 @@ export default function Header() {
           onClick={() => setMenuOpen(false)}
         >
           {t?.("collections") ?? "Collections"}
+        </MenuLink>
+        <MenuLink
+          to="/homme"
+          $open={menuOpen}
+          $delay={0.05}
+          onClick={() => setMenuOpen(false)}
+        >
+          {t?.("Homme") ?? "Homme"}
+        </MenuLink>
+        <MenuLink
+          to="/femme"
+          $open={menuOpen}
+          $delay={0.05}
+          onClick={() => setMenuOpen(false)}
+        >
+          {t?.("Femme") ?? "Femme"}
         </MenuLink>
         <MenuLink
           to="/new"
