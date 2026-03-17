@@ -547,10 +547,6 @@ export default function HomePremium() {
             <h3>Bientôt disponible</h3>
             <div className="images-wrapper">
               <img
-                src="/WhatsApp Image 2026-03-17 at 01.10.21 (1).jpeg"
-                alt="bientot disponible 1"
-              />
-              <img
                 src="/WhatsApp Image 2026-03-17 at 01.10.21.jpeg"
                 alt="bientot disponible 2"
               />
