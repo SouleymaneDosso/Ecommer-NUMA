@@ -4,7 +4,8 @@ import { FiHeart, FiCheck } from "react-icons/fi";
 import { FaHeart } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { ThemeContext } from "../../Utils/Context";
-
+import { PanierContext } from "../../Utils/Context";
+import { HiShoppingBag } from "react-icons/hi";
 /* ================= ANIMATIONS ================= */
 
 const fadeIn = keyframes`
@@ -23,7 +24,9 @@ const PageWrapper = styled.main`
   padding-bottom: 3.8rem 6%;
   background: ${({ $isdark }) => ($isdark ? "#111" : "#fff")};
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
-  transition: background 0.3s ease, color 0.3s ease;
+  transition:
+    background 0.3s ease,
+    color 0.3s ease;
 `;
 
 const PageHeader = styled.div`
@@ -101,9 +104,7 @@ const FilterButton = styled.button`
 const Grid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 0.rem;
- 
-
+  gap: 0rem;
 
   @media (min-width: 900px) {
     grid-template-columns: repeat(3, 1fr);
@@ -124,7 +125,6 @@ const ProductCard = styled.div`
   background: ${({ $isdark }) => ($isdark ? "#1a1a1a" : "#fff")};
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
   border-radius: 8px;
-  
 
   &:hover {
     transform: translateY(-4px);
@@ -237,6 +237,38 @@ const SkeletonCard = styled.div`
   background-size: 800px 100%;
   animation: ${shimmer} 1.2s infinite linear;
 `;
+const AddToCartButton = styled.button`
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+
+  border: none;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
+  color: ${({ $isdark }) => ($isdark ? "#111" : "#fff")};
+
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+
+  transition: all 0.25s ease;
+
+  &:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+`;
 
 /* ================= COMPONENT ================= */
 
@@ -254,6 +286,8 @@ export default function Homme() {
   const [loading, setLoading] = useState(true);
   const [limit, setLimit] = useState(12);
 
+  const { ajouterPanier } = useContext(PanierContext);
+
   const token = localStorage.getItem("token");
 
   useEffect(() => {
@@ -261,7 +295,7 @@ export default function Homme() {
       .then((res) => res.json())
       .then((data) => {
         const valid = data.filter(
-          (p) => p.images?.length && p.genre === "homme"
+          (p) => p.images?.length && p.genre === "homme",
         );
 
         setProducts(valid);
@@ -286,7 +320,7 @@ export default function Homme() {
     })
       .then((res) => res.json())
       .then((data) =>
-        setFavorites(data.map((f) => f.productId?._id).filter(Boolean))
+        setFavorites(data.map((f) => f.productId?._id).filter(Boolean)),
       )
       .catch(console.error);
   }, [token]);
@@ -295,14 +329,17 @@ export default function Homme() {
     if (!token) return;
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/favorites/toggle`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/favorites/toggle`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ productId: id }),
         },
-        body: JSON.stringify({ productId: id }),
-      });
+      );
 
       const data = await res.json();
       if (res.ok) {
@@ -336,11 +373,13 @@ export default function Homme() {
 
     if (search)
       filtered = filtered.filter((p) =>
-        p.title.toLowerCase().includes(search.toLowerCase())
+        p.title.toLowerCase().includes(search.toLowerCase()),
       );
 
-    if (sort === "asc") filtered = [...filtered].sort((a, b) => a.price - b.price);
-    if (sort === "desc") filtered = [...filtered].sort((a, b) => b.price - a.price);
+    if (sort === "asc")
+      filtered = [...filtered].sort((a, b) => a.price - b.price);
+    if (sort === "desc")
+      filtered = [...filtered].sort((a, b) => b.price - a.price);
 
     return filtered.slice(0, limit);
   }, [products, filter, sort, search, limit]);
@@ -373,7 +412,11 @@ export default function Homme() {
             ))}
           </FilterWrapper>
 
-          <Select $isdark={$isdark} value={sort} onChange={(e) => setSort(e.target.value)}>
+          <Select
+            $isdark={$isdark}
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+          >
             <option value="default">Trier</option>
             <option value="asc">Prix croissant</option>
             <option value="desc">Prix décroissant</option>
@@ -425,18 +468,37 @@ export default function Homme() {
 
                 <Validation>
                   <FiCheck />
-                  Disponible
+                  En stock
                 </Validation>
               </CardContent>
+              <AddToCartButton
+                $isdark={$isdark}
+                onClick={(e) => {
+                  e.stopPropagation();
+
+                  const produitPanier = {
+                    id: p._id,
+                    nom: p.title,
+                    image: p.images[0]?.url || "",
+                    prix: p.price,
+                    quantite: 1,
+                    taille: p.tailles?.[0] || "",
+                    couleur: p.couleurs?.[0] || "",
+                    stockDisponible: p.stock || 10,
+                  };
+
+                  ajouterPanier(produitPanier);
+                }}
+              >
+                <HiShoppingBag size={18} />
+              </AddToCartButton>
             </ProductCard>
           );
         })}
       </Grid>
 
       {filteredProducts.length >= limit && (
-        <LoadMore onClick={() => setLimit(limit + 12)}>
-          Voir plus
-        </LoadMore>
+        <LoadMore onClick={() => setLimit(limit + 12)}>Voir plus</LoadMore>
       )}
     </PageWrapper>
   );
