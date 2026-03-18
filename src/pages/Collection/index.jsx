@@ -2,6 +2,7 @@
 import { useState, useEffect, Fragment, useRef } from "react";
 import styled from "styled-components";
 import { FiFilter } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 import { LoaderWrapper, Loader } from "../../Utils/Rotate";
 
 // ---------- STYLES ----------
@@ -17,9 +18,7 @@ const PageWrapper = styled.main`
   }
 `;
 
-const Sidebar = styled.div`
-  width: 200px;
-`;
+const Sidebar = styled.div`width: 200px;`;
 
 const FilterButton = styled.button`
   display: block;
@@ -30,9 +29,7 @@ const FilterButton = styled.button`
   cursor: pointer;
 `;
 
-const Content = styled.div`
-  flex: 1;
-`;
+const Content = styled.div`flex: 1;`;
 
 const TopBar = styled.div`
   display: flex;
@@ -52,14 +49,23 @@ const Grid = styled.div`
 `;
 
 // ---------- PRODUIT ----------
-const ProductCard = styled.div``;
+const ProductCard = styled.div`
+  cursor: pointer;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.25s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+  }
+`;
 
 const ProductCarousel = styled.div`
   display: flex;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
-  scroll-behavior: smooth; // <-- smooth scroll
+  scroll-behavior: smooth;
 
   &::-webkit-scrollbar {
     display: none;
@@ -107,7 +113,7 @@ const BannerWrapper = styled.div`
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
-  scroll-behavior: smooth; // <-- smooth scroll
+  scroll-behavior: smooth;
 
   &::-webkit-scrollbar {
     display: none;
@@ -159,6 +165,7 @@ const DotFill = styled.div`
 
 // ---------- COMPONENT ----------
 export default function Collection() {
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [imageIndexes, setImageIndexes] = useState({});
@@ -174,6 +181,10 @@ export default function Collection() {
       const data = await res.json();
       setProducts(data);
       setLoading(false);
+
+      const indexes = {};
+      data.forEach((p) => (indexes[p._id] = 0));
+      setImageIndexes(indexes);
     }
     fetchProducts();
   }, []);
@@ -202,7 +213,6 @@ export default function Collection() {
 
   const bannerImages = filteredProducts[0]?.images || [];
 
-  // Liste des genres pour le filtre
   const genres = ["Tous", ...new Set(products.map((p) => p.genre))];
 
   return (
@@ -212,9 +222,7 @@ export default function Collection() {
           <FilterButton
             key={g}
             onClick={() => setGenreFilter(g)}
-            style={{
-              fontWeight: genreFilter === g ? "bold" : "normal",
-            }}
+            style={{ fontWeight: genreFilter === g ? "bold" : "normal" }}
           >
             <FiFilter /> {g}
           </FilterButton>
@@ -224,7 +232,7 @@ export default function Collection() {
       <Content>
         <TopBar>
           <div>{filteredProducts.length} PRODUITS</div>
-          <div>Filtrer par genre</div> {/* <-- texte modifié */}
+          <div>Filtrer par genre</div>
         </TopBar>
 
         <Grid>
@@ -257,7 +265,7 @@ export default function Collection() {
               )}
 
               {/* PRODUIT */}
-              <ProductCard>
+              <ProductCard onClick={() => navigate(`/produit/${p._id}`)}>
                 <ProductCarousel
                   ref={(el) => (carouselRefs.current[p._id] = el)}
                   onScroll={() => handleProductScroll(p._id)}

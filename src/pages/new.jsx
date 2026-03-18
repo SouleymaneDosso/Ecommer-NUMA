@@ -21,7 +21,16 @@ const Grid = styled.div`
   }
 `;
 
-const ProductCard = styled.div``;
+const ProductCard = styled.div`
+  cursor: pointer;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.25s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+  }
+`;
 
 const ProductCarousel = styled.div`
   display: flex;
@@ -80,6 +89,11 @@ export default function Nouveautes() {
         const data = await res.json();
         const newProducts = data.filter((p) => p.badge === "new");
         setProducts(newProducts);
+
+        // Initialiser les index pour le carrousel
+        const indexes = {};
+        newProducts.forEach((p) => (indexes[p._id] = 0));
+        setImageIndexes(indexes);
       } catch (err) {
         console.error(err);
       } finally {
@@ -110,7 +124,10 @@ export default function Nouveautes() {
 
             {/* 🔥 GRAND BANNER AU MILIEU */}
             {index === 2 && products[0]?.images?.length > 0 && (
-              <ProductCard style={{ gridColumn: "1 / -1", position: "relative" }}>
+              <ProductCard
+                style={{ gridColumn: "1 / -1", position: "relative" }}
+                onClick={() => navigate(`/produit/${products[0]._id}`)}
+              >
                 <ProductCarousel
                   ref={(el) => (carouselRefs.current["banner"] = el)}
                   onScroll={() => {
@@ -145,7 +162,7 @@ export default function Nouveautes() {
             )}
 
             {/* PRODUIT NORMAL */}
-            <ProductCard>
+            <ProductCard onClick={() => navigate(`/produit/${p._id}`)}>
               <ProductCarousel
                 ref={(el) => (carouselRefs.current[p._id] = el)}
                 onScroll={() => handleProductScroll(p._id)}

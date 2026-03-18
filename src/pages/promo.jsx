@@ -11,13 +11,6 @@ const PageWrapper = styled.main`
   padding: 2rem;
 `;
 
-const TopBar = styled.div`
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-  font-weight: bold;
-`;
-
 const Grid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -28,7 +21,16 @@ const Grid = styled.div`
   }
 `;
 
-const ProductCard = styled.div``;
+const ProductCard = styled.div`
+  cursor: pointer;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.25s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+  }
+`;
 
 const ProductCarousel = styled.div`
   display: flex;
@@ -87,6 +89,11 @@ export default function PromoLuxury() {
         const data = await res.json();
         const promoProducts = data.filter((p) => p.badge === "promo");
         setProducts(promoProducts);
+
+        // Initialiser index carousel
+        const indexes = {};
+        promoProducts.forEach((p) => (indexes[p._id] = 0));
+        setImageIndexes(indexes);
       } catch (err) {
         console.error(err);
       } finally {
@@ -123,6 +130,7 @@ export default function PromoLuxury() {
             {index === 2 && products[0]?.images?.length > 0 && (
               <ProductCard
                 style={{ gridColumn: "1 / -1", position: "relative" }}
+                onClick={() => navigate(`/produit/${products[0]._id}`)}
               >
                 <ProductCarousel
                   ref={(el) => (carouselRefs.current["banner"] = el)}
@@ -158,7 +166,7 @@ export default function PromoLuxury() {
             )}
 
             {/* PRODUIT NORMAL */}
-            <ProductCard>
+            <ProductCard onClick={() => navigate(`/produit/${p._id}`)}>
               <ProductCarousel
                 ref={(el) => (carouselRefs.current[p._id] = el)}
                 onScroll={() => handleProductScroll(p._id)}
