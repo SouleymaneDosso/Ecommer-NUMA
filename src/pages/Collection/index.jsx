@@ -9,7 +9,6 @@ import { LoaderWrapper, Loader } from "../../Utils/Rotate";
 const PageWrapper = styled.main`
   max-width: 1400px;
   margin: auto;
-  padding: 2rem;
   display: flex;
   gap: 2rem;
 
@@ -41,7 +40,7 @@ const TopBar = styled.div`
 const Grid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
+  gap: 0.3rem;
 
   @media (min-width: 768px) {
     grid-template-columns: repeat(3, 1fr);
@@ -51,7 +50,6 @@ const Grid = styled.div`
 // ---------- PRODUIT ----------
 const ProductCard = styled.div`
   cursor: pointer;
-  border-radius: 8px;
   overflow: hidden;
   transition: transform 0.25s ease;
 

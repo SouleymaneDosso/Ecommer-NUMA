@@ -8,13 +8,13 @@ import { useNavigate } from "react-router-dom";
 const PageWrapper = styled.main`
   max-width: 1600px;
   margin: auto;
-  padding: 2rem;
+  
 `;
 
 const Grid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
+  gap: 0.1rem;
 
   @media (min-width: 768px) {
     grid-template-columns: repeat(3, 1fr);
@@ -23,7 +23,6 @@ const Grid = styled.div`
 
 const ProductCard = styled.div`
   cursor: pointer;
-  border-radius: 8px;
   overflow: hidden;
   transition: transform 0.25s ease;
 
