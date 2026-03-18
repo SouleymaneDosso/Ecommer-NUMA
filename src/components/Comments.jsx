@@ -2,9 +2,10 @@
 import { useState } from "react";
 import styled from "styled-components";
 import { FiStar, FiUser } from "react-icons/fi";
+import { Link } from "react-router-dom"; // <- pour créer des liens
 
 /* =============================
-   WRAPPER
+   WRAPPER ET STYLES
 ============================= */
 
 const Wrapper = styled.section`
@@ -20,10 +21,6 @@ const Heading = styled.h3`
   letter-spacing: 1px;
   margin-bottom: 2.5rem;
 `;
-
-/* =============================
-   COMMENT LIST
-============================= */
 
 const CommentCard = styled.div`
   display: flex;
@@ -78,10 +75,6 @@ const Message = styled.p`
   color: #444;
 `;
 
-/* =============================
-   FORM
-============================= */
-
 const Form = styled.form`
   margin-top: 3rem;
   display: flex;
@@ -105,7 +98,7 @@ const Textarea = styled.textarea`
   box-sizing: border-box;
   border: 1px solid #ddd;
   padding: 14px;
-  font-size: 16px; /* IMPORTANT anti-zoom mobile */
+  font-size: 16px;
   resize: vertical;
   min-height: 100px;
   background: #fff;
@@ -144,6 +137,16 @@ const Button = styled.button`
   }
 `;
 
+const AlertMessage = styled.div`
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #fff3cd;
+  border: 1px solid #ffeeba;
+  color: #856404;
+  border-radius: 5px;
+  font-size: 0.9rem;
+`;
+
 /* =============================
    COMPONENT
 ============================= */
@@ -154,6 +157,7 @@ export default function Comments({ commentaires = [], produitId, userId }) {
   const [note, setNote] = useState(0);
   const [hover, setHover] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [alert, setAlert] = useState("");
 
   const formatDate = (date) => {
     return new Date(date).toLocaleDateString("fr-FR", {
@@ -165,10 +169,30 @@ export default function Comments({ commentaires = [], produitId, userId }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!texte || note === 0) return;
 
     const token = localStorage.getItem("token");
+
+    // Si l'utilisateur n'est pas connecté
+    if (!token) {
+      setAlert(
+        <>
+          Vous devez être connecté pour publier un commentaire.{" "}
+          <Link to="/login" style={{ fontWeight: "bold", textDecoration: "underline" }}>
+            Se connecter
+          </Link>{" "}
+          ou{" "}
+          <Link to="/signup" style={{ fontWeight: "bold", textDecoration: "underline" }}>
+            créer un compte
+          </Link>.
+        </>
+      );
+      return;
+    }
+
+    if (!texte || note === 0) return;
+
     setLoading(true);
+    setAlert("");
 
     try {
       const res = await fetch(
@@ -193,6 +217,7 @@ export default function Comments({ commentaires = [], produitId, userId }) {
       setNote(0);
     } catch (err) {
       console.error(err);
+      setAlert("Une erreur est survenue. Veuillez réessayer.");
     } finally {
       setLoading(false);
     }
@@ -211,9 +236,7 @@ export default function Comments({ commentaires = [], produitId, userId }) {
           <Content>
             <TopRow>
               <UserName>{c.user || "Anonyme"}</UserName>
-              <DateText>
-                {c.createdAt ? formatDate(c.createdAt) : ""}
-              </DateText>
+              <DateText>{c.createdAt ? formatDate(c.createdAt) : ""}</DateText>
               <Stars>
                 {[...Array(5)].map((_, index) => (
                   <FiStar
@@ -230,7 +253,6 @@ export default function Comments({ commentaires = [], produitId, userId }) {
         </CommentCard>
       ))}
 
-      {/* FORMULAIRE */}
       <Form onSubmit={handleSubmit}>
         <InputContainer>
           <Textarea
@@ -250,15 +272,13 @@ export default function Comments({ commentaires = [], produitId, userId }) {
                   onClick={() => setNote(ratingValue)}
                   onMouseEnter={() => setHover(ratingValue)}
                   onMouseLeave={() => setHover(null)}
-                  fill={
-                    ratingValue <= (hover || note)
-                      ? "#111"
-                      : "transparent"
-                  }
+                  fill={ratingValue <= (hover || note) ? "#111" : "transparent"}
                 />
               );
             })}
           </StarSelector>
+
+          {alert && <AlertMessage>{alert}</AlertMessage>}
         </InputContainer>
 
         <Button type="submit" disabled={loading}>

@@ -1,11 +1,11 @@
-import { useState, useEffect, useMemo, useContext } from "react";
+import React, { useState, useEffect, useMemo, useContext } from "react";
 import styled, { keyframes } from "styled-components";
 import { FiHeart, FiCheck } from "react-icons/fi";
 import { FaHeart } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
-import { ThemeContext } from "../../Utils/Context";
-import { PanierContext } from "../../Utils/Context";
+import { ThemeContext, PanierContext } from "../../Utils/Context";
 import { HiShoppingBag } from "react-icons/hi";
+
 /* ================= ANIMATIONS ================= */
 
 const fadeIn = keyframes`
@@ -18,15 +18,13 @@ const shimmer = keyframes`
   100% { background-position: 400px 0; }
 `;
 
-/* ================= STYLES PREMIUM + DARK MODE ================= */
+/* ================= STYLES ================= */
 
 const PageWrapper = styled.main`
   padding-bottom: 3.8rem 6%;
   background: ${({ $isdark }) => ($isdark ? "#111" : "#fff")};
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
-  transition:
-    background 0.3s ease,
-    color 0.3s ease;
+  transition: background 0.3s ease, color 0.3s ease;
 `;
 
 const PageHeader = styled.div`
@@ -231,27 +229,22 @@ const SkeletonCard = styled.div`
   background-size: 800px 100%;
   animation: ${shimmer} 1.2s infinite linear;
 `;
+
 const AddToCartButton = styled.button`
   position: absolute;
   bottom: 10px;
   right: 10px;
-
   width: 23px;
   height: 23px;
   border-radius: 50%;
-
   border: none;
   cursor: pointer;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   background: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
   color: ${({ $isdark }) => ($isdark ? "#111" : "#fff")};
-
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-
   transition: all 0.25s ease;
 
   &:hover {
@@ -262,6 +255,38 @@ const AddToCartButton = styled.button`
   &:active {
     transform: scale(0.95);
   }
+`;
+
+/* ================= MODAL ================= */
+
+const ModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: ${({ $show }) => ($show ? "flex" : "none")};
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+`;
+
+const ModalContent = styled.div`
+  background: #fff;
+  color: #111;
+  padding: 2rem;
+  border-radius: 8px;
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+`;
+
+const ModalButton = styled.button`
+  margin-top: 1.5rem;
+  padding: 8px 14px;
+  border: none;
+  cursor: pointer;
+  background: #111;
+  color: #fff;
+  border-radius: 4px;
 `;
 
 /* ================= COMPONENT ================= */
@@ -282,13 +307,16 @@ export default function Femme() {
   const { ajouterPanier } = useContext(PanierContext);
   const token = localStorage.getItem("token");
 
-  /* CHARGER PRODUITS */
+  // Etat modal
+  const [showModal, setShowModal] = useState(false);
+
+  /* ========== CHARGER PRODUITS ========== */
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/api/produits`)
       .then((res) => res.json())
       .then((data) => {
         const valid = data.filter(
-          (p) => p.images?.length && p.genre === "femme",
+          (p) => p.images?.length && p.genre === "femme"
         );
 
         setProducts(valid);
@@ -305,7 +333,7 @@ export default function Femme() {
       .catch(console.error);
   }, []);
 
-  /* FAVORIS */
+  /* ========== FAVORIS ========== */
   useEffect(() => {
     if (!token) return;
 
@@ -314,13 +342,17 @@ export default function Femme() {
     })
       .then((res) => res.json())
       .then((data) =>
-        setFavorites(data.map((f) => f.productId?._id).filter(Boolean)),
+        setFavorites(data.map((f) => f.productId?._id).filter(Boolean))
       )
       .catch(console.error);
   }, [token]);
 
   const toggleFavorite = async (id) => {
-    if (!token) return;
+    if (!token) {
+      // si pas connecté -> modal
+      setShowModal(true);
+      return;
+    }
 
     try {
       const res = await fetch(
@@ -332,7 +364,7 @@ export default function Femme() {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ productId: id }),
-        },
+        }
       );
 
       const data = await res.json();
@@ -345,7 +377,7 @@ export default function Femme() {
     }
   };
 
-  /* CAROUSEL */
+  /* ========== CAROUSEL ========== */
   useEffect(() => {
     const interval = setInterval(() => {
       setImageIndexes((prev) => {
@@ -360,22 +392,22 @@ export default function Femme() {
     return () => clearInterval(interval);
   }, [products]);
 
-  /* FILTRE + TRI + RECHERCHE */
+  /* ========== FILTRE + TRI + RECHERCHE ========== */
   const filteredProducts = useMemo(() => {
     let filtered =
       filter === "tout"
         ? products
-        : products.filter((p) => p.categorie?.toLowerCase().trim() === filter);
+        : products.filter(
+            (p) => p.categorie?.toLowerCase().trim() === filter
+          );
 
     if (search)
       filtered = filtered.filter((p) =>
-        p.title.toLowerCase().includes(search.toLowerCase()),
+        p.title.toLowerCase().includes(search.toLowerCase())
       );
 
-    if (sort === "asc")
-      filtered = [...filtered].sort((a, b) => a.price - b.price);
-    if (sort === "desc")
-      filtered = [...filtered].sort((a, b) => b.price - a.price);
+    if (sort === "asc") filtered = [...filtered].sort((a, b) => a.price - b.price);
+    if (sort === "desc") filtered = [...filtered].sort((a, b) => b.price - a.price);
 
     return filtered.slice(0, limit);
   }, [products, filter, sort, search, limit]);
@@ -384,9 +416,9 @@ export default function Femme() {
 
   return (
     <PageWrapper $isdark={$isdark}>
+      {/* HEADER */}
       <PageHeader>
         <PageTitle>Collection Femme</PageTitle>
-
         <ControlsWrapper>
           <SearchInput
             $isdark={$isdark}
@@ -394,7 +426,6 @@ export default function Femme() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-
           <FilterWrapper>
             {["tout", "haut", "bas", "robe", "chaussure"].map((cat) => (
               <FilterButton
@@ -407,12 +438,7 @@ export default function Femme() {
               </FilterButton>
             ))}
           </FilterWrapper>
-
-          <Select
-            $isdark={$isdark}
-            value={sort}
-            onChange={(e) => setSort(e.target.value)}
-          >
+          <Select $isdark={$isdark} value={sort} onChange={(e) => setSort(e.target.value)}>
             <option value="default">Trier</option>
             <option value="asc">Prix croissant</option>
             <option value="desc">Prix décroissant</option>
@@ -420,6 +446,7 @@ export default function Femme() {
         </ControlsWrapper>
       </PageHeader>
 
+      {/* GRID PRODUITS */}
       <Grid>
         {filteredProducts.map((p) => {
           const isFav = favorites.includes(p._id);
@@ -456,22 +483,20 @@ export default function Femme() {
 
               <CardContent>
                 <ProductTitle>{p.title}</ProductTitle>
-
                 <PriceRow>
                   <ProductPrice>{p.price} FCFA</ProductPrice>
                   {p.gadget && <Gadget>{p.gadget}</Gadget>}
                 </PriceRow>
-
                 <Validation>
                   <FiCheck />
                   Disponible
                 </Validation>
               </CardContent>
+
               <AddToCartButton
                 $isdark={$isdark}
                 onClick={(e) => {
                   e.stopPropagation();
-
                   const produitPanier = {
                     id: p._id,
                     nom: p.title,
@@ -484,7 +509,6 @@ export default function Femme() {
                     tailles: p.tailles || [],
                     couleurs: p.couleurs || [],
                   };
-
                   ajouterPanier(produitPanier);
                 }}
               >
@@ -498,6 +522,22 @@ export default function Femme() {
       {filteredProducts.length >= limit && (
         <LoadMore onClick={() => setLimit(limit + 12)}>Voir plus</LoadMore>
       )}
+
+      {/* MODAL CONNEXION */}
+      <ModalOverlay $show={showModal}>
+        <ModalContent>
+          <h2>Connexion requise</h2>
+          <p>Vous devez être connecté pour ajouter un produit à vos favoris.</p>
+          <ModalButton
+            onClick={() => {
+              setShowModal(false);
+              navigate("/login"); // Redirection vers login
+            }}
+          >
+            Se connecter
+          </ModalButton>
+        </ModalContent>
+      </ModalOverlay>
     </PageWrapper>
   );
 }

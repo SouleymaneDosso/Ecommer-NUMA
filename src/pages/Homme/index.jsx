@@ -3,11 +3,10 @@ import styled, { keyframes } from "styled-components";
 import { FiHeart, FiCheck } from "react-icons/fi";
 import { FaHeart } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
-import { ThemeContext } from "../../Utils/Context";
-import { PanierContext } from "../../Utils/Context";
+import { ThemeContext, PanierContext } from "../../Utils/Context";
 import { HiShoppingBag } from "react-icons/hi";
-/* ================= ANIMATIONS ================= */
 
+/* ================= ANIMATIONS ================= */
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(18px); }
   to { opacity: 1; transform: translateY(0); }
@@ -18,15 +17,12 @@ const shimmer = keyframes`
   100% { background-position: 400px 0; }
 `;
 
-/* ================= STYLES DARK MODE ================= */
-
+/* ================= STYLES ================= */
 const PageWrapper = styled.main`
   padding-bottom: 3.8rem 6%;
   background: ${({ $isdark }) => ($isdark ? "#111" : "#fff")};
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
-  transition:
-    background 0.3s ease,
-    color 0.3s ease;
+  transition: background 0.3s ease, color 0.3s ease;
 `;
 
 const PageHeader = styled.div`
@@ -237,6 +233,7 @@ const SkeletonCard = styled.div`
   background-size: 800px 100%;
   animation: ${shimmer} 1.2s infinite linear;
 `;
+
 const AddToCartButton = styled.button`
   position: absolute;
   bottom: 10px;
@@ -270,8 +267,38 @@ const AddToCartButton = styled.button`
   }
 `;
 
-/* ================= COMPONENT ================= */
+/* ================= MODAL ================= */
+const ModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: ${({ $show }) => ($show ? "flex" : "none")};
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+`;
 
+const ModalContent = styled.div`
+  background: #fff;
+  color: #111;
+  padding: 2rem;
+  border-radius: 8px;
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+`;
+
+const ModalButton = styled.button`
+  margin-top: 1.5rem;
+  padding: 8px 14px;
+  border: none;
+  cursor: pointer;
+  background: #111;
+  color: #fff;
+  border-radius: 4px;
+`;
+
+/* ================= COMPONENT ================= */
 export default function Homme() {
   const navigate = useNavigate();
   const { theme } = useContext(ThemeContext);
@@ -287,17 +314,15 @@ export default function Homme() {
   const [limit, setLimit] = useState(12);
 
   const { ajouterPanier } = useContext(PanierContext);
-
   const token = localStorage.getItem("token");
+
+  const [showModal, setShowModal] = useState(false); // modal connexion
 
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/api/produits`)
       .then((res) => res.json())
       .then((data) => {
-        const valid = data.filter(
-          (p) => p.images?.length && p.genre === "homme",
-        );
-
+        const valid = data.filter((p) => p.images?.length && p.genre === "homme");
         setProducts(valid);
 
         const indexes = {};
@@ -305,7 +330,6 @@ export default function Homme() {
           const mainIndex = p.images.findIndex((img) => img.isMain);
           indexes[p._id] = mainIndex >= 0 ? mainIndex : 0;
         });
-
         setImageIndexes(indexes);
         setTimeout(() => setLoading(false), 500);
       })
@@ -314,32 +338,31 @@ export default function Homme() {
 
   useEffect(() => {
     if (!token) return;
-
     fetch(`${import.meta.env.VITE_API_URL}/api/favorites`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
       .then((data) =>
-        setFavorites(data.map((f) => f.productId?._id).filter(Boolean)),
+        setFavorites(data.map((f) => f.productId?._id).filter(Boolean))
       )
       .catch(console.error);
   }, [token]);
 
   const toggleFavorite = async (id) => {
-    if (!token) return;
+    if (!token) {
+      setShowModal(true); // afficher modal si non connecté
+      return;
+    }
 
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/favorites/toggle`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ productId: id }),
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/favorites/toggle`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-      );
+        body: JSON.stringify({ productId: id }),
+      });
 
       const data = await res.json();
       if (res.ok) {
@@ -373,13 +396,11 @@ export default function Homme() {
 
     if (search)
       filtered = filtered.filter((p) =>
-        p.title.toLowerCase().includes(search.toLowerCase()),
+        p.title.toLowerCase().includes(search.toLowerCase())
       );
 
-    if (sort === "asc")
-      filtered = [...filtered].sort((a, b) => a.price - b.price);
-    if (sort === "desc")
-      filtered = [...filtered].sort((a, b) => b.price - a.price);
+    if (sort === "asc") filtered = [...filtered].sort((a, b) => a.price - b.price);
+    if (sort === "desc") filtered = [...filtered].sort((a, b) => b.price - a.price);
 
     return filtered.slice(0, limit);
   }, [products, filter, sort, search, limit]);
@@ -412,11 +433,7 @@ export default function Homme() {
             ))}
           </FilterWrapper>
 
-          <Select
-            $isdark={$isdark}
-            value={sort}
-            onChange={(e) => setSort(e.target.value)}
-          >
+          <Select $isdark={$isdark} value={sort} onChange={(e) => setSort(e.target.value)}>
             <option value="default">Trier</option>
             <option value="asc">Prix croissant</option>
             <option value="desc">Prix décroissant</option>
@@ -429,20 +446,10 @@ export default function Homme() {
           const isFav = favorites.includes(p._id);
 
           return (
-            <ProductCard
-              key={p._id}
-              $isdark={$isdark}
-              onClick={() => navigate(`/produit/${p._id}`)}
-            >
+            <ProductCard key={p._id} $isdark={$isdark} onClick={() => navigate(`/produit/${p._id}`)}>
               <ImageWrapper $isdark={$isdark}>
                 {p.images.map((img, index) => (
-                  <ProductImage
-                    key={index}
-                    src={img.url}
-                    alt={p.title}
-                    loading="lazy"
-                    $active={imageIndexes[p._id] === index}
-                  />
+                  <ProductImage key={index} src={img.url} alt={p.title} loading="lazy" $active={imageIndexes[p._id] === index} />
                 ))}
 
                 {p.badge && <Badge>{p.badge}</Badge>}
@@ -460,7 +467,6 @@ export default function Homme() {
 
               <CardContent>
                 <ProductTitle>{p.title}</ProductTitle>
-
                 <PriceRow>
                   <ProductPrice>{p.price} FCFA</ProductPrice>
                   {p.gadget && <Gadget>{p.gadget}</Gadget>}
@@ -471,11 +477,11 @@ export default function Homme() {
                   En stock
                 </Validation>
               </CardContent>
+
               <AddToCartButton
                 $isdark={$isdark}
                 onClick={(e) => {
                   e.stopPropagation();
-
                   const produitPanier = {
                     id: p._id,
                     nom: p.title,
@@ -488,7 +494,6 @@ export default function Homme() {
                     tailles: p.tailles || [],
                     couleurs: p.couleurs || [],
                   };
-
                   ajouterPanier(produitPanier);
                 }}
               >
@@ -502,6 +507,22 @@ export default function Homme() {
       {filteredProducts.length >= limit && (
         <LoadMore onClick={() => setLimit(limit + 12)}>Voir plus</LoadMore>
       )}
+
+      {/* MODAL CONNEXION */}
+      <ModalOverlay $show={showModal}>
+        <ModalContent>
+          <h2>Connexion requise</h2>
+          <p>Vous devez être connecté pour ajouter un produit à vos favoris.</p>
+          <ModalButton
+            onClick={() => {
+              setShowModal(false);
+              navigate("/login");
+            }}
+          >
+            Se connecter
+          </ModalButton>
+        </ModalContent>
+      </ModalOverlay>
     </PageWrapper>
   );
 }
