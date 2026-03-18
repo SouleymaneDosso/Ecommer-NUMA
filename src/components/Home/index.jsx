@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo, useContext, useRef } from "react";
 import styled, { keyframes } from "styled-components";
 import { Link } from "react-router-dom";
-import { FaArrowRight } from "react-icons/fa";
+import { FaArrowRight, FaTruck, FaShieldAlt, FaUndo } from "react-icons/fa";
 import { ThemeContext } from "../../Utils/Context";
-import { FaTruck, FaShieldAlt, FaUndo } from "react-icons/fa";
+
 // ===============================
 // SCROLL REVEAL COMPONENT
 // ===============================
@@ -14,15 +14,11 @@ function RevealOnScroll({ children }) {
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true);
-        }
+        if (entry.isIntersecting) setVisible(true);
       },
-      { threshold: 0.2 },
+      { threshold: 0.2 }
     );
-
     if (ref.current) observer.observe(ref.current);
-
     return () => observer.disconnect();
   }, []);
 
@@ -53,50 +49,8 @@ const fadeIn = keyframes`
   to {opacity:1;}
 `;
 
-const BenefitsSection = styled.div`
-  display: flex;
-  justify-content: center;
-  gap: 60px;
-  padding: 40px 20px;
-  flex-wrap: wrap;
-`;
-
-const BenefitCard = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  max-width: 220px;
-  gap: 12px;
-  transition: transform 0.3s ease;
-
-  &:hover {
-    transform: translateY(-8px);
-  }
-`;
-
-const BenefitIcon = styled.div`
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 30px;
-  color: white;
-`;
-
-const BenefitTitle = styled.div`
-  font-weight: bold;
-  font-size: 1.1rem;
-`;
-
-const BenefitText = styled.div`
-  font-size: 0.9rem;
-  opacity: 0.8;
-`;
 // ===============================
-// WRAPPERS
+// WRAPPERS & SECTIONS
 // ===============================
 const Wrapper = styled.div`
   display: flex;
@@ -107,9 +61,6 @@ const Wrapper = styled.div`
   color: ${({ $isDark }) => ($isDark ? "#f8fafc" : "#111")};
 `;
 
-// ===============================
-// HERO
-// ===============================
 const Hero = styled.div`
   height: 90vh;
   position: relative;
@@ -206,7 +157,6 @@ const FeatureLink = styled(Link)`
   display: inline-flex;
   align-items: center;
   gap: 6px;
-
   &:hover {
     transform: translateX(5px);
     transition: transform 0.3s;
@@ -223,181 +173,119 @@ const Description = styled.p`
 `;
 
 // ===============================
-// DOT CAROUSEL
+// BENEFITS SECTION
 // ===============================
-const CarouselTrack = styled.div`
+const BenefitsSection = styled.div`
   display: flex;
-  width: 100%;
+  justify-content: center;
+  gap: 60px;
+  padding: 40px 20px;
+  flex-wrap: wrap;
 `;
 
-const CarouselSlide = styled.div`
-  width: 100%;
-  flex-shrink: 0;
+const BenefitCard = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20px 0;
+  text-align: center;
+  max-width: 220px;
+  gap: 12px;
+  transition: transform 0.3s ease;
+  &:hover {
+    transform: translateY(-8px);
+  }
 `;
 
-const SlideImg = styled.img`
-  width: 300px;
-  height: 400px;
-  display: block;
-  margin: 0 auto;
-  object-fit: cover;
-`;
-
-const Dot = styled.div`
-  width: 12px;
-  height: 12px;
+const BenefitIcon = styled.div`
+  width: 70px;
+  height: 70px;
   border-radius: 50%;
-  background: ${(p) => (p.active ? "#111" : "#ccc")};
-  cursor: pointer;
-  transition:
-    background 0.3s,
-    transform 0.3s;
-  transform: scale(${(p) => (p.active ? 1.3 : 1)});
-`;
-
-const CarouselContainer = styled.div`
-  position: relative;
-  width: 100%;
-  overflow: hidden;
-  margin-bottom: 70px;
-`;
-
-const ProgressDotsWrapper = styled.div`
   display: flex;
+  align-items: center;
   justify-content: center;
-  gap: 8px;
-  margin-top: 16px;
+  font-size: 30px;
+  color: white;
 `;
 
-const SlideInfo = styled.div`
-  text-align: left;
-  margin-top: 8px;
-  padding: 0 10px;
-`;
-
-const SlideTitleText = styled.div`
+const BenefitTitle = styled.div`
   font-weight: bold;
-  font-size: 1rem;
-  color: ${({ $isDark }) => ($isDark ? "#f8fafc" : "#111")};
+  font-size: 1.1rem;
 `;
 
-const SlidePriceText = styled.div`
+const BenefitText = styled.div`
   font-size: 0.9rem;
-  color: ${({ $isDark }) => ($isDark ? "#f8fafc" : "#111")};
-  margin-top: 4px;
+  opacity: 0.8;
 `;
+
 // ===============================
-// BIENTÔT DISPONIBLE STYLED
+// COMING SOON CAROUSEL CONTINUOUS
 // ===============================
 const ComingSoonSection = styled.div`
   text-align: center;
   padding: 60px 20px;
   background: ${({ $isDark }) => ($isDark ? "#1a1a1a" : "#f9f9f9")};
   color: ${({ $isDark }) => ($isDark ? "#f8fafc" : "#111")};
-
   h3 {
     font-size: 2rem;
     margin-bottom: 30px;
     font-weight: bold;
     animation: ${fadeUp} 1s ease forwards;
   }
+`;
 
-  .images-wrapper {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 40px;
-  }
+const ComingSoonCarouselContainer = styled.div`
+  position: relative;
+  width: 100%;
+  background: black;
+  padding: 40px 0;
+  overflow: hidden;
+`;
 
-  .images-wrapper img {
-    width: 300px;
-    max-width: 90%;
-    object-fit: cover;
-    transition:
-      transform 0.3s,
-    cursor: pointer;
+const ComingSoonTrack = styled.div`
+  display: flex;
+  width: max-content;
+  animation: scroll 15s linear infinite;
 
-    &:hover {
-      transform: scale(1.05);
+  @keyframes scroll {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-50%);
     }
   }
 `;
-function DotCarousel({ products, delay = 4000, $isDark }) {
-  const filtered = useMemo(() => products.slice(0, 6), [products]);
-  const slides = filtered.length ? [...filtered, filtered[0]] : [];
 
-  const [current, setCurrent] = useState(0);
-  const [transition, setTransition] = useState(true);
+const ComingSoonSlide = styled.div`
+  flex-shrink: 0;
+  width: 300px;
+  margin-right: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
 
-  useEffect(() => {
-    if (filtered.length < 2) return;
-    const interval = setInterval(() => {
-      setCurrent((c) => c + 1);
-    }, delay);
-    return () => clearInterval(interval);
-  }, [filtered, delay]);
+const ComingSoonImg = styled.img`
+  width: 300px;
+  height: 400px;
+  object-fit: cover;
+  border-radius: 12px;
+`;
 
-  useEffect(() => {
-    if (current === filtered.length) {
-      setTimeout(() => {
-        setTransition(false);
-        setCurrent(0);
-      }, 500);
-    }
-  }, [current, filtered.length]);
-
-  useEffect(() => {
-    if (!transition) {
-      setTimeout(() => {
-        setTransition(true);
-      }, 50);
-    }
-  }, [transition]);
-
-  const imgUrl = (p) => {
-    if (!p.images || !p.images.length) return "";
-    return p.images[0].url.startsWith("http")
-      ? p.images[0].url
-      : `${import.meta.env.VITE_API_URL}${p.images[0].url}`;
-  };
+// Carousel continu
+function ComingSoonCarousel({ images = [] }) {
+  const loopedImages = [...images, ...images]; // boucle infinie
 
   return (
-    <div>
-      <CarouselContainer>
-        <CarouselTrack
-          style={{
-            transform: `translateX(-${current * 100}%)`,
-            transition: transition ? "transform 0.5s ease" : "none",
-          }}
-        >
-          {slides.map((p, i) => (
-            <CarouselSlide key={i}>
-              <SlideImg src={imgUrl(p)} alt={p.title} />
-              <SlideInfo>
-                <SlideTitleText $isDark={$isDark}>{p.title}</SlideTitleText>
-                <SlidePriceText $isDark={$isDark}>
-                  {p.price} FCFA
-                </SlidePriceText>
-              </SlideInfo>
-            </CarouselSlide>
-          ))}
-        </CarouselTrack>
-      </CarouselContainer>
-
-      <ProgressDotsWrapper>
-        {filtered.map((_, i) => (
-          <Dot
-            key={i}
-            active={i === current % filtered.length}
-            onClick={() => setCurrent(i)}
-          />
+    <ComingSoonCarouselContainer>
+      <ComingSoonTrack>
+        {loopedImages.map((src, i) => (
+          <ComingSoonSlide key={i}>
+            <ComingSoonImg src={src} alt={`bientot ${i + 1}`} />
+          </ComingSoonSlide>
         ))}
-      </ProgressDotsWrapper>
-    </div>
+      </ComingSoonTrack>
+    </ComingSoonCarouselContainer>
   );
 }
 
@@ -425,14 +313,14 @@ export default function HomePremium() {
 
   const heroProducts = useMemo(
     () => products.filter((p) => p.hero),
-    [products],
+    [products]
   );
 
   useEffect(() => {
     if (!heroProducts.length) return;
     const interval = setInterval(
       () => setSlide((s) => (s + 1) % heroProducts.length),
-      3500,
+      3500
     );
     return () => clearInterval(interval);
   }, [heroProducts]);
@@ -460,6 +348,7 @@ export default function HomePremium() {
         </HeroText>
       </Hero>
 
+      {/* FEATURE CARDS HOMME */}
       <RevealOnScroll>
         {products
           .filter((p) => p.genre?.toLowerCase() === "homme")
@@ -479,6 +368,7 @@ export default function HomePremium() {
           ))}
       </RevealOnScroll>
 
+      {/* FEATURE CARDS FEMME */}
       <RevealOnScroll>
         {products
           .filter((p) => p.genre?.toLowerCase() === "femme")
@@ -499,60 +389,56 @@ export default function HomePremium() {
           ))}
       </RevealOnScroll>
 
+      {/* BENEFITS */}
       <RevealOnScroll>
-        <DotCarousel products={products} delay={3500} $isDark={$isDark} />
+        <BenefitsSection>
+          <BenefitCard>
+            <BenefitIcon style={{ background: "#2563eb" }}>
+              <FaTruck />
+            </BenefitIcon>
+            <BenefitTitle>Livraison gratuite</BenefitTitle>
+            <BenefitText>
+              Livraison offerte sur toutes vos commandes.
+            </BenefitText>
+          </BenefitCard>
+
+          <BenefitCard>
+            <BenefitIcon style={{ background: "#16a34a" }}>
+              <FaShieldAlt />
+            </BenefitIcon>
+            <BenefitTitle>Paiement en credit</BenefitTitle>
+            <BenefitText>
+              Transactions protégées et 100% sécurisées. whatsapp: 0700247693
+            </BenefitText>
+          </BenefitCard>
+
+          <BenefitCard>
+            <BenefitIcon style={{ background: "#ea580c" }}>
+              <FaUndo />
+            </BenefitIcon>
+            <BenefitTitle>Retour facile</BenefitTitle>
+            <BenefitText>Retour possible sous 7 jours.</BenefitText>
+          </BenefitCard>
+        </BenefitsSection>
       </RevealOnScroll>
 
+      <Description>
+        NUMA offre des pièces uniques avec un design raffiné, des
+        matériaux de qualité supérieure et une expérience de mode exclusive.
+      </Description>
+
+      {/* BIENTÔT DISPONIBLE */}
       <RevealOnScroll>
-        <RevealOnScroll>
-          <RevealOnScroll>
-            <BenefitsSection>
-              <BenefitCard>
-                <BenefitIcon style={{ background: "#2563eb" }}>
-                  <FaTruck />
-                </BenefitIcon>
-                <BenefitTitle>Livraison gratuite</BenefitTitle>
-                <BenefitText>
-                  Livraison offerte sur toutes vos commandes.
-                </BenefitText>
-              </BenefitCard>
-
-              <BenefitCard>
-                <BenefitIcon style={{ background: "#16a34a" }}>
-                  <FaShieldAlt />
-                </BenefitIcon>
-                <BenefitTitle>Paiement en credit</BenefitTitle>
-                <BenefitText>
-                  Transactions protégées et 100% sécurisées. whatsapp:
-                  0700247693
-                </BenefitText>
-              </BenefitCard>
-
-              <BenefitCard>
-                <BenefitIcon style={{ background: "#ea580c" }}>
-                  <FaUndo />
-                </BenefitIcon>
-                <BenefitTitle>Retour facile</BenefitTitle>
-                <BenefitText>Retour possible sous 7 jours.</BenefitText>
-              </BenefitCard>
-            </BenefitsSection>
-          </RevealOnScroll>
-        </RevealOnScroll>
-        <Description>
-          NUMA Premium offre des pièces uniques avec un design raffiné, des
-          matériaux de qualité supérieure et une expérience de mode exclusive.
-        </Description>
-        <RevealOnScroll>
-          <ComingSoonSection $isDark={$isDark}>
-            <h3>Bientôt disponible</h3>
-            <div className="images-wrapper">
-              <img
-                src="/WhatsApp Image 2026-03-17 at 01.10.21.jpeg"
-                alt="bientot disponible 2"
-              />
-            </div>
-          </ComingSoonSection>
-        </RevealOnScroll>
+        <ComingSoonSection $isDark={$isDark}>
+          <h3>Bientôt disponible</h3>
+          <ComingSoonCarousel
+            images={[
+              "/image2.jpeg",
+              "/image3.jpeg",
+              "/image4.jpeg",
+            ]}
+          />
+        </ComingSoonSection>
       </RevealOnScroll>
     </Wrapper>
   );
