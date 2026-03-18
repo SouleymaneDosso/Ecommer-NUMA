@@ -222,7 +222,6 @@ const BenefitText = styled.div`
 // ===============================
 const ComingSoonSection = styled.div`
   text-align: center;
-  padding: 60px 20px;
   background: ${({ $isDark }) => ($isDark ? "#1a1a1a" : "#f9f9f9")};
   color: ${({ $isDark }) => ($isDark ? "#f8fafc" : "#111")};
   h3 {
@@ -269,7 +268,6 @@ const ComingSoonImg = styled.img`
   width: 300px;
   height: 400px;
   object-fit: cover;
-  border-radius: 12px;
 `;
 
 // Carousel continu
