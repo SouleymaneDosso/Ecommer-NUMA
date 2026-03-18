@@ -142,6 +142,18 @@ export const Panier = ({ children }) => {
   };
 
   const toutSupprimer = () => setAjouter([]);
+  const modifierProduit = (id, nouvellesDonnees) => {
+  setAjouter((prev) =>
+    prev.map((p) =>
+      p.id === id
+        ? {
+            ...p,
+            ...nouvellesDonnees,
+          }
+        : p
+    )
+  );
+};
 
   /* ================== CALCULS LIVRAISON ================== */
 
@@ -213,6 +225,7 @@ export const Panier = ({ children }) => {
         sousTotal,
         fraisLivraison,
         total,
+        modifierProduit,
       }}
     >
       {children}

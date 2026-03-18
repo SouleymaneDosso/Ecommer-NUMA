@@ -4,7 +4,8 @@ import { FiHeart, FiCheck } from "react-icons/fi";
 import { FaHeart } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { ThemeContext } from "../../Utils/Context";
-
+import { PanierContext } from "../../Utils/Context";
+import { HiShoppingBag } from "react-icons/hi";
 /* ================= ANIMATIONS ================= */
 
 const fadeIn = keyframes`
@@ -23,7 +24,9 @@ const PageWrapper = styled.main`
   padding-bottom: 3.8rem 6%;
   background: ${({ $isdark }) => ($isdark ? "#111" : "#fff")};
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
-  transition: background 0.3s ease, color 0.3s ease;
+  transition:
+    background 0.3s ease,
+    color 0.3s ease;
 `;
 
 const PageHeader = styled.div`
@@ -228,6 +231,38 @@ const SkeletonCard = styled.div`
   background-size: 800px 100%;
   animation: ${shimmer} 1.2s infinite linear;
 `;
+const AddToCartButton = styled.button`
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+
+  border: none;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
+  color: ${({ $isdark }) => ($isdark ? "#111" : "#fff")};
+
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+
+  transition: all 0.25s ease;
+
+  &:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+`;
 
 /* ================= COMPONENT ================= */
 
@@ -244,7 +279,7 @@ export default function Femme() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [limit, setLimit] = useState(12);
-
+  const { ajouterPanier } = useContext(PanierContext);
   const token = localStorage.getItem("token");
 
   /* CHARGER PRODUITS */
@@ -253,7 +288,7 @@ export default function Femme() {
       .then((res) => res.json())
       .then((data) => {
         const valid = data.filter(
-          (p) => p.images?.length && p.genre === "femme"
+          (p) => p.images?.length && p.genre === "femme",
         );
 
         setProducts(valid);
@@ -279,7 +314,7 @@ export default function Femme() {
     })
       .then((res) => res.json())
       .then((data) =>
-        setFavorites(data.map((f) => f.productId?._id).filter(Boolean))
+        setFavorites(data.map((f) => f.productId?._id).filter(Boolean)),
       )
       .catch(console.error);
   }, [token]);
@@ -288,14 +323,17 @@ export default function Femme() {
     if (!token) return;
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/favorites/toggle`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/favorites/toggle`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ productId: id }),
         },
-        body: JSON.stringify({ productId: id }),
-      });
+      );
 
       const data = await res.json();
       if (res.ok) {
@@ -331,11 +369,13 @@ export default function Femme() {
 
     if (search)
       filtered = filtered.filter((p) =>
-        p.title.toLowerCase().includes(search.toLowerCase())
+        p.title.toLowerCase().includes(search.toLowerCase()),
       );
 
-    if (sort === "asc") filtered = [...filtered].sort((a, b) => a.price - b.price);
-    if (sort === "desc") filtered = [...filtered].sort((a, b) => b.price - a.price);
+    if (sort === "asc")
+      filtered = [...filtered].sort((a, b) => a.price - b.price);
+    if (sort === "desc")
+      filtered = [...filtered].sort((a, b) => b.price - a.price);
 
     return filtered.slice(0, limit);
   }, [products, filter, sort, search, limit]);
@@ -368,7 +408,11 @@ export default function Femme() {
             ))}
           </FilterWrapper>
 
-          <Select $isdark={$isdark} value={sort} onChange={(e) => setSort(e.target.value)}>
+          <Select
+            $isdark={$isdark}
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+          >
             <option value="default">Trier</option>
             <option value="asc">Prix croissant</option>
             <option value="desc">Prix décroissant</option>
@@ -423,15 +467,36 @@ export default function Femme() {
                   Disponible
                 </Validation>
               </CardContent>
+              <AddToCartButton
+                $isdark={$isdark}
+                onClick={(e) => {
+                  e.stopPropagation();
+
+                  const produitPanier = {
+                    id: p._id,
+                    nom: p.title,
+                    image: p.images[0]?.url || "",
+                    prix: p.price,
+                    quantite: 1,
+                    taille: p.tailles?.[0] || "",
+                    couleur: p.couleurs?.[0] || "",
+                    stockDisponible: p.stock || 10,
+                    tailles: p.tailles || [],
+                    couleurs: p.couleurs || [],
+                  };
+
+                  ajouterPanier(produitPanier);
+                }}
+              >
+                <HiShoppingBag size={18} />
+              </AddToCartButton>
             </ProductCard>
           );
         })}
       </Grid>
 
       {filteredProducts.length >= limit && (
-        <LoadMore onClick={() => setLimit(limit + 12)}>
-          Voir plus
-        </LoadMore>
+        <LoadMore onClick={() => setLimit(limit + 12)}>Voir plus</LoadMore>
       )}
     </PageWrapper>
   );

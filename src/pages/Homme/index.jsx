@@ -485,6 +485,8 @@ export default function Homme() {
                     taille: p.tailles?.[0] || "",
                     couleur: p.couleurs?.[0] || "",
                     stockDisponible: p.stock || 10,
+                    tailles: p.tailles || [],
+                    couleurs: p.couleurs || [],
                   };
 
                   ajouterPanier(produitPanier);
