@@ -236,8 +236,8 @@ const AddToCartButton = styled.button`
   bottom: 10px;
   right: 10px;
 
-  width: 38px;
-  height: 38px;
+  width: 23px;
+  height: 23px;
   border-radius: 50%;
 
   border: none;
