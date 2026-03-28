@@ -1,7 +1,13 @@
 import { useState, useEffect, useRef, useContext } from "react";
 import { Link } from "react-router-dom";
 import styled, { keyframes } from "styled-components";
-import { FiArrowUp, FiSend, FiFacebook, FiInstagram, FiChevronDown } from "react-icons/fi";
+import {
+  FiArrowUp,
+  FiSend,
+  FiFacebook,
+  FiInstagram,
+  FiChevronDown,
+} from "react-icons/fi";
 import { ThemeContext } from "../../Utils/Context";
 import { useTranslation } from "react-i18next";
 
@@ -25,7 +31,9 @@ const FooterWrapper = styled.footer`
   flex-direction: column;
   gap: 2rem;
   position: relative;
-  transition: background 0.35s ease, color 0.35s ease;
+  transition:
+    background 0.35s ease,
+    color 0.35s ease;
 `;
 
 const NewsletterSection = styled.div`
@@ -57,7 +65,11 @@ const EmailInput = styled.input`
   background: ${({ $isdark }) => ($isdark ? "#111" : "#fff")};
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#000")};
   font-size: 16px;
-  &:focus { outline: none; border-color: #000; box-shadow: 0 0 6px rgba(0,0,0,0.3); }
+  &:focus {
+    outline: none;
+    border-color: #000;
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.3);
+  }
 `;
 
 const SubmitButton = styled.button`
@@ -73,9 +85,17 @@ const SubmitButton = styled.button`
   justify-content: center;
   font-size: 14px;
   transition: all 0.3s ease;
-  &:hover { background: #333; }
-  &:disabled { opacity: 0.6; cursor: not-allowed; }
-  svg { margin-left: 6px; font-size: 18px; }
+  &:hover {
+    background: #333;
+  }
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  svg {
+    margin-left: 6px;
+    font-size: 18px;
+  }
 `;
 
 const Spinner = styled.div`
@@ -85,7 +105,14 @@ const Spinner = styled.div`
   width: 16px;
   height: 16px;
   animation: spin 0.6s linear infinite;
-  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
 `;
 
 const ConfirmationText = styled.span`
@@ -99,7 +126,8 @@ const Section = styled.div`
   flex-direction: column;
   gap: 0.5rem;
   opacity: 0;
-  animation: ${({ $visible }) => ($visible ? fadeIn : "none")} 0.6s ease forwards;
+  animation: ${({ $visible }) => ($visible ? fadeIn : "none")} 0.6s ease
+    forwards;
 `;
 
 const TitleButton = styled.button`
@@ -132,8 +160,12 @@ const FooterLink = styled(Link)`
   display: flex;
   align-items: center;
   gap: 6px;
-  transition: color 0.25s ease, transform 0.25s ease;
-  &:hover { transform: translateX(4px); }
+  transition:
+    color 0.25s ease,
+    transform 0.25s ease;
+  &:hover {
+    transform: translateX(4px);
+  }
 `;
 
 const IconWrapper = styled.a`
@@ -177,8 +209,10 @@ const ScrollTopButton = styled.button`
   display: ${({ $visible }) => ($visible ? "flex" : "none")};
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-  &:hover { background: #333; }
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  &:hover {
+    background: #333;
+  }
 `;
 
 /* ---------------- Cookie Banner carré avec rebond ---------------- */
@@ -202,10 +236,11 @@ const CookieBanner = styled.div`
   gap: 1rem;
   align-items: center;
   text-align: center;
-  box-shadow: 0 -4px 15px rgba(0,0,0,0.25);
+  box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.25);
   opacity: ${({ $visible }) => ($visible ? 1 : 0)};
   z-index: 20000;
-  animation: ${({ $visible }) => ($visible ? bounceUp : "none")} 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  animation: ${({ $visible }) => ($visible ? bounceUp : "none")} 0.6s
+    cubic-bezier(0.25, 1, 0.5, 1) forwards;
 `;
 
 const CookieTextMinimal = styled.p`
@@ -232,13 +267,17 @@ const CookieButtonMinimal = styled.button`
 const AcceptCookieMinimal = styled(CookieButtonMinimal)`
   background: #fff;
   color: #000;
-  &:hover { background: #f0f0f0; }
+  &:hover {
+    background: #f0f0f0;
+  }
 `;
 
 const RejectCookieMinimal = styled(CookieButtonMinimal)`
   background: #000;
   color: #fff;
-  &:hover { background: #111; }
+  &:hover {
+    background: #111;
+  }
 `;
 /* ---------------- Footer Component ---------------- */
 export default function Footer() {
@@ -269,7 +308,9 @@ export default function Footer() {
         if (!data.marketingConsent) setCookieVisible(true);
         else {
           const newsletterSeen = localStorage.getItem("seenNewsletterModal");
-          const newsletterSubscribed = localStorage.getItem("newsletterSubscribed");
+          const newsletterSubscribed = localStorage.getItem(
+            "newsletterSubscribed",
+          );
           if (!newsletterSeen && !newsletterSubscribed)
             setTimeout(() => setNewsletterVisible(true), 1500);
         }
@@ -286,17 +327,20 @@ export default function Footer() {
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting)
-            setVisible((prev) => [...new Set([...prev, entry.target.dataset.index])]);
+            setVisible((prev) => [
+              ...new Set([...prev, entry.target.dataset.index]),
+            ]);
         });
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
     sectionRefs.current.forEach((el) => el && observer.observe(el));
     return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
-    const handleScroll = () => setScrollVisible(window.scrollY > window.innerHeight);
+    const handleScroll = () =>
+      setScrollVisible(window.scrollY > window.innerHeight);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -307,7 +351,10 @@ export default function Footer() {
     setLoading(true);
     setSuccess(false);
 
-    const consentRes = await fetch(`${API}/api/cookies/consent`, { method: "GET", credentials: "include" });
+    const consentRes = await fetch(`${API}/api/cookies/consent`, {
+      method: "GET",
+      credentials: "include",
+    });
     const consentData = await consentRes.json();
     if (!consentData.marketingConsent) {
       alert("Vous devez accepter de recevoir des emails marketing.");
@@ -353,7 +400,9 @@ export default function Footer() {
       setCookieVisible(false);
       if (accepted) {
         const newsletterSeen = localStorage.getItem("seenNewsletterModal");
-        const newsletterSubscribed = localStorage.getItem("newsletterSubscribed");
+        const newsletterSubscribed = localStorage.getItem(
+          "newsletterSubscribed",
+        );
         if (!newsletterSeen && !newsletterSubscribed)
           setTimeout(() => setNewsletterVisible(true), 500);
       }
@@ -363,9 +412,37 @@ export default function Footer() {
   };
 
   const sections = [
-    { title: t("about"), links: [{ text: t("ourStory"), to: "/apropo" }, { text: t("faq"), to: "/faq" }, { text: t("contact"), to: "/contact" }] },
-    { title: t("services"), links: [{ text: t("returnPolicy"), to: "/politiqueretour" }, { text: t("shipping"), to: "/livraison" }, { text: t("terms"), to: "/conditionUtilisation" }] },
-    { title: t("social"), links: [{ text: "Facebook", href: "https://www.facebook.com", icon: <FiFacebook /> }, { text: "Instagram", href: "https://www.instagram.com", icon: <FiInstagram /> }] },
+    {
+      title: t("about"),
+      links: [
+        { text: t("ourStory"), to: "/apropo" },
+        { text: t("faq"), to: "/faq" },
+        { text: t("contact"), to: "/contact" },
+      ],
+    },
+    {
+      title: t("services"),
+      links: [
+        { text: t("returnPolicy"), to: "/politiqueretour" },
+        { text: t("shipping"), to: "/livraison" },
+        { text: t("terms"), to: "/conditionUtilisation" },
+      ],
+    },
+    {
+      title: t("social"),
+      links: [
+        {
+          text: "Facebook",
+          href: "https://www.facebook.com",
+          icon: <FiFacebook />,
+        },
+        {
+          text: "Instagram",
+          href: "https://www.instagram.com",
+          icon: <FiInstagram />,
+        },
+      ],
+    },
   ];
 
   return (
@@ -373,37 +450,87 @@ export default function Footer() {
       <NewsletterSection id="newsletterSection">
         <NewsletterTitle>Inscrivez-vous à notre newsletter</NewsletterTitle>
         <NewsletterForm onSubmit={handleNewsletterSubmit}>
-          <EmailInput type="email" placeholder="Votre email" value={email} onChange={(e) => setEmail(e.target.value)} $isdark={$isdark} />
-          <SubmitButton type="submit" disabled={loading}>{loading ? <Spinner /> : <>Envoyer <FiSend /></>}</SubmitButton>
+          <EmailInput
+            type="email"
+            placeholder="Votre email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            $isdark={$isdark}
+          />
+          <SubmitButton type="submit" disabled={loading}>
+            {loading ? (
+              <Spinner />
+            ) : (
+              <>
+                Envoyer <FiSend />
+              </>
+            )}
+          </SubmitButton>
           {success && <ConfirmationText>✅ Email envoyé !</ConfirmationText>}
         </NewsletterForm>
       </NewsletterSection>
 
       {sections.map((sec, i) => (
-        <Section key={i} $visible={visible.includes(i.toString())} ref={(el) => (sectionRefs.current[i] = el)} data-index={i}>
+        <Section
+          key={i}
+          $visible={visible.includes(i.toString())}
+          ref={(el) => (sectionRefs.current[i] = el)}
+          data-index={i}
+        >
           <TitleButton onClick={() => setOpenIndex(openIndex === i ? null : i)}>
-            {sec.title} <FiChevronDown style={{ transform: openIndex === i ? "rotate(180deg)" : "rotate(0)" }} />
+            {sec.title}{" "}
+            <FiChevronDown
+              style={{
+                transform: openIndex === i ? "rotate(180deg)" : "rotate(0)",
+              }}
+            />
           </TitleButton>
           <LinksContainer $open={openIndex === i}>
-            {sec.links.map((link, j) => link.to ? <FooterLink key={j} to={link.to} $isdark={$isdark}>{link.text}</FooterLink> : <IconWrapper key={j} href={link.href} $isdark={$isdark}>{link.icon}</IconWrapper>)}
+            {sec.links.map((link, j) =>
+              link.to ? (
+                <FooterLink key={j} to={link.to} $isdark={$isdark}>
+                  {link.text}
+                </FooterLink>
+              ) : (
+                <IconWrapper key={j} href={link.href} $isdark={$isdark}>
+                  {link.icon}
+                </IconWrapper>
+              ),
+            )}
           </LinksContainer>
         </Section>
       ))}
 
       <FooterExtras $isdark={$isdark}>
-        <BottomText $isdark={$isdark}>&copy; {new Date().getFullYear()} NUMA. {t("fashion")}</BottomText>
+        <BottomText $isdark={$isdark}>
+          &copy; {new Date().getFullYear()} NUMA. {t("fashion")}
+        </BottomText>
       </FooterExtras>
 
-      <ScrollTopButton $visible={scrollVisible} onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}><FiArrowUp /></ScrollTopButton>
+      <ScrollTopButton
+        $visible={scrollVisible}
+        onClick={() => {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          document.documentElement.scrollTo({ top: 0, behavior: "smooth" });
+          document.body.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+      >
+        <FiArrowUp />
+      </ScrollTopButton>
 
       {/* Cookie Banner carré noir/blanc */}
       <CookieBanner $visible={cookieVisible}>
         <CookieTextMinimal>
-          Nous utilisons des cookies pour améliorer votre expérience et envoyer des emails marketing.
+          Nous utilisons des cookies pour améliorer votre expérience et envoyer
+          des emails marketing.
         </CookieTextMinimal>
         <CookieButtonsColumn>
-          <AcceptCookieMinimal onClick={() => handleCookieConsent(true)}>Accepter</AcceptCookieMinimal>
-          <RejectCookieMinimal onClick={() => handleCookieConsent(false)}>Refuser</RejectCookieMinimal>
+          <AcceptCookieMinimal onClick={() => handleCookieConsent(true)}>
+            Accepter
+          </AcceptCookieMinimal>
+          <RejectCookieMinimal onClick={() => handleCookieConsent(false)}>
+            Refuser
+          </RejectCookieMinimal>
         </CookieButtonsColumn>
       </CookieBanner>
     </FooterWrapper>
