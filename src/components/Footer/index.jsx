@@ -196,22 +196,30 @@ const BottomText = styled.div`
 
 const ScrollTopButton = styled.button`
   position: fixed;
-  bottom: 30px;
-  right: 30px;
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  right: 20px;
   background: #000;
   color: white;
   border: none;
-  border-radius: 0;
-  width: 50px;
-  height: 50px;
+  border-radius: 50%;
+  width: 52px;
+  height: 52px;
   cursor: pointer;
   font-size: 24px;
   display: ${({ $visible }) => ($visible ? "flex" : "none")};
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 30000;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+
   &:hover {
     background: #333;
+  }
+
+  &:active {
+    transform: scale(0.96);
   }
 `;
 
