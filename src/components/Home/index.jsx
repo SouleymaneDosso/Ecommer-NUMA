@@ -264,7 +264,7 @@ const FeatureOverlay = styled.div`
   flex-direction: column;
   justify-content: flex-end;
   padding: 38px;
-  color: white;
+  color: hsl(0, 0%, 53%);
 `;
 
 const FeatureText = styled.p`
@@ -276,7 +276,7 @@ const FeatureText = styled.p`
 `;
 
 const FeatureLink = styled(Link)`
-  color: white;
+  color: hsl(0, 0%, 53%);
   text-decoration: none;
   font-weight: bold;
   font-size: 1.05rem;
@@ -393,7 +393,7 @@ const DotWrapper = styled.div`
 
 const DotFill = styled.div`
   height: 100%;
-  background: white;
+  background: black;
   width: ${(p) => p.$width}%;
   transition: width 0.1s linear;
 `;
