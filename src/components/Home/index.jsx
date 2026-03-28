@@ -1,14 +1,7 @@
 import { useState, useEffect, useMemo, useContext, useRef } from "react";
 import styled, { keyframes } from "styled-components";
 import { Link } from "react-router-dom";
-import {
-  FaArrowRight,
-  FaTruck,
-  FaShieldAlt,
-  FaUndo,
-  FaChevronLeft,
-  FaChevronRight,
-} from "react-icons/fa";
+import { FaArrowRight, FaTruck, FaShieldAlt, FaUndo } from "react-icons/fa";
 import { ThemeContext } from "../../Utils/Context";
 
 // ===============================
@@ -54,11 +47,6 @@ const fadeIn = keyframes`
 const slowZoom = keyframes`
   from { transform: scale(1); }
   to { transform: scale(1.08); }
-`;
-
-const miniProgress = keyframes`
-  from { width: 0%; }
-  to { width: 100%; }
 `;
 
 const floatUp = keyframes`
@@ -259,37 +247,19 @@ const FeatureGrid = styled.div`
 
 const FeatureCard = styled.div`
   position: relative;
-  height: 650px;
   overflow: hidden;
   cursor: pointer;
-  border-radius: 28px;
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.12);
-
-  &:hover img {
-    transform: scale(1.06);
-  }
-
-  @media (max-width: 768px) {
-    height: 460px;
-  }
 `;
 
 const FeatureImg = styled.img`
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  transition: transform 0.9s ease;
+  object-fit: contain;
 `;
 
 const FeatureOverlay = styled.div`
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to top,
-    rgba(0, 0, 0, 0.72),
-    rgba(0, 0, 0, 0.25),
-    transparent
-  );
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -324,7 +294,7 @@ const FeatureLink = styled(Link)`
 `;
 
 // ===============================
-// MINI CAROUSEL (5 IMAGES)
+// MINI CAROUSEL AVEC DOT FONCTIONNEL
 // ===============================
 const MiniCarouselSection = styled.div`
   width: min(1240px, 92%);
@@ -333,6 +303,7 @@ const MiniCarouselSection = styled.div`
 
 const MiniCarouselWrapper = styled.div`
   width: 100%;
+  position: relative;
 `;
 
 const MiniCarousel = styled.div`
@@ -340,12 +311,10 @@ const MiniCarousel = styled.div`
   width: 100%;
   height: 620px;
   overflow: hidden;
-  border-radius: 30px;
   box-shadow: 0 18px 60px rgba(0, 0, 0, 0.18);
 
   @media (max-width: 768px) {
     height: 420px;
-    border-radius: 22px;
   }
 `;
 
@@ -353,38 +322,26 @@ const MiniSlide = styled.div`
   position: absolute;
   inset: 0;
   opacity: ${(p) => (p.$active ? 1 : 0)};
-  transform: ${(p) => (p.$active ? "scale(1)" : "scale(1.04)")};
-  transition: opacity 0.8s ease, transform 0.8s ease;
+  transition: opacity 0.8s ease;
   pointer-events: ${(p) => (p.$active ? "auto" : "none")};
 `;
 
 const MiniSlideImg = styled.img`
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 `;
 
 const MiniOverlay = styled.div`
   position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    to top,
-    rgba(0, 0, 0, 0.72),
-    rgba(0, 0, 0, 0.18),
-    transparent
-  );
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0,0,0,0.25);
+  padding: 20px;
   display: flex;
-  align-items: flex-end;
   justify-content: space-between;
-  padding: 34px;
-  gap: 20px;
-
-  @media (max-width: 768px) {
-    padding: 22px;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: flex-end;
-  }
+  align-items: center;
 `;
 
 const MiniInfo = styled.div`
@@ -414,12 +371,10 @@ const MiniInfo = styled.div`
 
 const MiniCTA = styled(Link)`
   padding: 14px 24px;
-  border-radius: 999px;
   background: white;
   color: black;
-  text-decoration: none;
   font-weight: 700;
-  white-space: nowrap;
+  text-decoration: none;
   transition: all 0.3s ease;
 
   &:hover {
@@ -427,119 +382,24 @@ const MiniCTA = styled(Link)`
   }
 `;
 
-const ArrowBtn = styled.button`
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 3;
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  border: none;
-  cursor: pointer;
-  background: rgba(255, 255, 255, 0.16);
-  color: white;
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.26);
-    transform: translateY(-50%) scale(1.06);
-  }
-
-  &:first-of-type {
-    left: 18px;
-  }
-
-  &:last-of-type {
-    right: 18px;
-  }
-
-  @media (max-width: 768px) {
-    width: 42px;
-    height: 42px;
-  }
-`;
-
-const ProgressContainer = styled.div`
-  width: 100%;
+const DotWrapper = styled.div`
+  width: 60px;
   height: 6px;
-  background: rgba(255, 255, 255, 0.12);
-  margin-top: 16px;
-  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  margin: 16px auto 0;
   overflow: hidden;
 `;
 
-const ProgressBar = styled.div`
+const DotFill = styled.div`
   height: 100%;
-  background: ${({ $isDark }) => ($isDark ? "#fff" : "#111")};
-  border-radius: 999px;
-  animation: ${miniProgress} 3.8s linear forwards;
-`;
-
-const Dots = styled.div`
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 18px;
-`;
-
-const Dot = styled.button`
-  width: ${(p) => (p.$active ? "30px" : "10px")};
-  height: 10px;
-  border-radius: 999px;
-  border: none;
-  cursor: pointer;
-  background: ${({ $active, $isDark }) =>
-    $active ? ($isDark ? "#fff" : "#111") : "rgba(150,150,150,0.35)"};
-  transition: all 0.3s ease;
-`;
-
-const ThumbsRow = styled.div`
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 14px;
-  margin-top: 22px;
-
-  @media (max-width: 768px) {
-    grid-template-columns: repeat(5, 90px);
-    overflow-x: auto;
-    padding-bottom: 8px;
-  }
-`;
-
-const Thumb = styled.button`
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  overflow: hidden;
-  border-radius: 16px;
-  position: relative;
-  opacity: ${(p) => (p.$active ? 1 : 0.7)};
-  transform: ${(p) => (p.$active ? "scale(1)" : "scale(0.98)")};
-  transition: all 0.3s ease;
-  box-shadow: ${(p) =>
-    p.$active ? "0 10px 30px rgba(0,0,0,0.15)" : "none"};
-
-  &:hover {
-    opacity: 1;
-    transform: scale(1);
-  }
-
-  img {
-    width: 100%;
-    height: 95px;
-    object-fit: cover;
-    display: block;
-  }
-
-  @media (max-width: 768px) {
-    min-width: 90px;
-  }
+  background: white;
+  width: ${(p) => p.$width}%;
+  transition: width 0.1s linear;
 `;
 
 // ===============================
-// BENEFITS SECTION
+// BENEFITS
 // ===============================
 const BenefitsSection = styled.div`
   width: min(1240px, 92%);
@@ -558,7 +418,6 @@ const BenefitCard = styled.div`
   flex-direction: column;
   align-items: flex-start;
   padding: 30px;
-  border-radius: 26px;
   gap: 16px;
   background: ${({ $isDark }) =>
     $isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.8)"};
@@ -568,16 +427,11 @@ const BenefitCard = styled.div`
   backdrop-filter: blur(14px);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.06);
   transition: all 0.35s ease;
-
-  &:hover {
-    transform: translateY(-8px);
-  }
 `;
 
 const BenefitIcon = styled.div`
   width: 70px;
   height: 70px;
-  border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -614,8 +468,11 @@ export default function HomePremium() {
   const [products, setProducts] = useState([]);
   const [slide, setSlide] = useState(0);
   const [miniSlide, setMiniSlide] = useState(0);
+  const [progress, setProgress] = useState(0);
   const { theme } = useContext(ThemeContext);
-  const $isDark = theme === "dark";
+  const $isDark = theme === "light";
+  const intervalRef = useRef(null);
+  const duration = 3800;
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -630,57 +487,43 @@ export default function HomePremium() {
     fetchProducts();
   }, []);
 
-  const heroProducts = useMemo(
-    () => products.filter((p) => p.hero),
-    [products]
-  );
-
+  const heroProducts = useMemo(() => products.filter((p) => p.hero), [products]);
   const carouselProducts = useMemo(() => products.slice(0, 5), [products]);
 
   useEffect(() => {
     if (!heroProducts.length) return;
-    const interval = setInterval(
-      () => setSlide((s) => (s + 1) % heroProducts.length),
-      4000
-    );
+    const interval = setInterval(() => setSlide((s) => (s + 1) % heroProducts.length), 4000);
     return () => clearInterval(interval);
   }, [heroProducts]);
 
+  // MINI CAROUSEL DOT PROGRESS
   useEffect(() => {
     if (carouselProducts.length <= 1) return;
+    const step = 100 / (duration / 50);
+    intervalRef.current = setInterval(() => {
+      setProgress((prev) => {
+        if (prev + step >= 100) {
+          setMiniSlide((s) => (s + 1) % carouselProducts.length);
+          return 0;
+        }
+        return prev + step;
+      });
+    }, 50);
 
-    const interval = setInterval(() => {
-      setMiniSlide((prev) => (prev + 1) % carouselProducts.length);
-    }, 3800);
-
-    return () => clearInterval(interval);
-  }, [carouselProducts]);
+    return () => clearInterval(intervalRef.current);
+  }, [carouselProducts.length]);
 
   const getImg = (p) =>
     p.images?.[0]?.url?.startsWith("http")
       ? p.images[0].url
       : `${import.meta.env.VITE_API_URL}${p.images?.[0]?.url || ""}`;
 
-  const prevMini = () => {
-    setMiniSlide((prev) =>
-      prev === 0 ? carouselProducts.length - 1 : prev - 1
-    );
-  };
-
-  const nextMini = () => {
-    setMiniSlide((prev) => (prev + 1) % carouselProducts.length);
-  };
-
   return (
     <Wrapper $isDark={$isDark}>
       {/* HERO */}
       <Hero>
         {heroProducts.map((p, i) => (
-          <Slide
-            key={p._id}
-            $active={i === slide}
-            style={{ backgroundImage: `url(${getImg(p)})` }}
-          />
+          <Slide key={p._id} $active={i === slide} style={{ backgroundImage: `url(${getImg(p)})` }} />
         ))}
         <Overlay />
         <HeroContent>
@@ -688,79 +531,52 @@ export default function HomePremium() {
             <HeroBadge>Nouvelle saison • Numa</HeroBadge>
             <h1>Une mode pensée pour séduire au premier regard.</h1>
             <p>
-              Découvrez une sélection raffinée de pièces élégantes, modernes
-              et conçues pour sublimer votre présence avec caractère.
+              Découvrez une sélection raffinée de pièces élégantes, modernes et conçues pour sublimer votre présence.
             </p>
             <HeroActions>
               <HeroBtn to="/collections">
                 Explorer la collection <FaArrowRight />
               </HeroBtn>
-              <HeroGhostBtn to="/nouveautes">Voir les nouveautés</HeroGhostBtn>
+              <HeroGhostBtn to="/new">Voir les nouveautés</HeroGhostBtn>
             </HeroActions>
           </HeroText>
         </HeroContent>
       </Hero>
 
-      {/* HOMME / FEMME */}
+      {/* FEATURE CARDS */}
       <RevealOnScroll>
         <SectionHeader>
           <span>Univers</span>
           <h2>Des silhouettes qui imposent le style</h2>
-          <p>
-            Deux univers, une seule signature : l’élégance, la présence et le
-            détail qui fait toute la différence.
-          </p>
+          <p>Deux univers, une seule signature : l’élégance, la présence et le détail qui fait la différence.</p>
         </SectionHeader>
 
         <FeatureGrid>
-          {products
-            .filter((p) => p.genre?.toLowerCase() === "homme")
-            .slice(0, 1)
-            .map((p) => (
-              <FeatureCard key={p._id}>
-                <FeatureImg src={getImg(p)} alt={p.title} />
-                <FeatureOverlay>
-                  <FeatureText>
-                    Pour l’homme qui veut une allure forte, nette et assumée.
-                  </FeatureText>
-                  <FeatureLink to="/homme">
-                    Découvrir l’univers homme <FaArrowRight />
-                  </FeatureLink>
-                </FeatureOverlay>
-              </FeatureCard>
-            ))}
+          {products.filter((p) => p.genre?.toLowerCase() === "homme").slice(0, 1).map((p) => (
+            <FeatureCard key={p._id}>
+              <FeatureImg src={getImg(p)} alt={p.title} />
+              <FeatureOverlay>
+                <FeatureText>Pour l’homme qui veut une allure forte et assumée.</FeatureText>
+                <FeatureLink to="/homme">Découvrir l’univers homme <FaArrowRight /></FeatureLink>
+              </FeatureOverlay>
+            </FeatureCard>
+          ))}
 
-          {products
-            .filter((p) => p.genre?.toLowerCase() === "femme")
-            .slice(0, 1)
-            .map((p) => (
-              <FeatureCard key={p._id}>
-                <FeatureImg src={getImg(p)} alt={p.title} />
-                <FeatureOverlay>
-                  <FeatureText>
-                    Une élégance féminine pensée pour captiver avec finesse.
-                  </FeatureText>
-                  <FeatureLink to="/femme">
-                    Découvrir l’univers femme <FaArrowRight />
-                  </FeatureLink>
-                </FeatureOverlay>
-              </FeatureCard>
-            ))}
+          {products.filter((p) => p.genre?.toLowerCase() === "femme").slice(0, 1).map((p) => (
+            <FeatureCard key={p._id}>
+              <FeatureImg src={getImg(p)} alt={p.title} />
+              <FeatureOverlay>
+                <FeatureText>Pour la femme qui veut captiver avec confiance et élégance.</FeatureText>
+                <FeatureLink to="/femme">Découvrir l’univers femme <FaArrowRight /></FeatureLink>
+              </FeatureOverlay>
+            </FeatureCard>
+          ))}
         </FeatureGrid>
       </RevealOnScroll>
 
       {/* MINI CAROUSEL */}
       <RevealOnScroll>
         <MiniCarouselSection>
-          <SectionHeader>
-            <span>Sélection</span>
-            <h2>Nos pièces les plus désirées</h2>
-            <p>
-              Une sélection visuelle forte, conçue pour attirer, convaincre et
-              donner envie de cliquer.
-            </p>
-          </SectionHeader>
-
           <MiniCarouselWrapper>
             <MiniCarousel>
               {carouselProducts.map((p, i) => (
@@ -769,51 +585,16 @@ export default function HomePremium() {
                   <MiniOverlay>
                     <MiniInfo>
                       <h3>{p.title}</h3>
-                      <p>{p.price} FCFA</p>
+                      <p>{p.subtitle || ""}</p>
                     </MiniInfo>
-                    <MiniCTA to={`/product/${p._id}`}>Voir le produit</MiniCTA>
+                    <MiniCTA to={`/produit/${p._id}`}>Voir le produit</MiniCTA>
                   </MiniOverlay>
                 </MiniSlide>
               ))}
-
-              {carouselProducts.length > 1 && (
-                <>
-                  <ArrowBtn onClick={prevMini}>
-                    <FaChevronLeft />
-                  </ArrowBtn>
-                  <ArrowBtn onClick={nextMini}>
-                    <FaChevronRight />
-                  </ArrowBtn>
-                </>
-              )}
             </MiniCarousel>
-
-            <ProgressContainer>
-              <ProgressBar key={miniSlide} $isDark={$isDark} />
-            </ProgressContainer>
-
-            <Dots>
-              {carouselProducts.map((_, i) => (
-                <Dot
-                  key={i}
-                  $active={i === miniSlide}
-                  $isDark={$isDark}
-                  onClick={() => setMiniSlide(i)}
-                />
-              ))}
-            </Dots>
-
-            <ThumbsRow>
-              {carouselProducts.map((p, i) => (
-                <Thumb
-                  key={p._id}
-                  $active={i === miniSlide}
-                  onClick={() => setMiniSlide(i)}
-                >
-                  <img src={getImg(p)} alt={p.title} />
-                </Thumb>
-              ))}
-            </ThumbsRow>
+            <DotWrapper>
+              <DotFill $width={progress} />
+            </DotWrapper>
           </MiniCarouselWrapper>
         </MiniCarouselSection>
       </RevealOnScroll>
@@ -821,54 +602,31 @@ export default function HomePremium() {
       {/* BENEFITS */}
       <RevealOnScroll>
         <SectionHeader>
-          <span>Expérience</span>
-          <h2>Un service à la hauteur du style</h2>
-          <p>
-            Parce qu’une belle marque ne se limite pas au vêtement : elle se
-            ressent dans chaque détail de l’expérience.
-          </p>
+          <span>Avantages</span>
+          <h2>Pourquoi choisir Numa ?</h2>
+          <Description>Chaque pièce est pensée pour allier style, confort et durabilité. La signature Numa, c’est l’assurance d’un vêtement qui vous accompagne au quotidien.</Description>
         </SectionHeader>
 
         <BenefitsSection>
           <BenefitCard $isDark={$isDark}>
-            <BenefitIcon style={{ background: "#2563eb" }}>
-              <FaTruck />
-            </BenefitIcon>
-            <BenefitTitle>Livraison gratuite</BenefitTitle>
-            <BenefitText>
-              Livraison offerte sur vos commandes pour une expérience plus
-              fluide et plus agréable.
-            </BenefitText>
+            <BenefitIcon><FaTruck /></BenefitIcon>
+            <BenefitTitle>Livraison rapide</BenefitTitle>
+            <BenefitText>Recevez vos articles en un temps record, soigneusement emballés pour vous.</BenefitText>
           </BenefitCard>
 
           <BenefitCard $isDark={$isDark}>
-            <BenefitIcon style={{ background: "#16a34a" }}>
-              <FaShieldAlt />
-            </BenefitIcon>
+            <BenefitIcon><FaShieldAlt /></BenefitIcon>
             <BenefitTitle>Paiement sécurisé</BenefitTitle>
-            <BenefitText>
-              Transactions protégées et accompagnement direct via WhatsApp :
-              0700247693.
-            </BenefitText>
+            <BenefitText>Vos transactions sont cryptées et protégées pour une tranquillité totale.</BenefitText>
           </BenefitCard>
 
           <BenefitCard $isDark={$isDark}>
-            <BenefitIcon style={{ background: "#ea580c" }}>
-              <FaUndo />
-            </BenefitIcon>
+            <BenefitIcon><FaUndo /></BenefitIcon>
             <BenefitTitle>Retour facile</BenefitTitle>
-            <BenefitText>
-              Vous changez d’avis ? Le retour reste simple et possible sous 7
-              jours.
-            </BenefitText>
+            <BenefitText>Si un produit ne vous convient pas, retournez-le simplement et rapidement.</BenefitText>
           </BenefitCard>
         </BenefitsSection>
       </RevealOnScroll>
-
-      <Description>
-        NUMA propose une mode élégante, expressive et soignée, pensée pour les
-        personnes qui veulent plus qu’un vêtement : une vraie présence.
-      </Description>
     </Wrapper>
   );
 }
