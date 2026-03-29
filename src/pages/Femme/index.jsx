@@ -242,9 +242,8 @@ const AddToCartButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  background: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
-  color: ${({ $isdark }) => ($isdark ? "#111" : "#fff")};
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  background: none;
+  color: ${({ $isdark }) => ($isdark ? "white" : "#111")};
   transition: all 0.25s ease;
 
   &:hover {
