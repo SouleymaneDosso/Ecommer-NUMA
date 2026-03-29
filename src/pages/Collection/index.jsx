@@ -1,5 +1,5 @@
 // src/pages/Collection.jsx
-import { useState, useEffect, Fragment, useRef, useMemo } from "react";
+import { useState, useEffect, Fragment, useRef, useMemo, useCallback } from "react";
 import styled from "styled-components";
 import { FiFilter, FiChevronDown } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
@@ -169,7 +169,7 @@ const SortIcon = styled(FiChevronDown)`
 const Grid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 1.4rem;
+
 
   @media (min-width: 768px) {
     grid-template-columns: repeat(3, 1fr);
@@ -180,7 +180,7 @@ const Grid = styled.div`
   }
 
   @media (max-width: 520px) {
-    gap: 1rem;
+    gap: 0.2rem;
   }
 `;
 
@@ -220,6 +220,7 @@ const BannerImage = styled.img`
   height: 500px;
   object-fit: cover;
   display: block;
+  transition: transform 0.5s ease;
 
   @media (max-width: 850px) {
     height: 340px;
@@ -435,19 +436,17 @@ export default function Collection() {
   const bannerRef = useRef(null);
   const carouselRefs = useRef({});
 
+  // Fetch products
   useEffect(() => {
     async function fetchProducts() {
       try {
         const res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits`);
         const data = await res.json();
-
         setProducts(data);
         setLoading(false);
 
         const indexes = {};
-        data.forEach((p) => {
-          indexes[p._id] = 0;
-        });
+        data.forEach((p) => (indexes[p._id] = 0));
         setImageIndexes(indexes);
       } catch (error) {
         console.error("Erreur chargement produits :", error);
@@ -458,22 +457,34 @@ export default function Collection() {
     fetchProducts();
   }, []);
 
-  const handleScroll = () => {
+  // Banner automatic scroll
+  useEffect(() => {
     if (!bannerRef.current) return;
-    const scrollLeft = bannerRef.current.scrollLeft;
-    const width = bannerRef.current.clientWidth;
-    const index = Math.round(scrollLeft / width);
-    setActiveSlide(index);
-  };
+    const interval = setInterval(() => {
+      setActiveSlide((prev) => {
+        const next = prev + 1 >= (bannerRef.current?.children.length || 1) ? 0 : prev + 1;
+        bannerRef.current.scrollTo({
+          left: next * bannerRef.current.clientWidth,
+          behavior: "smooth",
+        });
+        return next;
+      });
+    }, 5000);
 
-  const handleProductScroll = (id) => {
+    return () => clearInterval(interval);
+  }, [bannerRef]);
+
+  const handleProductScroll = useCallback((id) => {
     const el = carouselRefs.current[id];
     if (!el) return;
     const index = Math.round(el.scrollLeft / el.clientWidth);
     setImageIndexes((prev) => ({ ...prev, [id]: index }));
-  };
+  }, []);
 
-  const genres = ["Tous", ...new Set(products.map((p) => p.genre).filter(Boolean))];
+  const genres = useMemo(
+    () => ["Tous", ...new Set(products.map((p) => p.genre).filter(Boolean))],
+    [products]
+  );
 
   const filteredProducts = useMemo(() => {
     let result =
@@ -481,20 +492,19 @@ export default function Collection() {
         ? [...products]
         : products.filter((p) => p.genre === genreFilter);
 
-    if (sortBy === "price-asc") {
-      result.sort((a, b) => Number(a.price) - Number(b.price));
-    }
-
-    if (sortBy === "price-desc") {
-      result.sort((a, b) => Number(b.price) - Number(a.price));
-    }
-
-    if (sortBy === "title-asc") {
-      result.sort((a, b) => a.title.localeCompare(b.title));
-    }
-
-    if (sortBy === "title-desc") {
-      result.sort((a, b) => b.title.localeCompare(a.title));
+    switch (sortBy) {
+      case "price-asc":
+        result.sort((a, b) => Number(a.price) - Number(b.price));
+        break;
+      case "price-desc":
+        result.sort((a, b) => Number(b.price) - Number(a.price));
+        break;
+      case "title-asc":
+        result.sort((a, b) => a.title.localeCompare(b.title));
+        break;
+      case "title-desc":
+        result.sort((a, b) => b.title.localeCompare(a.title));
+        break;
     }
 
     return result;
@@ -508,19 +518,17 @@ export default function Collection() {
     return "Tendance";
   };
 
-  if (loading) {
+  if (loading)
     return (
       <LoaderWrapper>
         <Loader />
       </LoaderWrapper>
     );
-  }
 
   return (
     <PageWrapper>
       <Sidebar>
         <SidebarTitle>Catégories</SidebarTitle>
-
         {genres.map((g) => (
           <FilterButton
             key={g}
@@ -536,9 +544,7 @@ export default function Collection() {
         <TopBar>
           <TitleBlock>
             <CollectionTitle>Collection</CollectionTitle>
-            <CollectionSub>
-              Des pièces fortes pour imposer ton style.
-            </CollectionSub>
+            <CollectionSub>Des pièces fortes pour imposer ton style.</CollectionSub>
           </TitleBlock>
 
           <TopRight>
@@ -566,7 +572,7 @@ export default function Collection() {
                 {/* BANNER */}
                 {index === 2 && bannerImages.length > 0 && (
                   <BannerCard>
-                    <BannerWrapper ref={bannerRef} onScroll={handleScroll}>
+                    <BannerWrapper ref={bannerRef}>
                       {bannerImages.map((img, i) => (
                         <BannerSlide key={i}>
                           <BannerImage src={img.url} alt={`Banner ${i + 1}`} />
@@ -575,14 +581,12 @@ export default function Collection() {
                             <BannerLabel>Nouvelle Saison</BannerLabel>
                             <BannerTitle>Like a king, dress to impress</BannerTitle>
                             <BannerDesc>
-                              Une collection pensée pour un style puissant,
-                              propre et remarquable.
+                              Une collection pensée pour un style puissant, propre et remarquable.
                             </BannerDesc>
                           </BannerText>
                         </BannerSlide>
                       ))}
                     </BannerWrapper>
-
                     <Dots>
                       {bannerImages.map((_, i) => (
                         <Dot key={i}>
