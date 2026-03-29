@@ -113,7 +113,7 @@ const Hero = styled.div`
 
   @media (max-width: 768px) {
     min-height: 620px;
-    height: 90vh;
+    height: 100vh;
   }
 `;
 
@@ -145,6 +145,7 @@ const HeroContent = styled.div`
   align-items: center;
   padding: 0 7%;
   z-index: 2;
+  margin-top: 600px;
 `;
 
 const HeroText = styled.div`
@@ -170,7 +171,7 @@ const HeroText = styled.div`
 
   @media (max-width: 768px) {
     h1 {
-      font-size: 2.3rem;
+      font-size: 1.6rem;
     }
 
     p {
@@ -191,14 +192,11 @@ const HeroBtn = styled(Link)`
   align-items: center;
   gap: 10px;
   padding: 15px 28px;
-  border-radius: 999px;
-  background: white;
-  color: black;
+  color: white;
   font-weight: 700;
   text-decoration: none;
   transition: all 0.3s ease;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
-
+  
   &:hover {
     transform: translateY(-3px) scale(1.02);
   }
@@ -691,7 +689,10 @@ export default function HomePremium() {
 
   const heroProducts = useMemo(() => products.filter((p) => p.hero), [products]);
   const carouselProducts = useMemo(() => products.slice(0, 5), [products]);
-  const bestSellers = useMemo(() => products.slice(0, 5), [products]);
+  const bestSellers = useMemo(
+  () => products.filter((p) => p.badge?.toLowerCase() === "new").slice(0, 5),
+  [products]
+);
 
   useEffect(() => {
     if (!heroProducts.length) return;

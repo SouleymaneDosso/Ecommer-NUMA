@@ -1,16 +1,22 @@
 import { useState, useRef, useEffect } from "react";
 import styled, { keyframes } from "styled-components";
+import {
+  FiAperture,
+  FiX,
+  FiChevronLeft,
+  FiChevronRight,
+} from "react-icons/fi";
 import { LoaderWrapper, Loader } from "../Utils/Rotate";
 
 // ---------- ANIMATIONS ----------
 const fadeSlide = keyframes`
   0% {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(20px) scale(0.98);
   }
   100% {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 `;
 
@@ -26,19 +32,17 @@ const flipSlide = keyframes`
 `;
 
 // ---------- STYLES ----------
-
 const Wrapper = styled.div`
   width: 100%;
-  max-width: 720px;
+  max-width: 760px;
   margin: 0 auto;
   position: relative;
-  font-family: 'Helvetica Neue', sans-serif;
+  font-family: "Helvetica Neue", sans-serif;
   color: #000;
 `;
 
-// Wrapper images vertical
 const ImagesWrapper = styled.div`
-  height: 85vh;
+  height: 88vh;
   overflow-y: scroll;
   scroll-snap-type: y mandatory;
   scrollbar-width: none;
@@ -48,9 +52,8 @@ const ImagesWrapper = styled.div`
   }
 `;
 
-// Slide unique
 const ImageSlide = styled.div`
-  height: 85vh;
+  height: 88vh;
   scroll-snap-align: start;
   display: flex;
   align-items: center;
@@ -67,10 +70,10 @@ const ImageSlide = styled.div`
     letter-spacing: 2px;
     opacity: 0.15;
     writing-mode: vertical-rl;
+    z-index: 2;
   }
 `;
 
-// Image produit
 const ProductImage = styled.img`
   width: 100%;
   height: 100%;
@@ -84,7 +87,6 @@ const ProductImage = styled.img`
   }
 `;
 
-// Logo overlay (type Prada)
 const LogoOverlay = styled.div`
   position: absolute;
   top: 24px;
@@ -93,14 +95,44 @@ const LogoOverlay = styled.div`
   font-size: 1.2rem;
   opacity: 0.2;
   letter-spacing: 2px;
+  z-index: 2;
+`;
+
+// ---------- ICON ----------
+const ZoomButton = styled.button`
+  position: absolute;
+  bottom: 24px;
+  right: 24px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.72);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 3;
+  backdrop-filter: blur(8px);
+  transition: all 0.25s ease;
+  opacity: 0.95;
+
+  &:hover {
+    transform: translateY(-2px) scale(1.08);
+    background: rgba(0, 0, 0, 0.88);
+  }
+
+  svg {
+    font-size: 1.2rem;
+  }
 `;
 
 // ---------- FULLSCREEN ----------
-
 const FullscreenOverlay = styled.div`
   position: fixed;
   inset: 0;
-  background: #000;
+  background: rgba(0, 0, 0, 0.992);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -109,39 +141,92 @@ const FullscreenOverlay = styled.div`
 `;
 
 const FullscreenImage = styled.img`
-  max-width: 85vw;
-  max-height: 90vh;
+  width: auto;
+  max-width: 97vw;
+  max-height: 97vh;
   object-fit: contain;
   animation: ${fadeSlide} 0.4s ease;
-  filter: grayscale(0.02) contrast(1.1);
+  filter: grayscale(0.01) contrast(1.08);
+  user-select: none;
 `;
 
-// Flèches minimalistes
-const Arrow = styled.div`
+const CloseButton = styled.button`
   position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 2.5rem;
-  color: black;
+  top: 24px;
+  right: 24px;
+  width: 54px;
+  height: 54px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  opacity: 0.6;
-  transition: opacity 0.2s ease;
+  backdrop-filter: blur(10px);
+  transition: all 0.25s ease;
+  z-index: 10;
 
   &:hover {
-    opacity: 1;
+    background: rgba(255, 255, 255, 0.18);
+    transform: scale(1.06);
+  }
+
+  svg {
+    font-size: 1.35rem;
   }
 `;
 
-const ArrowLeft = styled(Arrow)`left: 40px;`;
-const ArrowRight = styled(Arrow)`right: 40px;`;
+const Arrow = styled.button`
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 62px;
+  height: 62px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: all 0.25s ease;
+  z-index: 10;
 
-// Indicateur discret
+  &:hover {
+    background: rgba(255, 255, 255, 0.18);
+    transform: translateY(-50%) scale(1.06);
+  }
+
+  svg {
+    font-size: 1.6rem;
+  }
+
+  @media (max-width: 700px) {
+    width: 50px;
+    height: 50px;
+  }
+`;
+
+const ArrowLeft = styled(Arrow)`
+  left: 24px;
+`;
+
+const ArrowRight = styled(Arrow)`
+  right: 24px;
+`;
+
 const IndicatorWrapper = styled.div`
   position: absolute;
-  bottom: 32px;
-  width: 120px;
-  height: 2px;
-  background: rgba(255,255,255,0.2);
+  bottom: 28px;
+  width: 170px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  overflow: hidden;
 `;
 
 const IndicatorBar = styled.div`
@@ -151,6 +236,15 @@ const IndicatorBar = styled.div`
   transition: width 0.3s ease;
 `;
 
+const ImageCounter = styled.div`
+  position: absolute;
+  bottom: 52px;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+`;
+
 // ---------- COMPONENT ----------
 export default function ProductImages({ images = [] }) {
   const [urls, setUrls] = useState([]);
@@ -158,10 +252,9 @@ export default function ProductImages({ images = [] }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  const wrapperRef = useRef(null);
   const slidesRef = useRef([]);
 
-  // Charger les images
+  // Charger images
   useEffect(() => {
     if (images.length) {
       setUrls(images.map((img) => ({ url: img.url, title: img.title || "" })));
@@ -169,7 +262,7 @@ export default function ProductImages({ images = [] }) {
     setLoading(false);
   }, [images]);
 
-  // Bloquer scroll principal en fullscreen
+  // Bloquer scroll body en fullscreen
   useEffect(() => {
     if (isFullscreen) {
       const scrollY = window.scrollY;
@@ -187,7 +280,7 @@ export default function ProductImages({ images = [] }) {
     }
   }, [isFullscreen]);
 
-  // Scroll automatique vers image active
+  // Scroll auto vers image active
   useEffect(() => {
     if (slidesRef.current[currentIndex] && !isFullscreen) {
       slidesRef.current[currentIndex].scrollIntoView({
@@ -196,6 +289,24 @@ export default function ProductImages({ images = [] }) {
       });
     }
   }, [currentIndex, isFullscreen]);
+
+  // Clavier
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!isFullscreen) return;
+
+      if (e.key === "Escape") setIsFullscreen(false);
+      if (e.key === "ArrowLeft") {
+        setCurrentIndex((prev) => (prev === 0 ? urls.length - 1 : prev - 1));
+      }
+      if (e.key === "ArrowRight") {
+        setCurrentIndex((prev) => (prev === urls.length - 1 ? 0 : prev + 1));
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isFullscreen, urls.length]);
 
   const openFullscreen = (index) => {
     setCurrentIndex(index);
@@ -216,12 +327,19 @@ export default function ProductImages({ images = [] }) {
 
   const progress = ((currentIndex + 1) / urls.length) * 100;
 
-  if (loading) return <LoaderWrapper><Loader /></LoaderWrapper>;
+  if (loading) {
+    return (
+      <LoaderWrapper>
+        <Loader />
+      </LoaderWrapper>
+    );
+  }
+
   if (!urls.length) return null;
 
   return (
     <Wrapper>
-      <ImagesWrapper ref={wrapperRef}>
+      <ImagesWrapper>
         {urls.map((item, i) => (
           <ImageSlide
             key={i}
@@ -230,6 +348,14 @@ export default function ProductImages({ images = [] }) {
             ref={(el) => (slidesRef.current[i] = el)}
           >
             <LogoOverlay>NUMA</LogoOverlay>
+
+            <ZoomButton
+              onClick={() => openFullscreen(i)}
+              aria-label="Voir l'image en grand"
+            >
+              <FiAperture />
+            </ZoomButton>
+
             <ProductImage
               src={item.url}
               alt={item.title || `Produit ${i + 1}`}
@@ -241,12 +367,31 @@ export default function ProductImages({ images = [] }) {
 
       {isFullscreen && urls[currentIndex] && (
         <FullscreenOverlay onClick={closeFullscreen}>
-          <ArrowLeft onClick={prevImage}>&larr;</ArrowLeft>
+          <CloseButton onClick={closeFullscreen} aria-label="Fermer">
+            <FiX />
+          </CloseButton>
+
+          {urls.length > 1 && (
+            <ArrowLeft onClick={prevImage} aria-label="Image précédente">
+              <FiChevronLeft />
+            </ArrowLeft>
+          )}
+
           <FullscreenImage
             src={urls[currentIndex].url}
+            alt={urls[currentIndex].title || `Produit ${currentIndex + 1}`}
             onClick={(e) => e.stopPropagation()}
           />
-          <ArrowRight onClick={nextImage}>&rarr;</ArrowRight>
+
+          {urls.length > 1 && (
+            <ArrowRight onClick={nextImage} aria-label="Image suivante">
+              <FiChevronRight />
+            </ArrowRight>
+          )}
+
+          <ImageCounter>
+            {String(currentIndex + 1).padStart(2, "0")} / {String(urls.length).padStart(2, "0")}
+          </ImageCounter>
 
           <IndicatorWrapper>
             <IndicatorBar progress={progress} />
