@@ -15,7 +15,7 @@ import { ThemeContext, PanierContext } from "../../Utils/Context";
 import { useTranslation } from "react-i18next";
 
 const HEADER_HEIGHT = 70;
-const TOPBAR_HEIGHT = 40; // ✅ Défini
+const TOPBAR_HEIGHT = 50; 
 
 // Animation fade + slide pour le menu entier
 const fadeSlide = keyframes`
@@ -36,6 +36,11 @@ const topBarSlideOut = keyframes`
 `;
 
 // ================= Styled Components =================
+
+const Headercontain = styled.div`
+margin-top: 50px;
+`
+
 
 const HeaderWrapper = styled.header`
   position: fixed;
@@ -344,7 +349,7 @@ export default function Header() {
   };
 
   return (
-    <>
+    <Headercontain >
       <TopBarWrapper className={closingTopBar ? "closing" : ""}>
         <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
           💳
@@ -469,6 +474,6 @@ export default function Header() {
           {t?.("about") ?? "About"}
         </MenuLink>
       </MobileMenu>
-    </>
+    </Headercontain>
   );
 }
