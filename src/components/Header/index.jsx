@@ -37,9 +37,6 @@ const topBarSlideOut = keyframes`
 
 // ================= Styled Components =================
 
-const Headercontain = styled.div`
-margin-top: 40px;
-`
 
 
 const HeaderWrapper = styled.header`
@@ -349,7 +346,7 @@ export default function Header() {
   };
 
   return (
-    <Headercontain >
+    <>
       <TopBarWrapper className={closingTopBar ? "closing" : ""}>
         <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
           💳
@@ -474,6 +471,6 @@ export default function Header() {
           {t?.("about") ?? "About"}
         </MenuLink>
       </MobileMenu>
-    </Headercontain>
+    </>
   );
 }
