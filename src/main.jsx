@@ -43,6 +43,7 @@ import AdminProducts from "./pages/AdminProducts";
 import AdminCommandes from "./pages/AdminCommande";
 import AdminPaiements from "./pages/AdminPaiements";
 import PaiementTroisFois from "./pages/paiement-3x";
+import PageCommandeConfirmee from "./pages/PageCommandeConfirmee";
 import "./i18n";
 
 // --- Layout pour les pages publiques ---
@@ -140,7 +141,15 @@ createRoot(document.getElementById("root")).render(
                 </PublicLayout>
               }
             />
-
+            
+            <Route
+              path="/commande-confirmee/:id"
+              element={
+                <PublicLayout>
+                  <PageCommandeConfirmee />
+                </PublicLayout>
+              }
+            />
             <Route
               path="/search"
               element={

@@ -19,9 +19,30 @@ const AdminCommandes = () => {
     fetchCommandes(page);
   }, [page]);
 
+  const confirmerCommandeCOD = async (id) => {
+  try {
+    const res = await fetch(`${API_URL}/api/admin/commandes/${id}/confirmer-cod`, {
+      method: "PUT",
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      alert("Commande confirmée ✅");
+      fetchCommandes(page);
+    } else {
+      alert(data.message || "Erreur");
+    }
+  } catch (err) {
+    alert("Erreur serveur");
+  }
+};
+
   const fetchCommandes = async (pageNum = 1) => {
     try {
-      const res = await axios.get(`${API_URL}/api/admin/commandes?page=${pageNum}&limit=10`);
+      const res = await axios.get(
+        `${API_URL}/api/admin/commandes?page=${pageNum}&limit=10`,
+      );
       console.log("Réponse backend commandes :", res.data);
       setCommandes(res.data.commandes || []);
       setPages(res.data.pages || 1);
@@ -47,7 +68,9 @@ const AdminCommandes = () => {
       ) : (
         commandes.map((cmd) => {
           const totalPaye =
-            cmd.paiementsRecus?.filter((p) => p.status === "CONFIRMED")?.reduce((acc, p) => acc + p.montantEnvoye, 0) || 0;
+            cmd.paiementsRecus
+              ?.filter((p) => p.status === "CONFIRMED")
+              ?.reduce((acc, p) => acc + p.montantEnvoye, 0) || 0;
 
           return (
             <div
@@ -62,9 +85,11 @@ const AdminCommandes = () => {
             >
               {/* Infos client */}
               <div style={{ marginBottom: "10px" }}>
-                <strong>Date :</strong> {new Date(cmd.createdAt).toLocaleString()} <br />
+                <strong>Date :</strong>{" "}
+                {new Date(cmd.createdAt).toLocaleString()} <br />
                 <strong>ID :</strong> {cmd._id} <br />
-                <strong>Client :</strong> {cmd.client?.nom || "-"} {cmd.client?.prenom || "-"} <br />
+                <strong>Client :</strong> {cmd.client?.nom || "-"}{" "}
+                {cmd.client?.prenom || "-"} <br />
                 <strong>Total :</strong> {cmd.total || 0} FCFA <br />
                 <strong>Payé :</strong> {totalPaye} FCFA <br />
                 <strong>Statut :</strong>{" "}
@@ -78,6 +103,23 @@ const AdminCommandes = () => {
                 >
                   {cmd.statusCommande || "INCONNU"}
                 </span>
+                {cmd.modePaiement === "cod" &&
+                  cmd.statusCommande === "PENDING" && (
+                    <button
+                      onClick={() => confirmerCommandeCOD(cmd._id)}
+                      style={{
+                        marginTop: "10px",
+                        padding: "6px 12px",
+                        background: "green",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "4px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Confirmer commande COD
+                    </button>
+                  )}
               </div>
 
               {/* Bouton afficher panier */}
@@ -100,7 +142,14 @@ const AdminCommandes = () => {
 
               {/* Panier */}
               {openPanier[cmd._id] && cmd.panier?.length > 0 && (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginTop: "10px" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: "10px",
+                    marginTop: "10px",
+                  }}
+                >
                   {cmd.panier.map((item, idx) => (
                     <div
                       key={idx}
@@ -132,7 +181,8 @@ const AdminCommandes = () => {
                         <br />
                         {item.prix || 0} FCFA × {item.quantite || 1}
                         <br />
-                        Couleur: {item.couleur || "-"} | Taille: {item.taille || "-"}
+                        Couleur: {item.couleur || "-"} | Taille:{" "}
+                        {item.taille || "-"}
                       </div>
                     </div>
                   ))}
@@ -153,9 +203,11 @@ const AdminCommandes = () => {
                         marginBottom: "8px",
                       }}
                     >
-                      Étape {p.step || "-"} – {p.montantEnvoye || 0} FCFA – <strong>{p.status || "-"}</strong>
+                      Étape {p.step || "-"} – {p.montantEnvoye || 0} FCFA –{" "}
+                      <strong>{p.status || "-"}</strong>
                       <br />
-                      Référence: {p.reference || "-"} | Numéro: {p.numeroClient || "-"} | Service: {p.service || "-"}
+                      Référence: {p.reference || "-"} | Numéro:{" "}
+                      {p.numeroClient || "-"} | Service: {p.service || "-"}
                     </div>
                   ))
                 ) : (

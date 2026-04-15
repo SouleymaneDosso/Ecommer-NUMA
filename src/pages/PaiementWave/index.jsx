@@ -12,7 +12,12 @@ const Page = styled.main`
   max-width: 1100px;
   margin: 3rem auto;
   padding: 0 1.5rem;
-  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
 
   background: ${({ $isdark }) => ($isdark ? "#0f0f0f" : "#f7f7f7")};
   color: ${({ $isdark }) => ($isdark ? "#f5f5f5" : "#111")};
@@ -188,7 +193,7 @@ export default function PageCheckout() {
       client: { nom, prenom, adresse, ville, codePostal, pays },
       panier: panierBackend,
       modePaiement,
-      servicePaiement,
+      servicePaiement: modePaiement === "cod" ? "livraison" : servicePaiement,
       fraisLivraison,
       total,
     };
@@ -210,7 +215,11 @@ export default function PageCheckout() {
         return;
       }
 
-      navigate(`/paiement-semi/${data.commande._id}`);
+      if (modePaiement === "cod") {
+        navigate(`/commande-confirmee/${data.commande._id}`);
+      } else {
+        navigate(`/paiement-semi/${data.commande._id}`);
+      }
     } catch (err) {
       alert("Erreur serveur");
     } finally {
@@ -226,8 +235,9 @@ export default function PageCheckout() {
     );
   }
 
-  const montantParMois = modePaiement === "installments" ? Math.ceil(total / 3) : total;
-  const peutTroisFois = total >= 3000; // condition minimale (ajustable)
+  const montantParMois =
+    modePaiement === "installments" ? Math.ceil(total / 3) : total;
+  const peutTroisFois = total >= 3000; 
 
   return (
     <Page $isdark={$isdark}>
@@ -275,6 +285,18 @@ export default function PageCheckout() {
 
             {/* MODE DE PAIEMENT */}
             <h3>Mode de paiement</h3>
+            <br />
+
+            <RadioLabel>
+              <input
+                type="radio"
+                name="mode"
+                value="cod"
+                checked={modePaiement === "cod"}
+                onChange={(e) => setModePaiement(e.target.value)}
+              />
+              Paiement à la livraison
+            </RadioLabel>
             <RadioGroup>
               <RadioLabel>
                 <input
@@ -296,7 +318,7 @@ export default function PageCheckout() {
                   onChange={(e) => setModePaiement(e.target.value)}
                   disabled={!peutTroisFois}
                 />
-                Paiement en 3 fois
+                Paiement en 3 tranches
                 {!peutTroisFois && (
                   <small style={{ color: "red", marginLeft: "6px" }}>
                     (minimum 3000 FCFA)
@@ -333,7 +355,8 @@ export default function PageCheckout() {
 
             {modePaiement === "installments" && (
               <p>
-                Paiement en 3 fois : <strong>{montantParMois.toLocaleString()} FCFA</strong> par mois
+                Paiement en 3 fois :{" "}
+                <strong>{montantParMois.toLocaleString()} FCFA</strong> par mois
               </p>
             )}
 
