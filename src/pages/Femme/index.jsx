@@ -24,7 +24,7 @@ const PageWrapper = styled.main`
   background: ${({ $isdark }) => ($isdark ? "#111" : "#fff")};
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
   transition: background 0.3s ease, color 0.3s ease;
-  margin-bottom: 50px;
+  margin-bottom: 19px;
 `;
 
 const PageHeader = styled.div`
@@ -116,7 +116,6 @@ const Grid = styled.div`
 `;
 
 const ProductCard = styled.div`
-margin-bottom: 0.8rem;
   cursor: pointer;
   animation: ${fadeIn} 0.6s ease forwards;
   transition: transform 0.25s ease;
@@ -235,30 +234,6 @@ const SkeletonCard = styled.div`
   animation: ${shimmer} 1.2s infinite linear;
 `;
 
-const AddToCartButton = styled.button`
-    position: absolute;
-  margin-top: 15px;
-  border-radius: 10px;
-  padding: 7px;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  background: black;
-  color: ${({ $isdark }) => ($isdark ? "white" : "white")};
-  transition: all 0.25s ease;
-
-  &:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
-  }
-
-  &:active {
-    transform: scale(0.95);
-  }
-`;
 /*================= MODAL ================= */
 
 const ModalOverlay = styled.div`
@@ -494,28 +469,6 @@ export default function Femme() {
                   Disponible
                 </Validation>
               </CardContent>
-
-              <AddToCartButton
-                $isdark={$isdark}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const produitPanier = {
-                    id: p._id,
-                    nom: p.title,
-                    image: p.images[0]?.url || "",
-                    prix: p.price,
-                    quantite: 1,
-                    taille: p.tailles?.[0] || "",
-                    couleur: p.couleurs?.[0] || "",
-                    stockDisponible: p.stock || 10,
-                    tailles: p.tailles || [],
-                    couleurs: p.couleurs || [],
-                  };
-                  ajouterPanier(produitPanier);
-                }}
-              >
-                Ajouter au panier
-              </AddToCartButton>
             </ProductCard>
           );
         })}

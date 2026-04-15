@@ -4,7 +4,7 @@ import { FiHeart, FiCheck } from "react-icons/fi";
 import { FaHeart } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { ThemeContext, PanierContext } from "../../Utils/Context";
-import { HiShoppingBag } from "react-icons/hi";
+
 
 /* ================= ANIMATIONS ================= */
 const fadeIn = keyframes`
@@ -124,7 +124,7 @@ const ProductCard = styled.div`
   background: ${({ $isdark }) => ($isdark ? "#1a1a1a" : "#fff")};
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
   border-radius: 8px;
-   margin-bottom: 4.5rem;
+   margin-bottom: 1.1rem;
 
   &:hover {
     transform: translateY(-4px);
@@ -495,29 +495,6 @@ export default function Homme() {
                   En stock
                 </Validation>
               </CardContent>
-
-              <AddToCartButton
-                $isdark={$isdark}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const produitPanier = {
-                    id: p._id,
-                    nom: p.title,
-                    image: p.images[0]?.url || "",
-                    prix: p.price,
-                    quantite: 1,
-                    stock: p.stock,
-                    taille: p.tailles?.[0] || "",
-                    couleur: p.couleurs?.[0] || "",
-                    stockDisponible: p.stock || 10,
-                    tailles: p.tailles || [],
-                    couleurs: p.couleurs || [],
-                  };
-                  ajouterPanier(produitPanier);
-                }}
-              >
-                Ajouter au panier
-              </AddToCartButton>
             </ProductCard>
           );
         })}
