@@ -21,10 +21,10 @@ const shimmer = keyframes`
 /* ================= STYLES ================= */
 
 const PageWrapper = styled.main`
-  padding-bottom: 3.8rem 6%;
   background: ${({ $isdark }) => ($isdark ? "#111" : "#fff")};
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
   transition: background 0.3s ease, color 0.3s ease;
+  margin-bottom: 50px;
 `;
 
 const PageHeader = styled.div`
@@ -34,6 +34,7 @@ const PageHeader = styled.div`
   margin-bottom: 3rem;
   flex-wrap: wrap;
   gap: 1.2rem;
+  
 `;
 
 const PageTitle = styled.h1`
@@ -48,6 +49,7 @@ const ControlsWrapper = styled.div`
   align-items: center;
   gap: 1.6rem;
   flex-wrap: wrap;
+  
 `;
 
 const SearchInput = styled.input`
@@ -101,6 +103,7 @@ const FilterButton = styled.button`
 
 const Grid = styled.div`
   display: grid;
+  
   grid-template-columns: repeat(2, 1fr);
 
   @media (min-width: 900px) {
@@ -113,6 +116,7 @@ const Grid = styled.div`
 `;
 
 const ProductCard = styled.div`
+margin-bottom: 0.8rem;
   cursor: pointer;
   animation: ${fadeIn} 0.6s ease forwards;
   transition: transform 0.25s ease;
@@ -126,6 +130,7 @@ const ProductCard = styled.div`
 `;
 
 const ImageWrapper = styled.div`
+margin-bottom: 0.8rem;
   position: relative;
   width: 100%;
   aspect-ratio: 4/5;
@@ -231,19 +236,18 @@ const SkeletonCard = styled.div`
 `;
 
 const AddToCartButton = styled.button`
-  position: absolute;
-  bottom: 10px;
-  right: 10px;
-  width: 23px;
-  height: 23px;
-  border-radius: 50%;
+    position: absolute;
+  margin-top: 15px;
+  border-radius: 10px;
+  padding: 7px;
   border: none;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: none;
-  color: ${({ $isdark }) => ($isdark ? "white" : "#111")};
+
+  background: black;
+  color: ${({ $isdark }) => ($isdark ? "white" : "white")};
   transition: all 0.25s ease;
 
   &:hover {
@@ -255,8 +259,7 @@ const AddToCartButton = styled.button`
     transform: scale(0.95);
   }
 `;
-
-/* ================= MODAL ================= */
+/*================= MODAL ================= */
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -511,7 +514,7 @@ export default function Femme() {
                   ajouterPanier(produitPanier);
                 }}
               >
-                <HiShoppingBag size={18} />
+                Ajouter au panier
               </AddToCartButton>
             </ProductCard>
           );

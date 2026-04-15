@@ -22,7 +22,9 @@ const PageWrapper = styled.main`
   padding-bottom: 3.8rem 6%;
   background: ${({ $isdark }) => ($isdark ? "#111" : "#fff")};
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
-  transition: background 0.3s ease, color 0.3s ease;
+  transition:
+    background 0.3s ease,
+    color 0.3s ease;
 `;
 
 const PageHeader = styled.div`
@@ -46,6 +48,7 @@ const ControlsWrapper = styled.div`
   align-items: center;
   gap: 1.6rem;
   flex-wrap: wrap;
+  
 `;
 
 const SearchInput = styled.input`
@@ -121,6 +124,7 @@ const ProductCard = styled.div`
   background: ${({ $isdark }) => ($isdark ? "#1a1a1a" : "#fff")};
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
   border-radius: 8px;
+   margin-bottom: 4.5rem;
 
   &:hover {
     transform: translateY(-4px);
@@ -236,22 +240,18 @@ const SkeletonCard = styled.div`
 
 const AddToCartButton = styled.button`
   position: absolute;
-  bottom: 10px;
-  right: 10px;
+  margin-top: 15px;
 
-  width: 23px;
-  height: 23px;
-  border-radius: 50%;
-
+  border-radius: 10px;
+  padding: 7px;
   border: none;
   cursor: pointer;
-
   display: flex;
   align-items: center;
   justify-content: center;
 
-  background: none;
-  color: ${({ $isdark }) => ($isdark ? "white" : "#111")};
+  background: black;
+  color: ${({ $isdark }) => ($isdark ? "white" : "white")};
   transition: all 0.25s ease;
 
   &:hover {
@@ -319,7 +319,9 @@ export default function Homme() {
     fetch(`${import.meta.env.VITE_API_URL}/api/produits`)
       .then((res) => res.json())
       .then((data) => {
-        const valid = data.filter((p) => p.images?.length && p.genre === "homme");
+        const valid = data.filter(
+          (p) => p.images?.length && p.genre === "homme",
+        );
         setProducts(valid);
 
         const indexes = {};
@@ -340,26 +342,29 @@ export default function Homme() {
     })
       .then((res) => res.json())
       .then((data) =>
-        setFavorites(data.map((f) => f.productId?._id).filter(Boolean))
+        setFavorites(data.map((f) => f.productId?._id).filter(Boolean)),
       )
       .catch(console.error);
   }, [token]);
 
   const toggleFavorite = async (id) => {
     if (!token) {
-      setShowModal(true); // afficher modal si non connecté
+      setShowModal(true);
       return;
     }
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/favorites/toggle`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/favorites/toggle`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ productId: id }),
         },
-        body: JSON.stringify({ productId: id }),
-      });
+      );
 
       const data = await res.json();
       if (res.ok) {
@@ -393,11 +398,13 @@ export default function Homme() {
 
     if (search)
       filtered = filtered.filter((p) =>
-        p.title.toLowerCase().includes(search.toLowerCase())
+        p.title.toLowerCase().includes(search.toLowerCase()),
       );
 
-    if (sort === "asc") filtered = [...filtered].sort((a, b) => a.price - b.price);
-    if (sort === "desc") filtered = [...filtered].sort((a, b) => b.price - a.price);
+    if (sort === "asc")
+      filtered = [...filtered].sort((a, b) => a.price - b.price);
+    if (sort === "desc")
+      filtered = [...filtered].sort((a, b) => b.price - a.price);
 
     return filtered.slice(0, limit);
   }, [products, filter, sort, search, limit]);
@@ -430,7 +437,11 @@ export default function Homme() {
             ))}
           </FilterWrapper>
 
-          <Select $isdark={$isdark} value={sort} onChange={(e) => setSort(e.target.value)}>
+          <Select
+            $isdark={$isdark}
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+          >
             <option value="default">Trier</option>
             <option value="asc">Prix croissant</option>
             <option value="desc">Prix décroissant</option>
@@ -443,10 +454,20 @@ export default function Homme() {
           const isFav = favorites.includes(p._id);
 
           return (
-            <ProductCard key={p._id} $isdark={$isdark} onClick={() => navigate(`/produit/${p._id}`)}>
+            <ProductCard
+              key={p._id}
+              $isdark={$isdark}
+              onClick={() => navigate(`/produit/${p._id}`)}
+            >
               <ImageWrapper $isdark={$isdark}>
                 {p.images.map((img, index) => (
-                  <ProductImage key={index} src={img.url} alt={p.title} loading="lazy" $active={imageIndexes[p._id] === index} />
+                  <ProductImage
+                    key={index}
+                    src={img.url}
+                    alt={p.title}
+                    loading="lazy"
+                    $active={imageIndexes[p._id] === index}
+                  />
                 ))}
 
                 {p.badge && <Badge>{p.badge}</Badge>}
@@ -485,6 +506,7 @@ export default function Homme() {
                     image: p.images[0]?.url || "",
                     prix: p.price,
                     quantite: 1,
+                    stock: p.stock,
                     taille: p.tailles?.[0] || "",
                     couleur: p.couleurs?.[0] || "",
                     stockDisponible: p.stock || 10,
@@ -494,7 +516,7 @@ export default function Homme() {
                   ajouterPanier(produitPanier);
                 }}
               >
-                <HiShoppingBag size={18} />
+                Ajouter au panier
               </AddToCartButton>
             </ProductCard>
           );

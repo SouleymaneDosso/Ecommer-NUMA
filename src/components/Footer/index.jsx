@@ -168,7 +168,10 @@ const FooterLink = styled(Link)`
   }
 `;
 
-const IconWrapper = styled.a`
+const IconWrapper = styled.a.attrs({
+  target: "_blank",
+  rel: "noopener noreferrer",
+})`
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -424,7 +427,7 @@ export default function Footer() {
       title: t("about"),
       links: [
         { text: t("ourStory"), to: "/apropo" },
-        { text: t("faq"), to: "/faq" },
+        { text: t("faqLabel"), to: "/faq" },
         { text: t("contact"), to: "/contact" },
       ],
     },
@@ -490,6 +493,7 @@ export default function Footer() {
             <FiChevronDown
               style={{
                 transform: openIndex === i ? "rotate(180deg)" : "rotate(0)",
+                pointerEvents: "none", 
               }}
             />
           </TitleButton>
