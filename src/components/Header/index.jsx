@@ -38,7 +38,7 @@ const topBarSlideOut = keyframes`
 // ================= Styled Components =================
 
 const Headercontain = styled.div`
-margin-top: 50px;
+margin-top: 40px;
 `
 
 

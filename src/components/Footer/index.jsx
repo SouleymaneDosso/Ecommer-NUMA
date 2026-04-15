@@ -145,7 +145,7 @@ const TitleButton = styled.button`
 `;
 
 const LinksContainer = styled.div`
-  max-height: ${({ $open }) => ($open ? "500px" : "0")};
+  max-height: ${({ $open }) => ($open ? "1000px" : "0")};
   overflow: hidden;
   display: flex;
   flex-direction: column;
