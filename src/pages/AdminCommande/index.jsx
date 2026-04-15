@@ -20,23 +20,45 @@ const AdminCommandes = () => {
   }, [page]);
 
   const confirmerCommandeCOD = async (id) => {
-  try {
-    const res = await fetch(`${API_URL}/api/admin/commandes/${id}/confirmer-cod`, {
-      method: "PUT",
-    });
+    try {
+      const res = await fetch(
+        `${API_URL}/api/admin/commandes/${id}/confirmer-cod`,
+        {
+          method: "PUT",
+        },
+      );
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (res.ok) {
-      alert("Commande confirmée ✅");
-      fetchCommandes(page);
-    } else {
-      alert(data.message || "Erreur");
+      if (res.ok) {
+        alert("Commande confirmée ✅");
+        fetchCommandes(page);
+      } else {
+        alert(data.message || "Erreur");
+      }
+    } catch (err) {
+      alert("Erreur serveur");
     }
-  } catch (err) {
-    alert("Erreur serveur");
-  }
-};
+  };
+
+  const marquerCommeLivre = async (id) => {
+    try {
+      const res = await fetch(`${API_URL}/api/admin/commandes/${id}/livrer`, {
+        method: "PUT",
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert("Commande livrée ✅");
+        fetchCommandes(page);
+      } else {
+        alert(data.message || "Erreur");
+      }
+    } catch (err) {
+      alert("Erreur serveur");
+    }
+  };
 
   const fetchCommandes = async (pageNum = 1) => {
     try {
@@ -120,6 +142,22 @@ const AdminCommandes = () => {
                       Confirmer commande COD
                     </button>
                   )}
+                {cmd.statusCommande === "CONFIRMED" && (
+                  <button
+                    onClick={() => marquerCommeLivre(cmd._id)}
+                    style={{
+                      marginTop: "10px",
+                      padding: "6px 12px",
+                      background: "#222",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Marquer comme livré
+                  </button>
+                )}
               </div>
 
               {/* Bouton afficher panier */}
