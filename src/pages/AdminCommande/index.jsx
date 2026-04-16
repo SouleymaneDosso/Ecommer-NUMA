@@ -5,6 +5,8 @@ const statutColors = {
   PENDING: "#f0ad4e",
   PARTIALLY_PAID: "#5bc0de",
   PAID: "#5cb85c",
+  CONFIRMED: "#337ab7",
+  DELIVERED: "#222",
 };
 
 const AdminCommandes = () => {
@@ -57,6 +59,7 @@ const AdminCommandes = () => {
       }
     } catch (err) {
       alert("Erreur serveur");
+      console.error(err);
     }
   };
 
@@ -142,22 +145,24 @@ const AdminCommandes = () => {
                       Confirmer commande COD
                     </button>
                   )}
-                {cmd.statusCommande === "CONFIRMED" && (
-                  <button
-                    onClick={() => marquerCommeLivre(cmd._id)}
-                    style={{
-                      marginTop: "10px",
-                      padding: "6px 12px",
-                      background: "#222",
-                      color: "#fff",
-                      border: "none",
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Marquer comme livré
-                  </button>
-                )}
+                {(cmd.statusCommande === "CONFIRMED" ||
+                  cmd.statusCommande === "PAID") &&
+                  cmd.statusCommande !== "DELIVERED" && (
+                    <button
+                      onClick={() => marquerCommeLivre(cmd._id)}
+                      style={{
+                        marginTop: "10px",
+                        padding: "6px 12px",
+                        background: "#222",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "4px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Marquer comme livré
+                    </button>
+                  )}
               </div>
 
               {/* Bouton afficher panier */}

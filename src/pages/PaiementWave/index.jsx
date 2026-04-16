@@ -306,7 +306,7 @@ export default function PageCheckout() {
                   checked={modePaiement === "full"}
                   onChange={(e) => setModePaiement(e.target.value)}
                 />
-                Paiement en 1 fois
+                Paiement cash
               </RadioLabel>
 
               <RadioLabel>
@@ -355,7 +355,7 @@ export default function PageCheckout() {
 
             {modePaiement === "installments" && (
               <p>
-                Paiement en 3 fois :{" "}
+                Paiement en 3 tranches :{" "}
                 <strong>{montantParMois.toLocaleString()} FCFA</strong> par mois
               </p>
             )}
