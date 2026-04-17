@@ -7,6 +7,7 @@ const statutColors = {
   PAID: "#5cb85c",
   CONFIRMED: "#337ab7",
   DELIVERED: "#222",
+  SHIPPED: "#3b82f6",
 };
 
 const AdminCommandes = () => {
@@ -74,6 +75,26 @@ const AdminCommandes = () => {
     } catch (err) {
       console.error(err);
       alert("Erreur lors du chargement des commandes");
+    }
+  };
+
+  const marquerCommeExpedie = async (id) => {
+    try {
+      const res = await fetch(`${API_URL}/api/admin/commandes/${id}/ship`, {
+        method: "PUT",
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert("Commande en livraison 🚚");
+        fetchCommandes(page);
+      } else {
+        alert(data.message || "Erreur");
+      }
+    } catch (err) {
+      alert("Erreur serveur");
+      console.error(err);
     }
   };
 
@@ -145,24 +166,38 @@ const AdminCommandes = () => {
                       Confirmer commande COD
                     </button>
                   )}
-                {(cmd.statusCommande === "CONFIRMED" ||
-                  cmd.statusCommande === "PAID") &&
-                  cmd.statusCommande !== "DELIVERED" && (
-                    <button
-                      onClick={() => marquerCommeLivre(cmd._id)}
-                      style={{
-                        marginTop: "10px",
-                        padding: "6px 12px",
-                        background: "#222",
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      Marquer comme livré
-                    </button>
-                  )}
+                {cmd.statusCommande === "CONFIRMED" && (
+                  <button
+                    onClick={() => marquerCommeExpedie(cmd._id)}
+                    style={{
+                      marginTop: "10px",
+                      padding: "6px 12px",
+                      background: "#3b82f6",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    🚚 Mettre en livraison
+                  </button>
+                )}
+                {cmd.statusCommande === "SHIPPED" && (
+                  <button
+                    onClick={() => marquerCommeLivre(cmd._id)}
+                    style={{
+                      marginTop: "10px",
+                      padding: "6px 12px",
+                      background: "#222",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    ✔ Marquer comme livré
+                  </button>
+                )}
               </div>
 
               {/* Bouton afficher panier */}

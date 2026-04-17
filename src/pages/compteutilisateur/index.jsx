@@ -27,14 +27,15 @@ const Loader = styled.div`
 const PageWrapper = styled.main`
   max-width: 960px;
   margin: 2rem auto;
-  padding: 1.5rem;
+  padding: 2rem; /* ⬅️ plus d'espace desktop */
   background: #1f1f2e;
   border-radius: 22px;
   color: #f3f3f3;
 
   @media (max-width: 768px) {
-    margin: 1rem;
-    padding: 1rem;
+    margin: 0.5rem;
+    padding: 1.5rem; /* ⬅️ plus d'espace mobile */
+    border-radius: 18px;
   }
 `;
 
@@ -60,10 +61,13 @@ const Carousel = styled.div`
 const Section = styled.section`
   background: #2a2a3d;
   border-radius: 20px;
-  padding: 1.5rem;
+  padding: 1.8rem;
   margin-bottom: 2rem;
-`;
 
+  @media (max-width: 768px) {
+    padding: 1.3rem;
+  }
+`;
 const Title = styled.h2`
   margin-bottom: 1.2rem;
   font-size: 1.5rem;
@@ -72,7 +76,7 @@ const Title = styled.h2`
 
 /* ================= BUTTONS ================= */
 const Button = styled.button`
-  padding: 10px 16px;
+   padding: 12px 18px;
   border-radius: 14px;
   border: none;
   background: linear-gradient(135deg, #4f46e5, #6366f1);
@@ -109,11 +113,12 @@ const CoffreLine = styled.div`
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1.2rem; 
 
   @media (max-width: 600px) {
     flex-direction: column;
     align-items: stretch;
+    gap: 0.6rem;
   }
 `;
 
@@ -150,19 +155,29 @@ const FlexRow = styled.div`
 
 const ProductCard = styled.div`
   background: #1f1f2e;
-  padding: 1rem;
+  padding: 1.2rem;
   border-radius: 16px;
   display: flex;
   gap: 1rem;
   align-items: center;
   width: 100%;
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1.3rem;
+  }
 `;
 
 const ProductImage = styled.img`
-  width: 70px;
-  height: 70px;
-  border-radius: 14px;
-  object-fit: cover;
+  width: 80px;
+  height: 80px;
+
+  @media (max-width: 600px) {
+    width: 100%;
+    height: auto;
+    max-height: 160px;
+  }
 `;
 
 const TrashIcon = styled(FiTrash2)`
