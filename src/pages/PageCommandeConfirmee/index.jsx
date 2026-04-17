@@ -2,7 +2,6 @@ import { useEffect, useState, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import styled, { keyframes } from "styled-components";
 import { PanierContext, ThemeContext } from "../../Utils/Context";
-import { FaWhatsapp } from "react-icons/fa";
 
 /* ===== ANIMATIONS ===== */
 const fadeIn = keyframes`
@@ -31,7 +30,7 @@ const Page = styled.main`
   align-items: center;
 `;
 
-/* ===== CARD PRINCIPALE ===== */
+/* ===== CARD ===== */
 const Card = styled.div`
   width: 100%;
   max-width: 900px;
@@ -40,8 +39,6 @@ const Card = styled.div`
   padding: 3rem;
   box-shadow: 0 25px 60px rgba(0, 0, 0, 0.2);
   animation: ${fadeIn} 0.6s ease;
-  position: relative;
-  overflow: hidden;
 `;
 
 /* ===== HEADER ===== */
@@ -87,7 +84,7 @@ const Product = styled.div`
   font-size: 14px;
 `;
 
-/* ===== BUTTON ===== */
+/* ===== BUTTON HOME ===== */
 const Button = styled.button`
   margin-top: 2rem;
   width: 100%;
@@ -106,26 +103,23 @@ const Button = styled.button`
   }
 `;
 
-/* ===== WHATSAPP FLOAT ===== */
-const WhatsAppFloat = styled.a`
-  position: fixed;
-  bottom: 25px;
-  right: 25px;
-  width: 60px;
-  height: 60px;
+/* ===== WHATSAPP BUTTON ===== */
+const WhatsAppButton = styled.a`
+  display: block;
+  margin-top: 1.5rem;
+  width: 100%;
+  padding: 14px;
+  text-align: center;
+  border-radius: 14px;
   background: #25d366;
   color: white;
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 32px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
-  z-index: 9999;
+  font-weight: bold;
+  text-decoration: none;
   transition: 0.3s;
 
   &:hover {
-    transform: scale(1.15);
+    background: #1ebe5d;
+    transform: scale(1.02);
   }
 `;
 
@@ -197,17 +191,18 @@ export default function PageCommandeConfirmee() {
           ))}
         </Box>
 
-        <Button onClick={() => navigate("/")}>🏠 Retour à l’accueil</Button>
-      </Card>
+        {/* WHATSAPP BUTTON (TA VERSION) */}
+        <WhatsAppButton
+          href="https://wa.me/2250700247693"
+          target="_blank"
+        >
+          💬 Contacter le support WhatsApp
+        </WhatsAppButton>
 
-      {/* WHATSAPP FLOAT BUTTON */}
-      <WhatsAppFloat
-        href="https://wa.me/225700247693?text=Bonjour%20je%20viens%20de%20passer%20une%20commande"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <FaWhatsapp />
-      </WhatsAppFloat>
+        <Button onClick={() => navigate("/")}>
+          🏠 Retour à l’accueil
+        </Button>
+      </Card>
     </Page>
   );
 }
