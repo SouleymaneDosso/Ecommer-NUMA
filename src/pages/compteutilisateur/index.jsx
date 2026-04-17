@@ -3,7 +3,8 @@ import styled, { keyframes } from "styled-components";
 import { useNavigate, Link } from "react-router-dom";
 import { FiTrash2, FiChevronDown, FiChevronUp } from "react-icons/fi";
 import { FaLock, FaUnlock } from "react-icons/fa";
-
+import { io } from "socket.io-client";
+const socket = io(import.meta.env.VITE_API_URL);
 /* ================= LOADER ================= */
 const spin = keyframes`to { transform: rotate(360deg); }`;
 
@@ -51,7 +52,7 @@ const Title = styled.h2`
 
 /* ================= BADGE ================= */
 const Badge = styled.span`
-  padding: 4px 10px;
+  padding: 2px 8px;
   border-radius: 999px;
   font-size: 0.8rem;
   background: ${({ color }) => color};
@@ -132,10 +133,42 @@ export default function CompteClient() {
   const [commandes, setCommandes] = useState([]);
   const [expanded, setExpanded] = useState({});
 
-  useEffect(() => {
-    if (!token) return navigate("/login");
-    fetchCompte();
-  }, []);
+useEffect(() => {
+  if (!token) {
+    navigate("/login");
+    return;
+  }
+
+  fetchCompte();
+
+  socket.on("connect", () => {
+    console.log("✅ Socket connecté :", socket.id);
+  });
+
+  socket.on("commande_update", (data) => {
+    console.log("📦 update reçu :", data);
+
+    setCommandes((prev) =>
+      prev.map((cmd) =>
+        cmd._id === data.id
+          ? { ...cmd, statusCommande: data.status }
+          : cmd
+      )
+    );
+  });
+
+  // 🔥 join room dès que user est dispo
+  if (user?._id) {
+    socket.emit("join_room", user._id);
+    console.log("🟢 room join :", user._id);
+  }
+
+  return () => {
+    socket.off("connect");
+    socket.off("commande_update");
+    socket.disconnect();
+  };
+}, [user]);
 
   const fetchCompte = async () => {
     setLoading(true);
