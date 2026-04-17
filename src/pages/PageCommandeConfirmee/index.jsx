@@ -113,7 +113,7 @@ const WhatsAppFloat = styled.a`
   right: 25px;
   width: 60px;
   height: 60px;
-  background: #25D366;
+  background: #25d366;
   color: white;
   border-radius: 50%;
   display: flex;
@@ -197,14 +197,12 @@ export default function PageCommandeConfirmee() {
           ))}
         </Box>
 
-        <Button onClick={() => navigate("/")}>
-          🏠 Retour à l’accueil
-        </Button>
+        <Button onClick={() => navigate("/")}>🏠 Retour à l’accueil</Button>
       </Card>
 
       {/* WHATSAPP FLOAT BUTTON */}
       <WhatsAppFloat
-        href="https://wa.me/2250700247693"
+        href="https://wa.me/225700247693?text=Bonjour%20je%20viens%20de%20passer%20une%20commande"
         target="_blank"
         rel="noopener noreferrer"
       >
