@@ -4,7 +4,6 @@ import { useNavigate, Link } from "react-router-dom";
 import { FiTrash2, FiChevronDown, FiChevronUp } from "react-icons/fi";
 import { FaLock, FaUnlock } from "react-icons/fa";
 import { io } from "socket.io-client";
-const socket = io(import.meta.env.VITE_API_URL);
 /* ================= LOADER ================= */
 const spin = keyframes`to { transform: rotate(360deg); }`;
 
@@ -133,43 +132,40 @@ export default function CompteClient() {
   const [commandes, setCommandes] = useState([]);
   const [expanded, setExpanded] = useState({});
 
-useEffect(() => {
-  if (!token) {
-    navigate("/login");
-    return;
-  }
+  useEffect(() => {
+    if (!token) {
+      navigate("/login");
+      return;
+    }
 
-  fetchCompte();
+    fetchCompte();
 
-  socket.on("connect", () => {
-    console.log("✅ Socket connecté :", socket.id);
-  });
+    const socket = io(import.meta.env.VITE_API_URL);
 
-  socket.on("commande_update", (data) => {
-    console.log("📦 update reçu :", data);
+    socket.on("connect", () => {
+      console.log("✅ Socket connecté :", socket.id);
+    });
 
-    setCommandes((prev) =>
-      prev.map((cmd) =>
-        cmd._id === data.id
-          ? { ...cmd, statusCommande: data.status }
-          : cmd
-      )
-    );
-  });
+    socket.on("commande_update", (data) => {
+      console.log("📦 update reçu :", data);
 
-  // 🔥 join room dès que user est dispo
-  if (user?._id) {
-    socket.emit("join_room", user._id);
-    console.log("🟢 room join :", user._id);
-  }
+      setCommandes((prev) =>
+        prev.map((cmd) =>
+          cmd._id === data.id ? { ...cmd, statusCommande: data.status } : cmd,
+        ),
+      );
+    });
 
-  return () => {
-    socket.off("connect");
-    socket.off("commande_update");
-    socket.disconnect();
-  };
-}, [user]);
+    if (user?._id) {
+      socket.emit("join_room", user._id);
+      console.log("🟢 room join :", user._id);
+    }
 
+    return () => {
+      socket.disconnect(); 
+    };
+  }, [user]);
+  
   const fetchCompte = async () => {
     setLoading(true);
     try {
