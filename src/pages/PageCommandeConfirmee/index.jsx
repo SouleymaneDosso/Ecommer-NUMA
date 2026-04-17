@@ -2,6 +2,7 @@ import { useEffect, useState, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import styled, { keyframes } from "styled-components";
 import { PanierContext, ThemeContext } from "../../Utils/Context";
+import { FaWhatsapp } from "react-icons/fa";
 
 /* ===== ANIMATIONS ===== */
 const fadeIn = keyframes`
@@ -23,6 +24,7 @@ const Page = styled.main`
     $isdark
       ? "radial-gradient(circle at top, #1a1a1a, #000)"
       : "linear-gradient(135deg, #f8fafc, #e2e8f0)"};
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
   font-family: "Inter", sans-serif;
   display: flex;
   justify-content: center;
@@ -36,11 +38,18 @@ const Card = styled.div`
   background: ${({ $isdark }) => ($isdark ? "#111" : "#fff")};
   border-radius: 24px;
   padding: 3rem;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.2);
   animation: ${fadeIn} 0.6s ease;
+  position: relative;
+  overflow: hidden;
 `;
 
 /* ===== HEADER ===== */
+const Header = styled.div`
+  text-align: center;
+  margin-bottom: 2rem;
+`;
+
 const Badge = styled.div`
   display: inline-block;
   padding: 8px 16px;
@@ -50,7 +59,6 @@ const Badge = styled.div`
   font-weight: bold;
   font-size: 14px;
   animation: ${pulse} 1.5s infinite;
-  margin-bottom: 1rem;
 `;
 
 /* ===== GRID ===== */
@@ -58,7 +66,6 @@ const Grid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1.5rem;
-  margin-top: 2rem;
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
@@ -73,9 +80,9 @@ const Box = styled.div`
   border: 1px solid ${({ $isdark }) => ($isdark ? "#333" : "#e5e7eb")};
 `;
 
-/* ===== PRODUIT ===== */
+/* ===== PRODUITS ===== */
 const Product = styled.div`
-  padding: 8px 0;
+  padding: 10px 0;
   border-bottom: 1px solid #ddd;
   font-size: 14px;
 `;
@@ -99,21 +106,26 @@ const Button = styled.button`
   }
 `;
 
-/* ===== WHATSAPP BUTTON ===== */
-const WhatsAppButton = styled.a`
-  display: block;
-  margin-top: 1rem;
-  text-align: center;
-  padding: 14px;
-  border-radius: 14px;
+/* ===== WHATSAPP FLOATING BUTTON ===== */
+const WhatsAppFloat = styled.a`
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
   background: #25d366;
   color: white;
-  font-weight: bold;
-  text-decoration: none;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
   transition: 0.3s;
+  z-index: 999;
 
   &:hover {
-    transform: scale(1.02);
+    transform: scale(1.1);
   }
 `;
 
@@ -151,18 +163,25 @@ export default function PageCommandeConfirmee() {
   return (
     <Page $isdark={$isdark}>
       <Card $isdark={$isdark}>
-        <Badge>🎉 Commande confirmée</Badge>
-
-        <h1>Merci {commande.client.prenom} 👋</h1>
-        <p>Votre commande a été enregistrée avec succès.</p>
+        <Header>
+          <Badge>🎉 Commande confirmée</Badge>
+          <h1 style={{ marginTop: "1rem" }}>
+            Merci {commande.client.prenom} 👋
+          </h1>
+          <p>Votre commande a été enregistrée avec succès</p>
+        </Header>
 
         <Grid>
+          {/* PAIEMENT */}
           <Box $isdark={$isdark}>
             <h3>💰 Paiement</h3>
-            <p><strong>{commande.total.toLocaleString()} FCFA</strong></p>
+            <p>
+              <strong>{commande.total.toLocaleString()} FCFA</strong>
+            </p>
             <p>Paiement à la livraison</p>
           </Box>
 
+          {/* LIVRAISON */}
           <Box $isdark={$isdark}>
             <h3>📍 Livraison</h3>
             <p>{commande.client.adresse}</p>
@@ -170,28 +189,29 @@ export default function PageCommandeConfirmee() {
           </Box>
         </Grid>
 
+        {/* PRODUITS */}
         <Box $isdark={$isdark} style={{ marginTop: "1.5rem" }}>
-          <h3>📦 Produits</h3>
+          <h3>📦 Produits commandés</h3>
 
           {commande.panier.map((item) => (
             <Product key={item.produitId}>
-              🛍 {item.nom} — x{item.quantite}
+              🛍 {item.nom} — <strong>x{item.quantite}</strong>
             </Product>
           ))}
         </Box>
-
-        {/* WHATSAPP SUPPORT */}
-        <WhatsAppButton
-          href="https://wa.me/2250700247693"
-          target="_blank"
-        >
-          💬 Contacter le support WhatsApp
-        </WhatsAppButton>
 
         <Button onClick={() => navigate("/")}>
           🏠 Retour à l’accueil
         </Button>
       </Card>
+
+      {/* ===== WHATSAPP FLOATING ===== */}
+      <WhatsAppFloat
+        href="https://wa.me/2250700247693"
+        target="_blank"
+      >
+        <FaWhatsapp size={32} />
+      </WhatsAppFloat>
     </Page>
   );
 }
