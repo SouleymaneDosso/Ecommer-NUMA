@@ -27,172 +27,98 @@ const Loader = styled.div`
 const PageWrapper = styled.main`
   max-width: 960px;
   margin: 2rem auto;
-  padding: 2rem; /* ⬅️ plus d'espace desktop */
+  padding: 2rem;
   background: #1f1f2e;
   border-radius: 22px;
   color: #f3f3f3;
 
   @media (max-width: 768px) {
     margin: 0.5rem;
-    padding: 1.5rem; /* ⬅️ plus d'espace mobile */
-    border-radius: 18px;
-  }
-`;
-
-const Carousel = styled.div`
-  background: #0f0f1a;
-  padding: 0.7rem;
-  margin-bottom: 2rem;
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  animation: scroll 15s linear infinite;
-
-  @keyframes scroll {
-    from {
-      transform: translateX(100%);
-    }
-    to {
-      transform: translateX(-100%);
-    }
+    padding: 1.5rem;
   }
 `;
 
 const Section = styled.section`
   background: #2a2a3d;
   border-radius: 20px;
-  padding: 1.8rem;
+  padding: 1.6rem;
   margin-bottom: 2rem;
-
-  @media (max-width: 768px) {
-    padding: 1.3rem;
-  }
 `;
+
 const Title = styled.h2`
-  margin-bottom: 1.2rem;
-  font-size: 1.5rem;
-  font-weight: 700;
+  margin-bottom: 1rem;
 `;
 
-/* ================= BUTTONS ================= */
-const Button = styled.button`
-   padding: 12px 18px;
-  border-radius: 14px;
-  border: none;
-  background: linear-gradient(135deg, #4f46e5, #6366f1);
+/* ================= BADGE ================= */
+const Badge = styled.span`
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  background: ${({ color }) => color};
   color: #fff;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.25s ease;
-
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.35);
-  }
-
-  @media (max-width: 600px) {
-    width: 100%;
-  }
 `;
 
-const DangerButton = styled(Button)`
-  background: linear-gradient(135deg, #ef4444, #f87171);
+/* ================= BUTTON ================= */
+const Button = styled.button`
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  background: #6366f1;
+  color: #fff;
+  cursor: pointer;
+  width: 100%;
 `;
 
 /* ================= COFFRE ================= */
 const CoffreBox = styled.div`
-  background: linear-gradient(145deg, #2a2a3d, #1c1c2b);
+  background: #1c1c2b;
   padding: 1.5rem;
-  border-radius: 22px;
-  box-shadow: 0 0 30px rgba(99, 102, 241, 0.45);
+  border-radius: 20px;
 `;
 
 const CoffreLine = styled.div`
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.2rem; 
+  margin-bottom: 1rem;
 
   @media (max-width: 600px) {
     flex-direction: column;
-    align-items: stretch;
-    gap: 0.6rem;
+    gap: 0.5rem;
   }
 `;
 
-const CoffreLabel = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.95rem;
-  line-height: 1.4;
-  word-break: break-word;
-`;
-
-const CoffreProgressBar = styled.div`
+const ProgressBar = styled.div`
   height: 10px;
-  background: #3a3a5a;
-  border-radius: 8px;
+  background: #333;
+  border-radius: 10px;
   overflow: hidden;
-  margin: 1rem 0;
 `;
 
-const CoffreProgress = styled.div`
+const Progress = styled.div`
   height: 100%;
   width: ${({ percent }) => percent}%;
-  background: linear-gradient(90deg, #4f46e5, #6366f1);
-  transition: width 0.4s ease;
+  background: #6366f1;
 `;
 
-/* ================= CARDS ================= */
-const FlexRow = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-`;
-
-const ProductCard = styled.div`
+/* ================= CARD ================= */
+const Card = styled.div`
   background: #1f1f2e;
   padding: 1.2rem;
   border-radius: 16px;
+  margin-bottom: 1rem;
+`;
+
+const Product = styled.div`
   display: flex;
-  gap: 1rem;
-  align-items: center;
-  width: 100%;
+  gap: 10px;
+  margin-bottom: 10px;
 
-  @media (max-width: 600px) {
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 1.3rem;
+  img {
+    width: 70px;
+    height: 70px;
+    border-radius: 10px;
+    object-fit: cover;
   }
-`;
-
-const ProductImage = styled.img`
-  width: 80px;
-  height: 80px;
-
-  @media (max-width: 600px) {
-    width: 100%;
-    height: auto;
-    max-height: 160px;
-  }
-`;
-
-const TrashIcon = styled(FiTrash2)`
-  color: #ef4444;
-  cursor: pointer;
-`;
-
-const CommandHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  cursor: pointer;
-`;
-
-const CommandContent = styled.div`
-  margin-top: 1rem;
 `;
 
 /* ================= COMPONENT ================= */
@@ -228,9 +154,6 @@ export default function CompteClient() {
     }
   };
 
-  const getMainImage = (p) =>
-    p?.images?.[0]?.url || "https://via.placeholder.com/80";
-
   if (loading) {
     return (
       <LoaderWrapper>
@@ -239,13 +162,12 @@ export default function CompteClient() {
     );
   }
 
+  /* ================= CALCUL ================= */
   const totalPaid = commandes.reduce((total, c) => {
-    // ✅ CAS COD
     if (c.modePaiement === "cod") {
-      return total + (c.isPaid ? c.total : 0);
+      return total + (c.statusCommande === "DELIVERED" ? c.total : 0);
     }
 
-    // ✅ CAS NORMAL (paiement en ligne)
     const paid = (c.paiements || [])
       .filter((p) => p.status === "PAID")
       .reduce((a, b) => a + b.amountExpected, 0);
@@ -256,186 +178,148 @@ export default function CompteClient() {
   const totalAmount = commandes.reduce((a, c) => a + c.total, 0);
   const progress = totalAmount ? (totalPaid / totalAmount) * 100 : 0;
 
+  /* ================= UI ================= */
+  const getStatusBadge = (c) => {
+    if (c.statusCommande === "DELIVERED")
+      return <Badge color="#22c55e">Livré</Badge>;
+
+    if (c.statusCommande === "SHIPPED")
+      return <Badge color="#3b82f6">En livraison</Badge>;
+
+    if (c.statusCommande === "CONFIRMED")
+      return <Badge color="#22c55e">Confirmé</Badge>;
+
+    return <Badge color="#f59e0b">En attente</Badge>;
+  };
+
   return (
     <PageWrapper>
-      <Carousel>
-        Bienvenue dans votre coffre 💰 — Paiement sécurisé — Numa vous protège
-      </Carousel>
-
       <Section>
-        <Title>Bonjour {user?.username}</Title>
+        <Title>👋 Bonjour {user?.username}</Title>
         <p>{user?.email}</p>
-        <DangerButton
+        <Button
           onClick={() => {
             localStorage.removeItem("token");
             navigate("/login");
           }}
         >
           Se déconnecter
-        </DangerButton>
+        </Button>
       </Section>
 
+      {/* ================= COFFRE ================= */}
       <Section>
-        <Title>Votre Coffre</Title>
+        <Title>💰 Coffre</Title>
         <CoffreBox>
           <CoffreLine>
-            <span>Montant payé</span>
-            <strong>{totalPaid.toLocaleString()} FCFA</strong>
+            <span>Payé</span>
+            <strong>{totalPaid} FCFA</strong>
           </CoffreLine>
 
           <CoffreLine>
-            <span>Montant restant</span>
-            <strong>{(totalAmount - totalPaid).toLocaleString()} FCFA</strong>
+            <span>Restant</span>
+            <strong>{totalAmount - totalPaid} FCFA</strong>
           </CoffreLine>
 
-          <CoffreProgressBar>
-            <CoffreProgress percent={progress} />
-          </CoffreProgressBar>
-
-          {commandes.flatMap((c) =>
-            c.modePaiement === "cod" ? (
-              <CoffreLine key={c._id}>
-                <CoffreLabel>
-                  Commande #{c._id.slice(-6)} — Paiement à la livraison{" "}
-                  {c.statusCommande === "DELIVERED" ? (
-                    <>
-                      <FaUnlock />
-                      <span style={{ color: "#22c55e", fontWeight: "bold" }}>
-                        Payé
-                      </span>
-                    </>
-                  ) : c.statusCommande === "CONFIRMED" ? (
-                    <span style={{ color: "#22c55e" }}>Confirmée</span>
-                  ) : (
-                    <span style={{ color: "#fbbf24" }}>En attente</span>
-                  )}
-                </CoffreLabel>
-              </CoffreLine>
-            ) : (
-              c.paiements.map((p) => {
-                const paiementRecus = c.paiementsRecus?.find(
-                  (pr) => pr.step === p.step,
-                );
-
-                return (
-                  <CoffreLine key={`${c._id}-${p.step}`}>
-                    <CoffreLabel>
-                      Commande #{c._id.slice(-6)} — Étape {p.step}{" "}
-                      {p.status === "PAID" ? (
-                        <FaUnlock />
-                      ) : paiementRecus?.status === "PENDING" ? (
-                        <span style={{ color: "#fbbf24" }}>
-                          En attente de confirmation
-                        </span>
-                      ) : paiementRecus?.status === "REJECTED" ? (
-                        <span style={{ color: "#ef4444" }}>
-                          Paiement rejeté
-                        </span>
-                      ) : (
-                        <FaLock />
-                      )}
-                    </CoffreLabel>
-
-                    {p.status !== "PAID" &&
-                      (!paiementRecus ||
-                        paiementRecus.status === "REJECTED") && (
-                        <Button
-                          onClick={() => navigate(`/paiement-semi/${c._id}`)}
-                        >
-                          Payer cette étape
-                        </Button>
-                      )}
-                  </CoffreLine>
-                );
-              })
-            ),
-          )}
+          <ProgressBar>
+            <Progress percent={progress} />
+          </ProgressBar>
         </CoffreBox>
       </Section>
 
+      {/* ================= FAVORIS ================= */}
       <Section>
-        <Title>Favoris</Title>
-        <FlexRow>
-          {favorites.map((f) => (
-            <ProductCard key={f._id}>
-              <ProductImage src={getMainImage(f.productId)} />
-              <div style={{ flex: 1 }}>
-                <p>{f.productId?.title}</p>
-                <p>{f.productId?.price?.toLocaleString()} FCFA</p>
-              </div>
-              <TrashIcon
-                size={20}
-                onClick={async () => {
-                  if (!token) return navigate("/login");
-                  try {
-                    const res = await fetch(
-                      `${import.meta.env.VITE_API_URL}/api/favorites/${f._id}`,
-                      {
-                        method: "DELETE",
-                        headers: { Authorization: `Bearer ${token}` },
-                      },
-                    );
+        <Title>❤️ Favoris</Title>
 
-                    if (res.ok) {
-                      // Supprime le favori de l'état pour mise à jour instantanée
-                      setFavorites((prev) =>
-                        prev.filter((fav) => fav._id !== f._id),
-                      );
-                    } else {
-                      const data = await res.json();
-                      console.error("Erreur suppression :", data.message);
-                    }
-                  } catch (err) {
-                    console.error("Erreur réseau :", err);
+        {favorites.length === 0 ? (
+          <p>Aucun favori pour le moment</p>
+        ) : (
+          favorites.map((f) => (
+            <Card key={f._id}>
+              <Product>
+                <img
+                  src={
+                    f.productId?.images?.[0]?.url ||
+                    "https://via.placeholder.com/80"
                   }
-                }}
-              />
-            </ProductCard>
-          ))}
-        </FlexRow>
+                />
+
+                <div style={{ flex: 1 }}>
+                  <Link to={`/produit/${f.productId?._id}`}>
+                    {f.productId?.title}
+                  </Link>
+                  <p>{f.productId?.price} FCFA</p>
+                </div>
+
+                <FiTrash2
+                  style={{ color: "red", cursor: "pointer" }}
+                  size={20}
+                  onClick={async () => {
+                    try {
+                      const res = await fetch(
+                        `${import.meta.env.VITE_API_URL}/api/favorites/${f._id}`,
+                        {
+                          method: "DELETE",
+                          headers: {
+                            Authorization: `Bearer ${token}`,
+                          },
+                        },
+                      );
+
+                      if (res.ok) {
+                        setFavorites((prev) =>
+                          prev.filter((item) => item._id !== f._id),
+                        );
+                      }
+                    } catch (err) {
+                      console.error(err);
+                    }
+                  }}
+                />
+              </Product>
+            </Card>
+          ))
+        )}
       </Section>
 
+      {/* ================= COMMANDES ================= */}
       <Section>
-        <Title>Commandes</Title>
+        <Title>📦 Commandes</Title>
+
         {commandes.map((c) => (
-          <ProductCard key={c._id} style={{ flexDirection: "column" }}>
-            <CommandHeader
+          <Card key={c._id}>
+            <div
               onClick={() => setExpanded((p) => ({ ...p, [c._id]: !p[c._id] }))}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                cursor: "pointer",
+              }}
             >
               <div>
-                <p>Commande #{c._id.slice(-6)}</p>
-                <p>Total: {c.total.toLocaleString()} FCFA</p>
+                <strong>Commande #{c._id.slice(-6)}</strong>
+                <p>{c.total} FCFA</p>
               </div>
-              {expanded[c._id] ? <FiChevronUp /> : <FiChevronDown />}
-            </CommandHeader>
+
+              {getStatusBadge(c)}
+            </div>
 
             {expanded[c._id] && (
-              <CommandContent>
+              <div style={{ marginTop: "10px" }}>
                 {c.panier.map((p) => (
-                  <div
-                    key={p.produitId}
-                    style={{
-                      display: "flex",
-                      gap: "10px",
-                      marginBottom: "8px",
-                    }}
-                  >
-                    <ProductImage
-                      src={
-                        p.images?.[0]?.url ||
-                        p.produitId?.images?.[0]?.url ||
-                        "https://via.placeholder.com/80"
-                      }
+                  <Product key={p.produitId}>
+                    <img
+                      src={p.images?.[0]?.url || p.produitId?.images?.[0]?.url}
                     />
                     <div>
                       <Link to={`/produit/${p.produitId._id}`}>{p.nom}</Link>
                       <p>Qté: {p.quantite}</p>
                     </div>
-                  </div>
+                  </Product>
                 ))}
-              </CommandContent>
+              </div>
             )}
-          </ProductCard>
+          </Card>
         ))}
       </Section>
     </PageWrapper>
