@@ -1,5 +1,5 @@
 import { createContext, useEffect, useRef } from "react";
-import { socket } from "../components/socket";
+import { socket } from "../../components/socket";
 import toast from "react-hot-toast";
 
 export const NotificationContext = createContext();

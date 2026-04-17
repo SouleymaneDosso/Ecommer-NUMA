@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import styled, { keyframes } from "styled-components";
 import { useNavigate, Link } from "react-router-dom";
 import { FiTrash2, FiChevronDown, FiChevronUp } from "react-icons/fi";
-import { FaLock, FaUnlock } from "react-icons/fa";
 import { socket } from "../../components/socket";
 import toast from "react-hot-toast";
 import { useRef } from "react";
@@ -224,9 +223,10 @@ useEffect(() => {
     socket.on("commande_update", handleUpdate);
 
     return () => {
-      socket.off("commande_update", handleUpdate); // ⚠️ important
+      socket.off("commande_update", handleUpdate); 
+      socket.off("connect");
     };
-  }, [user?._id]);
+  }, [user?._id, token]);
   const fetchCompte = async () => {
     setLoading(true);
     try {
