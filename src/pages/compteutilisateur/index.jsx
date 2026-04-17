@@ -132,40 +132,46 @@ export default function CompteClient() {
   const [commandes, setCommandes] = useState([]);
   const [expanded, setExpanded] = useState({});
 
-  useEffect(() => {
-    if (!token) {
-      navigate("/login");
-      return;
-    }
+useEffect(() => {
+  if (!token) {
+    navigate("/login");
+    return;
+  }
 
-    fetchCompte();
+  fetchCompte();
+}, []);
 
-    const socket = io(import.meta.env.VITE_API_URL);
 
-    socket.on("connect", () => {
-      console.log("✅ Socket connecté :", socket.id);
-    });
 
-    socket.on("commande_update", (data) => {
-      console.log("📦 update reçu :", data);
+useEffect(() => {
+  if (!user?._id) return;
 
-      setCommandes((prev) =>
-        prev.map((cmd) =>
-          cmd._id === data.id ? { ...cmd, statusCommande: data.status } : cmd,
-        ),
-      );
-    });
+  const socket = io(import.meta.env.VITE_API_URL);
 
-    if (user?._id) {
-      socket.emit("join_room", user._id);
-      console.log("🟢 room join :", user._id);
-    }
+  socket.on("connect", () => {
+    console.log("✅ Socket connecté :", socket.id);
 
-    return () => {
-      socket.disconnect(); 
-    };
-  }, [user]);
-  
+    socket.emit("join_room", user._id);
+    console.log("🟢 room join :", user._id);
+  });
+
+  socket.on("commande_update", (data) => {
+    console.log("📦 update reçu :", data);
+
+    setCommandes((prev) =>
+      prev.map((cmd) =>
+        cmd._id === data.id
+          ? { ...cmd, statusCommande: data.status }
+          : cmd
+      )
+    );
+  });
+
+  return () => {
+    socket.disconnect();
+  };
+}, [user?._id]);
+
   const fetchCompte = async () => {
     setLoading(true);
     try {
