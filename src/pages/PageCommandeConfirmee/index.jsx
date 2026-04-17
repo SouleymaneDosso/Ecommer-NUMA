@@ -31,7 +31,7 @@ const Page = styled.main`
   align-items: center;
 `;
 
-/* ===== CARD ===== */
+/* ===== CARD PRINCIPALE ===== */
 const Card = styled.div`
   width: 100%;
   max-width: 900px;
@@ -105,30 +105,27 @@ const Button = styled.button`
     transform: scale(1.02);
   }
 `;
-
-/* ===== WHATSAPP FLOATING BUTTON ===== */
 const WhatsAppFloat = styled.a`
   position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: #25d366;
-  color: white;
+  bottom: 25px;
+  right: 25px;
   width: 60px;
   height: 60px;
+  background: #25d366;
+  color: white;
   border-radius: 50%;
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
+  font-size: 32px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
-  cursor: pointer;
+  z-index: 9999;
   transition: 0.3s;
-  z-index: 999;
 
   &:hover {
     transform: scale(1.1);
   }
 `;
-
 export default function PageCommandeConfirmee() {
   const { id } = useParams();
   const { toutSupprimer } = useContext(PanierContext);
@@ -200,17 +197,15 @@ export default function PageCommandeConfirmee() {
           ))}
         </Box>
 
-        <Button onClick={() => navigate("/")}>
-          🏠 Retour à l’accueil
-        </Button>
+        <Button onClick={() => navigate("/")}>🏠 Retour à l’accueil</Button>
       </Card>
 
-      {/* ===== WHATSAPP FLOATING ===== */}
       <WhatsAppFloat
         href="https://wa.me/2250700247693"
         target="_blank"
+        rel="noopener noreferrer"
       >
-        <FaWhatsapp size={32} />
+        <FaWhatsapp />
       </WhatsAppFloat>
     </Page>
   );
