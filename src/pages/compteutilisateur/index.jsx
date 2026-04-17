@@ -142,15 +142,15 @@ audioRef.current.volume = 1;
 
 
 const playSound = () => {
-  const audio = audioRef.current;
-  audio.currentTime = 0;
+  const audio = new Audio("/notification.mp3");
+  audio.volume = 1;
 
   audio.play().catch((err) => {
-    console.log("🔇 son bloqué :", err);
+    console.log("🔇 encore bloqué :", err);
   });
 };
 
-  useEffect(() => {
+useEffect(() => {
   const unlockAudio = () => {
     const audio = new Audio("/notification.mp3");
     audio.play().catch(() => {});
