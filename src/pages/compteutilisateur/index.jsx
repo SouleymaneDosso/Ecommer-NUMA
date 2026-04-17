@@ -136,6 +136,29 @@ export default function CompteClient() {
   const [notifCount, setNotifCount] = useState(0);
 
   useEffect(() => {
+  const unlockAudio = () => {
+    const audio = new Audio("/notification.mp3");
+    audio.play().catch(() => {});
+    window.removeEventListener("click", unlockAudio);
+  };
+
+  window.addEventListener("click", unlockAudio);
+
+  return () => {
+    window.removeEventListener("click", unlockAudio);
+  };
+}, []);
+// 🔊 fonction son notification
+const playSound = () => {
+  const audio = new Audio("/notification.mp3");
+  audio.volume = 1;
+
+  audio.play().catch((err) => {
+    console.log("🔇 son bloqué :", err);
+  });
+};
+
+  useEffect(() => {
     if (!token) {
       navigate("/login");
       return;
@@ -175,7 +198,7 @@ export default function CompteClient() {
       toast.success(message);
 
       // 🔊 son
-      audio.play().catch(() => {});
+   playSound();
     };
 
     socket.on("connect", () => {
