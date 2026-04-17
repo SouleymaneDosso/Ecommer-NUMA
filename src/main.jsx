@@ -44,6 +44,7 @@ import AdminCommandes from "./pages/AdminCommande";
 import AdminPaiements from "./pages/AdminPaiements";
 import PaiementTroisFois from "./pages/paiement-3x";
 import PageCommandeConfirmee from "./pages/PageCommandeConfirmee";
+import { Toaster } from "react-hot-toast";
 import "./i18n";
 
 // --- Layout pour les pages publiques ---
@@ -52,6 +53,7 @@ const PublicLayout = ({ children }) => {
   const heroPage = location.pathname === "/";
   return (
     <>
+    <Toaster position="top-right" />
       <ScrollToTop />
       <GlobalStyle heroPage={heroPage} />
       <Header />

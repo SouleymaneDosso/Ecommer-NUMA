@@ -3,7 +3,9 @@ import styled, { keyframes } from "styled-components";
 import { useNavigate, Link } from "react-router-dom";
 import { FiTrash2, FiChevronDown, FiChevronUp } from "react-icons/fi";
 import { FaLock, FaUnlock } from "react-icons/fa";
-import { io } from "socket.io-client";
+import { socket } from "../../components/socket";
+import toast from "react-hot-toast";
+
 /* ================= LOADER ================= */
 const spin = keyframes`to { transform: rotate(360deg); }`;
 
@@ -131,47 +133,61 @@ export default function CompteClient() {
   const [favorites, setFavorites] = useState([]);
   const [commandes, setCommandes] = useState([]);
   const [expanded, setExpanded] = useState({});
+  const [notifCount, setNotifCount] = useState(0);
 
-useEffect(() => {
-  if (!token) {
-    navigate("/login");
-    return;
-  }
+  useEffect(() => {
+    if (!token) {
+      navigate("/login");
+      return;
+    }
 
-  fetchCompte();
-}, []);
+    fetchCompte();
+  }, []);
 
+  useEffect(() => {
+    if (!user?._id) return;
 
+    socket.connect();
 
-useEffect(() => {
-  if (!user?._id) return;
+    const audio = new Audio("/notification.mp3");
 
-  const socket = io(import.meta.env.VITE_API_URL);
+    const handleUpdate = (data) => {
+      console.log("📦 update reçu :", data);
 
-  socket.on("connect", () => {
-    console.log("✅ Socket connecté :", socket.id);
+      // 🔥 update commandes
+      setCommandes((prev) =>
+        prev.map((cmd) =>
+          cmd._id === data.id ? { ...cmd, statusCommande: data.status } : cmd,
+        ),
+      );
 
-    socket.emit("join_room", user._id);
-    console.log("🟢 room join :", user._id);
-  });
+      // 🔴 notif badge
+      setNotifCount((prev) => prev + 1);
 
-  socket.on("commande_update", (data) => {
-    console.log("📦 update reçu :", data);
+      // 🔔 message
+      let message = "Mise à jour commande";
 
-    setCommandes((prev) =>
-      prev.map((cmd) =>
-        cmd._id === data.id
-          ? { ...cmd, statusCommande: data.status }
-          : cmd
-      )
-    );
-  });
+      if (data.status === "CONFIRMED") message = "✅ Commande confirmée";
+      if (data.status === "SHIPPED") message = "🚚 En livraison";
+      if (data.status === "DELIVERED") message = "🎉 Livrée";
 
-  return () => {
-    socket.disconnect();
-  };
-}, [user?._id]);
+      // 🔥 toast
+      toast.success(message);
 
+      // 🔊 son
+      audio.play().catch(() => {});
+    };
+
+    socket.on("connect", () => {
+      socket.emit("join_room", user._id);
+    });
+
+    socket.on("commande_update", handleUpdate);
+
+    return () => {
+      socket.off("commande_update", handleUpdate); // ⚠️ important
+    };
+  }, [user?._id]);
   const fetchCompte = async () => {
     setLoading(true);
     try {
@@ -230,6 +246,25 @@ useEffect(() => {
   return (
     <PageWrapper>
       <Section>
+        <div style={{ position: "relative", display: "inline-block" }}>
+          🔔
+          {notifCount > 0 && (
+            <span
+              style={{
+                position: "absolute",
+                top: "-5px",
+                right: "-10px",
+                background: "red",
+                color: "white",
+                borderRadius: "50%",
+                padding: "2px 6px",
+                fontSize: "12px",
+              }}
+            >
+              {notifCount}
+            </span>
+          )}
+        </div>
         <Title>👋 Bonjour {user?.username}</Title>
         <p>{user?.email}</p>
         <Button
