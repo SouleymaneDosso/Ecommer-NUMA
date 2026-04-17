@@ -1,6 +1,11 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter as Router, Routes, Route,useLocation  } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useLocation,
+} from "react-router-dom";
 import { useEffect } from "react";
 import GlobalStyle from "./GlobaleStyle";
 import { ToggleTheme } from "./Utils/Context";
@@ -45,6 +50,7 @@ import AdminPaiements from "./pages/AdminPaiements";
 import PaiementTroisFois from "./pages/paiement-3x";
 import PageCommandeConfirmee from "./pages/PageCommandeConfirmee";
 import { Toaster } from "react-hot-toast";
+import { NotificationProvider } from "./Utils/Context/NotificationProvider";
 import "./i18n";
 
 // --- Layout pour les pages publiques ---
@@ -53,7 +59,7 @@ const PublicLayout = ({ children }) => {
   const heroPage = location.pathname === "/";
   return (
     <>
-    <Toaster position="top-right" />
+      <Toaster position="top-right" />
       <ScrollToTop />
       <GlobalStyle heroPage={heroPage} />
       <Header />
@@ -74,253 +80,255 @@ createRoot(document.getElementById("root")).render(
     <Router>
       <ToggleTheme>
         <Panier>
-          <GlobalStyle />
-          <SEO />
-          <Routes>
-            {/* Pages publiques */}
-            <Route
-              path="/"
-              element={
-                <PublicLayout>
-                  <Home />
-                </PublicLayout>
-              }
-            />
-            <Route
-              path="/homme"
-              element={
-                <PublicLayout>
-                  <Homme />
-                </PublicLayout>
-              }
-            />
-            <Route
-              path="/femme"
-              element={
-                <PublicLayout>
-                  <Femme />
-                </PublicLayout>
-              }
-            />
-            <Route
-              path="/enfant"
-              element={
-                <PublicLayout>
-                  <Enfant />
-                </PublicLayout>
-              }
-            />
+          <NotificationProvider userId={localStorage.getItem("userId")}>
+            <GlobalStyle />
+            <SEO />
+            <Routes>
+              {/* Pages publiques */}
+              <Route
+                path="/"
+                element={
+                  <PublicLayout>
+                    <Home />
+                  </PublicLayout>
+                }
+              />
+              <Route
+                path="/homme"
+                element={
+                  <PublicLayout>
+                    <Homme />
+                  </PublicLayout>
+                }
+              />
+              <Route
+                path="/femme"
+                element={
+                  <PublicLayout>
+                    <Femme />
+                  </PublicLayout>
+                }
+              />
+              <Route
+                path="/enfant"
+                element={
+                  <PublicLayout>
+                    <Enfant />
+                  </PublicLayout>
+                }
+              />
 
-            <Route
-              path="/collections"
-              element={
-                <PublicLayout>
-                  <Collection />
-                </PublicLayout>
-              }
-            />
-            <Route
-              path="/paiement-3x"
-              element={
-                <PublicLayout>
-                  <PaiementTroisFois />
-                </PublicLayout>
-              }
-            />
-            <Route
-              path="/new"
-              element={
-                <PublicLayout>
-                  <New />
-                </PublicLayout>
-              }
-            />
-            <Route
-              path="/promo"
-              element={
-                <PublicLayout>
-                  <Promo />
-                </PublicLayout>
-              }
-            />
-            
-            <Route
-              path="/commande-confirmee/:id"
-              element={
-                <PublicLayout>
-                  <PageCommandeConfirmee />
-                </PublicLayout>
-              }
-            />
-            <Route
-              path="/search"
-              element={
-                <PublicLayout>
-                  <Search />
-                </PublicLayout>
-              }
-            />
+              <Route
+                path="/collections"
+                element={
+                  <PublicLayout>
+                    <Collection />
+                  </PublicLayout>
+                }
+              />
+              <Route
+                path="/paiement-3x"
+                element={
+                  <PublicLayout>
+                    <PaiementTroisFois />
+                  </PublicLayout>
+                }
+              />
+              <Route
+                path="/new"
+                element={
+                  <PublicLayout>
+                    <New />
+                  </PublicLayout>
+                }
+              />
+              <Route
+                path="/promo"
+                element={
+                  <PublicLayout>
+                    <Promo />
+                  </PublicLayout>
+                }
+              />
 
-            <Route
-              path="/apropo"
-              element={
-                <PublicLayout>
-                  <Apropos />
-                </PublicLayout>
-              }
-            />
-            <Route
-              path="/faq"
-              element={
-                <PublicLayout>
-                  <FAQ />
-                </PublicLayout>
-              }
-            />
-            <Route
-              path="/politiqueretour"
-              element={
-                <PublicLayout>
-                  <ReturnPolicy />
-                </PublicLayout>
-              }
-            />
-            <Route
-              path="/contact"
-              element={
-                <PublicLayout>
-                  <Contact />
-                </PublicLayout>
-              }
-            />
-            <Route
-              path="/livraison"
-              element={
-                <PublicLayout>
-                  <Delivery />
-                </PublicLayout>
-              }
-            />
-            <Route
-              path="/conditionUtilisation"
-              element={
-                <PublicLayout>
-                  <TermsOfUse />
-                </PublicLayout>
-              }
-            />
-            <Route
-              path="/favoris"
-              element={
-                <PublicLayout>
-                  <Favorie />
-                </PublicLayout>
-              }
-            />
-            <Route
-              path="/produit/:id"
-              element={
-                <PublicLayout>
-                  <Produit />
-                </PublicLayout>
-              }
-            />
-            <Route
-              path="/panier"
-              element={
-                <PublicLayout>
-                  <PagePanier />
-                </PublicLayout>
-              }
-            />
+              <Route
+                path="/commande-confirmee/:id"
+                element={
+                  <PublicLayout>
+                    <PageCommandeConfirmee />
+                  </PublicLayout>
+                }
+              />
+              <Route
+                path="/search"
+                element={
+                  <PublicLayout>
+                    <Search />
+                  </PublicLayout>
+                }
+              />
 
-            <Route
-              path="/signup"
-              element={
-                <PublicLayout>
-                  <Signup />
-                </PublicLayout>
-              }
-            />
-            <Route
-              path="/login"
-              element={
-                <PublicLayout>
-                  <Login />
-                </PublicLayout>
-              }
-            />
-            <Route
-              path="/forgot"
-              element={
-                <PublicLayout>
-                  <ForgotPassword />
-                </PublicLayout>
-              }
-            />
+              <Route
+                path="/apropo"
+                element={
+                  <PublicLayout>
+                    <Apropos />
+                  </PublicLayout>
+                }
+              />
+              <Route
+                path="/faq"
+                element={
+                  <PublicLayout>
+                    <FAQ />
+                  </PublicLayout>
+                }
+              />
+              <Route
+                path="/politiqueretour"
+                element={
+                  <PublicLayout>
+                    <ReturnPolicy />
+                  </PublicLayout>
+                }
+              />
+              <Route
+                path="/contact"
+                element={
+                  <PublicLayout>
+                    <Contact />
+                  </PublicLayout>
+                }
+              />
+              <Route
+                path="/livraison"
+                element={
+                  <PublicLayout>
+                    <Delivery />
+                  </PublicLayout>
+                }
+              />
+              <Route
+                path="/conditionUtilisation"
+                element={
+                  <PublicLayout>
+                    <TermsOfUse />
+                  </PublicLayout>
+                }
+              />
+              <Route
+                path="/favoris"
+                element={
+                  <PublicLayout>
+                    <Favorie />
+                  </PublicLayout>
+                }
+              />
+              <Route
+                path="/produit/:id"
+                element={
+                  <PublicLayout>
+                    <Produit />
+                  </PublicLayout>
+                }
+              />
+              <Route
+                path="/panier"
+                element={
+                  <PublicLayout>
+                    <PagePanier />
+                  </PublicLayout>
+                }
+              />
 
-            <Route
-              path="/reset-password/:token"
-              element={
-                <PublicLayout>
-                  <ResetPassword />
-                </PublicLayout>
-              }
-            />
+              <Route
+                path="/signup"
+                element={
+                  <PublicLayout>
+                    <Signup />
+                  </PublicLayout>
+                }
+              />
+              <Route
+                path="/login"
+                element={
+                  <PublicLayout>
+                    <Login />
+                  </PublicLayout>
+                }
+              />
+              <Route
+                path="/forgot"
+                element={
+                  <PublicLayout>
+                    <ForgotPassword />
+                  </PublicLayout>
+                }
+              />
 
-            <Route
-              path="/compte"
-              element={
-                <PublicLayout>
-                  <CompteClient />
-                </PublicLayout>
-              }
-            />
-            <Route
-              path="/checkout"
-              element={
-                <PublicLayout>
-                  <PaiementWave />
-                </PublicLayout>
-              }
-            />
+              <Route
+                path="/reset-password/:token"
+                element={
+                  <PublicLayout>
+                    <ResetPassword />
+                  </PublicLayout>
+                }
+              />
 
-            <Route
-              path="/paiement-semi/:id"
-              element={
-                <PublicLayout>
-                  <PaiementSemiManuel />
-                </PublicLayout>
-              }
-            />
-            <Route
-              path="/merci"
-              element={
-                <PublicLayout>
-                  <Merci />
-                </PublicLayout>
-              }
-            />
+              <Route
+                path="/compte"
+                element={
+                  <PublicLayout>
+                    <CompteClient />
+                  </PublicLayout>
+                }
+              />
+              <Route
+                path="/checkout"
+                element={
+                  <PublicLayout>
+                    <PaiementWave />
+                  </PublicLayout>
+                }
+              />
 
-            <Route
-              path="*"
-              element={
-                <PublicLayout>
-                  <Erreur />
-                </PublicLayout>
-              }
-            />
+              <Route
+                path="/paiement-semi/:id"
+                element={
+                  <PublicLayout>
+                    <PaiementSemiManuel />
+                  </PublicLayout>
+                }
+              />
+              <Route
+                path="/merci"
+                element={
+                  <PublicLayout>
+                    <Merci />
+                  </PublicLayout>
+                }
+              />
 
-            {/* Pages admin sans Header et Footer */}
-            <Route path="/admin/login" element={<AdminLogin />} />
+              <Route
+                path="*"
+                element={
+                  <PublicLayout>
+                    <Erreur />
+                  </PublicLayout>
+                }
+              />
 
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route path="dashboard" element={<AdminDashboard />} />
-              <Route path="products" element={<AdminProducts />} />
-              <Route path="orders" element={<AdminCommandes />} />
-              <Route path="paiement" element={<AdminPaiements />} />
-            </Route>
-          </Routes>
+              {/* Pages admin sans Header et Footer */}
+              <Route path="/admin/login" element={<AdminLogin />} />
+
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route path="dashboard" element={<AdminDashboard />} />
+                <Route path="products" element={<AdminProducts />} />
+                <Route path="orders" element={<AdminCommandes />} />
+                <Route path="paiement" element={<AdminPaiements />} />
+              </Route>
+            </Routes>
+          </NotificationProvider>
         </Panier>
       </ToggleTheme>
     </Router>
