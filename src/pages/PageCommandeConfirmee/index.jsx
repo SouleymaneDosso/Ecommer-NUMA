@@ -31,7 +31,7 @@ const Page = styled.main`
   align-items: center;
 `;
 
-/* ===== CARD ===== */
+/* ===== CARD PRINCIPALE ===== */
 const Card = styled.div`
   width: 100%;
   max-width: 900px;
@@ -106,26 +106,26 @@ const Button = styled.button`
   }
 `;
 
-/* ===== WHATSAPP FLOATING BUTTON ===== */
+/* ===== WHATSAPP FLOAT ===== */
 const WhatsAppFloat = styled.a`
   position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: #25d366;
-  color: white;
+  bottom: 25px;
+  right: 25px;
   width: 60px;
   height: 60px;
+  background: #25D366;
+  color: white;
   border-radius: 50%;
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
+  font-size: 32px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
-  cursor: pointer;
+  z-index: 9999;
   transition: 0.3s;
-  z-index: 999;
 
   &:hover {
-    transform: scale(1.1);
+    transform: scale(1.15);
   }
 `;
 
@@ -172,7 +172,6 @@ export default function PageCommandeConfirmee() {
         </Header>
 
         <Grid>
-          {/* PAIEMENT */}
           <Box $isdark={$isdark}>
             <h3>💰 Paiement</h3>
             <p>
@@ -181,7 +180,6 @@ export default function PageCommandeConfirmee() {
             <p>Paiement à la livraison</p>
           </Box>
 
-          {/* LIVRAISON */}
           <Box $isdark={$isdark}>
             <h3>📍 Livraison</h3>
             <p>{commande.client.adresse}</p>
@@ -189,7 +187,6 @@ export default function PageCommandeConfirmee() {
           </Box>
         </Grid>
 
-        {/* PRODUITS */}
         <Box $isdark={$isdark} style={{ marginTop: "1.5rem" }}>
           <h3>📦 Produits commandés</h3>
 
@@ -205,12 +202,13 @@ export default function PageCommandeConfirmee() {
         </Button>
       </Card>
 
-      {/* ===== WHATSAPP FLOATING ===== */}
+      {/* WHATSAPP FLOAT BUTTON */}
       <WhatsAppFloat
         href="https://wa.me/2250700247693"
         target="_blank"
+        rel="noopener noreferrer"
       >
-        <FaWhatsapp size={32} />
+        <FaWhatsapp />
       </WhatsAppFloat>
     </Page>
   );
