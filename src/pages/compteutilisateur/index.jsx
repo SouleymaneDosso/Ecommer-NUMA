@@ -137,31 +137,42 @@ export default function CompteClient() {
   const [notifCount, setNotifCount] = useState(0);
 
 
-  const audioRef = useRef(new Audio("/notification.mp3"));
-audioRef.current.volume = 1;
+const audioRef = useRef(null);
+
+useEffect(() => {
+  audioRef.current = new Audio("/notification.mp3");
+  audioRef.current.volume = 1;
+}, []);
 
 
 const playSound = () => {
-  const audio = new Audio("/notification.mp3");
-  audio.volume = 1;
+  if (!audioRef.current) return;
 
-  audio.play().catch((err) => {
-    console.log("🔇 encore bloqué :", err);
+  audioRef.current.currentTime = 0;
+
+  audioRef.current.play().catch((err) => {
+    console.log("🔇 bloqué :", err);
   });
 };
 
 useEffect(() => {
   const unlockAudio = () => {
-    const audio = new Audio("/notification.mp3");
-    audio.play().catch(() => {});
+    if (!audioRef.current) return;
+
+    audioRef.current
+      .play()
+      .then(() => {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      })
+      .catch(() => {});
+
     window.removeEventListener("click", unlockAudio);
   };
 
   window.addEventListener("click", unlockAudio);
 
-  return () => {
-    window.removeEventListener("click", unlockAudio);
-  };
+  return () => window.removeEventListener("click", unlockAudio);
 }, []);
 
 
