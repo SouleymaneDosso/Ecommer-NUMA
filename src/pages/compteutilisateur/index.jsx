@@ -5,6 +5,7 @@ import { FiTrash2, FiChevronDown, FiChevronUp } from "react-icons/fi";
 import { FaLock, FaUnlock } from "react-icons/fa";
 import { socket } from "../../components/socket";
 import toast from "react-hot-toast";
+import { useRef } from "react";
 
 /* ================= LOADER ================= */
 const spin = keyframes`to { transform: rotate(360deg); }`;
@@ -135,6 +136,20 @@ export default function CompteClient() {
   const [expanded, setExpanded] = useState({});
   const [notifCount, setNotifCount] = useState(0);
 
+
+  const audioRef = useRef(new Audio("/notification.mp3"));
+audioRef.current.volume = 1;
+
+
+const playSound = () => {
+  const audio = audioRef.current;
+  audio.currentTime = 0;
+
+  audio.play().catch((err) => {
+    console.log("🔇 son bloqué :", err);
+  });
+};
+
   useEffect(() => {
   const unlockAudio = () => {
     const audio = new Audio("/notification.mp3");
@@ -148,15 +163,7 @@ export default function CompteClient() {
     window.removeEventListener("click", unlockAudio);
   };
 }, []);
-// 🔊 fonction son notification
-const playSound = () => {
-  const audio = new Audio("/notification.mp3");
-  audio.volume = 1;
 
-  audio.play().catch((err) => {
-    console.log("🔇 son bloqué :", err);
-  });
-};
 
   useEffect(() => {
     if (!token) {
@@ -171,8 +178,6 @@ const playSound = () => {
     if (!user?._id) return;
 
     socket.connect();
-
-    const audio = new Audio("/notification.mp3");
 
     const handleUpdate = (data) => {
       console.log("📦 update reçu :", data);
