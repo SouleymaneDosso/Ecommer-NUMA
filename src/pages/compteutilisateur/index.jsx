@@ -224,10 +224,19 @@ export default function CompteClient() {
     );
   }
 
-  const totalPaid = commandes
-    .flatMap((c) => c.paiements || [])
-    .filter((p) => p.status === "PAID")
-    .reduce((a, b) => a + b.amountExpected, 0);
+  const totalPaid = commandes.reduce((total, c) => {
+    // ✅ CAS COD
+    if (c.modePaiement === "cod") {
+      return total + (c.isPaid ? c.total : 0);
+    }
+
+    // ✅ CAS NORMAL (paiement en ligne)
+    const paid = (c.paiements || [])
+      .filter((p) => p.status === "PAID")
+      .reduce((a, b) => a + b.amountExpected, 0);
+
+    return total + paid;
+  }, 0);
 
   const totalAmount = commandes.reduce((a, c) => a + c.total, 0);
   const progress = totalAmount ? (totalPaid / totalAmount) * 100 : 0;
@@ -269,39 +278,62 @@ export default function CompteClient() {
           </CoffreProgressBar>
 
           {commandes.flatMap((c) =>
-            c.paiements.map((p) => {
-              const paiementRecus = c.paiementsRecus?.find(
-                (pr) => pr.step === p.step
-              );
-
-              return (
-                <CoffreLine key={`${c._id}-${p.step}`}>
-                  <CoffreLabel>
-                    Commande #{c._id.slice(-6)} — Étape {p.step}{" "}
-                    {p.status === "PAID" ? (
+            c.modePaiement === "cod" ? (
+              <CoffreLine key={c._id}>
+                <CoffreLabel>
+                  Commande #{c._id.slice(-6)} — Paiement à la livraison{" "}
+                  {c.statusCommande === "DELIVERED" ? (
+                    <>
                       <FaUnlock />
-                    ) : paiementRecus?.status === "PENDING" ? (
-                      <span style={{ color: "#fbbf24" }}>
-                        En attente de confirmation
+                      <span style={{ color: "#22c55e", fontWeight: "bold" }}>
+                        Payé
                       </span>
-                    ) : paiementRecus?.status === "REJECTED" ? (
-                      <span style={{ color: "#ef4444" }}>Paiement rejeté</span>
-                    ) : (
-                      <FaLock />
-                    )}
-                  </CoffreLabel>
+                    </>
+                  ) : c.statusCommande === "CONFIRMED" ? (
+                    <span style={{ color: "#22c55e" }}>Confirmée</span>
+                  ) : (
+                    <span style={{ color: "#fbbf24" }}>En attente</span>
+                  )}
+                </CoffreLabel>
+              </CoffreLine>
+            ) : (
+              c.paiements.map((p) => {
+                const paiementRecus = c.paiementsRecus?.find(
+                  (pr) => pr.step === p.step,
+                );
 
-                  {p.status !== "PAID" &&
-                    (!paiementRecus || paiementRecus.status === "REJECTED") && (
-                      <Button
-                        onClick={() => navigate(`/paiement-semi/${c._id}`)}
-                      >
-                        Payer cette étape
-                      </Button>
-                    )}
-                </CoffreLine>
-              );
-            })
+                return (
+                  <CoffreLine key={`${c._id}-${p.step}`}>
+                    <CoffreLabel>
+                      Commande #{c._id.slice(-6)} — Étape {p.step}{" "}
+                      {p.status === "PAID" ? (
+                        <FaUnlock />
+                      ) : paiementRecus?.status === "PENDING" ? (
+                        <span style={{ color: "#fbbf24" }}>
+                          En attente de confirmation
+                        </span>
+                      ) : paiementRecus?.status === "REJECTED" ? (
+                        <span style={{ color: "#ef4444" }}>
+                          Paiement rejeté
+                        </span>
+                      ) : (
+                        <FaLock />
+                      )}
+                    </CoffreLabel>
+
+                    {p.status !== "PAID" &&
+                      (!paiementRecus ||
+                        paiementRecus.status === "REJECTED") && (
+                        <Button
+                          onClick={() => navigate(`/paiement-semi/${c._id}`)}
+                        >
+                          Payer cette étape
+                        </Button>
+                      )}
+                  </CoffreLine>
+                );
+              })
+            ),
           )}
         </CoffreBox>
       </Section>
@@ -326,13 +358,13 @@ export default function CompteClient() {
                       {
                         method: "DELETE",
                         headers: { Authorization: `Bearer ${token}` },
-                      }
+                      },
                     );
 
                     if (res.ok) {
                       // Supprime le favori de l'état pour mise à jour instantanée
                       setFavorites((prev) =>
-                        prev.filter((fav) => fav._id !== f._id)
+                        prev.filter((fav) => fav._id !== f._id),
                       );
                     } else {
                       const data = await res.json();
