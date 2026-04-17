@@ -50,7 +50,6 @@ import AdminPaiements from "./pages/AdminPaiements";
 import PaiementTroisFois from "./pages/paiement-3x";
 import PageCommandeConfirmee from "./pages/PageCommandeConfirmee";
 import { Toaster } from "react-hot-toast";
-import { NotificationProvider } from "./Utils/Context/NotificationProvider";
 import "./i18n";
 
 // --- Layout pour les pages publiques ---
@@ -80,7 +79,6 @@ createRoot(document.getElementById("root")).render(
     <Router>
       <ToggleTheme>
         <Panier>
-          <NotificationProvider userId={localStorage.getItem("userId")}>
             <GlobalStyle />
             <SEO />
             <Routes>
@@ -328,7 +326,6 @@ createRoot(document.getElementById("root")).render(
                 <Route path="paiement" element={<AdminPaiements />} />
               </Route>
             </Routes>
-          </NotificationProvider>
         </Panier>
       </ToggleTheme>
     </Router>
