@@ -313,7 +313,7 @@ export default function Footer() {
 
     if (!consent) {
       setCookieVisible(true);
-    } else {
+    } else if (consent === "true") {
       const newsletterSeen = localStorage.getItem("seenNewsletterModal");
       const newsletterSubscribed = localStorage.getItem("newsletterSubscribed");
 
@@ -352,13 +352,10 @@ export default function Footer() {
     setLoading(true);
     setSuccess(false);
 
-    const consentRes = await fetch(`${API}/api/cookies/consent`, {
-      method: "GET",
-      credentials: "include",
-    });
-    const consentData = await consentRes.json();
-    if (!consentData.marketingConsent) {
-      alert("Vous devez accepter de recevoir des emails marketing.");
+    const consent = localStorage.getItem("marketingConsent");
+
+    if (consent !== "true") {
+      alert("Vous devez accepter les cookies marketing.");
       setLoading(false);
       return;
     }
@@ -389,23 +386,17 @@ export default function Footer() {
     setNewsletterVisible(false);
   };
 
-  const handleCookieConsent = async (accepted) => {
-    try {
-      const res = await fetch(`${API}/api/cookies/consent`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ marketingConsent: accepted }),
-        credentials: "include",
-      });
-      if (!res.ok) return console.error("Erreur consent");
-      setCookieVisible(false);
-      if (accepted) {
-        localStorage.setItem("marketingConsent", "true");
-      } else {
-        localStorage.setItem("marketingConsent", "false");
+  const handleCookieConsent = (accepted) => {
+    localStorage.setItem("marketingConsent", String(accepted));
+    setCookieVisible(false);
+
+    if (accepted) {
+      const newsletterSeen = localStorage.getItem("seenNewsletterModal");
+      const newsletterSubscribed = localStorage.getItem("newsletterSubscribed");
+
+      if (!newsletterSeen && !newsletterSubscribed) {
+        setTimeout(() => setNewsletterVisible(true), 500);
       }
-    } catch (err) {
-      console.error(err);
     }
   };
 
