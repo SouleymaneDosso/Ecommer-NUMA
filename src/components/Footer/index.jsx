@@ -290,6 +290,53 @@ const RejectCookieMinimal = styled(CookieButtonMinimal)`
     background: #111;
   }
 `;
+
+const Overlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 25000;
+  animation: ${fadeIn} 0.3s ease;
+`;
+
+const ModalBox = styled.div`
+  width: min(92vw, 420px);
+  background: ${({ $isdark }) => ($isdark ? "#111" : "#fff")};
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#000")};
+  padding: 2rem;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  animation: ${scaleIn} 0.25s ease;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+`;
+
+const ModalTitle = styled.h3`
+  margin: 0;
+  font-size: 1.3rem;
+`;
+
+const ModalText = styled.p`
+  font-size: 0.95rem;
+  opacity: 0.8;
+`;
+
+const CloseBtn = styled.button`
+  margin-top: 0.5rem;
+  padding: 10px;
+  border: none;
+  cursor: pointer;
+  background: #000;
+  color: #fff;
+  font-weight: 600;
+  &:hover {
+    background: #333;
+  }
+`;
 /* ---------------- Footer Component ---------------- */
 export default function Footer() {
   const { theme } = useContext(ThemeContext);
@@ -309,21 +356,21 @@ export default function Footer() {
   const [cookieVisible, setCookieVisible] = useState(false);
   const [consent, setConsent] = useState(null);
 
-useEffect(() => {
-  const storedConsent = localStorage.getItem("marketingConsent");
-  setConsent(storedConsent);
+  useEffect(() => {
+    const storedConsent = localStorage.getItem("marketingConsent");
+    setConsent(storedConsent);
 
-  if (!storedConsent) {
-    setCookieVisible(true);
-  } else if (storedConsent === "true") {
-    const newsletterSeen = localStorage.getItem("seenNewsletterModal");
-    const newsletterSubscribed = localStorage.getItem("newsletterSubscribed");
+    if (!storedConsent) {
+      setCookieVisible(true);
+    } else if (storedConsent === "true") {
+      const newsletterSeen = localStorage.getItem("seenNewsletterModal");
+      const newsletterSubscribed = localStorage.getItem("newsletterSubscribed");
 
-    if (!newsletterSeen && !newsletterSubscribed) {
-      setTimeout(() => setNewsletterVisible(true), 1500);
+      if (!newsletterSeen && !newsletterSubscribed) {
+        setTimeout(() => setNewsletterVisible(true), 1500);
+      }
     }
-  }
-}, []);
+  }, []);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -354,9 +401,7 @@ useEffect(() => {
     setLoading(true);
     setSuccess(false);
 
-    const consent = localStorage.getItem("marketingConsent");
-
-   if (consent !== "true") {
+    if (consent !== "true") {
       alert("Vous devez accepter les cookies marketing.");
       setLoading(false);
       return;
@@ -366,7 +411,10 @@ useEffect(() => {
       const res = await fetch(`${API}/api/newsletter`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({
+          email,
+          marketingConsent: consent === "true",
+        }),
         credentials: "include",
       });
       const data = await res.json();
@@ -385,25 +433,27 @@ useEffect(() => {
 
   const handleCloseNewsletter = () => {
     localStorage.setItem("seenNewsletterModal", "true");
+    setSuccess(false);
+    setEmail("");
     setNewsletterVisible(false);
   };
 
-const handleCookieConsent = (accepted) => {
-  const value = accepted ? "true" : "false";
+  const handleCookieConsent = (accepted) => {
+    const value = accepted ? "true" : "false";
 
-  localStorage.setItem("marketingConsent", value);
-  setConsent(value);
-  setCookieVisible(false);
+    localStorage.setItem("marketingConsent", value);
+    setConsent(value);
+    setCookieVisible(false);
 
-  if (accepted) {
-    const newsletterSeen = localStorage.getItem("seenNewsletterModal");
-    const newsletterSubscribed = localStorage.getItem("newsletterSubscribed");
+    if (accepted) {
+      const newsletterSeen = localStorage.getItem("seenNewsletterModal");
+      const newsletterSubscribed = localStorage.getItem("newsletterSubscribed");
 
-    if (!newsletterSeen && !newsletterSubscribed) {
-      setTimeout(() => setNewsletterVisible(true), 500);
+      if (!newsletterSeen && !newsletterSubscribed) {
+        setTimeout(() => setNewsletterVisible(true), 500);
+      }
     }
-  }
-};
+  };
 
   const sections = [
     {
@@ -528,6 +578,44 @@ const handleCookieConsent = (accepted) => {
           </RejectCookieMinimal>
         </CookieButtonsColumn>
       </CookieBanner>
+      {newsletterVisible && (
+        <Overlay>
+          <ModalBox $isdark={$isdark}>
+            <ModalTitle>📩 Newsletter exclusive</ModalTitle>
+
+            <ModalText>
+              Reçois nos nouvelles collections, offres privées et promos
+              exclusives.
+            </ModalText>
+
+            <NewsletterForm onSubmit={handleNewsletterSubmit}>
+              <EmailInput
+                type="email"
+                placeholder="Votre email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                $isdark={$isdark}
+              />
+
+              <SubmitButton type="submit" disabled={loading}>
+                {loading ? (
+                  <Spinner />
+                ) : (
+                  <>
+                    S’inscrire <FiSend />
+                  </>
+                )}
+              </SubmitButton>
+            </NewsletterForm>
+
+            {success && (
+              <ConfirmationText>✅ Inscription réussie</ConfirmationText>
+            )}
+
+            <CloseBtn onClick={handleCloseNewsletter}>Fermer</CloseBtn>
+          </ModalBox>
+        </Overlay>
+      )}
     </FooterWrapper>
   );
 }
