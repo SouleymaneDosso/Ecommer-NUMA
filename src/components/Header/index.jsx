@@ -270,6 +270,12 @@ const CloseTopBar = styled.button`
     transform: scale(1.2);
   }
 `;
+const TopBarContent = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+`;
 
 // ================= Header Component =================
 export default function Header() {
@@ -350,9 +356,9 @@ export default function Header() {
   return (
     <>
      <TopBarWrapper className={closingTopBar ? "closing" : ""}>
-  <span style={{ display: "flex", alignItems: "center"}}>
+  <TopBarContent >
   <Link to="/paiement-3x">Paiement en 3 tranches</Link> : réservez, payez à votre rythme !
-  </span>
+  </TopBarContent>
 
   <CloseTopBar onClick={handleCloseTopBar}>×</CloseTopBar>
 </TopBarWrapper>
