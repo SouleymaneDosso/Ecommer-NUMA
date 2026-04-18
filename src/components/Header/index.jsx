@@ -15,7 +15,7 @@ import { ThemeContext, PanierContext } from "../../Utils/Context";
 import { useTranslation } from "react-i18next";
 
 const HEADER_HEIGHT = 70;
-const TOPBAR_HEIGHT = 50;
+const TOPBAR_HEIGHT = 50; 
 
 // Animation fade + slide pour le menu entier
 const fadeSlide = keyframes`
@@ -37,12 +37,10 @@ const topBarSlideOut = keyframes`
 
 // ================= Styled Components =================
 
+
+
 const HeaderWrapper = styled.header`
   position: fixed;
-  transition:
-    top 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
-    background 0.3s ease,
-    color 0.3s ease;
   top: ${({ $show, $topOffset }) =>
     $show ? `${$topOffset}px` : `-${HEADER_HEIGHT}px`};
   left: 0;
@@ -183,6 +181,7 @@ const MenuLink = styled(Link)`
   text-decoration: none;
   color: inherit;
   margin: 20px 0;
+  
 
   transform: ${({ $open }) => ($open ? "translateY(0)" : "translateY(15px)")};
   opacity: ${({ $open }) => ($open ? 1 : 0)};
@@ -194,7 +193,7 @@ const MenuLink = styled(Link)`
   &:hover {
     transform: scale(1.1);
   }
-`;
+`; 
 
 const CloseButton = styled.button`
   position: absolute;
@@ -206,9 +205,11 @@ const CloseButton = styled.button`
 
   font-size: 25px;
   cursor: pointer;
+  
 
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#000")};
 `;
+
 
 // ================= TopBar =================
 const TopBarWrapper = styled.div`
@@ -220,28 +221,23 @@ const TopBarWrapper = styled.div`
   justify-content: center;
 
   padding: 0 1rem;
-  box-sizing: border-box;
+
+  background: linear-gradient(90deg, black, black);
+  color: #fff;
 
   position: fixed;
   top: 0;
   left: 0;
   z-index: 10001;
 
-  color: #fff;
-
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  box-sizing: border-box;
 
   font-weight: 500;
   font-size: 0.95rem;
 
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
 
-  transition:
-    transform 0.35s ease,
-    opacity 0.35s ease,
-    height 0.2s ease;
+  transition: transform 0.35s ease, opacity 0.35s ease;
 
   a {
     color: #fff;
@@ -249,17 +245,16 @@ const TopBarWrapper = styled.div`
     margin: 0 4px;
     font-weight: 600;
   }
+    &.closing {
+  transform: translateY(-100%);
+  opacity: 0;
+}
 
-  &.closing {
-    transform: translateY(-100%);
-    opacity: 0;
-  }
-
-  @media (max-width: 768px) {
-    height: 56px;
-    font-size: 0.8rem;
-    text-align: center;
-  }
+ @media (max-width: 768px) {
+  height: 56px;
+  font-size: 0.8rem;
+  text-align: center;
+}
 `;
 
 const CloseTopBar = styled.button`
@@ -301,30 +296,13 @@ export default function Header() {
 
   const [showHeader, setShowHeader] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
-  // const [showTopBar, setShowTopBar] = useState(true);
+  const [showTopBar, setShowTopBar] = useState(true);
   const [closingTopBar, setClosingTopBar] = useState(false);
 
   const handleCloseTopBar = () => {
     setClosingTopBar(true);
     setTimeout(() => setShowTopBar(false), 350);
   };
-  useEffect(() => {
-    let lastScroll = window.scrollY;
-
-    const handleScroll = () => {
-      const current = window.scrollY;
-
-      if (current > lastScroll && current > 80 && !closingTopBar) {
-        setClosingTopBar(true);
-        setTimeout(() => {}, 0);
-      }
-
-      lastScroll = current;
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [closingTopBar]);
 
   // Bloquer scroll quand menu ouvert
   useEffect(() => {
@@ -371,14 +349,13 @@ export default function Header() {
 
   return (
     <>
-      <TopBarWrapper className={closingTopBar ? "closing" : ""}>
-        <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-          <Link to="/paiement-3x">Paiement en 3 tranches</Link> : réservez,
-          payez à votre rythme !
-        </span>
+     <TopBarWrapper className={closingTopBar ? "closing" : ""}>
+  <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+  <Link to="/paiement-3x">Paiement en 3 tranches</Link> : réservez, payez à votre rythme !
+  </span>
 
-        <CloseTopBar onClick={handleCloseTopBar}>×</CloseTopBar>
-      </TopBarWrapper>
+  <CloseTopBar onClick={handleCloseTopBar}>×</CloseTopBar>
+</TopBarWrapper>
 
       {/* Header */}
       <HeaderWrapper
@@ -386,7 +363,7 @@ export default function Header() {
         $hero={heroPage}
         $scrolled={scrolled}
         $show={showHeader}
-        $topOffset={!closingTopBar ? TOPBAR_HEIGHT : 0}
+        $topOffset={showTopBar ? TOPBAR_HEIGHT : 0} // ✅ décalage sous TopBar
       >
         <HeaderTop>
           <Logo to="/">NUMA</Logo>
