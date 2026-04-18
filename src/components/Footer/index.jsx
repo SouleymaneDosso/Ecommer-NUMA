@@ -309,28 +309,18 @@ export default function Footer() {
   const [cookieVisible, setCookieVisible] = useState(false);
 
   useEffect(() => {
-    const checkConsent = async () => {
-      try {
-        const res = await fetch(`${API}/api/cookies/consent`, {
-          method: "GET",
-          credentials: "include",
-        });
-        const data = await res.json();
-        if (!data.marketingConsent) setCookieVisible(true);
-        else {
-          const newsletterSeen = localStorage.getItem("seenNewsletterModal");
-          const newsletterSubscribed = localStorage.getItem(
-            "newsletterSubscribed",
-          );
-          if (!newsletterSeen && !newsletterSubscribed)
-            setTimeout(() => setNewsletterVisible(true), 1500);
-        }
-      } catch (err) {
-        console.error(err);
-        setCookieVisible(true);
+    const consent = localStorage.getItem("marketingConsent");
+
+    if (!consent) {
+      setCookieVisible(true);
+    } else {
+      const newsletterSeen = localStorage.getItem("seenNewsletterModal");
+      const newsletterSubscribed = localStorage.getItem("newsletterSubscribed");
+
+      if (!newsletterSeen && !newsletterSubscribed) {
+        setTimeout(() => setNewsletterVisible(true), 1500);
       }
-    };
-    checkConsent();
+    }
   }, []);
 
   useEffect(() => {
@@ -410,12 +400,9 @@ export default function Footer() {
       if (!res.ok) return console.error("Erreur consent");
       setCookieVisible(false);
       if (accepted) {
-        const newsletterSeen = localStorage.getItem("seenNewsletterModal");
-        const newsletterSubscribed = localStorage.getItem(
-          "newsletterSubscribed",
-        );
-        if (!newsletterSeen && !newsletterSubscribed)
-          setTimeout(() => setNewsletterVisible(true), 500);
+        localStorage.setItem("marketingConsent", "true");
+      } else {
+        localStorage.setItem("marketingConsent", "false");
       }
     } catch (err) {
       console.error(err);
@@ -493,7 +480,7 @@ export default function Footer() {
             <FiChevronDown
               style={{
                 transform: openIndex === i ? "rotate(180deg)" : "rotate(0)",
-                pointerEvents: "none", 
+                pointerEvents: "none",
               }}
             />
           </TitleButton>
