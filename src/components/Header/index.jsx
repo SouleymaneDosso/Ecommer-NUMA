@@ -257,6 +257,10 @@ const TopBarWrapper = styled.div`
 }
 `;
 
+const Messagelink = styled(Link)`
+display:flex;
+`
+
 const CloseTopBar = styled.button`
   background: none;
   border: none;
@@ -357,7 +361,8 @@ export default function Header() {
     <>
      <TopBarWrapper className={closingTopBar ? "closing" : ""}>
   <TopBarContent >
-  <Link to="/paiement-3x">Paiement en 3 tranches</Link> : réservez, payez à votre rythme !
+  <Messagelink to="/paiement-3x">Paiement en 3 tranches</Messagelink> : réservez, payez à votre rythme. 
+  Payer à la livraison.
   </TopBarContent>
 
   <CloseTopBar onClick={handleCloseTopBar}>×</CloseTopBar>
