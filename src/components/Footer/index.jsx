@@ -307,21 +307,23 @@ export default function Footer() {
 
   const [newsletterVisible, setNewsletterVisible] = useState(false);
   const [cookieVisible, setCookieVisible] = useState(false);
+  const [consent, setConsent] = useState(null);
 
-  useEffect(() => {
-    const consent = localStorage.getItem("marketingConsent");
+useEffect(() => {
+  const storedConsent = localStorage.getItem("marketingConsent");
+  setConsent(storedConsent);
 
-    if (!consent) {
-      setCookieVisible(true);
-    } else if (consent === "true") {
-      const newsletterSeen = localStorage.getItem("seenNewsletterModal");
-      const newsletterSubscribed = localStorage.getItem("newsletterSubscribed");
+  if (!storedConsent) {
+    setCookieVisible(true);
+  } else if (storedConsent === "true") {
+    const newsletterSeen = localStorage.getItem("seenNewsletterModal");
+    const newsletterSubscribed = localStorage.getItem("newsletterSubscribed");
 
-      if (!newsletterSeen && !newsletterSubscribed) {
-        setTimeout(() => setNewsletterVisible(true), 1500);
-      }
+    if (!newsletterSeen && !newsletterSubscribed) {
+      setTimeout(() => setNewsletterVisible(true), 1500);
     }
-  }, []);
+  }
+}, []);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -354,7 +356,7 @@ export default function Footer() {
 
     const consent = localStorage.getItem("marketingConsent");
 
-    if (consent !== "true") {
+   if (consent !== "true") {
       alert("Vous devez accepter les cookies marketing.");
       setLoading(false);
       return;
@@ -386,19 +388,22 @@ export default function Footer() {
     setNewsletterVisible(false);
   };
 
-  const handleCookieConsent = (accepted) => {
-    localStorage.setItem("marketingConsent", String(accepted));
-    setCookieVisible(false);
+const handleCookieConsent = (accepted) => {
+  const value = accepted ? "true" : "false";
 
-    if (accepted) {
-      const newsletterSeen = localStorage.getItem("seenNewsletterModal");
-      const newsletterSubscribed = localStorage.getItem("newsletterSubscribed");
+  localStorage.setItem("marketingConsent", value);
+  setConsent(value);
+  setCookieVisible(false);
 
-      if (!newsletterSeen && !newsletterSubscribed) {
-        setTimeout(() => setNewsletterVisible(true), 500);
-      }
+  if (accepted) {
+    const newsletterSeen = localStorage.getItem("seenNewsletterModal");
+    const newsletterSubscribed = localStorage.getItem("newsletterSubscribed");
+
+    if (!newsletterSeen && !newsletterSubscribed) {
+      setTimeout(() => setNewsletterVisible(true), 500);
     }
-  };
+  }
+};
 
   const sections = [
     {
