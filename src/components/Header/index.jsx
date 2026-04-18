@@ -350,7 +350,7 @@ export default function Header() {
   return (
     <>
      <TopBarWrapper className={closingTopBar ? "closing" : ""}>
-  <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+  <span style={{ display: "flex", alignItems: "center"}}>
   <Link to="/paiement-3x">Paiement en 3 tranches</Link> : réservez, payez à votre rythme !
   </span>
 
@@ -363,7 +363,7 @@ export default function Header() {
         $hero={heroPage}
         $scrolled={scrolled}
         $show={showHeader}
-        $topOffset={showTopBar ? TOPBAR_HEIGHT : 0} // ✅ décalage sous TopBar
+        $topOffset={showTopBar ? TOPBAR_HEIGHT : 0} 
       >
         <HeaderTop>
           <Logo to="/">NUMA</Logo>
