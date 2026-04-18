@@ -362,7 +362,7 @@ export default function Header() {
      <TopBarWrapper className={closingTopBar ? "closing" : ""}>
   <TopBarContent >
   <Messagelink to="/paiement-3x">Paiement en 3 tranches</Messagelink> : réservez, payez à votre rythme. 
-  Payer à la livraison.
+  Vous pouvez aussi Payer à la livraison.
   </TopBarContent>
 
   <CloseTopBar onClick={handleCloseTopBar}>×</CloseTopBar>
