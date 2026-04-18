@@ -210,49 +210,51 @@ const CloseButton = styled.button`
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#000")};
 `;
 
+
 // ================= TopBar =================
 const TopBarWrapper = styled.div`
   width: 100%;
   height: ${TOPBAR_HEIGHT}px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0 1rem;
+
   background: linear-gradient(90deg, black, black);
   color: #fff;
-  display: flex;
-  justify-content: center; /* centre le texte */
-  align-items: center;
-  font-weight: 500;
-  font-size: 0.95rem;
+
   position: fixed;
   top: 0;
   left: 0;
   z-index: 10001;
-  padding: 0 1rem;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-  transition:
-    transform 0.35s ease,
-    opacity 0.35s ease;
-  animation: ${fadeSlide} 0.35s ease;
 
-  /* Flex pour aligner texte et lien correctement */
+  box-sizing: border-box;
+
+  font-weight: 500;
+  font-size: 0.95rem;
+
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+
+  transition: transform 0.35s ease, opacity 0.35s ease;
+
   a {
     color: #fff;
     text-decoration: underline;
     margin: 0 4px;
     font-weight: 600;
-    transition: color 0.25s;
   }
+    &.closing {
+  transform: translateY(-100%);
+  opacity: 0;
+}
 
-  a:hover {
-    color: #d4f7d1; /* léger survol */
-  }
-
-  &.closing {
-    animation: ${topBarSlideOut} 0.35s forwards;
-  }
-
-  /* Responsivité: petit texte sur mobile */
-  @media (max-width: 768px) {
-    font-size: 0.85rem;
-  }
+ @media (max-width: 768px) {
+  height: 56px;
+  font-size: 0.8rem;
+  text-align: center;
+}
 `;
 
 const CloseTopBar = styled.button`
@@ -347,14 +349,13 @@ export default function Header() {
 
   return (
     <>
-      <TopBarWrapper className={closingTopBar ? "closing" : ""}>
-        <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-          💳
-          <Link to="/paiement-3x">Paiement en 3 tranches</Link>: réservez, payez
-          à votre rythme !
-        </span>
-        <CloseTopBar onClick={handleCloseTopBar}>×</CloseTopBar>
-      </TopBarWrapper>
+     <TopBarWrapper className={closingTopBar ? "closing" : ""}>
+  <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+    💳 <Link to="/paiement-3x">Paiement en 3 tranches</Link> : réservez, payez à votre rythme !
+  </span>
+
+  <CloseTopBar onClick={handleCloseTopBar}>×</CloseTopBar>
+</TopBarWrapper>
 
       {/* Header */}
       <HeaderWrapper
