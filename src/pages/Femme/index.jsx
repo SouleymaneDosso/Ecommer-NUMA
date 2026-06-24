@@ -4,7 +4,6 @@ import { FiHeart, FiCheck } from "react-icons/fi";
 import { FaHeart } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { ThemeContext, PanierContext } from "../../Utils/Context";
-import { HiShoppingBag } from "react-icons/hi";
 
 /* ================= ANIMATIONS ================= */
 
@@ -495,4 +494,5 @@ export default function Femme() {
       </ModalOverlay>
     </PageWrapper>
   );
+  
 }

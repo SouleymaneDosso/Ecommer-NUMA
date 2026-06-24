@@ -133,7 +133,7 @@ const Section = styled.div`
 const TitleButton = styled.button`
   display: flex;
   align-items: center;
-  justify-content: space-between;
+ 
   font-weight: 700;
   font-size: 1.1rem;
   background: none;
