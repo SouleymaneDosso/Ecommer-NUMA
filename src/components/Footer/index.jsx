@@ -124,7 +124,7 @@ const ConfirmationText = styled.span`
 const Section = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.2rem;
   opacity: 0;
   animation: ${({ $visible }) => ($visible ? fadeIn : "none")} 0.6s ease
     forwards;
@@ -135,13 +135,12 @@ const TitleButton = styled.button`
   align-items: center;
   justify-content: space-between;
   font-weight: 700;
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   background: none;
   border: none;
   color: inherit;
   cursor: pointer;
   
-  gap: 6px;
 `;
 
 const LinksContainer = styled.div`
