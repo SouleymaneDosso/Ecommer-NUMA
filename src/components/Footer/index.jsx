@@ -124,7 +124,7 @@ const ConfirmationText = styled.span`
 const Section = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.3rem;
   opacity: 0;
   animation: ${({ $visible }) => ($visible ? fadeIn : "none")} 0.6s ease
     forwards;
