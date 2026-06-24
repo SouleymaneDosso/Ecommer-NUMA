@@ -133,14 +133,14 @@ const Section = styled.div`
 const TitleButton = styled.button`
   display: flex;
   align-items: center;
- 
+  justify-content: space-between;
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: 1.5rem;
   background: none;
   border: none;
   color: inherit;
   cursor: pointer;
-  padding: 0;
+  
   gap: 6px;
 `;
 
