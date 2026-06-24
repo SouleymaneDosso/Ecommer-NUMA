@@ -135,7 +135,7 @@ const TitleButton = styled.button`
   align-items: center;
   justify-content: space-between;
   font-weight: 700;
-  font-size: 1.4rem;
+  font-size: 1.2rem;
   background: none;
   border: none;
   color: inherit;
