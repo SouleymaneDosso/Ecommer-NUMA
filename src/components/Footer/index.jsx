@@ -140,6 +140,8 @@ const TitleButton = styled.button`
   border: none;
   color: inherit;
   cursor: pointer;
+   position: relative;
+  z-index: 99999;
 `;
 
 const LinksContainer = styled.div`
