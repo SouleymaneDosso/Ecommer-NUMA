@@ -135,12 +135,12 @@ const TitleButton = styled.button`
   align-items: center;
   justify-content: space-between;
   font-weight: 700;
-  font-size: 1.3rem;
+  font-size: 1rem;
   background: none;
   border: none;
   color: inherit;
   cursor: pointer;
-   position: relative;
+   
   z-index: 99999;
 `;
 
