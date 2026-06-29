@@ -135,7 +135,7 @@ const TitleButton = styled.button`
   align-items: center;
   justify-content: space-between;
   font-weight: 700;
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   background: none;
   border: none;
   color: inherit;
@@ -521,13 +521,14 @@ export default function Footer() {
         >
           <TitleButton onClick={() => setOpenIndex(openIndex === i ? null : i)}>
             {sec.title}{" "}
-            <FiChevronDown 
+            <FiChevronDown
+              onClick={() => setOpenIndex(openIndex === i ? null : i)}
               style={{
+                cursor: "pointer",
                 transform: openIndex === i ? "rotate(180deg)" : "rotate(0)",
-                pointerEvents: "none",
+                transition: "transform 0.3s",
               }}
             />
-            
           </TitleButton>
           <LinksContainer $open={openIndex === i}>
             {sec.links.map((link, j) =>
