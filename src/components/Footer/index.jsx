@@ -10,6 +10,7 @@ import {
 } from "react-icons/fi";
 import { ThemeContext } from "../../Utils/Context";
 import { useTranslation } from "react-i18next";
+import { FaTiktok } from "react-icons/fa6";
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -354,9 +355,6 @@ export default function Footer() {
   const [cookieVisible, setCookieVisible] = useState(false);
   const [consent, setConsent] = useState(null);
 
-
-  
-
   useEffect(() => {
     const storedConsent = localStorage.getItem("marketingConsent");
     setConsent(storedConsent);
@@ -402,7 +400,7 @@ export default function Footer() {
     setLoading(true);
     setSuccess(false);
 
-    if(consent !== "true") {
+    if (consent !== "true") {
       alert("Vous devez accepter les cookies marketing.");
       setLoading(false);
       return;
@@ -478,20 +476,19 @@ export default function Footer() {
       links: [
         {
           text: "Facebook",
-          href: "https://www.facebook.com",
+          href: "https://www.facebook.com/share/1B6q48Xg3h/?mibextid=wwXIfr",
           icon: <FiFacebook />,
         },
         {
           text: "Instagram",
-          href: "https://www.instagram.com",
+          href: "https://www.instagram.com/numa12472?igsh=MXUyeDFrM2kzbDczdQ%3D%3D&utm_source=qr",
           icon: <FiInstagram />,
         },
-      {
-        text: "Tiktok",
-        href: "https://www.tiktok.com",
-        icon: <FiInstagram />,
-
-      },
+        {
+          text: "Tiktok",
+          href: "https://www.tiktok.com/@numa2255?_r=1&_d=ebgh06iff2c03g&sec_uid=MS4wLjABAAAAtxy4pKcUMgDAp5O-Hx8fa1lrt49-PsTcBrsnJEyLuE2-lv0FyjUxW6x3_Ngj16wj&share_author_id=7183872315774616581&sharer_language=fr&source=h5_m&u_code=e5ifa1idm9mb32&item_author_type=1&utm_source=copy&tt_from=copy&enable_checksum=1&utm_medium=ios&share_link_id=1EFE03E3-5633-4E38-84FE-1684932D4FE5&user_id=7183872315774616581&sec_user_id=MS4wLjABAAAAtxy4pKcUMgDAp5O-Hx8fa1lrt49-PsTcBrsnJEyLuE2-lv0FyjUxW6x3_Ngj16wj&social_share_type=4&ug_btm=b0,b0&utm_campaign=client_share&share_app_id=1233",
+          icon: <FaTiktok />,
+        },
       ],
     },
   ];
