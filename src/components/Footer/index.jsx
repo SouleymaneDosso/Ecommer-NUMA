@@ -128,6 +128,7 @@ const Section = styled.div`
   opacity: 0;
   animation: ${({ $visible }) => ($visible ? fadeIn : "none")} 0.6s ease
     forwards;
+    z-index: 99999;
 `;
 
 const TitleButton = styled.button`
@@ -141,7 +142,6 @@ const TitleButton = styled.button`
   color: inherit;
   cursor: pointer;
    
-  z-index: 99999;
 `;
 
 const LinksContainer = styled.div`
