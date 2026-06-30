@@ -558,6 +558,21 @@ export default function Footer() {
         </BottomText>
       </FooterExtras>
 
+        <CookieBanner $visible={cookieVisible}>
+              <CookieTextMinimal>
+                Nous utilisons des cookies pour améliorer votre expérience et
+                envoyer des emails marketing.
+              </CookieTextMinimal>
+              <CookieButtonsColumn>
+                <AcceptCookieMinimal onClick={() => handleCookieConsent(true)}>
+                  Accepter
+                </AcceptCookieMinimal>
+                <RejectCookieMinimal onClick={() => handleCookieConsent(false)}>
+                  Refuser
+                </RejectCookieMinimal>
+              </CookieButtonsColumn>
+            </CookieBanner>
+
       <ScrollTopButton
         $visible={scrollVisible}
         onClick={() => {
@@ -599,20 +614,7 @@ export default function Footer() {
               </SubmitButton>
             </NewsletterForm>
 
-            <CookieBanner $visible={cookieVisible}>
-              <CookieTextMinimal>
-                Nous utilisons des cookies pour améliorer votre expérience et
-                envoyer des emails marketing.
-              </CookieTextMinimal>
-              <CookieButtonsColumn>
-                <AcceptCookieMinimal onClick={() => handleCookieConsent(true)}>
-                  Accepter
-                </AcceptCookieMinimal>
-                <RejectCookieMinimal onClick={() => handleCookieConsent(false)}>
-                  Refuser
-                </RejectCookieMinimal>
-              </CookieButtonsColumn>
-            </CookieBanner>
+          
 
             {success && (
               <ConfirmationText>✅ Inscription réussie</ConfirmationText>
