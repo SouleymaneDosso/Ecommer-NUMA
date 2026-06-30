@@ -128,7 +128,6 @@ const Section = styled.div`
   opacity: 0;
   animation: ${({ $visible }) => ($visible ? fadeIn : "none")} 0.6s ease
     forwards;
-    z-index: 99999;
 `;
 
 const TitleButton = styled.button`
@@ -141,7 +140,6 @@ const TitleButton = styled.button`
   border: none;
   color: inherit;
   cursor: pointer;
-   
 `;
 
 const LinksContainer = styled.div`
@@ -356,6 +354,9 @@ export default function Footer() {
   const [cookieVisible, setCookieVisible] = useState(false);
   const [consent, setConsent] = useState(null);
 
+
+  
+
   useEffect(() => {
     const storedConsent = localStorage.getItem("marketingConsent");
     setConsent(storedConsent);
@@ -401,7 +402,7 @@ export default function Footer() {
     setLoading(true);
     setSuccess(false);
 
-    if (consent !== "true") {
+    if(consent !== "true") {
       alert("Vous devez accepter les cookies marketing.");
       setLoading(false);
       return;
@@ -485,6 +486,12 @@ export default function Footer() {
           href: "https://www.instagram.com",
           icon: <FiInstagram />,
         },
+      {
+        text: "Tiktok",
+        href: "https://www.tiktok.com",
+        icon: <FiInstagram />,
+
+      },
       ],
     },
   ];
@@ -565,21 +572,6 @@ export default function Footer() {
         <FiArrowUp />
       </ScrollTopButton>
 
-      {/* Cookie Banner carré noir/blanc */}
-      <CookieBanner $visible={cookieVisible}>
-        <CookieTextMinimal>
-          Nous utilisons des cookies pour améliorer votre expérience et envoyer
-          des emails marketing.
-        </CookieTextMinimal>
-        <CookieButtonsColumn>
-          <AcceptCookieMinimal onClick={() => handleCookieConsent(true)}>
-            Accepter
-          </AcceptCookieMinimal>
-          <RejectCookieMinimal onClick={() => handleCookieConsent(false)}>
-            Refuser
-          </RejectCookieMinimal>
-        </CookieButtonsColumn>
-      </CookieBanner>
       {newsletterVisible && (
         <Overlay>
           <ModalBox $isdark={$isdark}>
@@ -609,6 +601,21 @@ export default function Footer() {
                 )}
               </SubmitButton>
             </NewsletterForm>
+
+            <CookieBanner $visible={cookieVisible}>
+              <CookieTextMinimal>
+                Nous utilisons des cookies pour améliorer votre expérience et
+                envoyer des emails marketing.
+              </CookieTextMinimal>
+              <CookieButtonsColumn>
+                <AcceptCookieMinimal onClick={() => handleCookieConsent(true)}>
+                  Accepter
+                </AcceptCookieMinimal>
+                <RejectCookieMinimal onClick={() => handleCookieConsent(false)}>
+                  Refuser
+                </RejectCookieMinimal>
+              </CookieButtonsColumn>
+            </CookieBanner>
 
             {success && (
               <ConfirmationText>✅ Inscription réussie</ConfirmationText>
