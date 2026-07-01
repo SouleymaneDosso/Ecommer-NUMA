@@ -234,6 +234,7 @@ const bounceUp = keyframes`
 `;
 
 const CookieBanner = styled.div`
+  position: fixed;
   bottom: 0;
   left: 50%;
   width: min(95vw, 420px);
