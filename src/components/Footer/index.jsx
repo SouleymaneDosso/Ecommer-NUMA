@@ -234,7 +234,6 @@ const bounceUp = keyframes`
 `;
 
 const CookieBanner = styled.div`
-  position: fixed;
   bottom: 0;
   left: 50%;
   width: min(95vw, 420px);
@@ -558,7 +557,7 @@ export default function Footer() {
         </BottomText>
       </FooterExtras>
 
-        <CookieBanner $visible={cookieVisible}>
+      <CookieBanner $visible={cookieVisible}>
               <CookieTextMinimal>
                 Nous utilisons des cookies pour améliorer votre expérience et
                 envoyer des emails marketing.
@@ -583,6 +582,8 @@ export default function Footer() {
       >
         <FiArrowUp />
       </ScrollTopButton>
+
+        
 
       {newsletterVisible && (
         <Overlay>
@@ -624,6 +625,7 @@ export default function Footer() {
           </ModalBox>
         </Overlay>
       )}
+
     </FooterWrapper>
   );
 }
