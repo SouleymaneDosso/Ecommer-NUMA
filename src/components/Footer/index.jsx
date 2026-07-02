@@ -35,6 +35,7 @@ const FooterWrapper = styled.footer`
   transition:
     background 0.35s ease,
     color 0.35s ease;
+    
 `;
 
 const NewsletterSection = styled.div`
@@ -126,6 +127,8 @@ const Section = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
+   position: relative;
+  z-index: 20002;
   opacity: 0;
   animation: ${({ $visible }) => ($visible ? fadeIn : "none")} 0.6s ease
     forwards;
@@ -237,6 +240,8 @@ const CookieBanner = styled.div`
   position: fixed;
   bottom: 0;
   left: 50%;
+  transform: translateX(-50%);
+
   width: min(95vw, 420px);
   background: #000;
   color: #fff;
