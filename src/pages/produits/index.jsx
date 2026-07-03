@@ -127,7 +127,7 @@ export default function Produit() {
     : [];
 
   const message = `
-Bonjour 👋
+Salut 👋
 
 Je souhaite commander ce produit :
 

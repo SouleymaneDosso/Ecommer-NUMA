@@ -296,6 +296,7 @@ export default function Femme() {
         );
 
         setProducts(valid);
+        console.log("Produits Femme:", valid);
 
         const indexes = {};
         valid.forEach((p) => {

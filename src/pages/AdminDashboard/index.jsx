@@ -1,455 +1,479 @@
-import { useEffect, useState, useMemo } from "react";
-import styled from "styled-components";
-import Modal from "react-modal";
-Modal.setAppElement("#root");
+// import { useEffect, useState, useMemo } from "react";
+// import styled from "styled-components";
+// import Modal from "react-modal";
+// Modal.setAppElement("#root");
 
-/* ===== Styles ===== */
-const Container = styled.div`
-  padding: 40px;
-  max-width: 1400px;
-  margin: 0 auto;
-  background: #f9fafb;
-  min-height: 100vh;
-`;
+// /* ===== Styles ===== */
+// const Container = styled.div`
+//   padding: 40px;
+//   max-width: 1400px;
+//   margin: 0 auto;
+//   background: #f9fafb;
+//   min-height: 100vh;
+// `;
 
-const Title = styled.h1`
-  font-size: 28px;
-  font-weight: bold;
-  color: #2c3e50;
-  margin-bottom: 20px;
-`;
+// const Title = styled.h1`
+//   font-size: 28px;
+//   font-weight: bold;
+//   color: #2c3e50;
+//   margin-bottom: 20px;
+// `;
 
-const Controls = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
-  margin-bottom: 20px;
-  align-items: center;
-`;
+// const Controls = styled.div`
+//   display: flex;
+//   flex-wrap: wrap;
+//   gap: 15px;
+//   margin-bottom: 20px;
+//   align-items: center;
+// `;
 
-const SearchInput = styled.input`
-  padding: 10px 12px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  flex: 1;
-  min-width: 250px;
-  max-width: 400px;
-`;
+// const SearchInput = styled.input`
+//   padding: 10px 12px;
+//   border-radius: 6px;
+//   border: 1px solid #ccc;
+//   flex: 1;
+//   min-width: 250px;
+//   max-width: 400px;
+// `;
 
-const Select = styled.select`
-  padding: 10px 12px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-`;
+// const Select = styled.select`
+//   padding: 10px 12px;
+//   border-radius: 6px;
+//   border: 1px solid #ccc;
+// `;
 
-const StatsContainer = styled.div`
-  display: flex;
-  gap: 20px;
-  margin-bottom: 30px;
-  flex-wrap: wrap;
-  justify-content: center;
-`;
+// const StatsContainer = styled.div`
+//   display: flex;
+//   gap: 20px;
+//   margin-bottom: 30px;
+//   flex-wrap: wrap;
+//   justify-content: center;
+// `;
 
-const StatCard = styled.div`
-  background: #fff;
-  padding: 15px 20px;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  text-align: center;
-  min-width: 120px;
-  max-width: 180px;
-  flex: 0 1 auto;
-`;
+// const StatCard = styled.div`
+//   background: #fff;
+//   padding: 15px 20px;
+//   border-radius: 10px;
+//   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+//   text-align: center;
+//   min-width: 120px;
+//   max-width: 180px;
+//   flex: 0 1 auto;
+// `;
 
-const StatNumber = styled.div`
-  font-size: 22px;
-  font-weight: bold;
-  margin-bottom: 5px;
-`;
+// const StatNumber = styled.div`
+//   font-size: 22px;
+//   font-weight: bold;
+//   margin-bottom: 5px;
+// `;
 
-const StatLabel = styled.div`
-  color: #555;
-`;
+// const StatLabel = styled.div`
+//   color: #555;
+// `;
 
-const TableWrapper = styled.div`
-  overflow-x: auto;
-`;
+// const TableWrapper = styled.div`
+//   overflow-x: auto;
+// `;
 
-const TableContainer = styled.div`
-  min-width: 1400px;
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  padding: 20px;
-`;
+// const TableContainer = styled.div`
+//   min-width: 1400px;
+//   background: #fff;
+//   border-radius: 10px;
+//   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+//   padding: 20px;
+// `;
 
-const Table = styled.table`
-  width: 100%;
-  border-collapse: collapse;
+// const Table = styled.table`
+//   width: 100%;
+//   border-collapse: collapse;
 
-  tbody tr:hover {
-    background: #f1f3f6;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-`;
+//   tbody tr:hover {
+//     background: #f1f3f6;
+//     cursor: pointer;
+//     transition: background 0.2s;
+//   }
+// `;
 
-const Th = styled.th`
-  text-align: left;
-  padding: 12px;
-  background: #f1f3f6;
-  font-weight: 600;
-  color: #2c3e50;
-`;
+// const Th = styled.th`
+//   text-align: left;
+//   padding: 12px;
+//   background: #f1f3f6;
+//   font-weight: 600;
+//   color: #2c3e50;
+// `;
 
-const Td = styled.td`
-  padding: 12px;
-  border-bottom: 1px solid #eee;
-  color: #4a5568;
-  vertical-align: top;
-`;
+// const Td = styled.td`
+//   padding: 12px;
+//   border-bottom: 1px solid #eee;
+//   color: #4a5568;
+//   vertical-align: top;
+// `;
 
-const ProductImagesWrapper = styled.div`
-  display: flex;
-  gap: 5px;
-`;
+// const ProductImagesWrapper = styled.div`
+//   display: flex;
+//   gap: 5px;
+// `;
 
-const ProductImage = styled.img`
-  width: 60px;
-  height: 40px;
-  object-fit: cover;
-  border-radius: 5px;
-  border: 1px solid #ddd;
-`;
+// const ProductImage = styled.img`
+//   width: 60px;
+//   height: 40px;
+//   object-fit: cover;
+//   border-radius: 5px;
+//   border: 1px solid #ddd;
+// `;
 
-const Pagination = styled.div`
-  margin-top: 20px;
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-`;
+// const Pagination = styled.div`
+//   margin-top: 20px;
+//   display: flex;
+//   justify-content: flex-end;
+//   gap: 10px;
+// `;
 
-const PageButton = styled.button`
-  padding: 6px 12px;
-  border: 1px solid #007bff;
-  background: ${(props) => (props.$active ? "#007bff" : "#fff")};
-  color: ${(props) => (props.$active ? "#fff" : "#007bff")};
-  border-radius: 5px;
-  cursor: pointer;
-  font-weight: bold;
-`;
+// const PageButton = styled.button`
+//   padding: 6px 12px;
+//   border: 1px solid #007bff;
+//   background: ${(props) => (props.$active ? "#007bff" : "#fff")};
+//   color: ${(props) => (props.$active ? "#fff" : "#007bff")};
+//   border-radius: 5px;
+//   cursor: pointer;
+//   font-weight: bold;
+// `;
 
-const ModalContent = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-`;
+// const ModalContent = styled.div`
+//   display: flex;
+//   flex-direction: column;
+//   gap: 20px;
+// `;
 
-const ModalSection = styled.div`
-  background: #f9fafb;
-  padding: 15px;
-  border-radius: 10px;
-`;
+// const ModalSection = styled.div`
+//   background: #f9fafb;
+//   padding: 15px;
+//   border-radius: 10px;
+// `;
 
-const ModalSectionTitle = styled.h4`
-  margin-bottom: 10px;
-  color: #34495e;
-`;
+// const ModalSectionTitle = styled.h4`
+//   margin-bottom: 10px;
+//   color: #34495e;
+// `;
 
-const ModalFooter = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  border-top: 1px solid #eee;
-  padding-top: 15px;
-`;
+// const ModalFooter = styled.div`
+//   display: flex;
+//   justify-content: flex-end;
+//   gap: 10px;
+//   border-top: 1px solid #eee;
+//   padding-top: 15px;
+// `;
 
-/* ===== Composant ===== */
-function TableauDeBord() {
-  const [products, setProducts] = useState([]);
-  const [search, setSearch] = useState("");
-  const [filterGenre, setFilterGenre] = useState("");
-  const [filterCategorie, setFilterCategorie] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
+// /* ===== Composant ===== */
+// function TableauDeBord() {
+//   const [products, setProducts] = useState([]);
+//   const [search, setSearch] = useState("");
+//   const [filterGenre, setFilterGenre] = useState("");
+//   const [filterCategorie, setFilterCategorie] = useState("");
+//   const [currentPage, setCurrentPage] = useState(1);
+//   const [itemsPerPage] = useState(10);
 
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalProduct, setModalProduct] = useState(null);
+//   const [modalOpen, setModalOpen] = useState(false);
+//   const [modalProduct, setModalProduct] = useState(null);
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
+//  const getTotalStock = (stockParVariation) => {
+//   if (!stockParVariation) return 0;
 
-  const fetchProducts = async () => {
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits`);
-      const data = await res.json();
-      setProducts(data || []);
-    } catch (err) {
-      console.error("Erreur récupération produits", err);
-      setProducts([]);
-    }
-  };
+//   let total = 0;
 
-  const filteredProducts = products
-    .filter(
-      (p) =>
-        p.title?.toLowerCase().includes(search.toLowerCase()) ||
-        p.userId?.toLowerCase().includes(search.toLowerCase())
-    )
-    .filter(
-      (p) =>
-        !filterGenre ||
-        (Array.isArray(p.genre)
-          ? p.genre.includes(filterGenre)
-          : p.genre === filterGenre)
-    )
-    .filter((p) => !filterCategorie || p.categorie === filterCategorie);
+//   for (const couleur of Object.keys(stockParVariation)) {
+//     const tailles = stockParVariation[couleur];
 
-  const indexOfLast = currentPage * itemsPerPage;
-  const indexOfFirst = indexOfLast - itemsPerPage;
-  const currentProducts = filteredProducts.slice(indexOfFirst, indexOfLast);
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+//     for (const taille of Object.keys(tailles)) {
+//       total += Number(tailles[taille] ?? 0);
+//     }
+//   }
 
-  const stats = useMemo(() => {
-    const total = products.length;
-    const epuises = products.filter((p) => p.stock <= 0).length;
-    const promos = products.filter((p) => p.badge === "promo").length;
-    const nouveaux = products.filter((p) => p.badge === "new").length;
+//   return total;
+// };
 
-    const byGenre = ["homme", "femme", "enfant"].map((g) => ({
-      genre: g,
-      count: products.filter((p) =>
-        Array.isArray(p.genre) ? p.genre.includes(g) : p.genre === g
-      ).length,
-    }));
+//   useEffect(() => {
+//     fetchProducts();
+//   }, []);
 
-    const byCategorie = ["haut", "bas", "tout"].map((c) => ({
-      categorie: c,
-      count: products.filter((p) => p.categorie === c).length,
-    }));
+//   const fetchProducts = async () => {
+    
+//     try {
+//       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits`);
+//       const data = await res.json();
+    
+//       setProducts(data || []);
+      
+//     } catch (err) {
+//       console.error("Erreur récupération produits", err);
+//       setProducts([]);
+//     }
+//   };
 
-    return { total, epuises, promos, nouveaux, byGenre, byCategorie };
-  }, [products]);
+//   const filteredProducts = products
+//     .filter(
+//       (p) =>
+//         p.title?.toLowerCase().includes(search.toLowerCase()) ||
+//         p.userId?.toLowerCase().includes(search.toLowerCase()),
+//     )
+//     .filter(
+//       (p) =>
+//         !filterGenre ||
+//         (Array.isArray(p.genre)
+//           ? p.genre.includes(filterGenre)
+//           : p.genre === filterGenre),
+//     )
+//     .filter((p) => !filterCategorie || p.categorie === filterCategorie);
 
-  return (
-    <Container>
-      <Title>Tableau de bord</Title>
+//   const indexOfLast = currentPage * itemsPerPage;
+//   const indexOfFirst = indexOfLast - itemsPerPage;
+//   const currentProducts = filteredProducts.slice(indexOfFirst, indexOfLast);
+//   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
 
-      {/* ===== Statistiques simples ===== */}
-      <StatsContainer>
-        <StatCard>
-          <StatNumber>{stats.total}</StatNumber>
-          <StatLabel>Total produits</StatLabel>
-        </StatCard>
-        <StatCard>
-          <StatNumber>{stats.epuises}</StatNumber>
-          <StatLabel>Épuisés</StatLabel>
-        </StatCard>
-        <StatCard>
-          <StatNumber>{stats.promos}</StatNumber>
-          <StatLabel>Promos</StatLabel>
-        </StatCard>
-        <StatCard>
-          <StatNumber>{stats.nouveaux}</StatNumber>
-          <StatLabel>Nouveaux</StatLabel>
-        </StatCard>
-      </StatsContainer>
+//   const stats = useMemo(() => {
+//     const total = products.length;
+//     const epuises = products.filter(
+//       (p) => getTotalStock(p.stockParVariation) <= 0,
+//     ).length;
+//     const promos = products.filter((p) => p.badge === "promo").length;
+//     const nouveaux = products.filter((p) => p.badge === "new").length;
 
-      {/* Breakdown par genre et catégorie */}
-      <div style={{ marginBottom: "30px" }}>
-        <h3>Produits par genre :</h3>
-        <ul>
-          {stats.byGenre.map((g) => (
-            <li key={g.genre}>
-              {g.genre}: {g.count}
-            </li>
-          ))}
-        </ul>
+//     const byGenre = ["homme", "femme", "enfant"].map((g) => ({
+//       genre: g,
+//       count: products.filter((p) =>
+//         Array.isArray(p.genre) ? p.genre.includes(g) : p.genre === g,
+//       ).length,
+//     }));
 
-        <h3>Produits par catégorie :</h3>
-        <ul>
-          {stats.byCategorie.map((c) => (
-            <li key={c.categorie}>
-              {c.categorie}: {c.count}
-            </li>
-          ))}
-        </ul>
-      </div>
+//     const byCategorie = ["haut", "bas", "tout"].map((c) => ({
+//       categorie: c,
+//       count: products.filter((p) => p.categorie === c).length,
+//     }));
 
-      {/* ===== Contrôles de recherche et filtre ===== */}
-      <Controls>
-        <SearchInput
-          placeholder="Rechercher par titre ou utilisateur..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <Select
-          value={filterGenre}
-          onChange={(e) => setFilterGenre(e.target.value)}
-        >
-          <option value="">Tous les genres</option>
-          <option value="homme">Homme</option>
-          <option value="femme">Femme</option>
-          <option value="enfant">Enfant</option>
-        </Select>
-        <Select
-          value={filterCategorie}
-          onChange={(e) => setFilterCategorie(e.target.value)}
-        >
-          <option value="">Toutes les catégories</option>
-          <option value="haut">Haut</option>
-          <option value="bas">Bas</option>
-          <option value="tout">Tout</option>
-        </Select>
-      </Controls>
+//     return { total, epuises, promos, nouveaux, byGenre, byCategorie };
+//   }, [products]);
 
-      {/* ===== Tableau des produits ===== */}
-      <TableWrapper>
-        <TableContainer>
-          <Table>
-            <thead>
-              <tr>
-                <Th>Images</Th>
-                <Th>Titre</Th>
-                <Th>Prix</Th>
-                <Th>Stock</Th>
-                <Th>Utilisateur</Th>
-                <Th>Catégorie</Th>
-                <Th>Commentaires</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {currentProducts.map((p) => (
-                <tr
-                  key={p._id}
-                  onClick={() => {
-                    setModalProduct(p);
-                    setModalOpen(true);
-                  }}
-                >
-                  <Td>
-                    <ProductImagesWrapper>
-                      {Array.isArray(p.images) && p.images.length > 0 ? (
-                        p.images.map((img, idx) => (
-                          <ProductImage
-                            key={idx}
-                            src={img.url}
-                            alt={p.title}
-                          />
-                        ))
-                      ) : (
-                        <ProductImage
-                          src="https://via.placeholder.com/60x40?text=No+Image"
-                          alt="Pas d'image"
-                        />
-                      )}
-                    </ProductImagesWrapper>
-                  </Td>
-                  <Td>{p.title || "—"}</Td>
-                  <Td>{p.price ?? "—"} FCFA</Td>
-                  <Td
-                    style={{
-                      color: p.stock <= 0 ? "#e74c3c" : "#2c3e50",
-                      fontWeight: p.stock <= 0 ? "bold" : "normal",
-                    }}
-                  >
-                    {p.stock <= 0 ? "Épuisé" : p.stock ?? "—"}
-                  </Td>
-                  <Td>{p.userId || "—"}</Td>
-                  <Td>{p.categorie || "—"}</Td>
-                  <Td>{p.commentaires?.length || 0}</Td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-        </TableContainer>
-      </TableWrapper>
+//   return (
+//     <Container>
+//       <Title>Tableau de bord</Title>
 
-      {/* Pagination */}
-      <Pagination>
-        {Array.from({ length: totalPages }, (_, i) => (
-          <PageButton
-            key={i}
-            $active={currentPage === i + 1}
-            onClick={() => setCurrentPage(i + 1)}
-          >
-            {i + 1}
-          </PageButton>
-        ))}
-      </Pagination>
+//       {/* ===== Statistiques simples ===== */}
+//       <StatsContainer>
+//         <StatCard>
+//           <StatNumber>{stats.total}</StatNumber>
+//           <StatLabel>Total produits</StatLabel>
+//         </StatCard>
+//         <StatCard>
+//           <StatNumber>{stats.epuises}</StatNumber>
+//           <StatLabel>Épuisés</StatLabel>
+//         </StatCard>
+//         <StatCard>
+//           <StatNumber>{stats.promos}</StatNumber>
+//           <StatLabel>Promos</StatLabel>
+//         </StatCard>
+//         <StatCard>
+//           <StatNumber>{stats.nouveaux}</StatNumber>
+//           <StatLabel>Nouveaux</StatLabel>
+//         </StatCard>
+//       </StatsContainer>
 
-      {/* ===== Modal produit détaillé ===== */}
-      <Modal
-        isOpen={modalOpen}
-        onRequestClose={() => setModalOpen(false)}
-        style={{
-          content: {
-            maxWidth: "800px",
-            margin: "auto",
-            borderRadius: "14px",
-            padding: "25px",
-            maxHeight: "85vh",
-            overflow: "auto",
-          },
-        }}
-      >
-        {modalProduct && (
-          <ModalContent>
-            <h2>{modalProduct.title}</h2>
+//       {/* Breakdown par genre et catégorie */}
+//       <div style={{ marginBottom: "30px" }}>
+//         <h3>Produits par genre :</h3>
+//         <ul>
+//           {stats.byGenre.map((g) => (
+//             <li key={g.genre}>
+//               {g.genre}: {g.count}
+//             </li>
+//           ))}
+//         </ul>
 
-            <ModalSection>
-              <ModalSectionTitle>Images</ModalSectionTitle>
-              <ProductImagesWrapper>
-                {modalProduct.images?.map((img, idx) => (
-                  <ProductImage
-                    key={idx}
-                    src={img.url}
-                    alt={modalProduct.title}
-                  />
-                ))}
-              </ProductImagesWrapper>
-            </ModalSection>
+//         <h3>Produits par catégorie :</h3>
+//         <ul>
+//           {stats.byCategorie.map((c) => (
+//             <li key={c.categorie}>
+//               {c.categorie}: {c.count}
+//             </li>
+//           ))}
+//         </ul>
+//       </div>
 
-            <ModalSection>
-              <ModalSectionTitle>Description</ModalSectionTitle>
-              <p>{modalProduct.description}</p>
-            </ModalSection>
+//       {/* ===== Contrôles de recherche et filtre ===== */}
+//       <Controls>
+//         <SearchInput
+//           placeholder="Rechercher par titre ou utilisateur..."
+//           value={search}
+//           onChange={(e) => setSearch(e.target.value)}
+//         />
+//         <Select
+//           value={filterGenre}
+//           onChange={(e) => setFilterGenre(e.target.value)}
+//         >
+//           <option value="">Tous les genres</option>
+//           <option value="homme">Homme</option>
+//           <option value="femme">Femme</option>
+//           <option value="enfant">Enfant</option>
+//         </Select>
+//         <Select
+//           value={filterCategorie}
+//           onChange={(e) => setFilterCategorie(e.target.value)}
+//         >
+//           <option value="">Toutes les catégories</option>
+//           <option value="haut">Haut</option>
+//           <option value="bas">Bas</option>
+//           <option value="tout">Tout</option>
+//         </Select>
+//       </Controls>
 
-            <ModalSection>
-              <ModalSectionTitle>
-                Commentaires ({modalProduct.commentaires?.length || 0})
-              </ModalSectionTitle>
-              {modalProduct.commentaires?.length > 0 ? (
-                modalProduct.commentaires.map((c) => (
-                  <div
-                    key={c._id}
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      marginBottom: "10px",
-                      alignItems: "center",
-                    }}
-                  >
-                    <div>
-                      <strong>{c.user || "Anonyme"}</strong> : {c.message} —{" "}
-                      <span style={{ color: "#f59e0b" }}>{c.rating}★</span>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p>Aucun commentaire</p>
-              )}
-            </ModalSection>
+//       {/* ===== Tableau des produits ===== */}
+//       <TableWrapper>
+//         <TableContainer>
+//           <Table>
+//             <thead>
+//               <tr>
+//                 <Th>Images</Th>
+//                 <Th>Titre</Th>
+//                 <Th>Prix</Th>
+//                 <Th>Stock</Th>
+//                 <Th>Utilisateur</Th>
+//                 <Th>Catégorie</Th>
+//                 <Th>Commentaires</Th>
+//               </tr>
+//             </thead>
+//             <tbody>
+//               {currentProducts.map((p) => {
+//                 const totalStock = getTotalStock(p.stockParVariation);
+//                 return (
+//                   <tr
+//                     key={p._id}
+//                     onClick={() => {
+//                       setModalProduct(p);
+//                       setModalOpen(true);
+//                     }}
+//                   >
+//                     <Td>
+//                       <ProductImagesWrapper>
+//                         {Array.isArray(p.images) && p.images.length > 0 ? (
+//                           p.images.map((img, idx) => (
+//                             <ProductImage
+//                               key={idx}
+//                               src={img.url}
+//                               alt={p.title}
+//                             />
+//                           ))
+//                         ) : (
+//                           <ProductImage
+//                             src="https://via.placeholder.com/60x40?text=No+Image"
+//                             alt="Pas d'image"
+//                           />
+//                         )}
+//                       </ProductImagesWrapper>
+//                     </Td>
+//                     <Td>{p.title || "—"}</Td>
+//                     <Td>{p.price ?? "—"} FCFA</Td>
+//                     <Td
+//                       style={{
+//                         color: totalStock <= 0 ? "#e74c3c" : "#2c3e50",
+//                         fontWeight: totalStock <= 0 ? "bold" : "normal",
+//                       }}
+//                     >
+//                       {totalStock <= 0 ? "Épui" : totalStock}
+//                     </Td>
+//                     <Td>{p.userId || "—"}</Td>
+//                     <Td>{p.categorie || "—"}</Td>
+//                     <Td>{p.commentaires?.length || 0}</Td>
+//                   </tr>
+//                 );
+//               })}
+//             </tbody>
+//           </Table>
+//         </TableContainer>
+//       </TableWrapper>
 
-            <ModalFooter>
-              <button onClick={() => setModalOpen(false)}>Fermer</button>
-            </ModalFooter>
-          </ModalContent>
-        )}
-      </Modal>
-    </Container>
-  );
-}
+//       {/* Pagination */}
+//       <Pagination>
+//         {Array.from({ length: totalPages }, (_, i) => (
+//           <PageButton
+//             key={i}
+//             $active={currentPage === i + 1}
+//             onClick={() => setCurrentPage(i + 1)}
+//           >
+//             {i + 1}
+//           </PageButton>
+//         ))}
+//       </Pagination>
 
-export default TableauDeBord;
+//       {/* ===== Modal produit détaillé ===== */}
+//       <Modal
+//         isOpen={modalOpen}
+//         onRequestClose={() => setModalOpen(false)}
+//         style={{
+//           content: {
+//             maxWidth: "800px",
+//             margin: "auto",
+//             borderRadius: "14px",
+//             padding: "25px",
+//             maxHeight: "85vh",
+//             overflow: "auto",
+//           },
+//         }}
+//       >
+//         {modalProduct && (
+//           <ModalContent>
+//             <h2>{modalProduct.title}</h2>
+
+//             <ModalSection>
+//               <ModalSectionTitle>Images</ModalSectionTitle>
+//               <ProductImagesWrapper>
+//                 {modalProduct.images?.map((img, idx) => (
+//                   <ProductImage
+//                     key={idx}
+//                     src={img.url}
+//                     alt={modalProduct.title}
+//                   />
+//                 ))}
+//               </ProductImagesWrapper>
+//             </ModalSection>
+
+//             <ModalSection>
+//               <ModalSectionTitle>Description</ModalSectionTitle>
+//               <p>{modalProduct.description}</p>
+//             </ModalSection>
+
+//             <ModalSection>
+//               <ModalSectionTitle>
+//                 Commentaires ({modalProduct.commentaires?.length || 0})
+//               </ModalSectionTitle>
+//               {modalProduct.commentaires?.length > 0 ? (
+//                 modalProduct.commentaires.map((c) => (
+//                   <div
+//                     key={c._id}
+//                     style={{
+//                       display: "flex",
+//                       justifyContent: "space-between",
+//                       marginBottom: "10px",
+//                       alignItems: "center",
+//                     }}
+//                   >
+//                     <div>
+//                       <strong>{c.user || "Anonyme"}</strong> : {c.message} —{" "}
+//                       <span style={{ color: "#f59e0b" }}>{c.rating}★</span>
+//                     </div>
+//                   </div>
+//                 ))
+//               ) : (
+//                 <p>Aucun commentaire</p>
+//               )}
+//             </ModalSection>
+
+//             <ModalFooter>
+//               <button onClick={() => setModalOpen(false)}>Fermer</button>
+//             </ModalFooter>
+//           </ModalContent>
+//         )}
+//       </Modal>
+//     </Container>
+//   );
+// }
+
+// export default TableauDeBord;
