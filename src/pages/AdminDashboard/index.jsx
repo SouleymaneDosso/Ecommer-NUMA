@@ -377,7 +377,7 @@ function TableauDeBord() {
                         fontWeight: totalStock <= 0 ? "bold" : "normal",
                       }}
                     >
-                      {totalStock <= 0 ? "Épui" : totalStock}
+                      {totalStock <= 0 ? "Épuisé" : totalStock}
                     </Td>
                     <Td>{p.userId || "—"}</Td>
                     <Td>{p.categorie || "—"}</Td>
