@@ -35,7 +35,6 @@ const FooterWrapper = styled.footer`
   transition:
     background 0.35s ease,
     color 0.35s ease;
-    
 `;
 
 const NewsletterSection = styled.div`
@@ -127,7 +126,7 @@ const Section = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
-   position: relative;
+  position: relative;
   z-index: 20002;
   opacity: 0;
   animation: ${({ $visible }) => ($visible ? fadeIn : "none")} 0.6s ease
@@ -362,22 +361,17 @@ export default function Footer() {
 
   const [messagevue, setMessagevue] = useState(false);
 
+  // cacher success message apres 3 seconds
 
-// cacher success message apres 3 seconds
+  useEffect(() => {
+    if (!success) return;
+    setMessagevue(true);
+    const timer = setTimeout(() => {
+      setMessagevue(false);
+    }, 3000);
 
-
-useEffect(() =>{
-setMessagevue(true);
-const timer  = setTimeout(() => {
-  setMessagevue(false);
-}, 3000);
-
-return () => clearTimeout(timer);
-
-},[success])
-
-
-
+    return () => clearTimeout(timer);
+  }, [success]);
 
   useEffect(() => {
     const storedConsent = localStorage.getItem("marketingConsent");
@@ -538,7 +532,7 @@ return () => clearTimeout(timer);
               </>
             )}
           </SubmitButton>
-          {success && <ConfirmationText>✅ Email envoyé !</ConfirmationText>}
+          {messagevue && <ConfirmationText>✅ Email envoyé !</ConfirmationText>}
         </NewsletterForm>
       </NewsletterSection>
 
@@ -583,19 +577,19 @@ return () => clearTimeout(timer);
       </FooterExtras>
 
       <CookieBanner $visible={cookieVisible}>
-              <CookieTextMinimal>
-                Nous utilisons des cookies pour améliorer votre expérience et
-                envoyer des emails marketing.
-              </CookieTextMinimal>
-              <CookieButtonsColumn>
-                <AcceptCookieMinimal onClick={() => handleCookieConsent(true)}>
-                  Accepter
-                </AcceptCookieMinimal>
-                <RejectCookieMinimal onClick={() => handleCookieConsent(false)}>
-                  Refuser
-                </RejectCookieMinimal>
-              </CookieButtonsColumn>
-            </CookieBanner>
+        <CookieTextMinimal>
+          Nous utilisons des cookies pour améliorer votre expérience et envoyer
+          des emails marketing.
+        </CookieTextMinimal>
+        <CookieButtonsColumn>
+          <AcceptCookieMinimal onClick={() => handleCookieConsent(true)}>
+            Accepter
+          </AcceptCookieMinimal>
+          <RejectCookieMinimal onClick={() => handleCookieConsent(false)}>
+            Refuser
+          </RejectCookieMinimal>
+        </CookieButtonsColumn>
+      </CookieBanner>
 
       <ScrollTopButton
         $visible={scrollVisible}
@@ -607,8 +601,6 @@ return () => clearTimeout(timer);
       >
         <FiArrowUp />
       </ScrollTopButton>
-
-        
 
       {newsletterVisible && (
         <Overlay>
@@ -640,9 +632,7 @@ return () => clearTimeout(timer);
               </SubmitButton>
             </NewsletterForm>
 
-          
-
-            {success && (
+            {messagevue && (
               <ConfirmationText>✅ Inscription réussie</ConfirmationText>
             )}
 
@@ -650,7 +640,6 @@ return () => clearTimeout(timer);
           </ModalBox>
         </Overlay>
       )}
-
     </FooterWrapper>
   );
 }
