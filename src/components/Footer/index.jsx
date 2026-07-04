@@ -360,6 +360,25 @@ export default function Footer() {
   const [cookieVisible, setCookieVisible] = useState(false);
   const [consent, setConsent] = useState(null);
 
+  const [messagevue, setMessagevue] = useState(false);
+
+
+// cacher success message apres 3 seconds
+
+
+useEffect(() =>{
+setMessagevue(true);
+const timer  = setTimeout(() => {
+  setMessagevue(false);
+}, 3000);
+
+return () => clearTimeout(timer);
+
+},[success])
+
+
+
+
   useEffect(() => {
     const storedConsent = localStorage.getItem("marketingConsent");
     setConsent(storedConsent);
