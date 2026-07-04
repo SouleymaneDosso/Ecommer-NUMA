@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useMemo, useContext } from "react";
 import styled, { keyframes } from "styled-components";
-import { FiHeart, FiCheck } from "react-icons/fi";
+import {
+  FiHeart,
+  FiCheckCircle,
+  FiAlertCircle,
+  FiXCircle,
+} from "react-icons/fi";
 import { FaHeart } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { ThemeContext, PanierContext } from "../../Utils/Context";
@@ -22,7 +27,9 @@ const shimmer = keyframes`
 const PageWrapper = styled.main`
   background: ${({ $isdark }) => ($isdark ? "#111" : "#fff")};
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
-  transition: background 0.3s ease, color 0.3s ease;
+  transition:
+    background 0.3s ease,
+    color 0.3s ease;
   margin-bottom: 19px;
 `;
 
@@ -33,7 +40,6 @@ const PageHeader = styled.div`
   margin-bottom: 3rem;
   flex-wrap: wrap;
   gap: 1.2rem;
-  
 `;
 
 const PageTitle = styled.h1`
@@ -48,7 +54,6 @@ const ControlsWrapper = styled.div`
   align-items: center;
   gap: 1.6rem;
   flex-wrap: wrap;
-  
 `;
 
 const SearchInput = styled.input`
@@ -102,7 +107,7 @@ const FilterButton = styled.button`
 
 const Grid = styled.div`
   display: grid;
-  
+
   grid-template-columns: repeat(2, 1fr);
 
   @media (min-width: 900px) {
@@ -128,7 +133,7 @@ const ProductCard = styled.div`
 `;
 
 const ImageWrapper = styled.div`
-margin-bottom: 0.8rem;
+  margin-bottom: 0.8rem;
   position: relative;
   width: 100%;
   aspect-ratio: 4/5;
@@ -203,12 +208,20 @@ const Gadget = styled.div`
 `;
 
 const Validation = styled.div`
-  font-size: 0.7rem;
-  color: #2e7d32;
-  margin-top: 6px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
+
+  margin-top: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  color: ${({ $disponible }) => ($disponible ? "#15803d" : "#dc2626")};
+
+  background: ${({ $disponible }) => ($disponible ? "#dcfce7" : "#fee2e2")};
 `;
 
 const LoadMore = styled.button`
@@ -286,13 +299,19 @@ export default function Femme() {
   // Etat modal
   const [showModal, setShowModal] = useState(false);
 
+  const calculStock = (stockParVariation = {}) => {
+    return Object.values(stockParVariation).reduce((total, tailles) => {
+      return total + Object.values(tailles).reduce((n, v) => n + Number(v), 0);
+    }, 0);
+  };
+
   /* ========== CHARGER PRODUITS ========== */
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/api/produits`)
       .then((res) => res.json())
       .then((data) => {
         const valid = data.filter(
-          (p) => p.images?.length && p.genre === "femme"
+          (p) => p.images?.length && p.genre === "femme",
         );
 
         setProducts(valid);
@@ -319,7 +338,7 @@ export default function Femme() {
     })
       .then((res) => res.json())
       .then((data) =>
-        setFavorites(data.map((f) => f.productId?._id).filter(Boolean))
+        setFavorites(data.map((f) => f.productId?._id).filter(Boolean)),
       )
       .catch(console.error);
   }, [token]);
@@ -341,7 +360,7 @@ export default function Femme() {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ productId: id }),
-        }
+        },
       );
 
       const data = await res.json();
@@ -374,17 +393,17 @@ export default function Femme() {
     let filtered =
       filter === "tout"
         ? products
-        : products.filter(
-            (p) => p.categorie?.toLowerCase().trim() === filter
-          );
+        : products.filter((p) => p.categorie?.toLowerCase().trim() === filter);
 
     if (search)
       filtered = filtered.filter((p) =>
-        p.title.toLowerCase().includes(search.toLowerCase())
+        p.title.toLowerCase().includes(search.toLowerCase()),
       );
 
-    if (sort === "asc") filtered = [...filtered].sort((a, b) => a.price - b.price);
-    if (sort === "desc") filtered = [...filtered].sort((a, b) => b.price - a.price);
+    if (sort === "asc")
+      filtered = [...filtered].sort((a, b) => a.price - b.price);
+    if (sort === "desc")
+      filtered = [...filtered].sort((a, b) => b.price - a.price);
 
     return filtered.slice(0, limit);
   }, [products, filter, sort, search, limit]);
@@ -415,7 +434,11 @@ export default function Femme() {
               </FilterButton>
             ))}
           </FilterWrapper>
-          <Select $isdark={$isdark} value={sort} onChange={(e) => setSort(e.target.value)}>
+          <Select
+            $isdark={$isdark}
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+          >
             <option value="default">Trier</option>
             <option value="asc">Prix croissant</option>
             <option value="desc">Prix décroissant</option>
@@ -427,6 +450,7 @@ export default function Femme() {
       <Grid>
         {filteredProducts.map((p) => {
           const isFav = favorites.includes(p._id);
+          const totalStock = calculStock(p.stockParVariation);
 
           return (
             <ProductCard
@@ -464,9 +488,23 @@ export default function Femme() {
                   <ProductPrice>{p.price} FCFA</ProductPrice>
                   {p.gadget && <Gadget>{p.gadget}</Gadget>}
                 </PriceRow>
-                <Validation>
-                  <FiCheck />
-                  Disponible
+                <Validation $disponible={totalStock > 0}>
+                  {totalStock > 10 ? (
+                    <>
+                      <FiCheckCircle />
+                      En stock
+                    </>
+                  ) : totalStock > 0 ? (
+                    <>
+                      <FiAlertCircle />
+                      Plus que {totalStock}
+                    </>
+                  ) : (
+                    <>
+                      <FiXCircle />
+                      Épuisé
+                    </>
+                  )}
                 </Validation>
               </CardContent>
             </ProductCard>
@@ -495,5 +533,4 @@ export default function Femme() {
       </ModalOverlay>
     </PageWrapper>
   );
-  
 }

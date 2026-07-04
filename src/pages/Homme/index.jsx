@@ -1,10 +1,9 @@
 import { useState, useEffect, useMemo, useContext } from "react";
 import styled, { keyframes } from "styled-components";
-import { FiHeart, FiCheck } from "react-icons/fi";
+import { FiHeart, FiCheckCircle, FiAlertCircle, FiXCircle } from "react-icons/fi";
 import { FaHeart } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { ThemeContext, PanierContext } from "../../Utils/Context";
-
 
 /* ================= ANIMATIONS ================= */
 const fadeIn = keyframes`
@@ -48,7 +47,6 @@ const ControlsWrapper = styled.div`
   align-items: center;
   gap: 1.6rem;
   flex-wrap: wrap;
-  
 `;
 
 const SearchInput = styled.input`
@@ -124,7 +122,7 @@ const ProductCard = styled.div`
   background: ${({ $isdark }) => ($isdark ? "#1a1a1a" : "#fff")};
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
   border-radius: 8px;
-   margin-bottom: 1.1rem;
+  margin-bottom: 1.1rem;
 
   &:hover {
     transform: translateY(-4px);
@@ -208,12 +206,20 @@ const Gadget = styled.div`
 `;
 
 const Validation = styled.div`
-  font-size: 0.7rem;
-  color: #2e7d32;
-  margin-top: 6px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
+
+  margin-top: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  color: ${({ $disponible }) => ($disponible ? "#15803d" : "#dc2626")};
+
+  background: ${({ $disponible }) => ($disponible ? "#dcfce7" : "#fee2e2")};
 `;
 
 const LoadMore = styled.button`
@@ -314,6 +320,12 @@ export default function Homme() {
   const token = localStorage.getItem("token");
 
   const [showModal, setShowModal] = useState(false); // modal connexion
+
+  const calculStock = (stockParVariation = {}) => {
+    return Object.values(stockParVariation).reduce((total, tailles) => {
+      return total + Object.values(tailles).reduce((v, n) => v + Number(n), 0);
+    }, 0);
+  };
 
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/api/produits`)
@@ -452,7 +464,7 @@ export default function Homme() {
       <Grid>
         {filteredProducts.map((p) => {
           const isFav = favorites.includes(p._id);
-
+          const totalStock = calculStock(p.stockParVariation);
           return (
             <ProductCard
               key={p._id}
@@ -490,9 +502,23 @@ export default function Homme() {
                   {p.gadget && <Gadget>{p.gadget}</Gadget>}
                 </PriceRow>
 
-                <Validation>
-                  <FiCheck />
-                  En stock
+                <Validation $disponible={totalStock > 0}>
+                  {totalStock > 10 ? (
+                    <>
+                      <FiCheckCircle />
+                      En stock
+                    </>
+                  ) : totalStock > 0 ? (
+                    <>
+                      <FiAlertCircle />
+                      Plus que {totalStock}
+                    </>
+                  ) : (
+                    <>
+                      <FiXCircle />
+                      Épuisé
+                    </>
+                  )}
                 </Validation>
               </CardContent>
             </ProductCard>
