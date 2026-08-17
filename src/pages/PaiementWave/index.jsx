@@ -281,16 +281,20 @@ export default function PageCheckout() {
               ))}
             </Select>
 
-            <div style={{ display: "flex", alignItems: "center" }}>
-              <span>+225</span>
+            <Input
+              $isdark={$isdark}
+              placeholder="+225 00 00 00 00"
+              value={numero}
+              onChange={(e) => {
+                let value = e.target.value;
 
-              <Input
-                $isdark={$isdark}
-                placeholder="00 00 00 00"
-                value={numero}
-                onChange={(e) => setNumero(e.target.value)}
-              />
-            </div>
+                if (!value.startsWith("+225")) {
+                  value = "+225 " + value.replace(/^\+225\s*/, "");
+                }
+
+                setNumero(value);
+              }}
+            />
 
             <Input $isdark={$isdark} value={codePostal} disabled />
             <Input $isdark={$isdark} value={pays} disabled />
