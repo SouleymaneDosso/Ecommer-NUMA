@@ -176,8 +176,12 @@ export default function PageCheckout() {
   const handlePaiement = async (e) => {
     e.preventDefault();
 
-    if (!nom || !prenom || !adresse || !ville || numero!== Number(numero)) {
+    if (!nom || !prenom || !adresse || !ville ) {
       alert("Remplissez tous les champs.");
+      return;
+    }
+    if(!numero || !numero.startsWith("+225") || numero.length !== 13) {
+      alert("Veuillez entrer un numéro de téléphone valide au format +225XXXXXXXX. eviter les espaces entre les nombres.");
       return;
     }
 
