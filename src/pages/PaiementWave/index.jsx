@@ -180,7 +180,7 @@ export default function PageCheckout() {
       alert("Remplissez tous les champs.");
       return;
     }
-    if(!numero || !numero.startsWith("+225") || numero.length !== 13) {
+    if(!numero || !numero.startsWith("+225")) {
       alert("Veuillez entrer un numéro de téléphone valide au format +225XXXXXXXX. eviter les espaces entre les nombres.");
       return;
     }
@@ -293,7 +293,7 @@ export default function PageCheckout() {
                 let value = e.target.value;
 
                 if (!value.startsWith("+225")) {
-                  value = "+225 "+ value.replace(/^\+225\s*/, "");
+                  value = "+225"+value.replace(/^\+225\s*/, "");
                 }
 
                 setNumero(value);
