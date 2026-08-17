@@ -178,6 +178,8 @@ export default function PageCommandeConfirmee() {
             <h3>📍 Livraison</h3>
             <p>{commande.client.adresse}</p>
             <p>{commande.client.ville}</p>
+            <p>{commande.client.pays}</p>
+            <p>Numéro: {commande.client.numero}</p>
           </Box>
         </Grid>
 
