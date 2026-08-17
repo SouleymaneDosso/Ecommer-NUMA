@@ -238,7 +238,7 @@ export default function PageCheckout() {
 
   const montantParMois =
     modePaiement === "installments" ? Math.ceil(total / 3) : total;
-  const peutTroisFois = total >= 3000; 
+  const peutTroisFois = total >= 3000;
 
   return (
     <Page $isdark={$isdark}>
@@ -281,12 +281,16 @@ export default function PageCheckout() {
               ))}
             </Select>
 
-            <Input
-              $isdark={$isdark}
-              placeholder="Numéro de téléphone"
-              value={numero}
-              onChange={(e) => setNumero(e.target.value)}
-            />
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <span>+225</span>
+
+              <Input
+                $isdark={$isdark}
+                placeholder="00 00 00 00"
+                value={numero}
+                onChange={(e) => setNumero(e.target.value)}
+              />
+            </div>
 
             <Input $isdark={$isdark} value={codePostal} disabled />
             <Input $isdark={$isdark} value={pays} disabled />
