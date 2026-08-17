@@ -136,6 +136,10 @@ const AdminCommandes = () => {
                 <strong>ID :</strong> {cmd._id} <br />
                 <strong>Client :</strong> {cmd.client?.nom || "-"}{" "}
                 {cmd.client?.prenom || "-"} <br />
+                <strong>Adresse :</strong> {cmd.client?.adresse || "-"} <br />
+                <strong>Ville :</strong> {cmd.client?.ville || "-"} <br />
+                <strong>Pays :</strong> {cmd.client?.pays || "-"} <br />
+                <strong>Numéro :</strong> {cmd.client?.numero || "-"} <br />
                 <strong>Total :</strong> {cmd.total || 0} FCFA <br />
                 <strong>Payé :</strong> {totalPaye} FCFA <br />
                 <strong>Statut :</strong>{" "}
