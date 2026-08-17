@@ -293,7 +293,7 @@ export default function PageCheckout() {
                 let value = e.target.value;
 
                 if (!value.startsWith("+225")) {
-                  value = "+225 " + value.replace(/^\+225\s*/, "");
+                  value = "+225"+ value.replace(/^\+225\s*/, "");
                 }
 
                 setNumero(value);
