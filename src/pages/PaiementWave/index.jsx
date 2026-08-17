@@ -151,6 +151,7 @@ export default function PageCheckout() {
   const [prenom, setPrenom] = useState("");
   const [adresse, setAdresse] = useState("");
   const [ville, setVille] = useState("");
+  const [numero, setNumero] = useState("");
 
   const codePostal = "00225";
   const pays = "Côte d'Ivoire";
@@ -175,7 +176,7 @@ export default function PageCheckout() {
   const handlePaiement = async (e) => {
     e.preventDefault();
 
-    if (!nom || !prenom || !adresse || !ville) {
+    if (!nom || !prenom || !adresse || !ville || !numero) {
       alert("Remplissez tous les champs.");
       return;
     }
@@ -190,7 +191,7 @@ export default function PageCheckout() {
     }));
 
     const commande = {
-      client: { nom, prenom, adresse, ville, codePostal, pays },
+      client: { nom, prenom, adresse, ville, codePostal, pays, numero },
       panier: panierBackend,
       modePaiement,
       servicePaiement: modePaiement === "cod" ? "livraison" : servicePaiement,
@@ -279,6 +280,13 @@ export default function PageCheckout() {
                 </option>
               ))}
             </Select>
+
+            <Input
+              $isdark={$isdark}
+              placeholder="Numéro de téléphone"
+              value={numero}
+              onChange={(e) => setNumero(e.target.value)}
+            />
 
             <Input $isdark={$isdark} value={codePostal} disabled />
             <Input $isdark={$isdark} value={pays} disabled />
