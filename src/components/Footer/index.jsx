@@ -294,7 +294,7 @@ const SubmitButton = styled.button`
 
   min-height: 46px;
 
-  font-size: 13px;
+  font-size: 16px;
 
   font-weight: 700;
 
