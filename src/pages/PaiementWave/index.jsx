@@ -176,7 +176,7 @@ export default function PageCheckout() {
   const handlePaiement = async (e) => {
     e.preventDefault();
 
-    if (!nom || !prenom || !adresse || !ville || !numero) {
+    if (!nom || !prenom || !adresse || !ville || numero!== Number(numero)) {
       alert("Remplissez tous les champs.");
       return;
     }
