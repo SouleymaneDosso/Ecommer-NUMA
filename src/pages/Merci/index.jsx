@@ -7,6 +7,7 @@ import {
   FaRegCircle,
   FaArrowRight,
   FaShieldAlt,
+  FaStar,
 } from "react-icons/fa";
 import { ThemeContext } from "../../Utils/Context";
 
@@ -20,26 +21,79 @@ const spin = keyframes`
   }
 `;
 
-const fadeUp = keyframes`
+const reveal = keyframes`
   from {
     opacity: 0;
-    transform: translateY(18px);
+    transform: translateY(30px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
   }
 `;
 
-const pulse = keyframes`
-  0%, 100% {
+const scaleIn = keyframes`
+  from {
+    opacity: 0;
+    transform: scale(.75);
+  }
+  to {
+    opacity: 1;
     transform: scale(1);
   }
+`;
 
-  50% {
-    transform: scale(1.04);
+const shimmer = keyframes`
+  0% {
+    transform: translateX(-100%);
   }
+  100% {
+    transform: translateX(100%);
+  }
+`;
+
+/* =========================================================
+   GLOBAL
+========================================================= */
+
+const Page = styled.main`
+  min-height: 100vh;
+  padding: 40px 22px 80px;
+  box-sizing: border-box;
+
+  background: ${({ $isdark }) =>
+    $isdark
+      ? `
+        radial-gradient(
+          circle at 50% -20%,
+          #29251d 0%,
+          #11100e 35%,
+          #080808 75%
+        )
+      `
+      : `
+        radial-gradient(
+          circle at 50% -20%,
+          #fffdf7 0%,
+          #f7f3ea 38%,
+          #eee9df 100%
+        )
+      `};
+
+  color: ${({ $isdark }) =>
+    $isdark ? "#f7f4ed" : "#171512"};
+
+  transition: 0.3s ease;
+
+  @media (max-width: 700px) {
+    padding: 20px 12px 50px;
+  }
+`;
+
+const Container = styled.div`
+  width: 100%;
+  max-width: 1180px;
+  margin: auto;
 `;
 
 /* =========================================================
@@ -48,126 +102,173 @@ const pulse = keyframes`
 
 const LoaderWrapper = styled.div`
   min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
+
   background: ${({ $isdark }) =>
-    $isdark ? "#090909" : "#f6f5f2"};
+    $isdark ? "#080808" : "#f7f3ea"};
 `;
 
 const Loader = styled.div`
   width: 44px;
   height: 44px;
-  border: 4px solid ${({ $isdark }) => ($isdark ? "#252525" : "#e5e5e5")};
-  border-top-color: #111;
+
   border-radius: 50%;
-  animation: ${spin} 0.9s linear infinite;
+  border: 3px solid
+    ${({ $isdark }) =>
+      $isdark ? "#2d2a25" : "#e1dcd1"};
+
+  border-top-color: #b89b5e;
+
+  animation: ${spin} 0.8s linear infinite;
 `;
 
 /* =========================================================
-   PAGE
+   HERO
 ========================================================= */
 
-const Page = styled.main`
-  min-height: 100vh;
-  width: 100%;
-  box-sizing: border-box;
+const Hero = styled.section`
+  position: relative;
+  overflow: hidden;
 
-  padding: 4rem 1.5rem 5rem;
+  min-height: 330px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  text-align: center;
+
+  padding: 55px 25px;
+
+  border-radius: 34px;
 
   background: ${({ $isdark }) =>
     $isdark
-      ? "radial-gradient(circle at top, #1a1a1a 0%, #090909 55%)"
-      : "linear-gradient(180deg, #faf9f7 0%, #f3f1ed 100%)"};
+      ? "linear-gradient(145deg, #181713, #0d0d0c)"
+      : "linear-gradient(145deg, #fffdf8, #f3eee3)"};
 
-  color: ${({ $isdark }) => ($isdark ? "#f5f5f5" : "#111")};
+  border: 1px solid
+    ${({ $isdark }) => ($isdark ? "#302d26" : "#e2dbcc")};
 
-  transition:
-    background 0.3s ease,
-    color 0.3s ease;
+  box-shadow: ${({ $isdark }) =>
+    $isdark
+      ? "0 30px 80px rgba(0,0,0,.45)"
+      : "0 30px 80px rgba(77,61,31,.10)"};
 
-  @media (max-width: 700px) {
-    padding: 1.5rem 0.9rem 3rem;
+  animation: ${reveal} .7s ease both;
+
+  &::before {
+    content: "";
+    position: absolute;
+
+    width: 420px;
+    height: 420px;
+
+    border-radius: 50%;
+
+    background: ${({ $isdark }) =>
+      $isdark
+        ? "rgba(184,155,94,.06)"
+        : "rgba(184,155,94,.09)"};
+
+    top: -260px;
+    left: 50%;
+
+    transform: translateX(-50%);
   }
-`;
-
-/* =========================================================
-   CONTAINER
-========================================================= */
-
-const Container = styled.div`
-  width: 100%;
-  max-width: 920px;
-  margin: 0 auto;
-`;
-
-/* =========================================================
-   HEADER
-========================================================= */
-
-const Header = styled.header`
-  text-align: center;
-  margin-bottom: 2.5rem;
-  animation: ${fadeUp} 0.6s ease forwards;
 
   @media (max-width: 600px) {
-    margin-bottom: 1.8rem;
+    min-height: 280px;
+    border-radius: 24px;
+    padding: 40px 18px;
   }
+`;
+
+const LuxuryLine = styled.div`
+  width: 70px;
+  height: 1px;
+
+  margin-bottom: 22px;
+
+  background: #b89b5e;
 `;
 
 const SuccessIcon = styled.div`
-  width: 76px;
-  height: 76px;
-  margin: 0 auto 1.2rem;
+  position: relative;
+  z-index: 1;
 
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 82px;
+  height: 82px;
+
+  display: grid;
+  place-items: center;
+
+  margin-bottom: 22px;
 
   border-radius: 50%;
 
   background: ${({ $isdark }) =>
-    $isdark ? "#171717" : "#111"};
+    $isdark ? "#b89b5e" : "#171512"};
 
-  color: white;
+  color: ${({ $isdark }) =>
+    $isdark ? "#171512" : "#fffdf8"};
 
   box-shadow:
-    0 15px 40px rgba(0, 0, 0, 0.15);
+    0 0 0 8px
+      ${({ $isdark }) =>
+        $isdark
+          ? "rgba(184,155,94,.10)"
+          : "rgba(23,21,18,.06)"},
+    0 18px 45px rgba(0, 0, 0, .18);
 
-  animation: ${pulse} 2.5s ease-in-out infinite;
+  animation: ${scaleIn} .7s .15s ease both;
 
   svg {
-    font-size: 30px;
+    font-size: 34px;
   }
 
   @media (max-width: 600px) {
-    width: 64px;
-    height: 64px;
+    width: 70px;
+    height: 70px;
 
     svg {
-      font-size: 25px;
+      font-size: 28px;
     }
   }
 `;
 
 const Eyebrow = styled.div`
-  margin-bottom: 0.6rem;
+  position: relative;
+  z-index: 1;
 
-  font-size: 0.7rem;
+  color: #b89b5e;
+
+  font-size: .68rem;
   font-weight: 800;
-  letter-spacing: 2px;
+
+  letter-spacing: 3px;
   text-transform: uppercase;
 
-  color: ${({ $isdark }) => ($isdark ? "#999" : "#777")};
+  margin-bottom: 13px;
 `;
 
 const Title = styled.h1`
+  position: relative;
+  z-index: 1;
+
   margin: 0;
 
-  font-size: clamp(2rem, 5vw, 3.4rem);
-  line-height: 1;
-  letter-spacing: -1.8px;
-  font-weight: 900;
+  font-family: Georgia, "Times New Roman", serif;
+
+  font-size: clamp(2.3rem, 6vw, 4.7rem);
+
+  line-height: .95;
+
+  font-weight: 500;
+
+  letter-spacing: -2px;
 
   @media (max-width: 600px) {
     letter-spacing: -1px;
@@ -175,57 +276,65 @@ const Title = styled.h1`
 `;
 
 const Subtitle = styled.p`
-  max-width: 600px;
-  margin: 1rem auto 0;
+  position: relative;
+  z-index: 1;
 
-  font-size: 0.98rem;
-  line-height: 1.6;
+  max-width: 620px;
 
-  color: ${({ $isdark }) => ($isdark ? "#aaa" : "#666")};
+  margin: 20px auto 0;
 
-  @media (max-width: 600px) {
-    font-size: 0.88rem;
-  }
+  font-size: .9rem;
+  line-height: 1.8;
+
+  color: ${({ $isdark }) =>
+    $isdark ? "#aaa59a" : "#777168"};
 `;
-
-/* =========================================================
-   ORDER NUMBER
-========================================================= */
 
 const OrderReference = styled.div`
+  position: relative;
+  z-index: 1;
+
+  margin-top: 22px;
+
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 9px;
 
-  margin-top: 1.2rem;
-  padding: 9px 14px;
+  padding: 9px 16px;
 
-  border-radius: 999px;
+  border-radius: 100px;
 
   background: ${({ $isdark }) =>
-    $isdark ? "#181818" : "#fff"};
+    $isdark ? "#211f1a" : "#fff"};
 
   border: 1px solid
-    ${({ $isdark }) => ($isdark ? "#292929" : "#e5e5e5")};
+    ${({ $isdark }) => ($isdark ? "#39342a" : "#ded7c9")};
 
-  color: ${({ $isdark }) => ($isdark ? "#ddd" : "#444")};
+  color: ${({ $isdark }) =>
+    $isdark ? "#d8d1c4" : "#514b42"};
 
-  font-size: 0.78rem;
-  font-weight: 700;
+  font-size: .7rem;
+  font-weight: 800;
+
+  letter-spacing: 1px;
 `;
 
 /* =========================================================
-   GRID
+   CONTENT
 ========================================================= */
 
 const MainGrid = styled.div`
   display: grid;
-  grid-template-columns: 1.15fr 0.85fr;
-  gap: 1.2rem;
 
-  animation: ${fadeUp} 0.7s ease forwards;
+  grid-template-columns: 1.35fr .85fr;
 
-  @media (max-width: 780px) {
+  gap: 22px;
+
+  margin-top: 22px;
+
+  animation: ${reveal} .8s .15s ease both;
+
+  @media (max-width: 850px) {
     grid-template-columns: 1fr;
   }
 `;
@@ -235,131 +344,162 @@ const MainGrid = styled.div`
 ========================================================= */
 
 const Card = styled.section`
-  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
 
-  border-radius: 22px;
+  padding: 28px;
+
+  border-radius: 28px;
 
   background: ${({ $isdark }) =>
     $isdark
-      ? "rgba(23,23,23,0.96)"
-      : "rgba(255,255,255,0.92)"};
+      ? "rgba(20,19,17,.94)"
+      : "rgba(255,255,255,.88)"};
 
   border: 1px solid
-    ${({ $isdark }) => ($isdark ? "#292929" : "#e8e6e1")};
+    ${({ $isdark }) => ($isdark ? "#302d26" : "#e2dbcf")};
 
   box-shadow: ${({ $isdark }) =>
     $isdark
-      ? "0 18px 45px rgba(0,0,0,0.25)"
-      : "0 18px 45px rgba(0,0,0,0.06)"};
+      ? "0 25px 70px rgba(0,0,0,.28)"
+      : "0 25px 70px rgba(55,42,20,.08)"};
 
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(15px);
 
   @media (max-width: 600px) {
-    padding: 1.1rem;
-    border-radius: 17px;
+    padding: 20px 17px;
+    border-radius: 22px;
   }
 `;
 
-const CardHeader = styled.div`
+const CardTop = styled.div`
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 13px;
 
-  gap: 1rem;
+  margin-bottom: 25px;
+`;
 
-  margin-bottom: 1.3rem;
+const CardIcon = styled.div`
+  width: 42px;
+  height: 42px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 13px;
+
+  background: ${({ $isdark }) =>
+    $isdark ? "#25221c" : "#f3eee3"};
+
+  color: #b89b5e;
+
+  svg {
+    font-size: 17px;
+  }
+`;
+
+const CardTitleBox = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 `;
 
 const CardTitle = styled.h2`
   margin: 0;
 
-  font-size: 1rem;
+  font-size: .95rem;
   font-weight: 800;
-  letter-spacing: -0.2px;
 `;
 
 const CardLabel = styled.span`
-  font-size: 0.67rem;
-  font-weight: 800;
-  letter-spacing: 1.2px;
-  text-transform: uppercase;
+  color: ${({ $isdark }) =>
+    $isdark ? "#77736b" : "#999187"};
 
-  color: ${({ $isdark }) => ($isdark ? "#777" : "#999")};
+  font-size: .58rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
 `;
 
 /* =========================================================
-   ORDER LINES
+   PRODUCTS
 ========================================================= */
 
 const Line = styled.div`
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
 
-  gap: 1rem;
+  gap: 20px;
 
-  padding: 0.85rem 0;
+  padding: 17px 0;
 
   border-bottom: 1px solid
-    ${({ $isdark }) => ($isdark ? "#262626" : "#eeeeee")};
+    ${({ $isdark }) =>
+      $isdark ? "#292720" : "#eee9df"};
 
   &:last-child {
     border-bottom: none;
-  }
-
-  @media (max-width: 520px) {
-    gap: 0.6rem;
   }
 `;
 
 const ItemInfo = styled.div`
   min-width: 0;
-  flex: 1;
 
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
 `;
 
 const ItemName = styled.span`
-  font-size: 0.88rem;
+  font-size: .87rem;
   font-weight: 700;
 
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 `;
 
 const ItemQuantity = styled.span`
-  font-size: 0.74rem;
+  color: ${({ $isdark }) =>
+    $isdark ? "#77736b" : "#9b958b"};
 
-  color: ${({ $isdark }) => ($isdark ? "#777" : "#999")};
+  font-size: .68rem;
 `;
 
 const ItemPrice = styled.span`
   white-space: nowrap;
 
-  font-size: 0.88rem;
+  font-size: .83rem;
   font-weight: 800;
 `;
 
-const TotalLine = styled(Line)`
-  margin-top: 0.4rem;
-  padding-top: 1.2rem;
+const TotalBox = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  margin-top: 20px;
+  padding-top: 22px;
 
   border-top: 1px solid
-    ${({ $isdark }) => ($isdark ? "#333" : "#ddd")};
-
-  border-bottom: none;
+    ${({ $isdark }) =>
+      $isdark ? "#3a362d" : "#ddd6c8"};
 `;
 
 const TotalLabel = styled.span`
-  font-size: 0.95rem;
+  font-size: .82rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
   font-weight: 800;
 `;
 
 const TotalPrice = styled.span`
-  font-size: 1.15rem;
-  font-weight: 900;
+  font-family: Georgia, serif;
+
+  color: #b89b5e;
+
+  font-size: 1.55rem;
 `;
 
 /* =========================================================
@@ -367,46 +507,44 @@ const TotalPrice = styled.span`
 ========================================================= */
 
 const PaymentSummary = styled.div`
-  margin-top: 1rem;
-  padding: 1rem;
+  margin-top: 20px;
 
-  border-radius: 15px;
+  padding: 18px;
+
+  border-radius: 18px;
 
   background: ${({ $isdark }) =>
-    $isdark ? "#111" : "#f7f6f3"};
+    $isdark ? "#11100e" : "#f7f3ea"};
 `;
 
 const PaymentRow = styled.div`
   display: flex;
   justify-content: space-between;
-  gap: 1rem;
 
-  margin-bottom: 0.65rem;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
+  padding: 8px 0;
 
   span {
-    font-size: 0.8rem;
-
     color: ${({ $isdark }) =>
-      $isdark ? "#999" : "#777"};
+      $isdark ? "#858078" : "#817a70"};
+
+    font-size: .72rem;
   }
 
   strong {
-    font-size: 0.82rem;
+    font-size: .76rem;
   }
 `;
 
 const Remaining = styled(PaymentRow)`
-  padding-top: 0.7rem;
+  margin-top: 8px;
+  padding-top: 15px;
 
   border-top: 1px solid
-    ${({ $isdark }) => ($isdark ? "#292929" : "#e5e5e5")};
+    ${({ $isdark }) =>
+      $isdark ? "#302d26" : "#e5dfd3"};
 
   strong {
-    color: #d97706;
+    color: #b88a38;
   }
 `;
 
@@ -415,43 +553,65 @@ const Remaining = styled(PaymentRow)`
 ========================================================= */
 
 const Coffre = styled.div`
-  margin-top: 1.2rem;
-  padding: 1.25rem;
+  position: relative;
+  overflow: hidden;
 
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+  margin-top: 22px;
 
-  border-radius: 18px;
+  padding: 24px;
 
-  background: ${({ $isdark }) =>
-    $isdark
-      ? "linear-gradient(135deg, #202020, #111)"
-      : "linear-gradient(135deg, #171717, #333)"};
+  border-radius: 25px;
 
-  color: white;
+  background:
+    linear-gradient(
+      135deg,
+      #191713,
+      #0c0c0b
+    );
+
+  color: #fff;
 
   box-shadow:
-    0 15px 35px rgba(0, 0, 0, 0.15);
+    0 25px 60px rgba(0,0,0,.22);
 
-  @media (max-width: 520px) {
-    padding: 1rem;
+  &::after {
+    content: "";
+
+    position: absolute;
+
+    width: 180px;
+    height: 180px;
+
+    border-radius: 50%;
+
+    border: 1px solid rgba(184,155,94,.18);
+
+    right: -70px;
+    top: -80px;
   }
 `;
 
-const CoffreIcon = styled.div`
-  flex-shrink: 0;
-
-  width: 46px;
-  height: 46px;
-
+const CoffreTop = styled.div`
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 15px;
 
-  border-radius: 14px;
+  position: relative;
+  z-index: 1;
+`;
 
-  background: rgba(255, 255, 255, 0.1);
+const CoffreIcon = styled.div`
+  width: 50px;
+  height: 50px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 15px;
+
+  background: rgba(184,155,94,.14);
+
+  color: #c5a867;
 
   svg {
     font-size: 20px;
@@ -461,25 +621,59 @@ const CoffreIcon = styled.div`
 const CoffreText = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 3px;
-
-  min-width: 0;
+  gap: 5px;
 
   span {
-    font-size: 0.7rem;
-    color: #999;
+    color: #8c877d;
+
+    font-size: .58rem;
+
     text-transform: uppercase;
-    letter-spacing: 1px;
-    font-weight: 700;
+    letter-spacing: 2px;
   }
 
   strong {
-    font-size: 0.95rem;
+    font-family: Georgia, serif;
+
+    font-size: 1.1rem;
+    font-weight: 500;
   }
 `;
 
+const ProgressBar = styled.div`
+  position: relative;
+  z-index: 1;
+
+  width: 100%;
+  height: 4px;
+
+  margin-top: 22px;
+
+  border-radius: 10px;
+
+  background: #2a2823;
+
+  overflow: hidden;
+`;
+
+const Progress = styled.div`
+  height: 100%;
+
+  width: ${({ $percent }) => `${$percent}%`};
+
+  background: linear-gradient(
+    90deg,
+    #8d733d,
+    #d0b56f
+  );
+
+  border-radius: inherit;
+
+  transition: width .6s ease;
+`;
+
 /* =========================================================
-   PAYMENT STEPS
+   STEPS
 ========================================================= */
 
 const Steps = styled.div`
@@ -492,9 +686,10 @@ const Step = styled.div`
 
   display: flex;
   align-items: center;
-  gap: 0.85rem;
 
-  padding: 0.85rem 0;
+  gap: 14px;
+
+  padding: 15px 0;
 
   &:not(:last-child)::after {
     content: "";
@@ -502,13 +697,13 @@ const Step = styled.div`
     position: absolute;
 
     left: 11px;
-    top: 38px;
+    top: 39px;
 
     width: 1px;
-    height: calc(100% - 15px);
+    height: calc(100% - 10px);
 
     background: ${({ $isdark }) =>
-      $isdark ? "#303030" : "#ddd"};
+      $isdark ? "#302d26" : "#e2ddd4"};
   }
 `;
 
@@ -521,98 +716,91 @@ const StepIcon = styled.div`
   width: 24px;
   height: 24px;
 
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
+
+  border-radius: 50%;
 
   background: ${({ $paid, $isdark }) =>
     $paid
-      ? $isdark
-        ? "#171717"
-        : "#fff"
+      ? "#b89b5e"
       : $isdark
-        ? "#171717"
-        : "#fff"};
+        ? "#211f1a"
+        : "#f1eee7"};
+
+  color: ${({ $paid }) =>
+    $paid ? "#fff" : "#a39a8b"};
 
   svg {
-    font-size: 21px;
+    font-size: ${({ $paid }) =>
+      $paid ? "12px" : "15px"};
   }
 `;
 
 const StepInfo = styled.div`
   flex: 1;
-  min-width: 0;
 
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
 `;
 
 const StepTitle = styled.span`
-  font-size: 0.85rem;
+  font-size: .78rem;
   font-weight: 800;
 `;
 
 const StepAmount = styled.span`
-  font-size: 0.74rem;
-
   color: ${({ $isdark }) =>
-    $isdark ? "#777" : "#999"};
+    $isdark ? "#77736c" : "#999288"};
+
+  font-size: .65rem;
 `;
 
 const Badge = styled.span`
-  flex-shrink: 0;
+  padding: 6px 9px;
 
-  padding: 5px 9px;
+  border-radius: 100px;
 
-  border-radius: 999px;
-
-  font-size: 0.62rem;
+  font-size: .53rem;
   font-weight: 900;
 
-  letter-spacing: 0.5px;
+  letter-spacing: .8px;
 
   color: ${({ $paid }) =>
-    $paid ? "#166534" : "#92400e"};
+    $paid ? "#27613a" : "#876523"};
 
   background: ${({ $paid }) =>
-    $paid ? "#dcfce7" : "#fef3c7"};
-
-  @media (max-width: 450px) {
-    font-size: 0.55rem;
-    padding: 4px 7px;
-  }
+    $paid ? "#e5f3e8" : "#f6edda"};
 `;
 
 /* =========================================================
-   SECURITY INFO
+   SECURITY
 ========================================================= */
 
 const Security = styled.div`
   display: flex;
-  align-items: flex-start;
-  gap: 0.8rem;
+  gap: 10px;
 
-  margin-top: 1rem;
+  margin-top: 22px;
 
-  padding: 1rem;
+  padding: 15px;
 
   border-radius: 15px;
 
   background: ${({ $isdark }) =>
-    $isdark ? "#141414" : "#f8f8f6"};
-
-  border: 1px solid
-    ${({ $isdark }) => ($isdark ? "#252525" : "#e8e8e5")};
+    $isdark ? "#171613" : "#f8f5ef"};
 
   color: ${({ $isdark }) =>
-    $isdark ? "#999" : "#777"};
+    $isdark ? "#77736b" : "#858076"};
 
-  font-size: 0.72rem;
-  line-height: 1.5;
+  font-size: .65rem;
+
+  line-height: 1.6;
 
   svg {
     flex-shrink: 0;
+    color: #b89b5e;
     margin-top: 2px;
   }
 `;
@@ -624,42 +812,47 @@ const Security = styled.div`
 const Button = styled.button`
   width: 100%;
 
-  margin-top: 1.5rem;
+  margin-top: 22px;
 
-  min-height: 52px;
+  min-height: 58px;
 
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 10px;
+  align-items: center;
+  gap: 12px;
 
-  border: none;
-  border-radius: 14px;
+  border: 1px solid #b89b5e;
+  border-radius: 16px;
 
   background: ${({ $isdark }) =>
-    $isdark ? "#fff" : "#111"};
+    $isdark ? "#b89b5e" : "#171512"};
 
   color: ${({ $isdark }) =>
-    $isdark ? "#111" : "#fff"};
+    $isdark ? "#171512" : "#fff"};
 
-  font-size: 0.9rem;
-  font-weight: 800;
+  font-size: .76rem;
+  font-weight: 900;
+
+  letter-spacing: 1px;
+  text-transform: uppercase;
 
   cursor: pointer;
 
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+  transition: .25s ease;
 
-  &:hover {
-    transform: translateY(-2px);
-
-    box-shadow:
-      0 10px 25px rgba(0, 0, 0, 0.15);
+  svg {
+    transition: transform .25s ease;
   }
 
-  &:active {
-    transform: translateY(0);
+  &:hover {
+    transform: translateY(-3px);
+
+    box-shadow:
+      0 15px 35px rgba(0,0,0,.18);
+
+    svg {
+      transform: translateX(4px);
+    }
   }
 `;
 
@@ -677,54 +870,62 @@ const Modal = styled.div`
   align-items: center;
   justify-content: center;
 
-  padding: 1rem;
+  padding: 20px;
 
-  background: rgba(0, 0, 0, 0.72);
+  background: rgba(7,7,6,.78);
 
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(14px);
 `;
 
 const ModalContent = styled.div`
+  position: relative;
+
   width: 100%;
-  max-width: 440px;
+  max-width: 460px;
 
-  padding: 2rem;
+  padding: 38px;
 
-  border-radius: 22px;
+  border-radius: 28px;
 
   text-align: center;
 
   background: ${({ $isdark }) =>
-    $isdark ? "#181818" : "#fff"};
+    $isdark
+      ? "linear-gradient(145deg,#1d1b17,#11100e)"
+      : "linear-gradient(145deg,#fffefa,#f5f0e7)"};
 
-  color: ${({ $isdark }) =>
-    $isdark ? "#f5f5f5" : "#111"};
+  border: 1px solid
+    ${({ $isdark }) =>
+      $isdark ? "#39342a" : "#e2dacb"};
 
   box-shadow:
-    0 30px 80px rgba(0, 0, 0, 0.3);
+    0 40px 100px rgba(0,0,0,.4);
 
-  animation: ${fadeUp} 0.35s ease forwards;
+  animation: ${reveal} .4s ease both;
 
   @media (max-width: 500px) {
-    padding: 1.5rem;
-    border-radius: 18px;
+    padding: 28px 20px;
+    border-radius: 22px;
   }
 `;
 
 const ModalIcon = styled.div`
-  width: 54px;
-  height: 54px;
+  width: 64px;
+  height: 64px;
 
-  margin: 0 auto 1rem;
+  display: grid;
+  place-items: center;
 
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  margin: 0 auto 20px;
 
   border-radius: 50%;
 
-  background: ${({ $isdark }) =>
-    $isdark ? "#242424" : "#f2f2f2"};
+  background: #b89b5e;
+
+  color: #171512;
+
+  box-shadow:
+    0 10px 30px rgba(184,155,94,.25);
 
   svg {
     font-size: 23px;
@@ -732,40 +933,53 @@ const ModalIcon = styled.div`
 `;
 
 const ModalTitle = styled.h2`
-  margin: 0 0 0.7rem;
+  margin: 0 0 10px;
 
-  font-size: 1.25rem;
+  font-family: Georgia, serif;
+
+  font-size: 1.5rem;
+  font-weight: 500;
 `;
 
 const ModalText = styled.p`
   margin: 0;
 
   color: ${({ $isdark }) =>
-    $isdark ? "#999" : "#666"};
+    $isdark ? "#969188" : "#716b61"};
 
-  font-size: 0.88rem;
-  line-height: 1.6;
+  font-size: .78rem;
+  line-height: 1.7;
 `;
 
 const CloseModal = styled.button`
   width: 100%;
 
-  margin-top: 1.4rem;
+  margin-top: 25px;
 
-  padding: 12px 16px;
+  padding: 14px;
 
   border: none;
-  border-radius: 12px;
+  border-radius: 13px;
 
-  background: #111;
-  color: #fff;
+  background: ${({ $isdark }) =>
+    $isdark ? "#fff" : "#171512"};
 
-  font-weight: 800;
+  color: ${({ $isdark }) =>
+    $isdark ? "#171512" : "#fff"};
+
+  font-size: .7rem;
+  font-weight: 900;
+
+  letter-spacing: 1px;
+  text-transform: uppercase;
 
   cursor: pointer;
 
+  transition: .2s;
+
   &:hover {
-    opacity: 0.9;
+    opacity: .88;
+    transform: translateY(-1px);
   }
 `;
 
@@ -790,9 +1004,7 @@ export default function Merci() {
 
   const API_URL = import.meta.env.VITE_API_URL;
 
-  /* =========================================================
-     AUTH
-  ========================================================= */
+  /* ================= AUTH ================= */
 
   useEffect(() => {
     const savedToken = localStorage.getItem("token");
@@ -805,9 +1017,7 @@ export default function Merci() {
     setToken(savedToken);
   }, [navigate]);
 
-  /* =========================================================
-     FETCH COMMANDE
-  ========================================================= */
+  /* ================= FETCH ================= */
 
   useEffect(() => {
     if (!commandeId || !token) return;
@@ -853,9 +1063,7 @@ export default function Merci() {
     API_URL,
   ]);
 
-  /* =========================================================
-     LOADING
-  ========================================================= */
+  /* ================= LOADING ================= */
 
   if (loading) {
     return (
@@ -877,9 +1085,7 @@ export default function Merci() {
     );
   }
 
-  /* =========================================================
-     CALCULS
-  ========================================================= */
+  /* ================= DATA ================= */
 
   const paiements = commande.paiements || [];
   const panier = commande.panier || [];
@@ -900,48 +1106,54 @@ export default function Merci() {
 
   const remaining = Math.max(
     0,
-    Number(commande.total || 0) -
-      totalPaid,
+    Number(commande.total || 0) - totalPaid,
   );
 
-  /* =========================================================
-     UI
-  ========================================================= */
+  const progress =
+    totalSteps > 0
+      ? Math.round(
+          (paidSteps / totalSteps) * 100,
+        )
+      : 0;
+
+  /* ================= UI ================= */
 
   return (
     <Page $isdark={$isdark}>
       <Container>
 
-        {/* ================= HEADER ================= */}
+        {/* ================= HERO ================= */}
 
-        <Header>
+        <Hero $isdark={$isdark}>
+          <LuxuryLine />
+
           <SuccessIcon $isdark={$isdark}>
             <FaCheckCircle />
           </SuccessIcon>
 
-          <Eyebrow $isdark={$isdark}>
-            Commande enregistrée
+          <Eyebrow>
+            Confirmation de commande
           </Eyebrow>
 
           <Title>
-            Merci pour votre commande
+            Merci pour votre confiance
           </Title>
 
           <Subtitle $isdark={$isdark}>
-            Votre commande a bien été prise en
-            compte. Vous pouvez suivre son
-            avancement et vos paiements depuis
-            votre espace personnel.
+            Votre commande est officiellement
+            enregistrée. Retrouvez ci-dessous
+            son récapitulatif ainsi que
+            l'avancement de votre coffre.
           </Subtitle>
 
           {commandeId && (
             <OrderReference $isdark={$isdark}>
-              <FaBox />
-              Commande #
-              {String(commandeId).slice(-8)}
+              <FaStar />
+              COMMANDE #
+              {String(commandeId).slice(-8).toUpperCase()}
             </OrderReference>
           )}
-        </Header>
+        </Hero>
 
         {/* ================= CONTENT ================= */}
 
@@ -952,18 +1164,22 @@ export default function Merci() {
           <div>
 
             <Card $isdark={$isdark}>
-              <CardHeader>
-                <CardTitle>
-                  Récapitulatif
-                </CardTitle>
 
-                <CardLabel $isdark={$isdark}>
-                  {panier.length} article
-                  {panier.length > 1
-                    ? "s"
-                    : ""}
-                </CardLabel>
-              </CardHeader>
+              <CardTop>
+                <CardIcon $isdark={$isdark}>
+                  <FaBox />
+                </CardIcon>
+
+                <CardTitleBox>
+                  <CardTitle>
+                    Votre commande
+                  </CardTitle>
+
+                  <CardLabel $isdark={$isdark}>
+                    Récapitulatif
+                  </CardLabel>
+                </CardTitleBox>
+              </CardTop>
 
               {panier.map((item, index) => (
                 <Line
@@ -979,27 +1195,26 @@ export default function Merci() {
                       {item.nom}
                     </ItemName>
 
-                    <ItemQuantity $isdark={$isdark}>
-                      Quantité :{" "}
-                      {item.quantite}
+                    <ItemQuantity
+                      $isdark={$isdark}
+                    >
+                      Quantité : {item.quantite}
                     </ItemQuantity>
                   </ItemInfo>
 
                   <ItemPrice>
                     {(
                       Number(item.prix || 0) *
-                      Number(
-                        item.quantite || 0,
-                      )
+                      Number(item.quantite || 0)
                     ).toLocaleString()}{" "}
                     FCFA
                   </ItemPrice>
                 </Line>
               ))}
 
-              <TotalLine $isdark={$isdark}>
+              <TotalBox $isdark={$isdark}>
                 <TotalLabel>
-                  Total
+                  Total commande
                 </TotalLabel>
 
                 <TotalPrice>
@@ -1008,54 +1223,58 @@ export default function Merci() {
                   ).toLocaleString()}{" "}
                   FCFA
                 </TotalPrice>
-              </TotalLine>
+              </TotalBox>
 
               <PaymentSummary
                 $isdark={$isdark}
               >
-                <PaymentRow
-                  $isdark={$isdark}
-                >
+                <PaymentRow $isdark={$isdark}>
                   <span>
-                    Montant payé
+                    Montant déjà payé
                   </span>
 
                   <strong>
-                    {totalPaid.toLocaleString()}{" "}
-                    FCFA
+                    {totalPaid.toLocaleString()} FCFA
                   </strong>
                 </PaymentRow>
 
-                <Remaining
-                  $isdark={$isdark}
-                >
+                <Remaining $isdark={$isdark}>
                   <span>
-                    Reste à payer
+                    Solde restant
                   </span>
 
                   <strong>
-                    {remaining.toLocaleString()}{" "}
-                    FCFA
+                    {remaining.toLocaleString()} FCFA
                   </strong>
                 </Remaining>
               </PaymentSummary>
+
             </Card>
 
+            {/* COFFRE */}
+
             <Coffre $isdark={$isdark}>
-              <CoffreIcon>
-                <FaBox />
-              </CoffreIcon>
 
-              <CoffreText>
-                <span>
-                  Votre coffre
-                </span>
+              <CoffreTop>
+                <CoffreIcon>
+                  <FaBox />
+                </CoffreIcon>
 
-                <strong>
-                  {paidSteps} / {totalSteps}{" "}
-                  étapes payées
-                </strong>
-              </CoffreText>
+                <CoffreText>
+                  <span>
+                    Votre coffre
+                  </span>
+
+                  <strong>
+                    {paidSteps} / {totalSteps} étapes payées
+                  </strong>
+                </CoffreText>
+              </CoffreTop>
+
+              <ProgressBar>
+                <Progress $percent={progress} />
+              </ProgressBar>
+
             </Coffre>
 
           </div>
@@ -1065,17 +1284,25 @@ export default function Merci() {
           <div>
 
             <Card $isdark={$isdark}>
-              <CardHeader>
-                <CardTitle>
-                  Progression
-                </CardTitle>
 
-                <CardLabel $isdark={$isdark}>
-                  Paiement
-                </CardLabel>
-              </CardHeader>
+              <CardTop>
+                <CardIcon $isdark={$isdark}>
+                  <FaCheckCircle />
+                </CardIcon>
+
+                <CardTitleBox>
+                  <CardTitle>
+                    Progression
+                  </CardTitle>
+
+                  <CardLabel $isdark={$isdark}>
+                    Suivi du paiement
+                  </CardLabel>
+                </CardTitleBox>
+              </CardTop>
 
               <Steps>
+
                 {paiements.map((p) => {
                   const paid =
                     p.status === "PAID";
@@ -1085,22 +1312,20 @@ export default function Merci() {
                       key={p._id}
                       $isdark={$isdark}
                     >
+
                       <StepIcon
                         $paid={paid}
                         $isdark={$isdark}
                       >
                         {paid ? (
-                          <FaCheckCircle
-                            color="#16a34a"
-                          />
+                          <FaCheckCircle />
                         ) : (
-                          <FaRegCircle
-                            color="#d97706"
-                          />
+                          <FaRegCircle />
                         )}
                       </StepIcon>
 
                       <StepInfo>
+
                         <StepTitle>
                           Étape {p.step}
                         </StepTitle>
@@ -1109,11 +1334,11 @@ export default function Merci() {
                           $isdark={$isdark}
                         >
                           {Number(
-                            p.amountExpected ||
-                              0,
+                            p.amountExpected || 0,
                           ).toLocaleString()}{" "}
                           FCFA
                         </StepAmount>
+
                       </StepInfo>
 
                       <Badge $paid={paid}>
@@ -1121,22 +1346,25 @@ export default function Merci() {
                           ? "PAYÉ"
                           : "EN ATTENTE"}
                       </Badge>
+
                     </Step>
                   );
                 })}
+
               </Steps>
 
               <Security $isdark={$isdark}>
                 <FaShieldAlt />
 
                 <span>
-                  Le statut de vos paiements
-                  est mis à jour dans votre
-                  espace compte. Pensez à
-                  consulter votre coffre pour
-                  suivre votre progression.
+                  Vos paiements sont suivis
+                  automatiquement. Consultez
+                  régulièrement votre coffre
+                  pour connaître l'état de votre
+                  commande.
                 </span>
               </Security>
+
             </Card>
 
             <Button
@@ -1157,36 +1385,41 @@ export default function Merci() {
 
         {showModal && (
           <Modal>
+
             <ModalContent
               $isdark={$isdark}
             >
-              <ModalIcon $isdark={$isdark}>
+
+              <ModalIcon>
                 <FaBox />
               </ModalIcon>
 
               <ModalTitle>
-                Paiement en cours de
-                validation
+                Paiement en cours de validation
               </ModalTitle>
 
               <ModalText
                 $isdark={$isdark}
               >
                 Votre commande est bien
-                enregistrée. Suivez
-                l'avancement de votre coffre
-                directement depuis votre
-                espace compte.
+                enregistrée. La validation de
+                votre paiement peut prendre
+                quelques instants. Vous pourrez
+                suivre chaque étape depuis votre
+                coffre.
               </ModalText>
 
               <CloseModal
+                $isdark={$isdark}
                 onClick={() =>
                   setShowModal(false)
                 }
               >
                 Compris
               </CloseModal>
+
             </ModalContent>
+
           </Modal>
         )}
 
