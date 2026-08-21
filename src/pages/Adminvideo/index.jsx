@@ -51,7 +51,9 @@ const Button = styled.button`
 function Video() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [videoFile, setVideoFile] = useState(null);
+
+  // Maintenant c'est un tableau
+  const [videoFiles, setVideoFiles] = useState([]);
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -59,8 +61,8 @@ function Video() {
   const ajouterVideo = async (e) => {
     e.preventDefault();
 
-    if (!videoFile) {
-      setMessage("Veuillez sélectionner une vidéo.");
+    if (videoFiles.length === 0) {
+      setMessage("Veuillez sélectionner au moins une vidéo.");
       return;
     }
 
@@ -73,8 +75,10 @@ function Video() {
       formdata.append("title", title);
       formdata.append("description", description);
 
-
-      formdata.append("videos", videoFile);
+      // Ajouter toutes les vidéos
+      videoFiles.forEach((file) => {
+        formdata.append("videos", file);
+      });
 
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/api/videos/upload`,
@@ -87,17 +91,17 @@ function Video() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Erreur lors de l'ajout");
+        throw new Error(
+          data.message || "Erreur lors de l'ajout"
+        );
       }
 
-      setMessage("Vidéo ajoutée avec succès !");
+      setMessage("Vidéos ajoutées avec succès !");
 
-      // Réinitialiser le formulaire
       setTitle("");
       setDescription("");
-      setVideoFile(null);
+      setVideoFiles([]);
 
-      // Réinitialiser l'input file
       e.target.reset();
 
     } catch (error) {
@@ -110,7 +114,7 @@ function Video() {
 
   return (
     <Container>
-      <h1>Ajouter une vidéo</h1>
+      <h1>Ajouter des vidéos</h1>
 
       <Form onSubmit={ajouterVideo}>
 
@@ -122,7 +126,7 @@ function Video() {
           <Input
             id="title"
             type="text"
-            placeholder="Titre de la vidéo"
+            placeholder="Titre"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
@@ -136,7 +140,7 @@ function Video() {
 
           <Textarea
             id="description"
-            placeholder="Description de la vidéo"
+            placeholder="Description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             required
@@ -144,37 +148,46 @@ function Video() {
         </div>
 
         <div>
-          <Label htmlFor="video">
-            Vidéo
+          <Label htmlFor="videos">
+            Vidéos
           </Label>
 
           <Input
-            id="video"
+            id="videos"
             type="file"
             accept="video/*"
+            multiple
             onChange={(e) => {
-              setVideoFile(e.target.files[0]);
+              setVideoFiles(Array.from(e.target.files));
             }}
             required
           />
         </div>
 
-        {videoFile && (
-          <p>
-            Fichier sélectionné : {videoFile.name}
-          </p>
+        {videoFiles.length > 0 && (
+          <div>
+            <p>
+              {videoFiles.length} vidéo(s) sélectionnée(s)
+            </p>
+
+            {videoFiles.map((file, index) => (
+              <p key={index}>
+                {file.name}
+              </p>
+            ))}
+          </div>
         )}
 
         <Button
           type="submit"
           disabled={loading}
         >
-          {loading ? "Ajout en cours..." : "Ajouter la vidéo"}
+          {loading
+            ? "Upload en cours..."
+            : "Ajouter les vidéos"}
         </Button>
 
-        {message && (
-          <p>{message}</p>
-        )}
+        {message && <p>{message}</p>}
 
       </Form>
     </Container>
