@@ -49,10 +49,11 @@ import AdminCommandes from "./pages/AdminCommande";
 import AdminPaiements from "./pages/AdminPaiements";
 import PaiementTroisFois from "./pages/paiement-3x";
 import PageCommandeConfirmee from "./pages/PageCommandeConfirmee";
+import Video from "./pages/Adminvideo";
+
 import { Toaster } from "react-hot-toast";
 import "./i18n";
 
-// --- Layout pour les pages publiques ---
 const PublicLayout = ({ children }) => {
   const location = useLocation();
   const heroPage = location.pathname === "/";
@@ -324,6 +325,7 @@ createRoot(document.getElementById("root")).render(
                 <Route path="products" element={<AdminProducts />} />
                 <Route path="orders" element={<AdminCommandes />} />
                 <Route path="paiement" element={<AdminPaiements />} />
+                <Route path="videos" element={<Video />} />
               </Route>
             </Routes>
         </Panier>
