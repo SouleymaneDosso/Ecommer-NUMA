@@ -1177,207 +1177,42 @@ const EmptyState = styled.div`
   opacity: 0.55;
 `;
 
+/* =========================================================
+   VIDEO — HERO STYLE
+========================================================= */
+
 const VideoSection = styled.section`
-  width: min(1240px, 92%);
-  margin: 0 auto;
-  padding: 100px 0;
-
-  @media (max-width: 768px) {
-    padding: 70px 0;
-  }
-`;
-
-const VideoHeader = styled.div`
-  max-width: 760px;
-  margin-bottom: 45px;
-
-  .eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 16px;
-
-    font-size: 0.7rem;
-    font-weight: 800;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-
-    opacity: 0.55;
-
-    &::before {
-      content: "";
-      width: 30px;
-      height: 1px;
-      background: currentColor;
-    }
-  }
-
-  h2 {
-    margin: 0 0 15px;
-
-    font-size: clamp(2.2rem, 5vw, 4.5rem);
-    line-height: 0.98;
-    letter-spacing: -0.055em;
-  }
-
-  p {
-    max-width: 650px;
-    margin: 0;
-
-    font-size: 1rem;
-    line-height: 1.8;
-
-    opacity: 0.62;
-  }
-`;
-
-const VideoGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
-
-  @media (max-width: 800px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const VideoCard = styled.article`
   position: relative;
 
-  min-height: 560px;
+  width: 100%;
+  height: min(920px, 100vh);
+  min-height: 680px;
 
   overflow: hidden;
 
-  background: ${({ $isDark }) => ($isDark ? "#0b0b0b" : "#e9e9e9")};
+  background: #090909;
 
-  border: 1px solid
-    ${({ $isDark }) =>
-      $isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.07)"};
-
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.14);
-
-  transition:
-    transform 0.5s ease,
-    box-shadow 0.5s ease;
-
-  &:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.2);
-  }
-
-  @media (max-width: 600px) {
-    min-height: 500px;
+  @media (max-width: 768px) {
+    height: 760px;
+    min-height: 680px;
   }
 `;
 
 const VideoPlayer = styled.video`
   position: absolute;
-  inset: 0;
+  inset: -1%;
 
-  width: 100%;
-  height: 100%;
+  width: 102%;
+  height: 102%;
 
   object-fit: cover;
+  object-position: center;
 
-  background: #050505;
-`;
-
-const VideoGradient = styled.div`
-  position: absolute;
-  inset: 0;
+  background: #090909;
 
   pointer-events: none;
 
-  background: linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 0.05) 20%,
-    rgba(0, 0, 0, 0.15) 45%,
-    rgba(0, 0, 0, 0.88) 100%
-  );
-`;
-
-const VideoContent = styled.div`
-  position: absolute;
-  z-index: 2;
-
-  left: 0;
-  right: 0;
-  bottom: 0;
-
-  padding: 35px;
-
-  color: white;
-
-  @media (max-width: 600px) {
-    padding: 25px;
-  }
-`;
-
-const VideoNumber = styled.span`
-  display: block;
-
-  margin-bottom: 12px;
-
-  font-size: 0.65rem;
-  font-weight: 800;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-
-  opacity: 0.65;
-`;
-
-const VideoTitle = styled.h3`
-  margin: 0 0 10px;
-
-  font-size: clamp(1.7rem, 3vw, 2.5rem);
-  line-height: 1;
-  letter-spacing: -0.04em;
-`;
-
-const VideoDescription = styled.p`
-  max-width: 500px;
-
-  margin: 0;
-
-  font-size: 0.9rem;
-  line-height: 1.7;
-
-  opacity: 0.78;
-`;
-
-const VideoEmpty = styled.div`
-  min-height: 300px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  text-align: center;
-
-  opacity: 0.55;
-`;
-
-const VideoBadge = styled.span`
-  position: absolute;
-  z-index: 3;
-
-  top: 22px;
-  left: 22px;
-
-  padding: 8px 12px;
-
-  color: white;
-
-  background: rgba(0, 0, 0, 0.4);
-
-  border: 1px solid rgba(255, 255, 255, 0.18);
-
-  backdrop-filter: blur(12px);
-
-  font-size: 0.65rem;
-  font-weight: 800;
-  letter-spacing: 2px;
-  text-transform: uppercase;
+  user-select: none;
 `;
 
 /* =========================================================
@@ -1646,57 +1481,22 @@ export default function HomePremium() {
           COLLECTION NUMA
         </HeroMeta>
       </Hero>
+
       <VideoSection>
-        <VideoHeader>
-          <div className="eyebrow">NUMA — STORIES</div>
-
-          <h2>
-            L'univers Numa
-            <br />
-            en mouvement.
-          </h2>
-
-          <p>
-            Découvrez nos collections autrement à travers nos vidéos, nos
-            inspirations et notre univers.
-          </p>
-        </VideoHeader>
-
         {video.length > 0 ? (
-          <VideoGrid>
-            {video.map((vid, index) => (
-              <VideoCard key={vid._id} $isDark={$isDark}>
-                <VideoPlayer
-                  src={vid.url}
-                  controls
-                  playsInline
-                  preload="metadata"
-                />
-
-                <VideoGradient />
-
-                <VideoBadge>
-                  NUMA / {String(index + 1).padStart(2, "0")}
-                </VideoBadge>
-
-                <VideoContent>
-                  <VideoNumber>Collection vidéo</VideoNumber>
-
-                  <VideoDescription>{vid.description}</VideoDescription>
-                </VideoContent>
-              </VideoCard>
-            ))}
-          </VideoGrid>
-        ) : (
-          <VideoEmpty>
-            <div>
-              <h3>Aucune vidéo disponible</h3>
-              <p>Notre univers vidéo arrive bientôt.</p>
-            </div>
-          </VideoEmpty>
-        )}
+          <VideoPlayer
+            src={video[0].url}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            controls={false}
+            disablePictureInPicture
+            controlsList="nodownload noplaybackrate noremoteplayback"
+          />
+        ) : null}
       </VideoSection>
-
       {/* ===================================================
           UNIVERS
       =================================================== */}
