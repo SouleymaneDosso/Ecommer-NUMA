@@ -1455,13 +1455,6 @@ export default function HomePremium() {
         <HeroContent>
           <HeroText>
             <div className="eyebrow">NUMA — COLLECTION</div>
-
-            <h1>
-              Une mode pensée
-              <br />
-              pour séduire.
-            </h1>
-
             <p>
               Des silhouettes fortes, des détails maîtrisés et une élégance
               pensée pour marquer les esprits.
