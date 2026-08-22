@@ -96,6 +96,7 @@ function Video() {
       }
 
       setMessage("Vidéos ajoutées avec succès !");
+      fetchVideos();
 
       setTitle("");
       setDescription("");
