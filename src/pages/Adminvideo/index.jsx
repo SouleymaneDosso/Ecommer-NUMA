@@ -57,6 +57,7 @@ function Video() {
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+const [videos, setVideos] = useState([]);
 
   const ajouterVideo = async (e) => {
     e.preventDefault();
@@ -111,6 +112,23 @@ function Video() {
       setLoading(false);
     }
   };
+
+  const fetchVideos = async () => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/videos/videos`
+      );
+      const data = await response.json(); 
+      setVideos(data.videos);
+    } catch (error) {
+      console.log(error.message);
+      setMessage(error.message);
+    }
+  };
+
+  useEffect(() => {
+    fetchVideos();
+  }, []);
 
   return (
     <Container>
@@ -190,6 +208,18 @@ function Video() {
         {message && <p>{message}</p>}
 
       </Form>
+
+        <div>
+      {videos.map((video) => (
+        <div key={video._id}>
+          <h3>{video.title}</h3>
+          <p>{video.description}</p>
+          <video width="320" height="240" controls>
+            <source src={video.url} type="video/mp4" />
+          </video>
+        </div>
+      ))}
+    </div>
     </Container>
   );
 }
