@@ -127,6 +127,27 @@ function Video() {
     fetchVideos();
   }, []);
 
+  const deleteVideo = async (id) => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/videos/videos/${id}`,
+        {
+          method: "DELETE",
+        },
+      );
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Erreur lors de la suppression");
+      }
+
+      setMessage("Vidéo supprimée avec succès !");
+      fetchVideos();
+    } catch (error) {
+      console.log(error.message);
+      setMessage(error.message);
+    }
+  };
+
   return (
     <Container>
       <h1>Ajouter des vidéos</h1>
@@ -189,6 +210,7 @@ function Video() {
         {message && <p>{message}</p>}
       </Form>
 
+
       <div>
         {videos.map((video) => (
           <div key={video._id}>
@@ -198,6 +220,7 @@ function Video() {
               <source src={video.url} type="video/mp4" />
               Votre navigateur ne supporte pas la lecture vidéo.
             </video>
+            <button onClick={() => deleteVideo(video._id)}>Supprimer</button>
           </div>
         ))}
       </div>
