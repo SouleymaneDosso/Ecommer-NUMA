@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import styled from "styled-components";
 
 const Container = styled.div`
@@ -194,7 +194,10 @@ function Video() {
           <div key={video._id}>
             <h3>{video.title}</h3>
             <p>{video.description}</p>
-            <video src={video.url} type="video/mp4" />
+            <video controls width="400">
+              <source src={video.url} type="video/mp4" />
+              Votre navigateur ne supporte pas la lecture vidéo.
+            </video>
           </div>
         ))}
       </div>
