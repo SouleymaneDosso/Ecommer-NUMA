@@ -57,7 +57,7 @@ function Video() {
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-const [videos, setVideos] = useState([]);
+  const [videos, setVideos] = useState([]);
 
   const ajouterVideo = async (e) => {
     e.preventDefault();
@@ -86,15 +86,13 @@ const [videos, setVideos] = useState([]);
         {
           method: "POST",
           body: formdata,
-        }
+        },
       );
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.message || "Erreur lors de l'ajout"
-        );
+        throw new Error(data.message || "Erreur lors de l'ajout");
       }
 
       setMessage("Vidéos ajoutées avec succès !");
@@ -104,7 +102,6 @@ const [videos, setVideos] = useState([]);
       setVideoFiles([]);
 
       e.target.reset();
-
     } catch (error) {
       console.log(error.message);
       setMessage(error.message);
@@ -116,9 +113,9 @@ const [videos, setVideos] = useState([]);
   const fetchVideos = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/videos/videos`
+        `${import.meta.env.VITE_API_URL}/api/videos/videos`,
       );
-      const data = await response.json(); 
+      const data = await response.json();
       setVideos(data.videos);
     } catch (error) {
       console.log(error.message);
@@ -135,11 +132,8 @@ const [videos, setVideos] = useState([]);
       <h1>Ajouter des vidéos</h1>
 
       <Form onSubmit={ajouterVideo}>
-
         <div>
-          <Label htmlFor="title">
-            Titre
-          </Label>
+          <Label htmlFor="title">Titre</Label>
 
           <Input
             id="title"
@@ -152,9 +146,7 @@ const [videos, setVideos] = useState([]);
         </div>
 
         <div>
-          <Label htmlFor="description">
-            Description
-          </Label>
+          <Label htmlFor="description">Description</Label>
 
           <Textarea
             id="description"
@@ -166,9 +158,7 @@ const [videos, setVideos] = useState([]);
         </div>
 
         <div>
-          <Label htmlFor="videos">
-            Vidéos
-          </Label>
+          <Label htmlFor="videos">Vidéos</Label>
 
           <Input
             id="videos"
@@ -184,42 +174,30 @@ const [videos, setVideos] = useState([]);
 
         {videoFiles.length > 0 && (
           <div>
-            <p>
-              {videoFiles.length} vidéo(s) sélectionnée(s)
-            </p>
+            <p>{videoFiles.length} vidéo(s) sélectionnée(s)</p>
 
             {videoFiles.map((file, index) => (
-              <p key={index}>
-                {file.name}
-              </p>
+              <p key={index}>{file.name}</p>
             ))}
           </div>
         )}
 
-        <Button
-          type="submit"
-          disabled={loading}
-        >
-          {loading
-            ? "Upload en cours..."
-            : "Ajouter les vidéos"}
+        <Button type="submit" disabled={loading}>
+          {loading ? "Upload en cours..." : "Ajouter les vidéos"}
         </Button>
 
         {message && <p>{message}</p>}
-
       </Form>
 
-        <div>
-      {videos.map((video) => (
-        <div key={video._id}>
-          <h3>{video.title}</h3>
-          <p>{video.description}</p>
-          <video width="320" height="240" controls>
-            <source src={video.url} type="video/mp4" />
-          </video>
-        </div>
-      ))}
-    </div>
+      <div>
+        {videos.map((video) => (
+          <div key={video._id}>
+            <h3>{video.title}</h3>
+            <p>{video.description}</p>
+            <video src={video.url} type="video/mp4" />
+          </div>
+        ))}
+      </div>
     </Container>
   );
 }
