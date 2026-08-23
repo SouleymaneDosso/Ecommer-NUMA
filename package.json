@@ -17,6 +17,7 @@
     "framer-motion": "^12.23.26",
     "i18next": "^25.6.3",
     "leaflet": "^1.9.4",
+    "lucide-react": "^1.33.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-dropzone": "^14.3.8",

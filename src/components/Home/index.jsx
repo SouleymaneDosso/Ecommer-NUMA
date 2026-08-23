@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useContext, useRef } from "react";
+import { Play, Pause, Volume2, VolumeX } from "lucide-react";
 import styled, { keyframes } from "styled-components";
 import { Link } from "react-router-dom";
 import {
@@ -1215,6 +1216,36 @@ const VideoPlayer = styled.video`
   user-select: none;
 `;
 
+const VideoControls = styled.div`
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  display: flex;
+  gap: 10px;
+  z-index: 10;
+`;
+
+const VideoButton = styled.button`
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+
+  transition: 0.2s ease;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.8);
+    transform: scale(1.05);
+  }
+`;
+
 /* =========================================================
    COMPONENT
 ========================================================= */
@@ -1231,13 +1262,49 @@ export default function HomePremium() {
   const [bestProgress, setBestProgress] = useState(0);
   const [video, setVideo] = useState([]);
   const { theme } = useContext(ThemeContext);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
 
   const $isDark = theme === "light";
 
   const miniIntervalRef = useRef(null);
   const bestIntervalRef = useRef(null);
+  const videoRef = useRef(null);
 
   const duration = 4200;
+
+  // video configuration
+
+  const pauseVideo = () => {
+    if (videoRef.current) {
+      videoRef.current.pause();
+      setIsPlaying(false);
+    }
+  };
+
+  const playVideo = () => {
+    if (videoRef.current) {
+      videoRef.current.play();
+      setIsPlaying(true);
+    }
+  };
+
+  const toggleVideo = () => {
+    if (!videoRef.current) return;
+
+    if (videoRef.current.paused) {
+      playVideo();
+    } else {
+      pauseVideo();
+    }
+  };
+
+  const couperSon = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !videoRef.current.muted;
+      setIsMuted(videoRef.current.muted);
+    }
+  };
 
   // fetch video
 
@@ -1476,19 +1543,31 @@ export default function HomePremium() {
       </Hero>
 
       <VideoSection>
-        {video.length > 0 ? (
+        {video.length > 0 && (
           <VideoPlayer
+            ref={videoRef}
             src={video[0].url}
             autoPlay
-            muted
             loop
             playsInline
             preload="auto"
             controls={false}
             disablePictureInPicture
             controlsList="nodownload noplaybackrate noremoteplayback"
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
           />
-        ) : null}
+        )}
+
+        <VideoControls>
+          <VideoButton onClick={toggleVideo}>
+            {isPlaying ? <Pause size={20} /> : <Play size={20} />}
+          </VideoButton>
+
+          <VideoButton onClick={couperSon}>
+            {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+          </VideoButton>
+        </VideoControls>
       </VideoSection>
       {/* ===================================================
           UNIVERS
