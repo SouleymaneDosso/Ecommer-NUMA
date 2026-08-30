@@ -514,7 +514,7 @@ const Input = styled.input`
 
   color: #fff;
 
-  font-size: 13px;
+   font-size: 16px;
 
   transition:
     border-color 0.25s ease,

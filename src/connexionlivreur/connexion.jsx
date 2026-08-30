@@ -491,6 +491,7 @@ const Form = styled.form`
   display: flex;
 
   flex-direction: column;
+  
 
   gap: 19px;
 `;
@@ -554,7 +555,7 @@ const Input = styled.input`
 
   color: white;
 
-  font-size: 13px;
+  font-size: 16px;
 
   transition:
     0.25s ease;
