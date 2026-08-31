@@ -1,5 +1,5 @@
 import { useEffect, useState, useContext } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate, useParams} from "react-router-dom";
 import styled, { keyframes } from "styled-components";
 import {
   FaBox,
@@ -8,6 +8,7 @@ import {
   FaArrowRight,
   FaShieldAlt,
   FaStar,
+  FaLocationArrow,
 } from "react-icons/fa";
 import { ThemeContext } from "../../Utils/Context";
 
@@ -80,8 +81,7 @@ const Page = styled.main`
         )
       `};
 
-  color: ${({ $isdark }) =>
-    $isdark ? "#f7f4ed" : "#171512"};
+  color: ${({ $isdark }) => ($isdark ? "#f7f4ed" : "#171512")};
 
   transition: 0.3s ease;
 
@@ -105,8 +105,7 @@ const LoaderWrapper = styled.div`
   display: grid;
   place-items: center;
 
-  background: ${({ $isdark }) =>
-    $isdark ? "#080808" : "#f7f3ea"};
+  background: ${({ $isdark }) => ($isdark ? "#080808" : "#f7f3ea")};
 `;
 
 const Loader = styled.div`
@@ -114,9 +113,7 @@ const Loader = styled.div`
   height: 44px;
 
   border-radius: 50%;
-  border: 3px solid
-    ${({ $isdark }) =>
-      $isdark ? "#2d2a25" : "#e1dcd1"};
+  border: 3px solid ${({ $isdark }) => ($isdark ? "#2d2a25" : "#e1dcd1")};
 
   border-top-color: #b89b5e;
 
@@ -149,15 +146,12 @@ const Hero = styled.section`
       ? "linear-gradient(145deg, #181713, #0d0d0c)"
       : "linear-gradient(145deg, #fffdf8, #f3eee3)"};
 
-  border: 1px solid
-    ${({ $isdark }) => ($isdark ? "#302d26" : "#e2dbcc")};
+  border: 1px solid ${({ $isdark }) => ($isdark ? "#302d26" : "#e2dbcc")};
 
   box-shadow: ${({ $isdark }) =>
-    $isdark
-      ? "0 30px 80px rgba(0,0,0,.45)"
-      : "0 30px 80px rgba(77,61,31,.10)"};
+    $isdark ? "0 30px 80px rgba(0,0,0,.45)" : "0 30px 80px rgba(77,61,31,.10)"};
 
-  animation: ${reveal} .7s ease both;
+  animation: ${reveal} 0.7s ease both;
 
   &::before {
     content: "";
@@ -169,9 +163,7 @@ const Hero = styled.section`
     border-radius: 50%;
 
     background: ${({ $isdark }) =>
-      $isdark
-        ? "rgba(184,155,94,.06)"
-        : "rgba(184,155,94,.09)"};
+      $isdark ? "rgba(184,155,94,.06)" : "rgba(184,155,94,.09)"};
 
     top: -260px;
     left: 50%;
@@ -209,21 +201,17 @@ const SuccessIcon = styled.div`
 
   border-radius: 50%;
 
-  background: ${({ $isdark }) =>
-    $isdark ? "#b89b5e" : "#171512"};
+  background: ${({ $isdark }) => ($isdark ? "#b89b5e" : "#171512")};
 
-  color: ${({ $isdark }) =>
-    $isdark ? "#171512" : "#fffdf8"};
+  color: ${({ $isdark }) => ($isdark ? "#171512" : "#fffdf8")};
 
   box-shadow:
     0 0 0 8px
       ${({ $isdark }) =>
-        $isdark
-          ? "rgba(184,155,94,.10)"
-          : "rgba(23,21,18,.06)"},
-    0 18px 45px rgba(0, 0, 0, .18);
+        $isdark ? "rgba(184,155,94,.10)" : "rgba(23,21,18,.06)"},
+    0 18px 45px rgba(0, 0, 0, 0.18);
 
-  animation: ${scaleIn} .7s .15s ease both;
+  animation: ${scaleIn} 0.7s 0.15s ease both;
 
   svg {
     font-size: 34px;
@@ -245,7 +233,7 @@ const Eyebrow = styled.div`
 
   color: #b89b5e;
 
-  font-size: .68rem;
+  font-size: 0.68rem;
   font-weight: 800;
 
   letter-spacing: 3px;
@@ -264,7 +252,7 @@ const Title = styled.h1`
 
   font-size: clamp(2.3rem, 6vw, 4.7rem);
 
-  line-height: .95;
+  line-height: 0.95;
 
   font-weight: 500;
 
@@ -283,11 +271,10 @@ const Subtitle = styled.p`
 
   margin: 20px auto 0;
 
-  font-size: .9rem;
+  font-size: 0.9rem;
   line-height: 1.8;
 
-  color: ${({ $isdark }) =>
-    $isdark ? "#aaa59a" : "#777168"};
+  color: ${({ $isdark }) => ($isdark ? "#aaa59a" : "#777168")};
 `;
 
 const OrderReference = styled.div`
@@ -304,16 +291,13 @@ const OrderReference = styled.div`
 
   border-radius: 100px;
 
-  background: ${({ $isdark }) =>
-    $isdark ? "#211f1a" : "#fff"};
+  background: ${({ $isdark }) => ($isdark ? "#211f1a" : "#fff")};
 
-  border: 1px solid
-    ${({ $isdark }) => ($isdark ? "#39342a" : "#ded7c9")};
+  border: 1px solid ${({ $isdark }) => ($isdark ? "#39342a" : "#ded7c9")};
 
-  color: ${({ $isdark }) =>
-    $isdark ? "#d8d1c4" : "#514b42"};
+  color: ${({ $isdark }) => ($isdark ? "#d8d1c4" : "#514b42")};
 
-  font-size: .7rem;
+  font-size: 0.7rem;
   font-weight: 800;
 
   letter-spacing: 1px;
@@ -326,13 +310,13 @@ const OrderReference = styled.div`
 const MainGrid = styled.div`
   display: grid;
 
-  grid-template-columns: 1.35fr .85fr;
+  grid-template-columns: 1.35fr 0.85fr;
 
   gap: 22px;
 
   margin-top: 22px;
 
-  animation: ${reveal} .8s .15s ease both;
+  animation: ${reveal} 0.8s 0.15s ease both;
 
   @media (max-width: 850px) {
     grid-template-columns: 1fr;
@@ -352,17 +336,12 @@ const Card = styled.section`
   border-radius: 28px;
 
   background: ${({ $isdark }) =>
-    $isdark
-      ? "rgba(20,19,17,.94)"
-      : "rgba(255,255,255,.88)"};
+    $isdark ? "rgba(20,19,17,.94)" : "rgba(255,255,255,.88)"};
 
-  border: 1px solid
-    ${({ $isdark }) => ($isdark ? "#302d26" : "#e2dbcf")};
+  border: 1px solid ${({ $isdark }) => ($isdark ? "#302d26" : "#e2dbcf")};
 
   box-shadow: ${({ $isdark }) =>
-    $isdark
-      ? "0 25px 70px rgba(0,0,0,.28)"
-      : "0 25px 70px rgba(55,42,20,.08)"};
+    $isdark ? "0 25px 70px rgba(0,0,0,.28)" : "0 25px 70px rgba(55,42,20,.08)"};
 
   backdrop-filter: blur(15px);
 
@@ -389,8 +368,7 @@ const CardIcon = styled.div`
 
   border-radius: 13px;
 
-  background: ${({ $isdark }) =>
-    $isdark ? "#25221c" : "#f3eee3"};
+  background: ${({ $isdark }) => ($isdark ? "#25221c" : "#f3eee3")};
 
   color: #b89b5e;
 
@@ -408,15 +386,14 @@ const CardTitleBox = styled.div`
 const CardTitle = styled.h2`
   margin: 0;
 
-  font-size: .95rem;
+  font-size: 0.95rem;
   font-weight: 800;
 `;
 
 const CardLabel = styled.span`
-  color: ${({ $isdark }) =>
-    $isdark ? "#77736b" : "#999187"};
+  color: ${({ $isdark }) => ($isdark ? "#77736b" : "#999187")};
 
-  font-size: .58rem;
+  font-size: 0.58rem;
   letter-spacing: 1.5px;
   text-transform: uppercase;
 `;
@@ -434,9 +411,7 @@ const Line = styled.div`
 
   padding: 17px 0;
 
-  border-bottom: 1px solid
-    ${({ $isdark }) =>
-      $isdark ? "#292720" : "#eee9df"};
+  border-bottom: 1px solid ${({ $isdark }) => ($isdark ? "#292720" : "#eee9df")};
 
   &:last-child {
     border-bottom: none;
@@ -452,7 +427,7 @@ const ItemInfo = styled.div`
 `;
 
 const ItemName = styled.span`
-  font-size: .87rem;
+  font-size: 0.87rem;
   font-weight: 700;
 
   overflow: hidden;
@@ -461,16 +436,15 @@ const ItemName = styled.span`
 `;
 
 const ItemQuantity = styled.span`
-  color: ${({ $isdark }) =>
-    $isdark ? "#77736b" : "#9b958b"};
+  color: ${({ $isdark }) => ($isdark ? "#77736b" : "#9b958b")};
 
-  font-size: .68rem;
+  font-size: 0.68rem;
 `;
 
 const ItemPrice = styled.span`
   white-space: nowrap;
 
-  font-size: .83rem;
+  font-size: 0.83rem;
   font-weight: 800;
 `;
 
@@ -482,13 +456,11 @@ const TotalBox = styled.div`
   margin-top: 20px;
   padding-top: 22px;
 
-  border-top: 1px solid
-    ${({ $isdark }) =>
-      $isdark ? "#3a362d" : "#ddd6c8"};
+  border-top: 1px solid ${({ $isdark }) => ($isdark ? "#3a362d" : "#ddd6c8")};
 `;
 
 const TotalLabel = styled.span`
-  font-size: .82rem;
+  font-size: 0.82rem;
   text-transform: uppercase;
   letter-spacing: 1.5px;
   font-weight: 800;
@@ -513,8 +485,7 @@ const PaymentSummary = styled.div`
 
   border-radius: 18px;
 
-  background: ${({ $isdark }) =>
-    $isdark ? "#11100e" : "#f7f3ea"};
+  background: ${({ $isdark }) => ($isdark ? "#11100e" : "#f7f3ea")};
 `;
 
 const PaymentRow = styled.div`
@@ -524,14 +495,13 @@ const PaymentRow = styled.div`
   padding: 8px 0;
 
   span {
-    color: ${({ $isdark }) =>
-      $isdark ? "#858078" : "#817a70"};
+    color: ${({ $isdark }) => ($isdark ? "#858078" : "#817a70")};
 
-    font-size: .72rem;
+    font-size: 0.72rem;
   }
 
   strong {
-    font-size: .76rem;
+    font-size: 0.76rem;
   }
 `;
 
@@ -539,9 +509,7 @@ const Remaining = styled(PaymentRow)`
   margin-top: 8px;
   padding-top: 15px;
 
-  border-top: 1px solid
-    ${({ $isdark }) =>
-      $isdark ? "#302d26" : "#e5dfd3"};
+  border-top: 1px solid ${({ $isdark }) => ($isdark ? "#302d26" : "#e5dfd3")};
 
   strong {
     color: #b88a38;
@@ -562,17 +530,11 @@ const Coffre = styled.div`
 
   border-radius: 25px;
 
-  background:
-    linear-gradient(
-      135deg,
-      #191713,
-      #0c0c0b
-    );
+  background: linear-gradient(135deg, #191713, #0c0c0b);
 
   color: #fff;
 
-  box-shadow:
-    0 25px 60px rgba(0,0,0,.22);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.22);
 
   &::after {
     content: "";
@@ -584,7 +546,7 @@ const Coffre = styled.div`
 
     border-radius: 50%;
 
-    border: 1px solid rgba(184,155,94,.18);
+    border: 1px solid rgba(184, 155, 94, 0.18);
 
     right: -70px;
     top: -80px;
@@ -609,7 +571,7 @@ const CoffreIcon = styled.div`
 
   border-radius: 15px;
 
-  background: rgba(184,155,94,.14);
+  background: rgba(184, 155, 94, 0.14);
 
   color: #c5a867;
 
@@ -626,7 +588,7 @@ const CoffreText = styled.div`
   span {
     color: #8c877d;
 
-    font-size: .58rem;
+    font-size: 0.58rem;
 
     text-transform: uppercase;
     letter-spacing: 2px;
@@ -661,15 +623,11 @@ const Progress = styled.div`
 
   width: ${({ $percent }) => `${$percent}%`};
 
-  background: linear-gradient(
-    90deg,
-    #8d733d,
-    #d0b56f
-  );
+  background: linear-gradient(90deg, #8d733d, #d0b56f);
 
   border-radius: inherit;
 
-  transition: width .6s ease;
+  transition: width 0.6s ease;
 `;
 
 /* =========================================================
@@ -702,8 +660,7 @@ const Step = styled.div`
     width: 1px;
     height: calc(100% - 10px);
 
-    background: ${({ $isdark }) =>
-      $isdark ? "#302d26" : "#e2ddd4"};
+    background: ${({ $isdark }) => ($isdark ? "#302d26" : "#e2ddd4")};
   }
 `;
 
@@ -722,18 +679,12 @@ const StepIcon = styled.div`
   border-radius: 50%;
 
   background: ${({ $paid, $isdark }) =>
-    $paid
-      ? "#b89b5e"
-      : $isdark
-        ? "#211f1a"
-        : "#f1eee7"};
+    $paid ? "#b89b5e" : $isdark ? "#211f1a" : "#f1eee7"};
 
-  color: ${({ $paid }) =>
-    $paid ? "#fff" : "#a39a8b"};
+  color: ${({ $paid }) => ($paid ? "#fff" : "#a39a8b")};
 
   svg {
-    font-size: ${({ $paid }) =>
-      $paid ? "12px" : "15px"};
+    font-size: ${({ $paid }) => ($paid ? "12px" : "15px")};
   }
 `;
 
@@ -746,15 +697,14 @@ const StepInfo = styled.div`
 `;
 
 const StepTitle = styled.span`
-  font-size: .78rem;
+  font-size: 0.78rem;
   font-weight: 800;
 `;
 
 const StepAmount = styled.span`
-  color: ${({ $isdark }) =>
-    $isdark ? "#77736c" : "#999288"};
+  color: ${({ $isdark }) => ($isdark ? "#77736c" : "#999288")};
 
-  font-size: .65rem;
+  font-size: 0.65rem;
 `;
 
 const Badge = styled.span`
@@ -762,16 +712,14 @@ const Badge = styled.span`
 
   border-radius: 100px;
 
-  font-size: .53rem;
+  font-size: 0.53rem;
   font-weight: 900;
 
-  letter-spacing: .8px;
+  letter-spacing: 0.8px;
 
-  color: ${({ $paid }) =>
-    $paid ? "#27613a" : "#876523"};
+  color: ${({ $paid }) => ($paid ? "#27613a" : "#876523")};
 
-  background: ${({ $paid }) =>
-    $paid ? "#e5f3e8" : "#f6edda"};
+  background: ${({ $paid }) => ($paid ? "#e5f3e8" : "#f6edda")};
 `;
 
 /* =========================================================
@@ -788,13 +736,11 @@ const Security = styled.div`
 
   border-radius: 15px;
 
-  background: ${({ $isdark }) =>
-    $isdark ? "#171613" : "#f8f5ef"};
+  background: ${({ $isdark }) => ($isdark ? "#171613" : "#f8f5ef")};
 
-  color: ${({ $isdark }) =>
-    $isdark ? "#77736b" : "#858076"};
+  color: ${({ $isdark }) => ($isdark ? "#77736b" : "#858076")};
 
-  font-size: .65rem;
+  font-size: 0.65rem;
 
   line-height: 1.6;
 
@@ -824,13 +770,11 @@ const Button = styled.button`
   border: 1px solid #b89b5e;
   border-radius: 16px;
 
-  background: ${({ $isdark }) =>
-    $isdark ? "#b89b5e" : "#171512"};
+  background: ${({ $isdark }) => ($isdark ? "#b89b5e" : "#171512")};
 
-  color: ${({ $isdark }) =>
-    $isdark ? "#171512" : "#fff"};
+  color: ${({ $isdark }) => ($isdark ? "#171512" : "#fff")};
 
-  font-size: .76rem;
+  font-size: 0.76rem;
   font-weight: 900;
 
   letter-spacing: 1px;
@@ -838,17 +782,16 @@ const Button = styled.button`
 
   cursor: pointer;
 
-  transition: .25s ease;
+  transition: 0.25s ease;
 
   svg {
-    transition: transform .25s ease;
+    transition: transform 0.25s ease;
   }
 
   &:hover {
     transform: translateY(-3px);
 
-    box-shadow:
-      0 15px 35px rgba(0,0,0,.18);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.18);
 
     svg {
       transform: translateX(4px);
@@ -872,7 +815,7 @@ const Modal = styled.div`
 
   padding: 20px;
 
-  background: rgba(7,7,6,.78);
+  background: rgba(7, 7, 6, 0.78);
 
   backdrop-filter: blur(14px);
 `;
@@ -894,14 +837,11 @@ const ModalContent = styled.div`
       ? "linear-gradient(145deg,#1d1b17,#11100e)"
       : "linear-gradient(145deg,#fffefa,#f5f0e7)"};
 
-  border: 1px solid
-    ${({ $isdark }) =>
-      $isdark ? "#39342a" : "#e2dacb"};
+  border: 1px solid ${({ $isdark }) => ($isdark ? "#39342a" : "#e2dacb")};
 
-  box-shadow:
-    0 40px 100px rgba(0,0,0,.4);
+  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.4);
 
-  animation: ${reveal} .4s ease both;
+  animation: ${reveal} 0.4s ease both;
 
   @media (max-width: 500px) {
     padding: 28px 20px;
@@ -924,8 +864,7 @@ const ModalIcon = styled.div`
 
   color: #171512;
 
-  box-shadow:
-    0 10px 30px rgba(184,155,94,.25);
+  box-shadow: 0 10px 30px rgba(184, 155, 94, 0.25);
 
   svg {
     font-size: 23px;
@@ -944,10 +883,9 @@ const ModalTitle = styled.h2`
 const ModalText = styled.p`
   margin: 0;
 
-  color: ${({ $isdark }) =>
-    $isdark ? "#969188" : "#716b61"};
+  color: ${({ $isdark }) => ($isdark ? "#969188" : "#716b61")};
 
-  font-size: .78rem;
+  font-size: 0.78rem;
   line-height: 1.7;
 `;
 
@@ -961,13 +899,11 @@ const CloseModal = styled.button`
   border: none;
   border-radius: 13px;
 
-  background: ${({ $isdark }) =>
-    $isdark ? "#fff" : "#171512"};
+  background: ${({ $isdark }) => ($isdark ? "#fff" : "#171512")};
 
-  color: ${({ $isdark }) =>
-    $isdark ? "#171512" : "#fff"};
+  color: ${({ $isdark }) => ($isdark ? "#171512" : "#fff")};
 
-  font-size: .7rem;
+  font-size: 0.7rem;
   font-weight: 900;
 
   letter-spacing: 1px;
@@ -975,32 +911,82 @@ const CloseModal = styled.button`
 
   cursor: pointer;
 
-  transition: .2s;
+  transition: 0.2s;
 
   &:hover {
-    opacity: .88;
+    opacity: 0.88;
     transform: translateY(-1px);
   }
 `;
+const FindDriverButton = styled.button`
+  width: 100%;
+  max-width: 1180px;
 
+  margin: 22px auto 0;
+
+  min-height: 72px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+
+  border: none;
+  border-radius: 20px;
+
+  background: linear-gradient(
+    135deg,
+    #22c55e,
+    #16a34a
+  );
+
+  color: white;
+
+  font-size: 15px;
+  font-weight: 900;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 15px 40px rgba(34, 197, 94, 0.22);
+
+  transition:
+    transform .25s ease,
+    box-shadow .25s ease;
+
+  svg {
+    font-size: 20px;
+  }
+
+  &:hover {
+    transform: translateY(-3px);
+
+    box-shadow:
+      0 20px 50px rgba(34, 197, 94, 0.32);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
 /* =========================================================
    COMPONENT
 ========================================================= */
 
 export default function Merci() {
-  const location = useLocation();
   const navigate = useNavigate();
 
   const { theme } = useContext(ThemeContext);
 
   const $isdark = theme !== "light";
 
-  const commandeId = location.state?.commandeId;
+ const { id } = useParams();
 
   const [commande, setCommande] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(true);
   const [token, setToken] = useState(null);
+  const [rechercheLivreur, setRechercheLivreur] = useState(false);
 
   const API_URL = import.meta.env.VITE_API_URL;
 
@@ -1020,34 +1006,27 @@ export default function Merci() {
   /* ================= FETCH ================= */
 
   useEffect(() => {
-    if (!commandeId || !token) return;
+    if (!id || !token) return;
 
     const fetchCommande = async () => {
       try {
-        const res = await fetch(
-          `${API_URL}/api/commandes/${commandeId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+        const res = await fetch(`${API_URL}/api/commandes/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
           },
-        );
+        });
 
         const data = await res.json();
 
         if (!res.ok) {
-          throw new Error(
-            data.message || "Erreur serveur",
-          );
+          throw new Error(data.message || "Erreur serveur");
         }
 
         setCommande(data.commande || data);
       } catch (err) {
         console.error(err);
 
-        alert(
-          "Impossible de récupérer la commande",
-        );
+        alert("Impossible de récupérer la commande");
 
         navigate("/");
       } finally {
@@ -1056,12 +1035,44 @@ export default function Merci() {
     };
 
     fetchCommande();
-  }, [
-    commandeId,
-    token,
-    navigate,
-    API_URL,
-  ]);
+  }, [id, token, navigate, API_URL]);
+
+  const chercherLivreur = async () => {
+    if(!id || !token) {
+      alert("Commande introuvable ou utilisateur non authentifié.");
+      return;
+    }
+    setRechercheLivreur(true);
+    try {
+      const res = await fetch(
+        `${API_URL}/api/livreurs/commande/${id}/rechercher-livreur`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message || "Impossible de rechercher un livreur.");
+        return;
+      }
+
+      setCommande(data.commande || commande);
+
+      alert("Recherche de livreur lancée !");
+    } catch (error) {
+      console.error("RECHERCHE LIVREUR ERROR:", error);
+
+      alert("Impossible de contacter le serveur.");
+    }finally {
+    setRechercheLivreur(false);
+  }
+  };
 
   /* ================= LOADING ================= */
 
@@ -1077,9 +1088,7 @@ export default function Merci() {
     return (
       <Page $isdark={$isdark}>
         <Container>
-          <Card $isdark={$isdark}>
-            Commande introuvable
-          </Card>
+          <Card $isdark={$isdark}>Commande introuvable</Card>
         </Container>
       </Page>
     );
@@ -1090,38 +1099,24 @@ export default function Merci() {
   const paiements = commande.paiements || [];
   const panier = commande.panier || [];
 
-  const paidSteps = paiements.filter(
-    (p) => p.status === "PAID",
-  ).length;
+  const paidSteps = paiements.filter((p) => p.status === "PAID").length;
 
   const totalSteps = paiements.length;
 
   const totalPaid = paiements
     .filter((p) => p.status === "PAID")
-    .reduce(
-      (acc, p) =>
-        acc + Number(p.amountExpected || 0),
-      0,
-    );
+    .reduce((acc, p) => acc + Number(p.amountExpected || 0), 0);
 
-  const remaining = Math.max(
-    0,
-    Number(commande.total || 0) - totalPaid,
-  );
+  const remaining = Math.max(0, Number(commande.total || 0) - totalPaid);
 
   const progress =
-    totalSteps > 0
-      ? Math.round(
-          (paidSteps / totalSteps) * 100,
-        )
-      : 0;
+    totalSteps > 0 ? Math.round((paidSteps / totalSteps) * 100) : 0;
 
   /* ================= UI ================= */
 
   return (
     <Page $isdark={$isdark}>
       <Container>
-
         {/* ================= HERO ================= */}
 
         <Hero $isdark={$isdark}>
@@ -1131,81 +1126,66 @@ export default function Merci() {
             <FaCheckCircle />
           </SuccessIcon>
 
-          <Eyebrow>
-            Confirmation de commande
-          </Eyebrow>
+          <Eyebrow>Confirmation de commande</Eyebrow>
 
-          <Title>
-            Merci pour votre confiance
-          </Title>
+          <Title>Merci pour votre confiance</Title>
 
           <Subtitle $isdark={$isdark}>
-            Votre commande est officiellement
-            enregistrée. Retrouvez ci-dessous
-            son récapitulatif ainsi que
-            l'avancement de votre coffre.
+            Votre commande est officiellement enregistrée. Retrouvez ci-dessous
+            son récapitulatif ainsi que l'avancement de votre coffre.
           </Subtitle>
 
-          {commandeId && (
+          {id && (
             <OrderReference $isdark={$isdark}>
               <FaStar />
-              COMMANDE #
-              {String(commandeId).slice(-8).toUpperCase()}
+              COMMANDE #{String(id).slice(-8).toUpperCase()}
             </OrderReference>
           )}
         </Hero>
 
+        <FindDriverButton $isdark={$isdark} onClick={chercherLivreur}>
+          <FaLocationArrow />
+
+          <span>Chercher un livreur maintenant</span>
+
+          <FaArrowRight />
+        </FindDriverButton>
+
         {/* ================= CONTENT ================= */}
 
         <MainGrid>
-
           {/* ================= LEFT ================= */}
 
           <div>
-
             <Card $isdark={$isdark}>
-
               <CardTop>
                 <CardIcon $isdark={$isdark}>
                   <FaBox />
                 </CardIcon>
 
                 <CardTitleBox>
-                  <CardTitle>
-                    Votre commande
-                  </CardTitle>
+                  <CardTitle>Votre commande</CardTitle>
 
-                  <CardLabel $isdark={$isdark}>
-                    Récapitulatif
-                  </CardLabel>
+                  <CardLabel $isdark={$isdark}>Récapitulatif</CardLabel>
                 </CardTitleBox>
               </CardTop>
 
               {panier.map((item, index) => (
                 <Line
-                  key={
-                    item.produitId ||
-                    item._id ||
-                    index
-                  }
+                  key={item.produitId || item._id || index}
                   $isdark={$isdark}
                 >
                   <ItemInfo>
-                    <ItemName>
-                      {item.nom}
-                    </ItemName>
+                    <ItemName>{item.nom}</ItemName>
 
-                    <ItemQuantity
-                      $isdark={$isdark}
-                    >
+                    <ItemQuantity $isdark={$isdark}>
                       Quantité : {item.quantite}
                     </ItemQuantity>
                   </ItemInfo>
 
                   <ItemPrice>
                     {(
-                      Number(item.prix || 0) *
-                      Number(item.quantite || 0)
+                      Number(item.prix || 0) * Number(item.quantite || 0)
                     ).toLocaleString()}{" "}
                     FCFA
                   </ItemPrice>
@@ -1213,57 +1193,38 @@ export default function Merci() {
               ))}
 
               <TotalBox $isdark={$isdark}>
-                <TotalLabel>
-                  Total commande
-                </TotalLabel>
+                <TotalLabel>Total commande</TotalLabel>
 
                 <TotalPrice>
-                  {Number(
-                    commande.total || 0,
-                  ).toLocaleString()}{" "}
-                  FCFA
+                  {Number(commande.total || 0).toLocaleString()} FCFA
                 </TotalPrice>
               </TotalBox>
 
-              <PaymentSummary
-                $isdark={$isdark}
-              >
+              <PaymentSummary $isdark={$isdark}>
                 <PaymentRow $isdark={$isdark}>
-                  <span>
-                    Montant déjà payé
-                  </span>
+                  <span>Montant déjà payé</span>
 
-                  <strong>
-                    {totalPaid.toLocaleString()} FCFA
-                  </strong>
+                  <strong>{totalPaid.toLocaleString()} FCFA</strong>
                 </PaymentRow>
 
                 <Remaining $isdark={$isdark}>
-                  <span>
-                    Solde restant
-                  </span>
+                  <span>Solde restant</span>
 
-                  <strong>
-                    {remaining.toLocaleString()} FCFA
-                  </strong>
+                  <strong>{remaining.toLocaleString()} FCFA</strong>
                 </Remaining>
               </PaymentSummary>
-
             </Card>
 
             {/* COFFRE */}
 
             <Coffre $isdark={$isdark}>
-
               <CoffreTop>
                 <CoffreIcon>
                   <FaBox />
                 </CoffreIcon>
 
                 <CoffreText>
-                  <span>
-                    Votre coffre
-                  </span>
+                  <span>Votre coffre</span>
 
                   <strong>
                     {paidSteps} / {totalSteps} étapes payées
@@ -1274,155 +1235,90 @@ export default function Merci() {
               <ProgressBar>
                 <Progress $percent={progress} />
               </ProgressBar>
-
             </Coffre>
-
           </div>
 
           {/* ================= RIGHT ================= */}
 
           <div>
-
             <Card $isdark={$isdark}>
-
               <CardTop>
                 <CardIcon $isdark={$isdark}>
                   <FaCheckCircle />
                 </CardIcon>
 
                 <CardTitleBox>
-                  <CardTitle>
-                    Progression
-                  </CardTitle>
+                  <CardTitle>Progression</CardTitle>
 
-                  <CardLabel $isdark={$isdark}>
-                    Suivi du paiement
-                  </CardLabel>
+                  <CardLabel $isdark={$isdark}>Suivi du paiement</CardLabel>
                 </CardTitleBox>
               </CardTop>
 
               <Steps>
-
                 {paiements.map((p) => {
-                  const paid =
-                    p.status === "PAID";
+                  const paid = p.status === "PAID";
 
                   return (
-                    <Step
-                      key={p._id}
-                      $isdark={$isdark}
-                    >
-
-                      <StepIcon
-                        $paid={paid}
-                        $isdark={$isdark}
-                      >
-                        {paid ? (
-                          <FaCheckCircle />
-                        ) : (
-                          <FaRegCircle />
-                        )}
+                    <Step key={p._id} $isdark={$isdark}>
+                      <StepIcon $paid={paid} $isdark={$isdark}>
+                        {paid ? <FaCheckCircle /> : <FaRegCircle />}
                       </StepIcon>
 
                       <StepInfo>
+                        <StepTitle>Étape {p.step}</StepTitle>
 
-                        <StepTitle>
-                          Étape {p.step}
-                        </StepTitle>
-
-                        <StepAmount
-                          $isdark={$isdark}
-                        >
-                          {Number(
-                            p.amountExpected || 0,
-                          ).toLocaleString()}{" "}
-                          FCFA
+                        <StepAmount $isdark={$isdark}>
+                          {Number(p.amountExpected || 0).toLocaleString()} FCFA
                         </StepAmount>
-
                       </StepInfo>
 
-                      <Badge $paid={paid}>
-                        {paid
-                          ? "PAYÉ"
-                          : "EN ATTENTE"}
-                      </Badge>
-
+                      <Badge $paid={paid}>{paid ? "PAYÉ" : "EN ATTENTE"}</Badge>
                     </Step>
                   );
                 })}
-
               </Steps>
 
               <Security $isdark={$isdark}>
                 <FaShieldAlt />
 
                 <span>
-                  Vos paiements sont suivis
-                  automatiquement. Consultez
-                  régulièrement votre coffre
-                  pour connaître l'état de votre
+                  Vos paiements sont suivis automatiquement. Consultez
+                  régulièrement votre coffre pour connaître l'état de votre
                   commande.
                 </span>
               </Security>
-
             </Card>
 
-            <Button
-              $isdark={$isdark}
-              onClick={() =>
-                navigate("/compte")
-              }
-            >
+            <Button $isdark={$isdark} onClick={() => navigate("/compte")}>
               Accéder à mon coffre
               <FaArrowRight />
             </Button>
-
           </div>
-
         </MainGrid>
 
         {/* ================= MODAL ================= */}
 
         {showModal && (
           <Modal>
-
-            <ModalContent
-              $isdark={$isdark}
-            >
-
+            <ModalContent $isdark={$isdark}>
               <ModalIcon>
                 <FaBox />
               </ModalIcon>
 
-              <ModalTitle>
-                Paiement en cours de validation
-              </ModalTitle>
+              <ModalTitle>Paiement en cours de validation</ModalTitle>
 
-              <ModalText
-                $isdark={$isdark}
-              >
-                Votre commande est bien
-                enregistrée. La validation de
-                votre paiement peut prendre
-                quelques instants. Vous pourrez
-                suivre chaque étape depuis votre
-                coffre.
+              <ModalText $isdark={$isdark}>
+                Votre commande est bien enregistrée. La validation de votre
+                paiement peut prendre quelques instants. Vous pourrez suivre
+                chaque étape depuis votre coffre.
               </ModalText>
 
-              <CloseModal
-                $isdark={$isdark}
-                onClick={() =>
-                  setShowModal(false)
-                }
-              >
+              <CloseModal $isdark={$isdark} onClick={() => setShowModal(false)}>
                 Compris
               </CloseModal>
-
             </ModalContent>
-
           </Modal>
         )}
-
       </Container>
     </Page>
   );

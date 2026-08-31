@@ -319,7 +319,7 @@ createRoot(document.getElementById("root")).render(
               }
             />
             <Route
-              path="/merci"
+              path="/merci/:id"
               element={
                 <PublicLayout>
                   <Merci />

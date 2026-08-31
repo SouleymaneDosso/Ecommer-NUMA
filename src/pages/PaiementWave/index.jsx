@@ -221,7 +221,7 @@ export default function PageCheckout() {
       }
 
       if (modePaiement === "cod") {
-        navigate(`/commande-confirmee/${data.commande._id}`);
+        navigate(`/merci/${data.commande._id}`);
       } else {
         navigate(`/paiement-semi/${data.commande._id}`);
       }

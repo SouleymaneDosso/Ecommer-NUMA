@@ -37,6 +37,8 @@ function InscriptionLivreur() {
 
       if (response.ok) {
         alert('Inscription réussie !');
+        localStorage.setItem("tokenLivreur", data.token);
+        navigate("/livreur/dashboard");
       } else {
         console.error('Inscription échouée:', data.message);
         alert(data.message || "L'inscription a échoué.");

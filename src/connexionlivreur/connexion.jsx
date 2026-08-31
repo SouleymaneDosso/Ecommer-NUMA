@@ -38,11 +38,9 @@ function ConnexionLivreur() {
 
         return;
       }
-
-      console.log("Connexion réussie :", data);
-
       alert("Connexion réussie !");
-
+       localStorage.setItem("tokenLivreur", data.token);
+       navigate("/livreur/dashboard");
 
     } catch (error) {
       console.error("Erreur :", error);
