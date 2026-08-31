@@ -65,7 +65,6 @@ export const LangueTheme = ({ children }) => {
 };
 
 // ====================== PANIER CONTEXT ======================
-
 export const PanierContext = createContext();
 
 export const Panier = ({ children }) => {
@@ -75,6 +74,14 @@ export const Panier = ({ children }) => {
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
+    }
+  });
+
+  const [villeLivraison, setVilleLivraison] = useState(() => {
+    try {
+      return localStorage.getItem("villeLivraison") || "";
+    } catch {
+      return "";
     }
   });
 
@@ -135,32 +142,74 @@ export const Panier = ({ children }) => {
   };
 
   const toutSupprimer = () => setAjouter([]);
-
   const modifierProduit = (id, nouvellesDonnees) => {
-    setAjouter((prev) =>
-      prev.map((p) =>
-        p.id === id
-          ? {
-              ...p,
-              ...nouvellesDonnees,
-            }
-          : p
-      )
-    );
-  };
+  setAjouter((prev) =>
+    prev.map((p) =>
+      p.id === id
+        ? {
+            ...p,
+            ...nouvellesDonnees,
+          }
+        : p
+    )
+  );
+};
 
-  /* ================== CALCUL SOUS-TOTAL ================== */
+  /* ================== CALCULS LIVRAISON ================== */
 
   const sousTotal = ajouter.reduce(
     (acc, item) => acc + item.prix * item.quantite,
     0
   );
 
+  const nombreProduits = ajouter.reduce(
+    (acc, item) => acc + item.quantite,
+    0
+  );
+
+  let fraisLivraison = 0;
+
+  const zonesProche = ["Cocody", "Bingerville"];
+  const zonesMoyenne = [
+    "Plateau",
+    "Adjamé",
+    "Treichville",
+    "Marcory",
+    "Attécoubé",
+  ];
+  const zonesLoin = [
+    "Yopougon",
+    "Abobo",
+    "Koumassi",
+    "Port-Bouët",
+    "Anyama",
+  ];
+
+  if (villeLivraison) {
+    if (zonesProche.includes(villeLivraison)) {
+      // À Abidjan
+      fraisLivraison = nombreProduits >= 2 ? 0 : 1500;
+    } else if (zonesMoyenne.includes(villeLivraison)) {
+      fraisLivraison = nombreProduits >= 2 ? 0 : 2000;
+    } else if (zonesLoin.includes(villeLivraison)) {
+      fraisLivraison = nombreProduits >= 2 ? 0 : 3000;
+    } else {
+      // Hors Abidjan
+      fraisLivraison = nombreProduits >= 2 ? 2000 : 4000;
+    }
+  }
+
+  const total = sousTotal + fraisLivraison;
+
   /* ================== PERSISTENCE ================== */
 
   useEffect(() => {
     localStorage.setItem("panier", JSON.stringify(ajouter));
   }, [ajouter]);
+
+  useEffect(() => {
+    localStorage.setItem("villeLivraison", villeLivraison);
+  }, [villeLivraison]);
 
   return (
     <PanierContext.Provider
@@ -171,7 +220,11 @@ export const Panier = ({ children }) => {
         augmenter,
         diminuer,
         toutSupprimer,
+        villeLivraison,
+        setVilleLivraison,
         sousTotal,
+        fraisLivraison,
+        total,
         modifierProduit,
       }}
     >
@@ -179,4 +232,3 @@ export const Panier = ({ children }) => {
     </PanierContext.Provider>
   );
 };
-
