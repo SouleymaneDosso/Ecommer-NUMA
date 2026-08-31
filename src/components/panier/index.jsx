@@ -203,6 +203,7 @@ const Back = styled(Link)`
 
 /* ================== COMPONENT ================== */
 
+
 export default function PagePanierZara() {
   const navigate = useNavigate();
 
@@ -212,31 +213,8 @@ export default function PagePanierZara() {
     augmenter,
     diminuer,
     toutSupprimer,
-    villeLivraison,
-    setVilleLivraison,
     sousTotal,
-    fraisLivraison,
-    total,
   } = useContext(PanierContext);
-
-  const estAbidjan =
-    villeLivraison === "Abidjan";
-
-  const estCommune =
-    [
-      "Cocody",
-      "Bingerville",
-      "Plateau",
-      "Adjamé",
-      "Treichville",
-      "Marcory",
-      "Attécoubé",
-      "Yopougon",
-      "Abobo",
-      "Koumassi",
-      "Port-Bouët",
-      "Anyama",
-    ].includes(villeLivraison);
 
   if (ajouter.length === 0) {
     return (
@@ -267,7 +245,10 @@ export default function PagePanierZara() {
                 <Price>{item.prix.toLocaleString()} FCFA</Price>
 
                 <Quantity>
-                  <QtyBtn onClick={() => diminuer(item.id)} disabled={item.quantite <= 1}>
+                  <QtyBtn
+                    onClick={() => diminuer(item.id)}
+                    disabled={item.quantite <= 1}
+                  >
                     <FiMinus size={12} />
                   </QtyBtn>
 
@@ -281,7 +262,9 @@ export default function PagePanierZara() {
                   </QtyBtn>
                 </Quantity>
 
-                <StockHint>Stock maximum : {item.stockDisponible}</StockHint>
+                <StockHint>
+                  Stock maximum : {item.stockDisponible}
+                </StockHint>
               </Info>
 
               <Remove onClick={() => supprimer(item.id)}>
@@ -293,81 +276,23 @@ export default function PagePanierZara() {
 
         {/* SUMMARY */}
         <Summary>
-          {/* VILLE */}
-          <Select
-            value={villeLivraison}
-            onChange={(e) => setVilleLivraison(e.target.value)}
-          >
-            <option value="">Choisir votre ville</option>
-            <option>Abidjan</option>
-            <option>Bouaké</option>
-            <option>Daloa</option>
-            <option>Yamoussoukro</option>
-            <option>San-Pédro</option>
-            <option>Korhogo</option>
-            <option>Man</option>
-            <option>Gagnoa</option>
-            <option>Abengourou</option>
-            <option>Bondoukou</option>
-            <option>Soubré</option>
-            <option>Divo</option>
-          </Select>
-
-          {/* COMMUNE (si Abidjan) */}
-          {estAbidjan && (
-            <Select
-              value={estCommune ? villeLivraison : ""}
-              onChange={(e) => setVilleLivraison(e.target.value)}
-            >
-              <option value="">Choisir votre commune</option>
-              <option>Cocody</option>
-              <option>Bingerville</option>
-              <option>Plateau</option>
-              <option>Adjamé</option>
-              <option>Treichville</option>
-              <option>Marcory</option>
-              <option>Attécoubé</option>
-              <option>Yopougon</option>
-              <option>Abobo</option>
-              <option>Koumassi</option>
-              <option>Port-Bouët</option>
-              <option>Anyama</option>
-            </Select>
-          )}
-
-          {!estAbidjan && villeLivraison && (
-            <p style={{ fontSize: "0.9rem", color: "#555" }}>
-              Livraison hors Abidjan : retrait du colis en gare.
-            </p>
-          )}
-
           <Line>
             <span>Sous-total</span>
             <span>{sousTotal.toLocaleString()} FCFA</span>
           </Line>
 
-          <Line>
-            <span>Livraison</span>
-            <span>
-              {fraisLivraison === 0
-                ? "Gratuite"
-                : `${fraisLivraison.toLocaleString()} FCFA`}
-            </span>
-          </Line>
-
           <Total>
             <span>Total</span>
-            <span>{total.toLocaleString()} FCFA</span>
+            <span>{sousTotal.toLocaleString()} FCFA</span>
           </Total>
 
-          <PayButton
-            disabled={!villeLivraison}
-            onClick={() => navigate("/checkout")}
-          >
+          <PayButton onClick={() => navigate("/checkout")}>
             Passer au paiement
           </PayButton>
 
-          <Clear onClick={toutSupprimer}>Vider le panier</Clear>
+          <Clear onClick={toutSupprimer}>
+            Vider le panier
+          </Clear>
         </Summary>
       </Grid>
 
@@ -375,3 +300,4 @@ export default function PagePanierZara() {
     </Page>
   );
 }
+
