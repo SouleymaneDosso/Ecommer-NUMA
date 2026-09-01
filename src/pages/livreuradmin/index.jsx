@@ -26,7 +26,7 @@ function LivreurAdmin() {
     Authorization: `Bearer ${token}`,
   };
 
-
+const remove = localStorage.removeItem("tokenLivreur")
 // ======================================================
 // GPS TEMPS RÉEL DU LIVREUR
 // ======================================================
@@ -473,6 +473,11 @@ useEffect(() => {
             NUMA
             <BrandDot />
           </Brand>
+
+          <Brand>
+            <button onClick={remove}>Déconnexion</button>
+          </Brand>
+
 
           <HeaderRight>
             <StatusPill $status={livreur?.statut}>
