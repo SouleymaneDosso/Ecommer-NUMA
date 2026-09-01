@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 import {
   MapContainer,
@@ -7,43 +7,52 @@ import {
   Marker,
   Popup,
   Polyline,
-  Circle,
   useMap,
+  ZoomControl,
 } from "react-leaflet";
 
 import L from "leaflet";
-import "leaflet/dist/leaflet.css";
-
 import styled from "styled-components";
 
 import {
   FaArrowLeft,
   FaPhone,
   FaComments,
-  FaLocationArrow,
+  FaMapMarkerAlt,
+  FaMotorcycle,
   FaCheck,
   FaBox,
-  FaMotorcycle,
-  FaMapMarkerAlt,
+  FaLocationArrow,
   FaClock,
+  FaShieldAlt,
   FaCircle,
 } from "react-icons/fa";
 
 import { socket } from "../services/socket";
+
+import "leaflet/dist/leaflet.css";
+
+// ======================================================
+// CONFIG
+// ======================================================
+
+const ABIDJAN = {
+  latitude: 5.3364,
+  longitude: -4.0267,
+};
 
 // ======================================================
 // ICONE LIVREUR
 // ======================================================
 
 const livreurIcon = new L.DivIcon({
-  className: "custom-livreur-marker",
+  className: "livreur-marker",
   html: `
-    <div class="livreur-marker-wrapper">
-      <div class="livreur-marker-pulse"></div>
-
-      <div class="livreur-marker">
+    <div class="driver-marker">
+      <div class="driver-marker-inner">
         <span>🚴</span>
       </div>
+      <div class="driver-pulse"></div>
     </div>
   `,
   iconSize: [58, 58],
@@ -55,21 +64,21 @@ const livreurIcon = new L.DivIcon({
 // ======================================================
 
 const destinationIcon = new L.DivIcon({
-  className: "custom-destination-marker",
+  className: "destination-marker",
   html: `
-    <div class="destination-marker">
+    <div class="destination-marker-inner">
       <span>📍</span>
     </div>
   `,
-  iconSize: [42, 42],
-  iconAnchor: [21, 38],
+  iconSize: [46, 46],
+  iconAnchor: [23, 42],
 });
 
 // ======================================================
-// RECENTRER
+// RECENTRER AUTOMATIQUEMENT
 // ======================================================
 
-function RecentrerCarte({ position, zoom = 15 }) {
+function RecentrerCarte({ position }) {
   const map = useMap();
 
   useEffect(() => {
@@ -77,33 +86,39 @@ function RecentrerCarte({ position, zoom = 15 }) {
 
     map.flyTo(
       [position.latitude, position.longitude],
-      zoom,
+      15,
       {
         duration: 0.8,
       },
     );
-  }, [position, zoom, map]);
+  }, [position, map]);
 
   return null;
 }
 
 // ======================================================
-// FIT BOUNDS LIVREUR + DESTINATION
+// AJUSTER LA CARTE SUR LIVREUR + DESTINATION
 // ======================================================
 
-function AjusterVue({ livreur, destination }) {
+function AjusterBounds({ livreur, destination }) {
   const map = useMap();
 
   useEffect(() => {
     if (!livreur || !destination) return;
 
     const bounds = L.latLngBounds(
-      [livreur.latitude, livreur.longitude],
-      [destination.latitude, destination.longitude],
+      [
+        livreur.latitude,
+        livreur.longitude,
+      ],
+      [
+        destination.latitude,
+        destination.longitude,
+      ],
     );
 
     map.fitBounds(bounds, {
-      padding: [80, 80],
+      padding: [70, 70],
       maxZoom: 15,
       animate: true,
     });
@@ -117,33 +132,50 @@ function AjusterVue({ livreur, destination }) {
 // ======================================================
 
 export default function SuiviCommande() {
-  const { commandeId } = useParams();
+  const { commandeId, id } = useParams();
+
   const navigate = useNavigate();
+
+  // Supporte les deux noms de paramètre
+  const currentCommandeId = commandeId || id;
 
   const API_URL = import.meta.env.VITE_API_URL;
 
   const [commande, setCommande] = useState(null);
-  const [livreur, setLivreur] = useState(null);
-  const [positionLivreur, setPositionLivreur] = useState(null);
 
-  const [loading, setLoading] = useState(true);
-  const [erreur, setErreur] = useState("");
+  const [positionLivreur, setPositionLivreur] =
+    useState(null);
 
-  const [mapReady, setMapReady] = useState(false);
+  const [livreur, setLivreur] =
+    useState(null);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [erreur, setErreur] =
+    useState("");
+
+  const [mapReady, setMapReady] =
+    useState(false);
 
   // ====================================================
-  // CHARGER COMMANDE
+  // CHARGER LA COMMANDE
   // ====================================================
 
   useEffect(() => {
-    if (!commandeId) return;
+    if (!currentCommandeId) {
+      setErreur("Identifiant de commande manquant.");
+      setLoading(false);
+      return;
+    }
 
     const chargerCommande = async () => {
       try {
         setLoading(true);
         setErreur("");
 
-        const token = localStorage.getItem("token");
+        const token =
+          localStorage.getItem("token");
 
         if (!token) {
           navigate("/login");
@@ -151,7 +183,7 @@ export default function SuiviCommande() {
         }
 
         const response = await fetch(
-          `${API_URL}/api/commandes/${commandeId}`,
+          `${API_URL}/api/commandes/${currentCommandeId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -168,87 +200,162 @@ export default function SuiviCommande() {
           );
         }
 
-        const commandeData = data.commande || data;
+        const commandeData =
+          data.commande || data;
 
         setCommande(commandeData);
 
-        // ------------------------------------------------
+        // ==============================================
         // LIVREUR
-        // ------------------------------------------------
+        // ==============================================
 
-        if (commandeData.livraison?.livreur) {
+        if (
+          commandeData.livraison?.livreur
+        ) {
           setLivreur(
             commandeData.livraison.livreur,
           );
         }
 
-        // ------------------------------------------------
-        // LOCALISATION
-        // ------------------------------------------------
-
-        const localisation =
-          commandeData.livraison?.localisation ||
-          commandeData.livreur?.localisation ||
-          commandeData.livraison?.livreur
-            ?.localisation;
+        // ==============================================
+        // POSITION
+        // ==============================================
 
         if (
-          localisation?.latitude !== null &&
-          localisation?.longitude !== null &&
-          localisation?.latitude !== undefined &&
-          localisation?.longitude !== undefined
+          commandeData.livraison?.localisation
         ) {
-          setPositionLivreur({
-            latitude: Number(localisation.latitude),
-            longitude: Number(localisation.longitude),
-          });
+          const localisation =
+            commandeData.livraison.localisation;
+
+          if (
+            Number.isFinite(
+              Number(localisation.latitude),
+            ) &&
+            Number.isFinite(
+              Number(localisation.longitude),
+            )
+          ) {
+            setPositionLivreur({
+              latitude:
+                Number(localisation.latitude),
+              longitude:
+                Number(localisation.longitude),
+            });
+          }
+        }
+
+        // Certains backends mettent directement
+        // la localisation dans le livreur.
+        if (
+          commandeData.livraison?.livreur
+            ?.localisation
+        ) {
+          const localisation =
+            commandeData.livraison.livreur
+              .localisation;
+
+          if (
+            localisation?.latitude !== null &&
+            localisation?.longitude !== null
+          ) {
+            setPositionLivreur({
+              latitude:
+                Number(localisation.latitude),
+              longitude:
+                Number(localisation.longitude),
+            });
+          }
         }
       } catch (error) {
         console.error(
-          "CHARGEMENT SUIVI ERROR:",
+          "SUIVI COMMANDE ERROR:",
           error,
         );
 
-        setErreur(error.message);
+        setErreur(
+          error.message ||
+            "Impossible de charger le suivi.",
+        );
       } finally {
         setLoading(false);
       }
     };
 
     chargerCommande();
-  }, [API_URL, commandeId, navigate]);
+  }, [
+    API_URL,
+    currentCommandeId,
+    navigate,
+  ]);
 
   // ====================================================
-  // SOCKET
+  // SOCKET.IO
   // ====================================================
 
   useEffect(() => {
-    if (!commandeId) return;
+    if (!currentCommandeId) return;
 
-    // rejoindre la room de la commande
+    // ================================================
+    // REJOINDRE LA ROOM COMMANDE
+    // ================================================
+
     socket.emit(
       "join_commande",
-      commandeId,
+      currentCommandeId,
     );
 
-    // --------------------------------------------------
+    // ================================================
+    // REJOINDRE LA ROOM CLIENT
+    // ================================================
+
+    const token =
+      localStorage.getItem("token");
+
+    try {
+      if (token) {
+        const payload =
+          JSON.parse(
+            atob(
+              token.split(".")[1]
+                .replace(/-/g, "+")
+                .replace(/_/g, "/"),
+            ),
+          );
+
+        if (payload?.userId) {
+          socket.emit(
+            "join_room",
+            payload.userId,
+          );
+        }
+      }
+    } catch (error) {
+      console.warn(
+        "Impossible de lire le token client",
+      );
+    }
+
+    // ================================================
     // POSITION LIVREUR
-    // --------------------------------------------------
+    // ================================================
 
     const handlePosition = (data) => {
       if (
         data.commandeId?.toString() !==
-        commandeId.toString()
+        currentCommandeId.toString()
       ) {
         return;
       }
 
-      const latitude = Number(data.latitude);
-      const longitude = Number(data.longitude);
+      const latitude =
+        Number(data.latitude);
+
+      const longitude =
+        Number(data.longitude);
 
       if (
-        Number.isNaN(latitude) ||
-        Number.isNaN(longitude)
+        !Number.isFinite(latitude) ||
+        !Number.isFinite(longitude)
       ) {
         return;
       }
@@ -257,21 +364,16 @@ export default function SuiviCommande() {
         latitude,
         longitude,
       });
-
-      // si le socket envoie également les infos
-      if (data.livreur) {
-        setLivreur(data.livreur);
-      }
     };
 
-    // --------------------------------------------------
+    // ================================================
     // UPDATE COMMANDE
-    // --------------------------------------------------
+    // ================================================
 
     const handleCommandeUpdate = (data) => {
       if (
         data.id?.toString() !==
-        commandeId.toString()
+        currentCommandeId.toString()
       ) {
         return;
       }
@@ -281,12 +383,12 @@ export default function SuiviCommande() {
 
         return {
           ...prev,
+
           livraison: {
             ...prev.livraison,
 
             statut:
-              data.statutLivraison ||
-              prev.livraison?.statut,
+              data.statutLivraison,
 
             livreurId:
               data.livreurId ||
@@ -295,10 +397,16 @@ export default function SuiviCommande() {
         };
       });
 
+      // ==============================================
+      // NOUVEAU LIVREUR
+      // ==============================================
+
       if (data.livreur) {
         setLivreur(data.livreur);
 
-        if (data.livreur.localisation) {
+        if (
+          data.livreur.localisation
+        ) {
           const localisation =
             data.livreur.localisation;
 
@@ -307,12 +415,11 @@ export default function SuiviCommande() {
             localisation.longitude !== null
           ) {
             setPositionLivreur({
-              latitude: Number(
-                localisation.latitude,
-              ),
-              longitude: Number(
-                localisation.longitude,
-              ),
+              latitude:
+                Number(localisation.latitude),
+
+              longitude:
+                Number(localisation.longitude),
             });
           }
         }
@@ -342,100 +449,10 @@ export default function SuiviCommande() {
 
       socket.emit(
         "leave_commande",
-        commandeId,
+        currentCommandeId,
       );
     };
-  }, [commandeId]);
-
-  // ====================================================
-  // DONNÉES
-  // ====================================================
-
-  const statut =
-    commande?.livraison?.statut ||
-    "NOT_STARTED";
-
-  const destination = useMemo(() => {
-    const latitude =
-      commande?.client?.latitude;
-
-    const longitude =
-      commande?.client?.longitude;
-
-    if (
-      latitude === undefined ||
-      latitude === null ||
-      longitude === undefined ||
-      longitude === null
-    ) {
-      return null;
-    }
-
-    return {
-      latitude: Number(latitude),
-      longitude: Number(longitude),
-    };
-  }, [commande]);
-
-  const positionCarte =
-    positionLivreur ||
-    destination || {
-      latitude: 5.3364,
-      longitude: -4.0267,
-    };
-
-  // ====================================================
-  // PROGRESSION
-  // ====================================================
-
-  const etapes = [
-    {
-      key: "CONFIRMED",
-      title: "Commande confirmée",
-      text: "Votre commande est enregistrée.",
-      icon: <FaCheck />,
-      active: true,
-    },
-    {
-      key: "ACCEPTED",
-      title: "Livreur attribué",
-      text: livreur?.username
-        ? `${livreur.username} prend en charge votre commande.`
-        : "Un livreur prend en charge votre commande.",
-      icon: <FaMotorcycle />,
-      active: [
-        "ACCEPTED",
-        "PICKING_UP",
-        "IN_DELIVERY",
-        "DELIVERED",
-      ].includes(statut),
-    },
-    {
-      key: "IN_DELIVERY",
-      title: "En livraison",
-      text: "Votre commande est actuellement en route.",
-      icon: <FaBox />,
-      active: [
-        "IN_DELIVERY",
-        "DELIVERED",
-      ].includes(statut),
-    },
-    {
-      key: "DELIVERED",
-      title: "Livrée",
-      text: "Votre commande est arrivée.",
-      icon: <FaCheck />,
-      active: statut === "DELIVERED",
-    },
-  ];
-
-  // ====================================================
-  // RECHERCHE
-  // ====================================================
-
-  const rechercheActive =
-    statut === "SEARCHING" ||
-    statut === "REQUESTED";
+  }, [currentCommandeId]);
 
   // ====================================================
   // LOADING
@@ -446,9 +463,12 @@ export default function SuiviCommande() {
       <Page>
         <LoadingScreen>
           <LoadingSpinner />
-
+          <LoadingTitle>
+            Préparation de votre suivi
+          </LoadingTitle>
           <LoadingText>
-            Préparation du suivi...
+            Nous récupérons les informations de
+            votre livraison...
           </LoadingText>
         </LoadingScreen>
       </Page>
@@ -456,23 +476,20 @@ export default function SuiviCommande() {
   }
 
   // ====================================================
-  // ERROR
+  // ERREUR
   // ====================================================
 
-  if (erreur || !commande) {
+  if (erreur) {
     return (
       <Page>
         <ErrorScreen>
           <ErrorIcon>!</ErrorIcon>
 
           <h2>
-            Impossible de charger le suivi
+            Impossible d'afficher le suivi
           </h2>
 
-          <p>
-            {erreur ||
-              "Commande introuvable."}
-          </p>
+          <p>{erreur}</p>
 
           <BackButton
             onClick={() => navigate(-1)}
@@ -485,41 +502,109 @@ export default function SuiviCommande() {
     );
   }
 
+  if (!commande) {
+    return (
+      <Page>
+        <ErrorScreen>
+          <ErrorIcon>!</ErrorIcon>
+
+          <h2>
+            Commande introuvable
+          </h2>
+
+          <BackButton
+            onClick={() => navigate("/")}
+          >
+            Retour à l'accueil
+          </BackButton>
+        </ErrorScreen>
+      </Page>
+    );
+  }
+
   // ====================================================
-  // RENDER
+  // DONNÉES
+  // ====================================================
+
+  const statut =
+    commande.livraison?.statut ||
+    "NOT_STARTED";
+
+  const destination =
+    commande.client?.latitude !==
+      undefined &&
+    commande.client?.latitude !==
+      null &&
+    commande.client?.longitude !==
+      undefined &&
+    commande.client?.longitude !==
+      null
+      ? {
+          latitude:
+            Number(
+              commande.client.latitude,
+            ),
+
+          longitude:
+            Number(
+              commande.client.longitude,
+            ),
+        }
+      : null;
+
+  const positionCarte =
+    positionLivreur ||
+    destination ||
+    ABIDJAN;
+
+  const statutInfo =
+    statutConfig[statut] ||
+    statutConfig.NOT_STARTED;
+
+  const livreurDisponible =
+    Boolean(livreur);
+
+  // ====================================================
+  // RENDU
   // ====================================================
 
   return (
     <Page>
       {/* =================================================
-          TOP BAR
+          HEADER
       ================================================= */}
 
-      <TopBar>
-        <BackButton
-          onClick={() => navigate(-1)}
+      <TopHeader>
+        <HeaderLeft>
+          <BackIcon
+            onClick={() => navigate(-1)}
+          >
+            <FaArrowLeft />
+          </BackIcon>
+
+          <div>
+            <SmallTitle>
+              SUIVI DE LIVRAISON
+            </SmallTitle>
+
+            <OrderNumber>
+              #{currentCommandeId
+                ?.slice(-8)
+                .toUpperCase()}
+            </OrderNumber>
+          </div>
+        </HeaderLeft>
+
+        <StatusBadge
+          $type={statutInfo.type}
         >
-          <FaArrowLeft />
-        </BackButton>
-
-        <OrderHeader>
-          <OrderEyebrow>
-            SUIVI DE LIVRAISON
-          </OrderEyebrow>
-
-          <OrderNumber>
-            #{commande._id.slice(-8).toUpperCase()}
-          </OrderNumber>
-        </OrderHeader>
-
-        <LiveBadge>
-          <LiveDot />
-          EN DIRECT
-        </LiveBadge>
-      </TopBar>
+          <FaCircle />
+          {statutInfo.label}
+        </StatusBadge>
+      </TopHeader>
 
       {/* =================================================
-          CARTE
+          MAP
       ================================================= */}
 
       <MapSection>
@@ -537,59 +622,58 @@ export default function SuiviCommande() {
           whenReady={() => setMapReady(true)}
         >
           <TileLayer
-            attribution='&copy; OpenStreetMap'
+            attribution="&copy; OpenStreetMap contributors"
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
 
-          {/* Vue globale au chargement */}
-          {mapReady &&
-            positionLivreur &&
-            destination && (
-              <AjusterVue
-                livreur={positionLivreur}
-                destination={destination}
-              />
-            )}
+          <ZoomControl position="bottomright" />
 
-          {/* Position actuelle */}
-          {positionLivreur && (
-            <>
-              <Marker
-                position={[
-                  positionLivreur.latitude,
-                  positionLivreur.longitude,
-                ]}
-                icon={livreurIcon}
-              >
-                <Popup>
-                  <strong>
-                    {livreur?.username ||
-                      "Votre livreur"}
-                  </strong>
+          {/* Recentrage sur le livreur */}
+          <RecentrerCarte
+            position={null}
+          />
 
-                  <br />
-
-                  Votre livreur est ici.
-                </Popup>
-              </Marker>
-
-              <Circle
-                center={[
-                  positionLivreur.latitude,
-                  positionLivreur.longitude,
-                ]}
-                radius={80}
-                pathOptions={{
-                  color: "#111",
-                  fillColor: "#111",
-                  fillOpacity: 0.08,
-                  weight: 1,
-                }}
-              />
-            </>
+          {/* Ajustement initial */}
+          {mapReady && (
+            <AjusterBounds
+              livreur={
+                positionLivreur
+              }
+              destination={
+                destination
+              }
+            />
           )}
 
-          {/* Destination */}
+          {/* ===========================================
+              LIVREUR
+          =========================================== */}
+
+          {positionLivreur && (
+            <Marker
+              position={[
+                positionLivreur.latitude,
+                positionLivreur.longitude,
+              ]}
+              icon={livreurIcon}
+            >
+              <Popup>
+                <strong>
+                  {livreur?.username ||
+                    "Votre livreur"}
+                </strong>
+
+                <br />
+
+                Livreur en temps réel
+              </Popup>
+            </Marker>
+          )}
+
+          {/* ===========================================
+              DESTINATION
+          =========================================== */}
+
           {destination && (
             <Marker
               position={[
@@ -600,17 +684,16 @@ export default function SuiviCommande() {
             >
               <Popup>
                 <strong>
-                  Destination
+                  Votre destination
                 </strong>
-
-                <br />
-
-                {commande.client?.adresse}
               </Popup>
             </Marker>
           )}
 
-          {/* Ligne livreur → destination */}
+          {/* ===========================================
+              TRAJET
+          =========================================== */}
+
           {positionLivreur &&
             destination && (
               <Polyline
@@ -626,358 +709,515 @@ export default function SuiviCommande() {
                 ]}
                 pathOptions={{
                   color: "#111",
-                  weight: 4,
+                  weight: 5,
                   opacity: 0.75,
-                  dashArray: "8 10",
+                  dashArray: "10 8",
                 }}
               />
             )}
-
-          <RecentrerCarte
-            position={positionLivreur}
-          />
         </MapContainer>
 
         {/* =================================================
-            CARTE INFO FLOTTANTE
+            OVERLAY CARTE
         ================================================= */}
 
-        <MapInfoCard>
-          <MapInfoTop>
+        <MapOverlay>
+          <LiveBadge>
+            <LiveDot />
+            LIVE
+          </LiveBadge>
+
+          <MapInfo>
             <MapInfoIcon>
-              {rechercheActive ? (
-                <FaLocationArrow />
-              ) : (
-                <FaMotorcycle />
-              )}
+              <FaLocationArrow />
             </MapInfoIcon>
 
             <div>
-              <MapInfoLabel>
-                {rechercheActive
-                  ? "RECHERCHE EN COURS"
-                  : "LIVRAISON"}
-              </MapInfoLabel>
-
               <MapInfoTitle>
-                {statutLabel[statut] ||
-                  statut}
+                Position du livreur
               </MapInfoTitle>
+
+              <MapInfoText>
+                Mise à jour en temps réel
+              </MapInfoText>
             </div>
-          </MapInfoTop>
-
-          {positionLivreur && (
-            <LocationLive>
-              <LiveDot />
-
-              Position du livreur mise à jour
-            </LocationLive>
-          )}
-        </MapInfoCard>
+          </MapInfo>
+        </MapOverlay>
 
         {/* =================================================
-            RECENTRER
+            CARTE SANS GPS
         ================================================= */}
 
-        <LocateButton
-          onClick={() => {
-            if (!positionLivreur) return;
+        {!positionLivreur &&
+          statut !== "DELIVERED" && (
+            <WaitingMapCard>
+              <WaitingMapIcon>
+                <FaMotorcycle />
+              </WaitingMapIcon>
 
-            setMapReady(false);
-            setTimeout(
-              () => setMapReady(true),
-              50,
-            );
-          }}
-          disabled={!positionLivreur}
-        >
-          <FaLocationArrow />
-        </LocateButton>
+              <div>
+                <strong>
+                  En attente de localisation
+                </strong>
+
+                <span>
+                  La position du livreur apparaîtra
+                  ici dès qu'il sera connecté.
+                </span>
+              </div>
+            </WaitingMapCard>
+          )}
       </MapSection>
 
       {/* =================================================
-          PANNEAU
+          CONTENU
       ================================================= */}
 
       <Content>
-        <TrackingCard>
-          {/* ---------------------------------------------
-              HEADER
-          --------------------------------------------- */}
+        <MainGrid>
+          {/* =================================================
+              COLONNE PRINCIPALE
+          ================================================= */}
 
-          <TrackingHeader>
-            <div>
-              <Eyebrow>
-                ÉTAT DE LA LIVRAISON
-              </Eyebrow>
+          <MainColumn>
+            {/* =============================================
+                STATUT
+            ============================================= */}
 
-              <TrackingTitle>
-                {statutLabel[statut] ||
-                  statut}
-              </TrackingTitle>
-            </div>
+            <StatusCard>
+              <StatusCardTop>
+                <StatusTextBlock>
+                  <Eyebrow>
+                    ÉTAT DE LA LIVRAISON
+                  </Eyebrow>
 
-            <StatusIcon $active>
-              {statutIcon[statut]}
-            </StatusIcon>
-          </TrackingHeader>
+                  <StatusTitle>
+                    {statutInfo.label}
+                  </StatusTitle>
 
-          {/* ---------------------------------------------
-              TIMELINE
-          --------------------------------------------- */}
+                  <StatusDescription>
+                    {statutInfo.description}
+                  </StatusDescription>
+                </StatusTextBlock>
 
-          <Timeline>
-            {etapes.map(
-              (etape, index) => (
-                <TimelineItem
-                  key={etape.key}
-                  $active={etape.active}
-                  $last={
-                    index ===
-                    etapes.length - 1
-                  }
+                <BigStatusIcon
+                  $type={statutInfo.type}
                 >
-                  <TimelineSide>
-                    <TimelineDot
-                      $active={etape.active}
-                    >
-                      {etape.icon}
-                    </TimelineDot>
+                  {statutInfo.icon}
+                </BigStatusIcon>
+              </StatusCardTop>
+            </StatusCard>
 
-                    {index <
-                      etapes.length - 1 && (
-                      <TimelineLine
-                        $active={
-                          etapes.active
-                        }
-                      />
-                    )}
-                  </TimelineSide>
+            {/* =============================================
+                TIMELINE
+            ============================================= */}
+
+            <Card>
+              <CardHeader>
+                <CardHeaderIcon>
+                  <FaBox />
+                </CardHeaderIcon>
+
+                <div>
+                  <CardEyebrow>
+                    PROGRESSION
+                  </CardEyebrow>
+
+                  <CardTitle>
+                    Votre commande
+                  </CardTitle>
+                </div>
+              </CardHeader>
+
+              <Timeline>
+                <TimelineItem
+                  $active={true}
+                  $last={false}
+                >
+                  <TimelineLine />
+
+                  <TimelineDot $active>
+                    <FaCheck />
+                  </TimelineDot>
 
                   <TimelineContent>
-                    <TimelineTitle
-                      $active={etape.active}
-                    >
-                      {etape.title}
-                    </TimelineTitle>
+                    <TimelineItemTitle>
+                      Commande confirmée
+                    </TimelineItemTitle>
 
-                    <TimelineText>
-                      {etape.text}
-                    </TimelineText>
+                    <TimelineItemText>
+                      Votre commande a été
+                      enregistrée.
+                    </TimelineItemText>
                   </TimelineContent>
                 </TimelineItem>
-              ),
-            )}
-          </Timeline>
 
-          {/* ---------------------------------------------
-              LIVREUR
-          --------------------------------------------- */}
+                <TimelineItem
+                  $active={[
+                    "ACCEPTED",
+                    "PICKING_UP",
+                    "IN_DELIVERY",
+                    "DELIVERED",
+                  ].includes(statut)}
+                >
+                  <TimelineLine />
 
-          {livreur && (
-            <LivreurSection>
-              <SectionLabel>
-                VOTRE LIVREUR
-              </SectionLabel>
+                  <TimelineDot
+                    $active={[
+                      "ACCEPTED",
+                      "PICKING_UP",
+                      "IN_DELIVERY",
+                      "DELIVERED",
+                    ].includes(statut)}
+                  >
+                    <FaMotorcycle />
+                  </TimelineDot>
 
-              <LivreurCard>
-                <Avatar>
-                  {livreur.username
-                    ?.charAt(0)
-                    ?.toUpperCase() ||
-                    "L"}
-                </Avatar>
+                  <TimelineContent>
+                    <TimelineItemTitle>
+                      Livreur attribué
+                    </TimelineItemTitle>
 
-                <LivreurInfo>
-                  <LivreurName>
-                    {livreur.username}
-                  </LivreurName>
+                    <TimelineItemText>
+                      {livreur?.username
+                        ? `${livreur.username} prend en charge votre commande.`
+                        : "Nous recherchons un livreur disponible."}
+                    </TimelineItemText>
+                  </TimelineContent>
+                </TimelineItem>
 
-                  <LivreurStatus>
-                    <StatusOnlineDot />
+                <TimelineItem
+                  $active={[
+                    "PICKING_UP",
+                    "IN_DELIVERY",
+                    "DELIVERED",
+                  ].includes(statut)}
+                >
+                  <TimelineLine />
 
-                    {statut ===
-                    "IN_DELIVERY"
-                      ? "En route vers vous"
-                      : "Votre livreur"}
-                  </LivreurStatus>
-                </LivreurInfo>
+                  <TimelineDot
+                    $active={[
+                      "PICKING_UP",
+                      "IN_DELIVERY",
+                      "DELIVERED",
+                    ].includes(statut)}
+                  >
+                    <FaBox />
+                  </TimelineDot>
 
-                <Actions>
+                  <TimelineContent>
+                    <TimelineItemTitle>
+                      Commande en préparation
+                    </TimelineItemTitle>
+
+                    <TimelineItemText>
+                      Le livreur récupère votre
+                      commande.
+                    </TimelineItemText>
+                  </TimelineContent>
+                </TimelineItem>
+
+                <TimelineItem
+                  $active={[
+                    "IN_DELIVERY",
+                    "DELIVERED",
+                  ].includes(statut)}
+                  $last
+                >
+                  <TimelineDot
+                    $active={[
+                      "IN_DELIVERY",
+                      "DELIVERED",
+                    ].includes(statut)}
+                  >
+                    <FaLocationArrow />
+                  </TimelineDot>
+
+                  <TimelineContent>
+                    <TimelineItemTitle>
+                      Livraison
+                    </TimelineItemTitle>
+
+                    <TimelineItemText>
+                      {statut === "DELIVERED"
+                        ? "Votre commande a été livrée."
+                        : "Votre commande est en route vers vous."}
+                    </TimelineItemText>
+                  </TimelineContent>
+                </TimelineItem>
+              </Timeline>
+            </Card>
+          </MainColumn>
+
+          {/* =================================================
+              SIDEBAR
+          ================================================= */}
+
+          <SideColumn>
+            {/* =============================================
+                LIVREUR
+            ============================================= */}
+
+            {livreurDisponible && (
+              <DriverCard>
+                <DriverCardHeader>
+                  <DriverLabel>
+                    VOTRE LIVREUR
+                  </DriverLabel>
+
+                  <OnlineBadge>
+                    <LiveDot />
+                    EN LIGNE
+                  </OnlineBadge>
+                </DriverCardHeader>
+
+                <DriverMain>
+                  <DriverAvatar>
+                    {livreur.username
+                      ?.charAt(0)
+                      ?.toUpperCase() || "L"}
+                  </DriverAvatar>
+
+                  <DriverIdentity>
+                    <DriverName>
+                      {livreur.username}
+                    </DriverName>
+
+                    <DriverRole>
+                      Livreur partenaire
+                    </DriverRole>
+
+                    {positionLivreur && (
+                      <DriverLocation>
+                        <FaLocationArrow />
+                        Position active
+                      </DriverLocation>
+                    )}
+                  </DriverIdentity>
+                </DriverMain>
+
+                <DriverActions>
                   {livreur.telephone && (
-                    <ActionButton
+                    <DriverAction
                       as="a"
                       href={`tel:${livreur.telephone}`}
-                      aria-label="Appeler le livreur"
                     >
                       <FaPhone />
-                    </ActionButton>
+                      <span>
+                        Appeler
+                      </span>
+                    </DriverAction>
                   )}
 
-                  <ActionButton
+                  <DriverAction
                     onClick={() =>
-                      navigate(
-                        `/commande/${commandeId}/chat`,
+                      alert(
+                        "Le chat sera activé à la prochaine étape.",
                       )
                     }
-                    aria-label="Discuter avec le livreur"
                   >
                     <FaComments />
-                  </ActionButton>
-                </Actions>
-              </LivreurCard>
-            </LivreurSection>
-          )}
+                    <span>
+                      Discuter
+                    </span>
+                  </DriverAction>
+                </DriverActions>
+              </DriverCard>
+            )}
 
-          {/* ---------------------------------------------
-              DESTINATION
-          --------------------------------------------- */}
+            {/* =============================================
+                DESTINATION
+            ============================================= */}
 
-          <DestinationCard>
-            <DestinationIcon>
-              <FaMapMarkerAlt />
-            </DestinationIcon>
-
-            <DestinationInfo>
-              <DestinationLabel>
-                ADRESSE DE LIVRAISON
-              </DestinationLabel>
-
-              <DestinationText>
-                {commande.client?.adresse ||
-                  "Adresse de livraison"}
-              </DestinationText>
-
-              <DestinationCity>
-                {commande.client?.ville}
-                {commande.client
-                  ?.codePostal
-                  ? ` · ${commande.client.codePostal}`
-                  : ""}
-              </DestinationCity>
-            </DestinationInfo>
-          </DestinationCard>
-
-          {/* ---------------------------------------------
-              INFORMATIONS
-          --------------------------------------------- */}
-
-          <InfoRow>
-            <InfoItem>
-              <FaClock />
+            <DestinationCard>
+              <DestinationIcon>
+                <FaMapMarkerAlt />
+              </DestinationIcon>
 
               <div>
-                <InfoLabel>
-                  STATUT
-                </InfoLabel>
+                <DestinationLabel>
+                  DESTINATION
+                </DestinationLabel>
 
-                <InfoValue>
-                  {statutLabel[statut] ||
-                    statut}
-                </InfoValue>
+                <DestinationAddress>
+                  {commande.client?.adresse ||
+                    "Adresse de livraison"}
+                </DestinationAddress>
+
+                {commande.client?.ville && (
+                  <DestinationCity>
+                    {commande.client.ville}
+                  </DestinationCity>
+                )}
               </div>
-            </InfoItem>
+            </DestinationCard>
 
-            <InfoItem>
-              <FaBox />
+            {/* =============================================
+                SÉCURITÉ
+            ============================================= */}
+
+            <SecurityCard>
+              <SecurityIcon>
+                <FaShieldAlt />
+              </SecurityIcon>
 
               <div>
-                <InfoLabel>
-                  COMMANDE
-                </InfoLabel>
+                <SecurityTitle>
+                  Suivi sécurisé
+                </SecurityTitle>
 
-                <InfoValue>
-                  #{commande._id.slice(-6)}
-                </InfoValue>
+                <SecurityText>
+                  La position du livreur est
+                  transmise en temps réel pendant
+                  votre livraison.
+                </SecurityText>
               </div>
-            </InfoItem>
-          </InfoRow>
-        </TrackingCard>
+            </SecurityCard>
+
+            {/* =============================================
+                TEMPS RÉEL
+            ============================================= */}
+
+            <RealtimeCard>
+              <RealtimeIcon>
+                <FaClock />
+              </RealtimeIcon>
+
+              <div>
+                <RealtimeTitle>
+                  Suivi en temps réel
+                </RealtimeTitle>
+
+                <RealtimeText>
+                  Cette page se met automatiquement
+                  à jour sans avoir besoin de la
+                  recharger.
+                </RealtimeText>
+              </div>
+            </RealtimeCard>
+          </SideColumn>
+        </MainGrid>
       </Content>
     </Page>
   );
 }
 
 // ======================================================
-// LABELS
+// STATUTS
 // ======================================================
 
-const statutLabel = {
-  NOT_STARTED:
-    "Recherche non démarrée",
+const statutConfig = {
+  NOT_STARTED: {
+    label: "Recherche non démarrée",
+    description:
+      "La recherche d'un livreur n'a pas encore commencé.",
+    icon: "⏳",
+    type: "neutral",
+  },
 
-  SEARCHING:
-    "Recherche d'un livreur...",
+  SEARCHING: {
+    label: "Recherche d'un livreur",
+    description:
+      "Nous recherchons actuellement un livreur disponible.",
+    icon: "🔎",
+    type: "searching",
+  },
 
-  REQUESTED:
-    "Recherche d'un livreur...",
+  REQUESTED: {
+    label: "Livreur recherché",
+    description:
+      "Votre demande de livraison est en cours.",
+    icon: "🔎",
+    type: "searching",
+  },
 
-  ACCEPTED:
-    "Livreur attribué",
+  ACCEPTED: {
+    label: "Livreur attribué",
+    description:
+      "Un livreur a accepté votre commande.",
+    icon: "🚴",
+    type: "success",
+  },
 
-  PICKING_UP:
-    "Récupération de votre commande",
+  PICKING_UP: {
+    label: "Récupération en cours",
+    description:
+      "Votre livreur récupère actuellement votre commande.",
+    icon: "📦",
+    type: "warning",
+  },
 
-  IN_DELIVERY:
-    "Votre commande est en route",
+  IN_DELIVERY: {
+    label: "Votre commande est en route",
+    description:
+      "Votre livreur se dirige vers votre adresse.",
+    icon: "🚚",
+    type: "success",
+  },
 
-  DELIVERED:
-    "Commande livrée",
+  DELIVERED: {
+    label: "Commande livrée",
+    description:
+      "Votre commande a été livrée avec succès.",
+    icon: "✓",
+    type: "success",
+  },
 
-  CANCELLED:
-    "Commande annulée",
-};
-
-const statutIcon = {
-  NOT_STARTED: "⏳",
-  SEARCHING: "🔎",
-  REQUESTED: "🔎",
-  ACCEPTED: "🚴",
-  PICKING_UP: "📦",
-  IN_DELIVERY: "🚚",
-  DELIVERED: "✓",
-  CANCELLED: "×",
+  CANCELLED: {
+    label: "Commande annulée",
+    description:
+      "Cette livraison a été annulée.",
+    icon: "×",
+    type: "danger",
+  },
 };
 
 // ======================================================
-// STYLES
+// PAGE
 // ======================================================
 
 const Page = styled.div`
   min-height: 100vh;
-  background: #f4f4f2;
+  background: #f4f5f7;
   color: #111;
 `;
 
-const TopBar = styled.header`
-  height: 82px;
-  padding: 0 28px;
+// ======================================================
+// HEADER
+// ======================================================
+
+const TopHeader = styled.header`
+  height: 78px;
+  padding: 0 5%;
 
   background: rgba(255, 255, 255, 0.96);
 
   display: flex;
   align-items: center;
-  gap: 18px;
+  justify-content: space-between;
 
-  border-bottom: 1px solid #e8e8e6;
+  border-bottom: 1px solid #e9e9eb;
 
   position: relative;
   z-index: 20;
 
-  backdrop-filter: blur(18px);
-
-  @media (max-width: 600px) {
-    height: 72px;
-    padding: 0 16px;
+  @media (max-width: 700px) {
+    padding: 0 18px;
   }
 `;
 
-const BackButton = styled.button`
-  width: 44px;
-  height: 44px;
+const HeaderLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 14px;
+`;
 
-  border: 1px solid #e5e5e3;
-  border-radius: 14px;
+const BackIcon = styled.button`
+  width: 40px;
+  height: 40px;
+
+  border: 1px solid #e5e5e7;
+  border-radius: 12px;
 
   background: white;
 
@@ -990,62 +1230,65 @@ const BackButton = styled.button`
   transition: 0.2s;
 
   &:hover {
-    transform: translateX(-2px);
-    background: #f6f6f4;
+    background: #f5f5f5;
   }
 `;
 
-const OrderHeader = styled.div`
-  flex: 1;
-`;
-
-const OrderEyebrow = styled.div`
+const SmallTitle = styled.div`
   font-size: 10px;
   font-weight: 800;
-  letter-spacing: 0.15em;
-  color: #888;
+
+  letter-spacing: 0.13em;
+
+  color: #8a8a8f;
 `;
 
 const OrderNumber = styled.div`
-  margin-top: 4px;
-  font-size: 20px;
+  margin-top: 3px;
+
+  font-size: 19px;
   font-weight: 800;
-  letter-spacing: -0.03em;
+
+  letter-spacing: -0.02em;
 `;
 
-const LiveBadge = styled.div`
+const StatusBadge = styled.div`
   display: flex;
   align-items: center;
   gap: 7px;
 
-  padding: 9px 13px;
+  padding: 10px 14px;
 
   border-radius: 999px;
 
-  background: #f0f0ed;
+  background: ${({ $type }) => {
+    if ($type === "success") return "#e9f8ef";
+    if ($type === "searching") return "#fff7df";
+    if ($type === "danger") return "#ffecec";
+    return "#f1f1f3";
+  }};
 
-  font-size: 10px;
+  color: ${({ $type }) => {
+    if ($type === "success") return "#168344";
+    if ($type === "searching") return "#946d00";
+    if ($type === "danger") return "#b42318";
+    return "#555";
+  }};
+
+  font-size: 12px;
   font-weight: 800;
-  letter-spacing: 0.08em;
 
-  @media (max-width: 500px) {
-    font-size: 0;
-    width: 10px;
-    height: 10px;
-    padding: 0;
+  svg {
+    font-size: 7px;
   }
-`;
 
-const LiveDot = styled.span`
-  width: 7px;
-  height: 7px;
+  @media (max-width: 550px) {
+    span {
+      display: none;
+    }
 
-  border-radius: 50%;
-
-  background: #1e9b58;
-
-  box-shadow:
-    0 0 0 4px rgba(30, 155, 88, 0.12);
+    padding: 10px;
+  }
 `;
 
 // ======================================================
@@ -1053,47 +1296,60 @@ const LiveDot = styled.span`
 // ======================================================
 
 const MapSection = styled.section`
-  height: min(62vh, 650px);
-
+  height: 57vh;
   min-height: 430px;
 
   position: relative;
 
-  background: #dededb;
+  background: #dfe2e5;
+
+  overflow: hidden;
 
   .leaflet-container {
     font-family: inherit;
-  }
-
-  .leaflet-control-attribution {
-    font-size: 9px;
   }
 
   .leaflet-popup-content-wrapper {
     border-radius: 14px;
   }
 
-  .livreur-marker-wrapper {
+  .leaflet-popup-content {
+    margin: 13px 16px;
+  }
+
+  .driver-marker {
     position: relative;
 
     width: 58px;
     height: 58px;
   }
 
-  .livreur-marker-pulse {
-    position: absolute;
+  .driver-marker-inner {
+    width: 48px;
+    height: 48px;
 
-    width: 58px;
-    height: 58px;
+    margin: 5px;
 
     border-radius: 50%;
 
-    background: rgba(17, 17, 17, 0.12);
+    background: #111;
 
-    animation: pulse 2s infinite;
+    border: 4px solid white;
+
+    box-shadow:
+      0 8px 25px rgba(0, 0, 0, 0.3);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 23px;
+
+    position: relative;
+    z-index: 2;
   }
 
-  .livreur-marker {
+  .driver-pulse {
     position: absolute;
 
     width: 48px;
@@ -1104,108 +1360,124 @@ const MapSection = styled.section`
 
     border-radius: 50%;
 
-    background: #111;
+    border: 2px solid rgba(17, 17, 17, 0.25);
 
-    border: 4px solid white;
-
-    box-shadow:
-      0 8px 24px rgba(0, 0, 0, 0.3);
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    font-size: 22px;
+    animation: driverPulse 2s infinite;
   }
 
-  .destination-marker {
+  .destination-marker-inner {
     width: 42px;
     height: 42px;
 
-    border-radius: 50% 50% 50% 0;
+    border-radius: 50%;
 
     background: white;
 
     border: 3px solid #111;
 
     box-shadow:
-      0 5px 18px rgba(0, 0, 0, 0.2);
+      0 5px 18px rgba(0, 0, 0, 0.22);
 
     display: flex;
     align-items: center;
     justify-content: center;
 
-    transform: rotate(-45deg);
+    font-size: 22px;
   }
 
-  .destination-marker span {
-    transform: rotate(45deg);
-    font-size: 18px;
-  }
-
-  @keyframes pulse {
+  @keyframes driverPulse {
     0% {
       transform: scale(0.8);
       opacity: 0.8;
     }
 
     70% {
-      transform: scale(1.5);
+      transform: scale(1.45);
       opacity: 0;
     }
 
     100% {
-      transform: scale(1.5);
       opacity: 0;
     }
   }
 
-  @media (max-width: 600px) {
-    height: 55vh;
-    min-height: 380px;
+  @media (max-width: 700px) {
+    min-height: 400px;
+    height: 52vh;
   }
 `;
 
-const MapInfoCard = styled.div`
+const MapOverlay = styled.div`
   position: absolute;
 
-  top: 24px;
-  left: 24px;
+  top: 18px;
+  left: 20px;
 
   z-index: 500;
 
-  width: min(360px, calc(100% - 48px));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 
-  padding: 18px;
+  pointer-events: none;
+`;
 
-  border-radius: 20px;
+const LiveBadge = styled.div`
+  width: fit-content;
+
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  padding: 7px 11px;
+
+  border-radius: 999px;
+
+  background: rgba(17, 17, 17, 0.92);
+
+  color: white;
+
+  font-size: 10px;
+  font-weight: 900;
+
+  letter-spacing: 0.08em;
+
+  backdrop-filter: blur(10px);
+`;
+
+const LiveDot = styled.span`
+  width: 7px;
+  height: 7px;
+
+  border-radius: 50%;
+
+  background: #23c66b;
+
+  box-shadow: 0 0 0 4px rgba(35, 198, 107, 0.15);
+`;
+
+const MapInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 11px 14px;
 
   background: rgba(255, 255, 255, 0.94);
 
+  border-radius: 15px;
+
   box-shadow:
-    0 15px 40px rgba(0, 0, 0, 0.14);
+    0 8px 30px rgba(0, 0, 0, 0.12);
 
-  backdrop-filter: blur(18px);
-
-  @media (max-width: 600px) {
-    top: 16px;
-    left: 16px;
-
-    width: calc(100% - 32px);
-  }
-`;
-
-const MapInfoTop = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 13px;
+  backdrop-filter: blur(12px);
 `;
 
 const MapInfoIcon = styled.div`
-  width: 44px;
-  height: 44px;
+  width: 34px;
+  height: 34px;
 
-  border-radius: 14px;
+  border-radius: 10px;
 
   background: #111;
   color: white;
@@ -1213,150 +1485,244 @@ const MapInfoIcon = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-`;
 
-const MapInfoLabel = styled.div`
-  font-size: 9px;
-  font-weight: 800;
-
-  letter-spacing: 0.13em;
-
-  color: #888;
+  font-size: 13px;
 `;
 
 const MapInfoTitle = styled.div`
-  margin-top: 3px;
-
-  font-size: 16px;
+  font-size: 12px;
   font-weight: 800;
 `;
 
-const LocationLive = styled.div`
-  margin-top: 13px;
+const MapInfoText = styled.div`
+  margin-top: 2px;
 
-  display: flex;
-  align-items: center;
-  gap: 9px;
+  color: #777;
 
-  font-size: 11px;
-  color: #666;
+  font-size: 10px;
 `;
 
-const LocateButton = styled.button`
+const WaitingMapCard = styled.div`
   position: absolute;
 
-  right: 24px;
-  bottom: 24px;
+  bottom: 20px;
+  left: 50%;
+
+  transform: translateX(-50%);
 
   z-index: 500;
 
-  width: 48px;
-  height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 
-  border: 0;
-  border-radius: 15px;
+  width: min(420px, calc(100% - 40px));
 
-  background: white;
+  padding: 13px 15px;
+
+  background: rgba(255, 255, 255, 0.95);
+
+  border-radius: 17px;
 
   box-shadow:
-    0 8px 25px rgba(0, 0, 0, 0.15);
+    0 10px 35px rgba(0, 0, 0, 0.14);
+
+  backdrop-filter: blur(12px);
+`;
+
+const WaitingMapIcon = styled.div`
+  width: 38px;
+  height: 38px;
+
+  flex: 0 0 auto;
+
+  border-radius: 12px;
+
+  background: #f0f0f2;
 
   display: flex;
   align-items: center;
   justify-content: center;
-
-  cursor: pointer;
-
-  transition: 0.2s;
-
-  &:hover {
-    transform: scale(1.04);
-  }
-
-  &:disabled {
-    opacity: 0.45;
-    cursor: default;
-  }
 `;
+
+const WaitingMapCardText = styled.div``;
 
 // ======================================================
 // CONTENT
 // ======================================================
 
 const Content = styled.main`
-  max-width: 900px;
+  max-width: 1180px;
 
-  margin: -55px auto 0;
-
-  padding: 0 20px 60px;
+  margin: -48px auto 0;
 
   position: relative;
-
   z-index: 10;
-`;
 
-const TrackingCard = styled.section`
-  background: white;
+  padding: 0 22px 60px;
 
-  border-radius: 30px;
-
-  padding: 30px;
-
-  box-shadow:
-    0 18px 60px rgba(0, 0, 0, 0.1);
-
-  @media (max-width: 600px) {
-    padding: 22px;
-
-    border-radius: 24px;
+  @media (max-width: 700px) {
+    margin-top: -25px;
+    padding: 0 14px 40px;
   }
 `;
 
-const TrackingHeader = styled.div`
-  display: flex;
+const MainGrid = styled.div`
+  display: grid;
 
-  align-items: center;
+  grid-template-columns:
+    minmax(0, 1fr)
+    350px;
 
-  justify-content: space-between;
+  gap: 22px;
+
+  @media (max-width: 950px) {
+    grid-template-columns: 1fr;
+  }
 `;
+
+const MainColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+`;
+
+const SideColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+`;
+
+// ======================================================
+// STATUS CARD
+// ======================================================
+
+const StatusCard = styled.section`
+  padding: 25px;
+
+  border-radius: 24px;
+
+  background: #111;
+  color: white;
+
+  box-shadow:
+    0 18px 45px rgba(0, 0, 0, 0.16);
+`;
+
+const StatusCardTop = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 20px;
+`;
+
+const StatusTextBlock = styled.div``;
 
 const Eyebrow = styled.div`
   font-size: 10px;
 
-  letter-spacing: 0.14em;
-
-  color: #888;
-
   font-weight: 800;
+
+  letter-spacing: 0.13em;
+
+  color: #96969c;
 `;
 
-const TrackingTitle = styled.h2`
-  margin: 7px 0 0;
+const StatusTitle = styled.h2`
+  margin: 7px 0 6px;
 
-  font-size: 27px;
+  font-size: 25px;
 
-  letter-spacing: -0.04em;
-
-  @media (max-width: 600px) {
-    font-size: 22px;
-  }
+  letter-spacing: -0.03em;
 `;
 
-const StatusIcon = styled.div`
-  width: 55px;
-  height: 55px;
+const StatusDescription = styled.p`
+  margin: 0;
 
-  border-radius: 18px;
+  color: #aaaab0;
 
-  background: #111;
+  font-size: 13px;
 
-  color: white;
+  line-height: 1.5;
+`;
+
+const BigStatusIcon = styled.div`
+  width: 62px;
+  height: 62px;
+
+  flex: 0 0 auto;
+
+  border-radius: 19px;
+
+  background: ${({ $type }) =>
+    $type === "success"
+      ? "#1d5f3b"
+      : $type === "danger"
+        ? "#672525"
+        : "#29292d"};
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  font-size: 24px;
+  font-size: 27px;
+`;
+
+// ======================================================
+// CARD
+// ======================================================
+
+const Card = styled.section`
+  background: white;
+
+  border: 1px solid #e8e8ea;
+
+  border-radius: 24px;
+
+  padding: 25px;
+
+  box-shadow:
+    0 10px 35px rgba(0, 0, 0, 0.045);
+`;
+
+const CardHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 13px;
+`;
+
+const CardHeaderIcon = styled.div`
+  width: 42px;
+  height: 42px;
+
+  border-radius: 13px;
+
+  background: #f1f1f3;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 14px;
+`;
+
+const CardEyebrow = styled.div`
+  font-size: 9px;
+
+  font-weight: 800;
+
+  letter-spacing: 0.12em;
+
+  color: #96969c;
+`;
+
+const CardTitle = styled.h3`
+  margin: 3px 0 0;
+
+  font-size: 18px;
+
+  letter-spacing: -0.02em;
 `;
 
 // ======================================================
@@ -1364,40 +1730,45 @@ const StatusIcon = styled.div`
 // ======================================================
 
 const Timeline = styled.div`
-  margin-top: 34px;
+  margin-top: 28px;
 `;
 
 const TimelineItem = styled.div`
-  display: flex;
+  display: grid;
 
-  gap: 15px;
+  grid-template-columns: 42px 1fr;
 
-  min-height: 76px;
+  column-gap: 14px;
+
+  min-height: 78px;
 
   opacity: ${({ $active }) =>
-    $active ? 1 : 0.32};
+    $active ? 1 : 0.35};
+
+  position: relative;
 `;
 
-const TimelineSide = styled.div`
-  width: 38px;
+const TimelineLine = styled.div`
+  position: absolute;
 
-  display: flex;
+  left: 20px;
+  top: 42px;
 
-  flex-direction: column;
+  height: 60px;
 
-  align-items: center;
+  width: 1px;
+
+  background: #dedee1;
 `;
 
 const TimelineDot = styled.div`
-  width: 38px;
-  height: 38px;
-
-  flex: 0 0 38px;
+  width: 42px;
+  height: 42px;
 
   border-radius: 50%;
 
   background: ${({ $active }) =>
-    $active ? "#111" : "#e8e8e6"};
+    $active ? "#111" : "#f0f0f2"};
 
   color: ${({ $active }) =>
     $active ? "white" : "#999"};
@@ -1408,368 +1779,86 @@ const TimelineDot = styled.div`
 
   font-size: 13px;
 
-  transition: 0.3s;
-`;
-
-const TimelineLine = styled.div`
-  width: 2px;
-
-  flex: 1;
-
-  margin: 5px 0;
-
-  background: #e5e5e3;
+  position: relative;
+  z-index: 2;
 `;
 
 const TimelineContent = styled.div`
-  padding-top: 2px;
-
-  padding-bottom: 15px;
+  padding-top: 3px;
 `;
 
-const TimelineTitle = styled.div`
-  font-weight: 800;
-
+const TimelineItemTitle = styled.div`
   font-size: 14px;
 
-  color: ${({ $active }) =>
-    $active ? "#111" : "#999"};
+  font-weight: 800;
 `;
 
-const TimelineText = styled.div`
+const TimelineItemText = styled.div`
   margin-top: 5px;
 
   color: #777;
 
-  font-size: 13px;
+  font-size: 12px;
 
   line-height: 1.5;
 `;
 
 // ======================================================
-// LIVREUR
+// DRIVER
 // ======================================================
 
-const LivreurSection = styled.div`
-  margin-top: 8px;
-`;
-
-const SectionLabel = styled.div`
-  margin-bottom: 10px;
-
-  font-size: 10px;
-
-  letter-spacing: 0.13em;
-
-  font-weight: 800;
-
-  color: #888;
-`;
-
-const LivreurCard = styled.div`
-  padding: 16px;
-
-  border-radius: 20px;
-
-  background: #f5f5f3;
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 13px;
-`;
-
-const Avatar = styled.div`
-  width: 52px;
-  height: 52px;
-
-  flex: 0 0 52px;
-
-  border-radius: 17px;
-
-  background: #111;
-
-  color: white;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  font-size: 20px;
-
-  font-weight: 800;
-`;
-
-const LivreurInfo = styled.div`
-  flex: 1;
-
-  min-width: 0;
-`;
-
-const LivreurName = styled.div`
-  font-size: 15px;
-
-  font-weight: 800;
-`;
-
-const LivreurStatus = styled.div`
-  margin-top: 5px;
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 6px;
-
-  color: #777;
-
-  font-size: 12px;
-`;
-
-const StatusOnlineDot = styled.span`
-  width: 6px;
-  height: 6px;
-
-  border-radius: 50%;
-
-  background: #1e9b58;
-`;
-
-const Actions = styled.div`
-  display: flex;
-
-  gap: 8px;
-`;
-
-const ActionButton = styled.button`
-  width: 43px;
-  height: 43px;
-
-  border: 1px solid #e3e3e1;
-
-  border-radius: 14px;
+const DriverCard = styled.section`
+  padding: 22px;
 
   background: white;
 
-  color: #111;
+  border: 1px solid #e8e8ea;
 
+  border-radius: 24px;
+
+  box-shadow:
+    0 10px 35px rgba(0, 0, 0, 0.045);
+`;
+
+const DriverCardHeader = styled.div`
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
-
-  text-decoration: none;
-
-  cursor: pointer;
-
-  transition: 0.2s;
-
-  &:hover {
-    background: #111;
-    color: white;
-  }
 `;
 
-// ======================================================
-// DESTINATION
-// ======================================================
-
-const DestinationCard = styled.div`
-  margin-top: 18px;
-
-  padding: 17px;
-
-  border: 1px solid #ececea;
-
-  border-radius: 20px;
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 13px;
-`;
-
-const DestinationIcon = styled.div`
-  width: 43px;
-  height: 43px;
-
-  border-radius: 14px;
-
-  background: #f1f1ef;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-
-const DestinationInfo = styled.div`
-  flex: 1;
-
-  min-width: 0;
-`;
-
-const DestinationLabel = styled.div`
-  font-size: 9px;
-
-  letter-spacing: 0.13em;
-
-  color: #999;
-
-  font-weight: 800;
-`;
-
-const DestinationText = styled.div`
-  margin-top: 4px;
-
-  font-size: 13px;
-
-  font-weight: 700;
-
-  white-space: nowrap;
-
-  overflow: hidden;
-
-  text-overflow: ellipsis;
-`;
-
-const DestinationCity = styled.div`
-  margin-top: 3px;
-
-  font-size: 11px;
-
-  color: #888;
-`;
-
-// ======================================================
-// INFO
-// ======================================================
-
-const InfoRow = styled.div`
-  margin-top: 20px;
-
-  padding-top: 20px;
-
-  border-top: 1px solid #eeeeec;
-
-  display: grid;
-
-  grid-template-columns: 1fr 1fr;
-
-  gap: 15px;
-
-  @media (max-width: 500px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const InfoItem = styled.div`
-  display: flex;
-
-  align-items: center;
-
-  gap: 11px;
+const DriverLabel = styled.div`
+  font-size: 10px;
 
   color: #888;
 
-  font-size: 13px;
-`;
-
-const InfoLabel = styled.div`
-  font-size: 9px;
-
-  letter-spacing: 0.1em;
-
   font-weight: 800;
 
-  color: #999;
+  letter-spacing: 0.12em;
 `;
 
-const InfoValue = styled.div`
-  margin-top: 3px;
-
-  color: #111;
-
-  font-size: 12px;
-
-  font-weight: 700;
-`;
-
-// ======================================================
-// LOADING
-// ======================================================
-
-const LoadingScreen = styled.div`
-  min-height: 100vh;
-
+const OnlineBadge = styled.div`
   display: flex;
+  align-items: center;
+  gap: 7px;
 
-  flex-direction: column;
+  font-size: 9px;
+
+  font-weight: 900;
+
+  color: #168344;
+`;
+
+const DriverMain = styled.div`
+  display: flex;
 
   align-items: center;
 
-  justify-content: center;
+  gap: 14px;
 
-  gap: 18px;
+  margin-top: 19px;
 `;
 
-const LoadingSpinner = styled.div`
-  width: 38px;
-  height: 38px;
-
-  border-radius: 50%;
-
-  border: 3px solid #ddd;
-
-  border-top-color: #111;
-
-  animation: spin 0.8s linear infinite;
-
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-`;
-
-const LoadingText = styled.div`
-  font-size: 13px;
-
-  color: #777;
-
-  font-weight: 600;
-`;
-
-// ======================================================
-// ERROR
-// ======================================================
-
-const ErrorScreen = styled.div`
-  min-height: 100vh;
-
-  display: flex;
-
-  flex-direction: column;
-
-  align-items: center;
-
-  justify-content: center;
-
-  padding: 30px;
-
-  text-align: center;
-
-  h2 {
-    margin: 18px 0 6px;
-  }
-
-  p {
-    color: #777;
-    font-size: 14px;
-  }
-`;
-
-const ErrorIcon = styled.div`
+const DriverAvatar = styled.div`
   width: 58px;
   height: 58px;
 
@@ -1783,6 +1872,379 @@ const ErrorIcon = styled.div`
   align-items: center;
   justify-content: center;
 
-  font-size: 25px;
+  font-size: 22px;
+
   font-weight: 800;
+`;
+
+const DriverIdentity = styled.div`
+  min-width: 0;
+`;
+
+const DriverName = styled.div`
+  font-size: 17px;
+
+  font-weight: 800;
+`;
+
+const DriverRole = styled.div`
+  margin-top: 3px;
+
+  font-size: 11px;
+
+  color: #888;
+`;
+
+const DriverLocation = styled.div`
+  margin-top: 7px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 5px;
+
+  color: #168344;
+
+  font-size: 10px;
+
+  font-weight: 700;
+`;
+
+const DriverActions = styled.div`
+  display: grid;
+
+  grid-template-columns: 1fr 1fr;
+
+  gap: 9px;
+
+  margin-top: 20px;
+`;
+
+const DriverAction = styled.button`
+  min-height: 45px;
+
+  border: 1px solid #e3e3e5;
+
+  border-radius: 13px;
+
+  background: white;
+
+  color: #111;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 7px;
+
+  font-size: 12px;
+
+  font-weight: 800;
+
+  text-decoration: none;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+
+  &:hover {
+    background: #f4f4f5;
+  }
+`;
+
+// ======================================================
+// DESTINATION
+// ======================================================
+
+const DestinationCard = styled.section`
+  display: flex;
+
+  align-items: flex-start;
+
+  gap: 13px;
+
+  padding: 18px;
+
+  background: white;
+
+  border: 1px solid #e8e8ea;
+
+  border-radius: 20px;
+`;
+
+const DestinationIcon = styled.div`
+  width: 42px;
+  height: 42px;
+
+  flex: 0 0 auto;
+
+  border-radius: 13px;
+
+  background: #f2f2f3;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const DestinationLabel = styled.div`
+  font-size: 9px;
+
+  font-weight: 800;
+
+  color: #999;
+
+  letter-spacing: 0.12em;
+`;
+
+const DestinationAddress = styled.div`
+  margin-top: 5px;
+
+  font-size: 13px;
+
+  font-weight: 800;
+
+  line-height: 1.4;
+`;
+
+const DestinationCity = styled.div`
+  margin-top: 3px;
+
+  font-size: 11px;
+
+  color: #888;
+`;
+
+// ======================================================
+// SECURITY
+// ======================================================
+
+const SecurityCard = styled.section`
+  display: flex;
+
+  gap: 12px;
+
+  padding: 17px;
+
+  border-radius: 18px;
+
+  background: #f0f7f3;
+
+  color: #1b6c42;
+`;
+
+const SecurityIcon = styled.div`
+  width: 34px;
+  height: 34px;
+
+  flex: 0 0 auto;
+
+  border-radius: 10px;
+
+  background: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 12px;
+`;
+
+const SecurityTitle = styled.div`
+  font-size: 12px;
+
+  font-weight: 800;
+`;
+
+const SecurityText = styled.div`
+  margin-top: 3px;
+
+  font-size: 10px;
+
+  line-height: 1.5;
+
+  color: #4b8064;
+`;
+
+// ======================================================
+// REALTIME
+// ======================================================
+
+const RealtimeCard = styled.section`
+  display: flex;
+
+  gap: 12px;
+
+  padding: 17px;
+
+  border-radius: 18px;
+
+  background: #f6f6f7;
+`;
+
+const RealtimeIcon = styled.div`
+  width: 34px;
+  height: 34px;
+
+  flex: 0 0 auto;
+
+  border-radius: 10px;
+
+  background: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 12px;
+`;
+
+const RealtimeTitle = styled.div`
+  font-size: 12px;
+
+  font-weight: 800;
+`;
+
+const RealtimeText = styled.div`
+  margin-top: 3px;
+
+  font-size: 10px;
+
+  line-height: 1.5;
+
+  color: #777;
+`;
+
+// ======================================================
+// LOADING
+// ======================================================
+
+const LoadingScreen = styled.div`
+  min-height: 100vh;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  background: #f5f5f6;
+
+  text-align: center;
+
+  padding: 20px;
+`;
+
+const LoadingSpinner = styled.div`
+  width: 40px;
+  height: 40px;
+
+  border: 3px solid #ddd;
+
+  border-top-color: #111;
+
+  border-radius: 50%;
+
+  animation: spin 0.8s linear infinite;
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+`;
+
+const LoadingTitle = styled.h2`
+  margin: 18px 0 5px;
+
+  font-size: 18px;
+`;
+
+const LoadingText = styled.p`
+  margin: 0;
+
+  color: #777;
+
+  font-size: 13px;
+`;
+
+// ======================================================
+// ERROR
+// ======================================================
+
+const ErrorScreen = styled.div`
+  max-width: 450px;
+
+  margin: 100px auto;
+
+  padding: 35px 25px;
+
+  text-align: center;
+
+  background: white;
+
+  border-radius: 25px;
+
+  box-shadow:
+    0 15px 50px rgba(0, 0, 0, 0.08);
+
+  h2 {
+    margin: 15px 0 8px;
+  }
+
+  p {
+    color: #777;
+
+    font-size: 13px;
+
+    line-height: 1.5;
+  }
+`;
+
+const ErrorIcon = styled.div`
+  width: 55px;
+  height: 55px;
+
+  margin: auto;
+
+  border-radius: 50%;
+
+  background: #ffecec;
+
+  color: #c62828;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 24px;
+
+  font-weight: 900;
+`;
+
+const BackButton = styled.button`
+  margin-top: 15px;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  padding: 11px 16px;
+
+  border: 0;
+
+  border-radius: 12px;
+
+  background: #111;
+
+  color: white;
+
+  cursor: pointer;
+
+  font-weight: 700;
 `;
