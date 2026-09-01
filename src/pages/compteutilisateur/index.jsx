@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+} from "react-router-dom";
 import styled from "styled-components";
 
 import {
@@ -24,7 +27,6 @@ import { toast } from "react-toastify";
 
 import { socket } from "../../services/socket";
 
-
 // ======================================================
 // PAGE COMPTE CLIENT
 // ======================================================
@@ -48,7 +50,6 @@ export default function CompteClient() {
 
   const audioRef = useRef(null);
 
-
   // ======================================================
   // AUDIO
   // ======================================================
@@ -66,7 +67,6 @@ export default function CompteClient() {
     };
   }, []);
 
-
   const playSound = () => {
     if (!audioRef.current) return;
 
@@ -76,7 +76,6 @@ export default function CompteClient() {
       console.log("🔇 Son bloqué :", err);
     });
   };
-
 
   // ======================================================
   // UNLOCK AUDIO
@@ -104,7 +103,6 @@ export default function CompteClient() {
     };
   }, []);
 
-
   // ======================================================
   // AUTH
   // ======================================================
@@ -117,7 +115,6 @@ export default function CompteClient() {
 
     fetchCompte();
   }, []);
-
 
   // ======================================================
   // SOCKET
@@ -133,7 +130,6 @@ export default function CompteClient() {
 
       socket.emit("join_room", user._id);
     };
-
 
     // ====================================================
     // MISE À JOUR COMMANDE
@@ -154,25 +150,17 @@ export default function CompteClient() {
             livraison: {
               ...cmd.livraison,
 
-              statut:
-                data.statutLivraison ||
-                cmd.livraison?.statut,
+              statut: data.statutLivraison || cmd.livraison?.statut,
 
-              livreurId:
-                data.livreurId ||
-                cmd.livraison?.livreurId,
+              livreurId: data.livreurId || cmd.livraison?.livreurId,
 
-              livreur:
-                data.livreur ||
-                cmd.livraison?.livreur,
+              livreur: data.livreur || cmd.livraison?.livreur,
             },
           };
         }),
       );
 
-
       setNotifCount((prev) => prev + 1);
-
 
       // ==================================================
       // MESSAGE
@@ -180,47 +168,38 @@ export default function CompteClient() {
 
       let message = "Mise à jour de votre commande";
 
-
       if (data.statutLivraison === "SEARCHING") {
         message = "🔎 Recherche d'un livreur...";
       }
-
 
       if (data.statutLivraison === "ACCEPTED") {
         message = "🚴 Un livreur a accepté votre commande";
       }
 
-
       if (data.statutLivraison === "PICKING_UP") {
         message = "📦 Votre livreur récupère votre commande";
       }
-
 
       if (data.statutLivraison === "IN_DELIVERY") {
         message = "🚚 Votre commande est en route";
       }
 
-
       if (data.statutLivraison === "DELIVERED") {
         message = "🎉 Votre commande a été livrée";
       }
-
 
       toast.success(message);
 
       playSound();
     };
 
-
     socket.on("connect", handleConnect);
 
     socket.on("commande_update", handleUpdate);
 
-
     if (socket.connected) {
       socket.emit("join_room", user._id);
     }
-
 
     return () => {
       socket.off("connect", handleConnect);
@@ -228,7 +207,6 @@ export default function CompteClient() {
       socket.off("commande_update", handleUpdate);
     };
   }, [user?._id]);
-
 
   // ======================================================
   // FETCH COMPTE
@@ -238,23 +216,17 @@ export default function CompteClient() {
     setLoading(true);
 
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/compte`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/compte`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
-
+      });
 
       if (!res.ok) {
         throw new Error("Erreur compte");
       }
 
-
       const data = await res.json();
-
 
       setUser(data.user);
 
@@ -269,7 +241,6 @@ export default function CompteClient() {
       setLoading(false);
     }
   };
-
 
   // ======================================================
   // SUPPRIMER FAVORI
@@ -288,19 +259,12 @@ export default function CompteClient() {
         },
       );
 
-
       if (res.ok) {
-        setFavorites((prev) =>
-          prev.filter(
-            (item) => item._id !== favoriteId,
-          ),
-        );
+        setFavorites((prev) => prev.filter((item) => item._id !== favoriteId));
 
         toast.success("Retiré des favoris");
       } else {
-        toast.error(
-          "Impossible de supprimer ce favori",
-        );
+        toast.error("Impossible de supprimer ce favori");
       }
     } catch (error) {
       console.error(error);
@@ -308,7 +272,6 @@ export default function CompteClient() {
       toast.error("Une erreur est survenue");
     }
   };
-
 
   // ======================================================
   // LOGOUT
@@ -320,75 +283,44 @@ export default function CompteClient() {
     navigate("/login");
   };
 
-
   // ======================================================
   // TOTAL PAYÉ
   // ======================================================
 
-  const totalPaid = commandes.reduce(
-    (total, c) => {
-      if (c.modePaiement === "cod") {
-        return (
-          total +
-          (c.statusCommande === "DELIVERED"
-            ? c.total
-            : 0)
-        );
-      }
+  const totalPaid = commandes.reduce((total, c) => {
+    if (c.modePaiement === "cod") {
+      return total + (c.statusCommande === "DELIVERED" ? c.total : 0);
+    }
 
+    const paid = (c.paiements || [])
+      .filter((p) => p.status === "PAID")
+      .reduce((sum, payment) => sum + Number(payment.amountExpected || 0), 0);
 
-      const paid = (c.paiements || [])
-        .filter(
-          (p) => p.status === "PAID",
-        )
-        .reduce(
-          (sum, payment) =>
-            sum +
-            Number(
-              payment.amountExpected || 0,
-            ),
-          0,
-        );
-
-
-      return total + paid;
-    },
-    0,
-  );
-
+    return total + paid;
+  }, 0);
 
   // ======================================================
   // TOTAL COMMANDES
   // ======================================================
 
   const totalAmount = commandes.reduce(
-    (total, c) =>
-      total + Number(c.total || 0),
+    (total, c) => total + Number(c.total || 0),
     0,
   );
-
 
   // ======================================================
   // RESTANT
   // ======================================================
 
-  const remaining = Math.max(
-    0,
-    totalAmount - totalPaid,
-  );
-
+  const remaining = Math.max(0, totalAmount - totalPaid);
 
   // ======================================================
   // PROGRESSION
   // ======================================================
 
   const progress = totalAmount
-    ? Math.min(
-        100,
-        (totalPaid / totalAmount) * 100,
-      )
+    ? Math.min(100, (totalPaid / totalAmount) * 100)
     : 0;
-
 
   // ======================================================
   // STATUS LIVRAISON
@@ -403,7 +335,6 @@ export default function CompteClient() {
       };
     }
 
-
     if (status === "IN_DELIVERY") {
       return {
         label: "En livraison",
@@ -411,7 +342,6 @@ export default function CompteClient() {
         icon: <FiTruck />,
       };
     }
-
 
     if (status === "PICKING_UP") {
       return {
@@ -421,7 +351,6 @@ export default function CompteClient() {
       };
     }
 
-
     if (status === "ACCEPTED") {
       return {
         label: "Livreur attribué",
@@ -429,7 +358,6 @@ export default function CompteClient() {
         icon: <FiCheckCircle />,
       };
     }
-
 
     if (status === "SEARCHING") {
       return {
@@ -439,7 +367,6 @@ export default function CompteClient() {
       };
     }
 
-
     if (status === "NOT_STARTED") {
       return {
         label: "En attente",
@@ -447,7 +374,6 @@ export default function CompteClient() {
         icon: <FiClock />,
       };
     }
-
 
     if (status === "CANCELLED") {
       return {
@@ -457,14 +383,12 @@ export default function CompteClient() {
       };
     }
 
-
     return {
       label: "En cours",
       type: "warning",
       icon: <FiClock />,
     };
   };
-
 
   // ======================================================
   // LOADING
@@ -478,7 +402,6 @@ export default function CompteClient() {
     );
   }
 
-
   // ======================================================
   // RENDER
   // ======================================================
@@ -486,726 +409,386 @@ export default function CompteClient() {
   return (
     <Page>
       <Container>
-
-
         {/* =================================================
             HEADER
         ================================================= */}
 
         <Header>
-
           <HeaderLeft>
-
             <WelcomeLabel>
               <FiUser />
-
               Espace personnel
             </WelcomeLabel>
 
+            <Title>Bonjour {user?.username || "vous"} 👋</Title>
 
-            <Title>
-              Bonjour{" "}
-              {user?.username || "vous"} 👋
-            </Title>
-
-
-            <Email>
-              {user?.email}
-            </Email>
-
+            <Email>{user?.email}</Email>
           </HeaderLeft>
 
-
           <HeaderActions>
-
             <NotificationButton>
               <FiBell />
 
               {notifCount > 0 && (
                 <NotificationBadge>
-                  {notifCount > 99
-                    ? "99+"
-                    : notifCount}
+                  {notifCount > 99 ? "99+" : notifCount}
                 </NotificationBadge>
               )}
             </NotificationButton>
 
-
-            <LogoutButton
-              onClick={logout}
-            >
+            <LogoutButton onClick={logout}>
               <FiLogOut />
-
               Déconnexion
             </LogoutButton>
-
           </HeaderActions>
-
         </Header>
-
 
         {/* =================================================
             STATS
         ================================================= */}
 
         <StatsGrid>
-
           <StatCard>
-
             <StatTop>
-
-              <StatLabel>
-                Commandes
-              </StatLabel>
+              <StatLabel>Commandes</StatLabel>
 
               <StatIcon>
                 <FiPackage />
               </StatIcon>
-
             </StatTop>
 
-
-            <StatValue>
-              {commandes.length}
-            </StatValue>
-
+            <StatValue>{commandes.length}</StatValue>
           </StatCard>
 
-
           <StatCard>
-
             <StatTop>
-
-              <StatLabel>
-                Favoris
-              </StatLabel>
+              <StatLabel>Favoris</StatLabel>
 
               <StatIcon>
                 <FiHeart />
               </StatIcon>
-
             </StatTop>
 
-
-            <StatValue>
-              {favorites.length}
-            </StatValue>
-
+            <StatValue>{favorites.length}</StatValue>
           </StatCard>
 
-
           <StatCard>
-
             <StatTop>
-
-              <StatLabel>
-                Total dépensé
-              </StatLabel>
+              <StatLabel>Total dépensé</StatLabel>
 
               <StatIcon>
                 <FiCreditCard />
               </StatIcon>
-
             </StatTop>
 
-
-            <StatValue>
-              {totalPaid.toLocaleString(
-                "fr-FR",
-              )}{" "}
-              FCFA
-            </StatValue>
-
+            <StatValue>{totalPaid.toLocaleString("fr-FR")} FCFA</StatValue>
           </StatCard>
-
         </StatsGrid>
-
 
         {/* =================================================
             COFFRE
         ================================================= */}
 
         <Section>
-
           <SectionHeader>
-
             <SectionTitleWrap>
+              <SectionEyebrow>Suivi financier</SectionEyebrow>
 
-              <SectionEyebrow>
-                Suivi financier
-              </SectionEyebrow>
-
-
-              <SectionTitle>
-                Mon coffre
-              </SectionTitle>
-
+              <SectionTitle>Mon coffre</SectionTitle>
 
               <SectionDescription>
-                Suivez simplement le montant payé
-                et le montant restant sur vos
+                Suivez simplement le montant payé et le montant restant sur vos
                 commandes.
               </SectionDescription>
-
             </SectionTitleWrap>
-
           </SectionHeader>
 
-
           <CoffreBox>
-
             <CoffreHeader>
-
               <CoffreAmount>
+                <span>Montant payé</span>
 
-                <span>
-                  Montant payé
-                </span>
-
-                <strong>
-                  {totalPaid.toLocaleString(
-                    "fr-FR",
-                  )}{" "}
-                  FCFA
-                </strong>
-
+                <strong>{totalPaid.toLocaleString("fr-FR")} FCFA</strong>
               </CoffreAmount>
 
-
               <CoffreRemaining>
+                <span>Montant restant</span>
 
-                <span>
-                  Montant restant
-                </span>
-
-                <strong>
-                  {remaining.toLocaleString(
-                    "fr-FR",
-                  )}{" "}
-                  FCFA
-                </strong>
-
+                <strong>{remaining.toLocaleString("fr-FR")} FCFA</strong>
               </CoffreRemaining>
-
             </CoffreHeader>
 
-
             <ProgressInfo>
+              <span>Progression</span>
 
-              <span>
-                Progression
-              </span>
-
-              <strong>
-                {Math.round(progress)}%
-              </strong>
-
+              <strong>{Math.round(progress)}%</strong>
             </ProgressInfo>
 
-
             <ProgressBar>
-              <Progress
-                $percent={progress}
-              />
+              <Progress $percent={progress} />
             </ProgressBar>
-
           </CoffreBox>
-
         </Section>
-
 
         {/* =================================================
             FAVORIS
         ================================================= */}
 
         <Section>
-
           <SectionHeader>
-
             <SectionTitleWrap>
+              <SectionEyebrow>Votre sélection</SectionEyebrow>
 
-              <SectionEyebrow>
-                Votre sélection
-              </SectionEyebrow>
-
-
-              <SectionTitle>
-                Mes favoris
-              </SectionTitle>
-
+              <SectionTitle>Mes favoris</SectionTitle>
 
               <SectionDescription>
-                Les pièces que vous avez gardées
-                de côté.
+                Les pièces que vous avez gardées de côté.
               </SectionDescription>
-
             </SectionTitleWrap>
-
           </SectionHeader>
 
-
           {favorites.length === 0 ? (
-
             <EmptyState>
-
               <EmptyIcon>
                 <FiHeart />
               </EmptyIcon>
 
-
-              <div>
-                Vous n'avez encore aucun favori.
-              </div>
-
+              <div>Vous n'avez encore aucun favori.</div>
 
               <ShopLink to="/collections">
                 Découvrir la collection
-
                 <FiArrowRight />
               </ShopLink>
-
             </EmptyState>
-
           ) : (
-
             <FavoritesGrid>
+              {favorites.map((favorite) => {
+                const product = favorite.productId;
 
-              {favorites.map(
-                (favorite) => {
+                const image =
+                  product?.images?.[0]?.url ||
+                  "https://via.placeholder.com/300x400";
 
-                  const product =
-                    favorite.productId;
+                return (
+                  <FavoriteCard key={favorite._id}>
+                    <FavoriteImage
+                      src={image}
+                      alt={product?.title || "Produit"}
+                    />
 
+                    <FavoriteInfo>
+                      <FavoriteLink to={`/produit/${product?._id}`}>
+                        {product?.title || "Produit"}
+                      </FavoriteLink>
 
-                  const image =
-                    product?.images?.[0]?.url ||
-                    "https://via.placeholder.com/300x400";
+                      <FavoritePrice>
+                        {product?.price
+                          ? `${product.price.toLocaleString("fr-FR")} FCFA`
+                          : "Prix indisponible"}
+                      </FavoritePrice>
+                    </FavoriteInfo>
 
-
-                  return (
-
-                    <FavoriteCard
-                      key={favorite._id}
+                    <DeleteButton
+                      type="button"
+                      aria-label="Supprimer des favoris"
+                      onClick={() => removeFavorite(favorite._id)}
                     >
-
-                      <FavoriteImage
-                        src={image}
-                        alt={
-                          product?.title ||
-                          "Produit"
-                        }
-                      />
-
-
-                      <FavoriteInfo>
-
-                        <FavoriteLink
-                          to={`/produit/${product?._id}`}
-                        >
-                          {product?.title ||
-                            "Produit"}
-                        </FavoriteLink>
-
-
-                        <FavoritePrice>
-
-                          {product?.price
-                            ? `${product.price.toLocaleString(
-                                "fr-FR",
-                              )} FCFA`
-                            : "Prix indisponible"}
-
-                        </FavoritePrice>
-
-                      </FavoriteInfo>
-
-
-                      <DeleteButton
-                        type="button"
-                        aria-label="Supprimer des favoris"
-                        onClick={() =>
-                          removeFavorite(
-                            favorite._id,
-                          )
-                        }
-                      >
-                        <FiTrash2 />
-                      </DeleteButton>
-
-                    </FavoriteCard>
-
-                  );
-                },
-              )}
-
+                      <FiTrash2 />
+                    </DeleteButton>
+                  </FavoriteCard>
+                );
+              })}
             </FavoritesGrid>
-
           )}
-
         </Section>
-
 
         {/* =================================================
             COMMANDES
         ================================================= */}
 
         <Section>
-
           <SectionHeader>
-
             <SectionTitleWrap>
+              <SectionEyebrow>Historique</SectionEyebrow>
 
-              <SectionEyebrow>
-                Historique
-              </SectionEyebrow>
-
-
-              <SectionTitle>
-                Mes commandes
-              </SectionTitle>
-
+              <SectionTitle>Mes commandes</SectionTitle>
 
               <SectionDescription>
-                Consultez le statut, le contenu
-                et le suivi de chacune de vos
+                Consultez le statut, le contenu et le suivi de chacune de vos
                 commandes.
               </SectionDescription>
-
             </SectionTitleWrap>
-
           </SectionHeader>
 
-
           {commandes.length === 0 ? (
-
             <EmptyState>
-
               <EmptyIcon>
                 <FiShoppingBag />
               </EmptyIcon>
 
-
-              <div>
-                Vous n'avez encore passé aucune
-                commande.
-              </div>
-
+              <div>Vous n'avez encore passé aucune commande.</div>
 
               <ShopLink to="/collections">
                 Commencer mes achats
-
                 <FiArrowRight />
               </ShopLink>
-
             </EmptyState>
-
           ) : (
-
             <OrdersList>
+              {commandes.map((commande) => {
+                const statut = commande.livraison?.statut || "NOT_STARTED";
 
-              {commandes.map(
-                (commande) => {
+                const status = getStatus(statut);
 
-                  const statut =
-                    commande.livraison
-                      ?.statut ||
-                    "NOT_STARTED";
+                const isOpen = expanded[commande._id];
 
+                const hasLivreur = Boolean(commande.livraison?.livreurId);
 
-                  const status =
-                    getStatus(statut);
-
-
-                  const isOpen =
-                    expanded[
-                      commande._id
-                    ];
-
-
-                  const hasLivreur =
-                    Boolean(
-                      commande.livraison
-                        ?.livreurId,
-                    );
-
-
-                  return (
-
-                    <OrderCard
-                      key={commande._id}
-                    >
-
-
-                      {/* ==========================
+                return (
+                  <OrderCard key={commande._id}>
+                    {/* ==========================
                           HEADER COMMANDE
                       ========================== */}
 
-                      <OrderHeader
-                        type="button"
-                        onClick={() =>
-                          setExpanded(
-                            (prev) => ({
-                              ...prev,
+                    <OrderHeader
+                      type="button"
+                      onClick={() =>
+                        setExpanded((prev) => ({
+                          ...prev,
 
-                              [commande._id]:
-                                !prev[
-                                  commande._id
-                                ],
-                            }),
-                          )
-                        }
-                      >
+                          [commande._id]: !prev[commande._id],
+                        }))
+                      }
+                    >
+                      <OrderMain>
+                        <OrderNumber>
+                          Commande #{commande._id.slice(-6).toUpperCase()}
+                        </OrderNumber>
 
-                        <OrderMain>
+                        <OrderDate>
+                          {commande.createdAt
+                            ? new Date(commande.createdAt).toLocaleDateString(
+                                "fr-FR",
+                                {
+                                  day: "2-digit",
+                                  month: "long",
+                                  year: "numeric",
+                                },
+                              )
+                            : "Date indisponible"}
+                        </OrderDate>
+                      </OrderMain>
 
-                          <OrderNumber>
-                            Commande #
+                      <OrderRight>
+                        <OrderTotal>
+                          {Number(commande.total || 0).toLocaleString("fr-FR")}{" "}
+                          FCFA
+                        </OrderTotal>
 
-                            {commande._id
-                              .slice(-6)
-                              .toUpperCase()}
-                          </OrderNumber>
+                        <StatusBadge $type={status.type}>
+                          {status.icon}
 
+                          {status.label}
+                        </StatusBadge>
 
-                          <OrderDate>
+                        {isOpen ? <FiChevronUp /> : <FiChevronDown />}
+                      </OrderRight>
+                    </OrderHeader>
 
-                            {commande.createdAt
-                              ? new Date(
-                                  commande.createdAt,
-                                ).toLocaleDateString(
-                                  "fr-FR",
-                                  {
-                                    day: "2-digit",
-                                    month: "long",
-                                    year: "numeric",
-                                  },
-                                )
-                              : "Date indisponible"}
-
-                          </OrderDate>
-
-                        </OrderMain>
-
-
-                        <OrderRight>
-
-                          <OrderTotal>
-
-                            {Number(
-                              commande.total ||
-                                0,
-                            ).toLocaleString(
-                              "fr-FR",
-                            )}{" "}
-                            FCFA
-
-                          </OrderTotal>
-
-
-                          <StatusBadge
-                            $type={
-                              status.type
-                            }
-                          >
-
-                            {status.icon}
-
-                            {status.label}
-
-                          </StatusBadge>
-
-
-                          {isOpen ? (
-                            <FiChevronUp />
-                          ) : (
-                            <FiChevronDown />
-                          )}
-
-                        </OrderRight>
-
-                      </OrderHeader>
-
-
-                      {/* ==========================
+                    {/* ==========================
                           DETAILS
                       ========================== */}
 
-                      {isOpen && (
+                    {isOpen && (
+                      <OrderDetailsWrapper>
+                        <OrderDetails>
+                          {(commande.panier || []).map((p, index) => {
+                            const image =
+                              p.images?.[0]?.url ||
+                              p.produitId?.images?.[0]?.url ||
+                              "https://via.placeholder.com/100";
 
-                        <OrderDetailsWrapper>
+                            return (
+                              <OrderProduct
+                                key={
+                                  p.produitId?._id || `${commande._id}-${index}`
+                                }
+                              >
+                                <OrderProductImage
+                                  src={image}
+                                  alt={p.nom || p.produitId?.title || "Produit"}
+                                />
 
-
-                          <OrderDetails>
-
-                            {(commande.panier ||
-                              []
-                            ).map(
-                              (
-                                p,
-                                index,
-                              ) => {
-
-                                const image =
-                                  p.images?.[0]
-                                    ?.url ||
-                                  p.produitId
-                                    ?.images?.[0]
-                                    ?.url ||
-                                  "https://via.placeholder.com/100";
-
-
-                                return (
-
-                                  <OrderProduct
-                                    key={
-                                      p
-                                        .produitId
-                                        ?._id ||
-                                      `${commande._id}-${index}`
-                                    }
+                                <OrderProductInfo>
+                                  <OrderProductLink
+                                    to={`/produit/${p.produitId?._id}`}
                                   >
+                                    {p.nom || p.produitId?.title || "Produit"}
+                                  </OrderProductLink>
 
-                                    <OrderProductImage
-                                      src={image}
-                                      alt={
-                                        p.nom ||
-                                        p.produitId
-                                          ?.title ||
-                                        "Produit"
-                                      }
-                                    />
+                                  <Quantity>
+                                    Quantité : {p.quantite || 1}
+                                  </Quantity>
+                                </OrderProductInfo>
+                              </OrderProduct>
+                            );
+                          })}
+                        </OrderDetails>
 
-
-                                    <OrderProductInfo>
-
-                                      <OrderProductLink
-                                        to={`/produit/${p.produitId?._id}`}
-                                      >
-
-                                        {p.nom ||
-                                          p.produitId
-                                            ?.title ||
-                                          "Produit"}
-
-                                      </OrderProductLink>
-
-
-                                      <Quantity>
-
-                                        Quantité :{" "}
-                                        {p.quantite ||
-                                          1}
-
-                                      </Quantity>
-
-                                    </OrderProductInfo>
-
-                                  </OrderProduct>
-
-                                );
-                              },
-                            )}
-
-                          </OrderDetails>
-
-
-                          {/* ==========================
+                        {/* ==========================
                               SUIVI
                           ========================== */}
 
-                          <TrackingAction>
+                        <TrackingAction>
+                          <TrackingActionInfo>
+                            <TrackingActionIcon $active={hasLivreur}>
+                              {hasLivreur ? <FiTruck /> : <FiMapPin />}
+                            </TrackingActionIcon>
 
-                            <TrackingActionInfo>
+                            <div>
+                              <TrackingActionTitle>
+                                {hasLivreur
+                                  ? "Votre livraison est en cours"
+                                  : "Suivre votre commande"}
+                              </TrackingActionTitle>
 
-                              <TrackingActionIcon
-                                $active={
-                                  hasLivreur
-                                }
-                              >
+                              <TrackingActionText>
+                                {hasLivreur
+                                  ? "Consultez la position de votre livreur en temps réel."
+                                  : "Consultez l'état actuel de votre commande."}
+                              </TrackingActionText>
+                            </div>
+                          </TrackingActionInfo>
 
-                                {hasLivreur ? (
-                                  <FiTruck />
-                                ) : (
-                                  <FiMapPin />
-                                )}
+                          <TrackButton
+                            type="button"
+                            onClick={() =>
+                              navigate(`/suivi-commande/${commande._id}`)
+                            }
+                          >
+                            {hasLivreur ? "Suivre" : "Voir le suivi"}
 
-                              </TrackingActionIcon>
-
-
-                              <div>
-
-                                <TrackingActionTitle>
-
-                                  {hasLivreur
-                                    ? "Votre livraison est en cours"
-                                    : "Suivre votre commande"}
-
-                                </TrackingActionTitle>
-
-
-                                <TrackingActionText>
-
-                                  {hasLivreur
-                                    ? "Consultez la position de votre livreur en temps réel."
-                                    : "Consultez l'état actuel de votre commande."}
-
-                                </TrackingActionText>
-
-                              </div>
-
-                            </TrackingActionInfo>
-
-
-                            <TrackButton
-                              type="button"
-                              onClick={() =>
-                                navigate(
-                                  `/suivi-commande/${commande._id}`,
-                                )
-                              }
-                            >
-
-                              {hasLivreur
-                                ? "Suivre"
-                                : "Voir le suivi"}
-
-                              <FiArrowRight />
-
-                            </TrackButton>
-
-                          </TrackingAction>
-
-
-                        </OrderDetailsWrapper>
-
-                      )}
-
-                    </OrderCard>
-
-                  );
-                },
-              )}
-
+                            <FiArrowRight />
+                          </TrackButton>
+                        </TrackingAction>
+                      </OrderDetailsWrapper>
+                    )}
+                  </OrderCard>
+                );
+              })}
             </OrdersList>
-
           )}
-
         </Section>
-
 
         {/* =================================================
             FOOTER
         ================================================= */}
 
-        <AccountFooter>
-          Votre espace personnel NUMA
-        </AccountFooter>
-
+        <AccountFooter>Votre espace personnel NUMA</AccountFooter>
       </Container>
     </Page>
   );
 }
-
 
 // ======================================================
 // STYLES
@@ -1221,13 +804,11 @@ const Page = styled.div`
   padding: 40px 0 80px;
 `;
 
-
 const Container = styled.div`
   width: min(1180px, 92%);
 
   margin: 0 auto;
 `;
-
 
 const Header = styled.header`
   display: flex;
@@ -1247,9 +828,7 @@ const Header = styled.header`
   }
 `;
 
-
 const HeaderLeft = styled.div``;
-
 
 const WelcomeLabel = styled.div`
   display: flex;
@@ -1271,7 +850,6 @@ const WelcomeLabel = styled.div`
   margin-bottom: 10px;
 `;
 
-
 const Title = styled.h1`
   margin: 0;
 
@@ -1282,7 +860,6 @@ const Title = styled.h1`
   letter-spacing: -0.04em;
 `;
 
-
 const Email = styled.div`
   margin-top: 10px;
 
@@ -1291,7 +868,6 @@ const Email = styled.div`
   font-size: 14px;
 `;
 
-
 const HeaderActions = styled.div`
   display: flex;
 
@@ -1299,7 +875,6 @@ const HeaderActions = styled.div`
 
   gap: 10px;
 `;
-
 
 const NotificationButton = styled.button`
   position: relative;
@@ -1324,7 +899,6 @@ const NotificationButton = styled.button`
 
   cursor: pointer;
 `;
-
 
 const NotificationBadge = styled.span`
   position: absolute;
@@ -1356,7 +930,6 @@ const NotificationBadge = styled.span`
   justify-content: center;
 `;
 
-
 const LogoutButton = styled.button`
   border: 0;
 
@@ -1379,7 +952,6 @@ const LogoutButton = styled.button`
   cursor: pointer;
 `;
 
-
 const StatsGrid = styled.div`
   display: grid;
 
@@ -1394,7 +966,6 @@ const StatsGrid = styled.div`
   }
 `;
 
-
 const StatCard = styled.div`
   background: white;
 
@@ -1405,7 +976,6 @@ const StatCard = styled.div`
   border: 1px solid #eeeeee;
 `;
 
-
 const StatTop = styled.div`
   display: flex;
 
@@ -1414,7 +984,6 @@ const StatTop = styled.div`
   justify-content: space-between;
 `;
 
-
 const StatLabel = styled.div`
   color: #777;
 
@@ -1422,7 +991,6 @@ const StatLabel = styled.div`
 
   font-weight: 600;
 `;
-
 
 const StatIcon = styled.div`
   width: 40px;
@@ -1440,7 +1008,6 @@ const StatIcon = styled.div`
   justify-content: center;
 `;
 
-
 const StatValue = styled.div`
   margin-top: 22px;
 
@@ -1451,19 +1018,15 @@ const StatValue = styled.div`
   letter-spacing: -0.03em;
 `;
 
-
 const Section = styled.section`
   margin-bottom: 55px;
 `;
-
 
 const SectionHeader = styled.div`
   margin-bottom: 20px;
 `;
 
-
 const SectionTitleWrap = styled.div``;
-
 
 const SectionEyebrow = styled.div`
   color: #888;
@@ -1479,7 +1042,6 @@ const SectionEyebrow = styled.div`
   margin-bottom: 7px;
 `;
 
-
 const SectionTitle = styled.h2`
   margin: 0;
 
@@ -1487,7 +1049,6 @@ const SectionTitle = styled.h2`
 
   letter-spacing: -0.03em;
 `;
-
 
 const SectionDescription = styled.p`
   margin: 8px 0 0;
@@ -1501,7 +1062,6 @@ const SectionDescription = styled.p`
   line-height: 1.6;
 `;
 
-
 const CoffreBox = styled.div`
   background: #111;
 
@@ -1511,7 +1071,6 @@ const CoffreBox = styled.div`
 
   padding: 28px;
 `;
-
 
 const CoffreHeader = styled.div`
   display: flex;
@@ -1526,7 +1085,6 @@ const CoffreHeader = styled.div`
     flex-direction: column;
   }
 `;
-
 
 const CoffreAmount = styled.div`
   display: flex;
@@ -1546,7 +1104,6 @@ const CoffreAmount = styled.div`
   }
 `;
 
-
 const CoffreRemaining = styled(CoffreAmount)`
   text-align: right;
 
@@ -1554,7 +1111,6 @@ const CoffreRemaining = styled(CoffreAmount)`
     text-align: left;
   }
 `;
-
 
 const ProgressInfo = styled.div`
   display: flex;
@@ -1572,7 +1128,6 @@ const ProgressInfo = styled.div`
   }
 `;
 
-
 const ProgressBar = styled.div`
   height: 8px;
 
@@ -1582,7 +1137,6 @@ const ProgressBar = styled.div`
 
   overflow: hidden;
 `;
-
 
 const Progress = styled.div`
   width: ${({ $percent }) => $percent}%;
@@ -1595,7 +1149,6 @@ const Progress = styled.div`
 
   transition: width 0.5s ease;
 `;
-
 
 const EmptyState = styled.div`
   background: white;
@@ -1619,7 +1172,6 @@ const EmptyState = styled.div`
   gap: 14px;
 `;
 
-
 const EmptyIcon = styled.div`
   width: 50px;
 
@@ -1640,7 +1192,6 @@ const EmptyIcon = styled.div`
   color: #111;
 `;
 
-
 const ShopLink = styled.a`
   color: #111;
 
@@ -1654,7 +1205,6 @@ const ShopLink = styled.a`
 
   gap: 7px;
 `;
-
 
 const FavoritesGrid = styled.div`
   display: grid;
@@ -1672,7 +1222,6 @@ const FavoritesGrid = styled.div`
   }
 `;
 
-
 const FavoriteCard = styled.div`
   position: relative;
 
@@ -1685,7 +1234,6 @@ const FavoriteCard = styled.div`
   border: 1px solid #eeeeee;
 `;
 
-
 const FavoriteImage = styled.img`
   width: 100%;
 
@@ -1696,11 +1244,9 @@ const FavoriteImage = styled.img`
   display: block;
 `;
 
-
 const FavoriteInfo = styled.div`
   padding: 16px;
 `;
-
 
 const FavoriteLink = styled.a`
   color: #111;
@@ -1712,7 +1258,6 @@ const FavoriteLink = styled.a`
   font-size: 14px;
 `;
 
-
 const FavoritePrice = styled.div`
   margin-top: 7px;
 
@@ -1720,7 +1265,6 @@ const FavoritePrice = styled.div`
 
   font-size: 13px;
 `;
-
 
 const DeleteButton = styled.button`
   position: absolute;
@@ -1748,7 +1292,6 @@ const DeleteButton = styled.button`
   cursor: pointer;
 `;
 
-
 const OrdersList = styled.div`
   display: flex;
 
@@ -1756,7 +1299,6 @@ const OrdersList = styled.div`
 
   gap: 12px;
 `;
-
 
 const OrderCard = styled.div`
   background: white;
@@ -1767,7 +1309,6 @@ const OrderCard = styled.div`
 
   overflow: hidden;
 `;
-
 
 const OrderHeader = styled.button`
   width: 100%;
@@ -1797,18 +1338,15 @@ const OrderHeader = styled.button`
   }
 `;
 
-
 const OrderMain = styled.div`
   min-width: 0;
 `;
-
 
 const OrderNumber = styled.div`
   font-weight: 800;
 
   font-size: 15px;
 `;
-
 
 const OrderDate = styled.div`
   margin-top: 6px;
@@ -1817,7 +1355,6 @@ const OrderDate = styled.div`
 
   font-size: 12px;
 `;
-
 
 const OrderRight = styled.div`
   display: flex;
@@ -1831,13 +1368,11 @@ const OrderRight = styled.div`
   justify-content: flex-end;
 `;
 
-
 const OrderTotal = styled.div`
   font-weight: 800;
 
   font-size: 14px;
 `;
-
 
 const StatusBadge = styled.div`
   display: flex;
@@ -1887,13 +1422,11 @@ const StatusBadge = styled.div`
   }};
 `;
 
-
 const OrderDetailsWrapper = styled.div`
   padding: 0 20px 20px;
 
   border-top: 1px solid #eeeeee;
 `;
-
 
 const OrderDetails = styled.div`
   padding-top: 16px;
@@ -1904,7 +1437,6 @@ const OrderDetails = styled.div`
 
   gap: 10px;
 `;
-
 
 const OrderProduct = styled.div`
   display: flex;
@@ -1920,7 +1452,6 @@ const OrderProduct = styled.div`
   border-radius: 15px;
 `;
 
-
 const OrderProductImage = styled.img`
   width: 58px;
 
@@ -1931,13 +1462,11 @@ const OrderProductImage = styled.img`
   object-fit: cover;
 `;
 
-
 const OrderProductInfo = styled.div`
   min-width: 0;
 
   flex: 1;
 `;
-
 
 const OrderProductLink = styled.a`
   color: #111;
@@ -1957,7 +1486,6 @@ const OrderProductLink = styled.a`
   white-space: nowrap;
 `;
 
-
 const Quantity = styled.div`
   margin-top: 5px;
 
@@ -1965,7 +1493,6 @@ const Quantity = styled.div`
 
   font-size: 12px;
 `;
-
 
 /* ======================================================
    BLOC SUIVI
@@ -1997,7 +1524,6 @@ const TrackingAction = styled.div`
   }
 `;
 
-
 const TrackingActionInfo = styled.div`
   display: flex;
 
@@ -2005,7 +1531,6 @@ const TrackingActionInfo = styled.div`
 
   gap: 13px;
 `;
-
 
 const TrackingActionIcon = styled.div`
   flex: 0 0 auto;
@@ -2016,11 +1541,9 @@ const TrackingActionIcon = styled.div`
 
   border-radius: 14px;
 
-  background: ${({ $active }) =>
-    $active ? "#fff" : "#292929"};
+  background: ${({ $active }) => ($active ? "#fff" : "#292929")};
 
-  color: ${({ $active }) =>
-    $active ? "#111" : "#fff"};
+  color: ${({ $active }) => ($active ? "#111" : "#fff")};
 
   display: flex;
 
@@ -2031,13 +1554,11 @@ const TrackingActionIcon = styled.div`
   font-size: 18px;
 `;
 
-
 const TrackingActionTitle = styled.div`
   font-weight: 800;
 
   font-size: 13px;
 `;
-
 
 const TrackingActionText = styled.div`
   margin-top: 4px;
@@ -2048,7 +1569,6 @@ const TrackingActionText = styled.div`
 
   line-height: 1.4;
 `;
-
 
 const TrackButton = styled.button`
   flex: 0 0 auto;
@@ -2088,7 +1608,6 @@ const TrackButton = styled.button`
   }
 `;
 
-
 const AccountFooter = styled.footer`
   text-align: center;
 
@@ -2098,7 +1617,6 @@ const AccountFooter = styled.footer`
 
   padding-top: 20px;
 `;
-
 
 const LoaderWrapper = styled.div`
   min-height: 100vh;
@@ -2111,7 +1629,6 @@ const LoaderWrapper = styled.div`
 
   background: #f5f5f7;
 `;
-
 
 const Loader = styled.div`
   width: 42px;
