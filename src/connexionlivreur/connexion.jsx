@@ -38,9 +38,8 @@ function ConnexionLivreur() {
 
         return;
       }
-      alert("Connexion réussie !");
        localStorage.setItem("tokenLivreur", data.token);
-       navigate("/livreur/dashboard");
+       navigate("/admin-livreur");
 
     } catch (error) {
       console.error("Erreur :", error);

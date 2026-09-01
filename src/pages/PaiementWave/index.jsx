@@ -141,7 +141,7 @@ const villesCI = [
 ========================== */
 
 export default function PageCheckout() {
-  const { ajouter, fraisLivraison, total } = useContext(Context.PanierContext);
+  const { ajouter, fraisLivraison, total, toutSupprimer, } = useContext(Context.PanierContext);
   const { theme } = useContext(ThemeContext);
 
   const $isdark = theme === "light";
@@ -219,7 +219,7 @@ export default function PageCheckout() {
         alert(data.message || "Erreur");
         return;
       }
-
+      toutSupprimer();
       if (modePaiement === "cod") {
         navigate(`/merci/${data.commande._id}`);
       } else {

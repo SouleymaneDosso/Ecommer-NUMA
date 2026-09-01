@@ -989,6 +989,7 @@ export default function Merci() {
   const [rechercheLivreur, setRechercheLivreur] = useState(false);
 
   const API_URL = import.meta.env.VITE_API_URL;
+  
 
   /* ================= AUTH ================= */
 
@@ -1064,7 +1065,7 @@ export default function Merci() {
 
       setCommande(data.commande || commande);
 
-      alert("Recherche de livreur lancée !");
+      navigate(`/suivi-commande/${id}`)
     } catch (error) {
       console.error("RECHERCHE LIVREUR ERROR:", error);
 
@@ -1143,7 +1144,8 @@ export default function Merci() {
           )}
         </Hero>
 
-        <FindDriverButton $isdark={$isdark} onClick={chercherLivreur}>
+        <FindDriverButton $isdark={$isdark} onClick={chercherLivreur}
+        >
           <FaLocationArrow />
 
           <span>Chercher un livreur maintenant</span>

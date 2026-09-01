@@ -482,6 +482,15 @@ export default function Header() {
         >
           {t?.("about") ?? "About"}
         </MenuLink>
+
+        <MenuLink
+          to="/admin-livreur"
+          $open={menuOpen}
+          $delay={0.3}
+          onClick={() => setMenuOpen(false)}
+        >
+          Espace livreur
+        </MenuLink>
       </MobileMenu>
     </>
   );

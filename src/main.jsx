@@ -48,12 +48,12 @@ import AdminProducts from "./pages/AdminProducts";
 import AdminCommandes from "./pages/AdminCommande";
 import AdminPaiements from "./pages/AdminPaiements";
 import PaiementTroisFois from "./pages/paiement-3x";
-import PageCommandeConfirmee from "./pages/PageCommandeConfirmee";
 import Video from "./pages/Adminvideo";
 import InscriptionLivreur from "./connexionlivreur";
 import ConnexionLivreur from "./connexionlivreur/connexion";
-
+import LivreurAdmin from "./pages/livreuradmin";
 import { Toaster } from "react-hot-toast";
+import SuiviCommande from "./pages/SuiviCommande";
 import "./i18n";
 
 const PublicLayout = ({ children }) => {
@@ -153,10 +153,10 @@ createRoot(document.getElementById("root")).render(
             />
 
             <Route
-              path="/commande-confirmee/:id"
+              path="/admin-livreur"
               element={
                 <PublicLayout>
-                  <PageCommandeConfirmee />
+                  <LivreurAdmin />
                 </PublicLayout>
               }
             />
@@ -224,6 +224,10 @@ createRoot(document.getElementById("root")).render(
                   <ConnexionLivreur />
                 </PublicLayout>
               }
+            />
+            <Route
+              path="/suivi-commande/:commandeId"
+              element={<SuiviCommande />}
             />
 
             <Route
