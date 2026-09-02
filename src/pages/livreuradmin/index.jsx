@@ -1,13 +1,5 @@
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
-
-import styled from "styled-components";
-
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 
 import {
   MapContainer,
@@ -16,391 +8,197 @@ import {
   Popup,
   Polyline,
   useMap,
+  ZoomControl,
 } from "react-leaflet";
 
 import L from "leaflet";
+import styled from "styled-components";
+
+import {
+  FaArrowLeft,
+  FaPhone,
+  FaComments,
+  FaMapMarkerAlt,
+  FaMotorcycle,
+  FaCheck,
+  FaBox,
+  FaLocationArrow,
+  FaClock,
+  FaShieldAlt,
+  FaCircle,
+} from "react-icons/fa";
+
+import { socket } from "../services/socket";
 
 import "leaflet/dist/leaflet.css";
 
-import { socket } from "../../services/socket";
+// ======================================================
+// CONFIG
+// ======================================================
+
+const ABIDJAN = {
+  latitude: 5.3364,
+  longitude: -4.0267,
+};
 
 // ======================================================
-// ICÔNES CARTE
+// ICONE LIVREUR
 // ======================================================
 
 const livreurIcon = new L.DivIcon({
   className: "livreur-marker",
   html: `
-    <div style="
-      width:46px;
-      height:46px;
-      border-radius:50%;
-      background:#111;
-      color:white;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:23px;
-      border:4px solid white;
-      box-shadow:0 5px 18px rgba(0,0,0,.25);
-    ">
-      🚴
+    <div class="driver-marker">
+      <div class="driver-marker-inner">
+        <span>🚴</span>
+      </div>
+      <div class="driver-pulse"></div>
     </div>
   `,
-  iconSize: [46, 46],
-  iconAnchor: [23, 23],
+  iconSize: [58, 58],
+  iconAnchor: [29, 29],
 });
 
-const clientIcon = new L.DivIcon({
-  className: "client-marker",
+// ======================================================
+// ICONE DESTINATION
+// ======================================================
+
+const destinationIcon = new L.DivIcon({
+  className: "destination-marker",
   html: `
-    <div style="
-      width:46px;
-      height:46px;
-      border-radius:50%;
-      background:white;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:22px;
-      border:4px solid #111;
-      box-shadow:0 5px 18px rgba(0,0,0,.22);
-    ">
-      👤
+    <div class="destination-marker-inner">
+      <span>📍</span>
     </div>
   `,
   iconSize: [46, 46],
-  iconAnchor: [23, 23],
+  iconAnchor: [23, 42],
 });
 
 // ======================================================
-// VALIDATION POSITION
+// RECENTRER AUTOMATIQUEMENT SUR LE LIVREUR
 // ======================================================
 
-const positionValide = (position) => {
-  if (!position) {
-    return false;
-  }
-
-  const latitude = Number(position.latitude);
-  const longitude = Number(position.longitude);
-
-  return (
-    Number.isFinite(latitude) &&
-    Number.isFinite(longitude) &&
-    latitude >= -90 &&
-    latitude <= 90 &&
-    longitude >= -180 &&
-    longitude <= 180
-  );
-};
-
-// ======================================================
-// DISTANCE ENTRE DEUX POSITIONS
-// ======================================================
-
-const calculerDistanceEntrePositions = (
-  position1,
-  position2,
-) => {
-  if (
-    !positionValide(position1) ||
-    !positionValide(position2)
-  ) {
-    return Infinity;
-  }
-
-  const rayonTerre = 6371000;
-
-  const lat1 =
-    (Number(position1.latitude) * Math.PI) / 180;
-
-  const lat2 =
-    (Number(position2.latitude) * Math.PI) / 180;
-
-  const deltaLat =
-    ((Number(position2.latitude) -
-      Number(position1.latitude)) *
-      Math.PI) /
-    180;
-
-  const deltaLng =
-    ((Number(position2.longitude) -
-      Number(position1.longitude)) *
-      Math.PI) /
-    180;
-
-  const a =
-    Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
-    Math.cos(lat1) *
-      Math.cos(lat2) *
-      Math.sin(deltaLng / 2) *
-      Math.sin(deltaLng / 2);
-
-  const c =
-    2 *
-    Math.atan2(
-      Math.sqrt(a),
-      Math.sqrt(1 - a),
-    );
-
-  return rayonTerre * c;
-};
-
-// ======================================================
-// AJUSTEMENT AUTOMATIQUE DE LA CARTE
-// ======================================================
-
-function AjusterCarte({
-  positionLivreur,
-  positionClient,
-  itineraire,
-}) {
+function RecentrerCarte({ position }) {
   const map = useMap();
 
-  const premierCadrage = useRef(true);
-
   useEffect(() => {
-    if (!premierCadrage.current) {
+    if (!position) return;
+
+    const latitude = Number(position.latitude);
+    const longitude = Number(position.longitude);
+
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
       return;
     }
 
-    if (
-      itineraire?.coordinates?.length > 1
-    ) {
-      const bounds = L.latLngBounds(
-        itineraire.coordinates,
-      );
-
-      map.fitBounds(bounds, {
-        padding: [55, 55],
-        maxZoom: 16,
-      });
-
-      premierCadrage.current = false;
-
-      return;
-    }
-
-    if (
-      positionValide(positionLivreur) &&
-      positionValide(positionClient)
-    ) {
-      const bounds = L.latLngBounds([
-        [
-          Number(positionLivreur.latitude),
-          Number(positionLivreur.longitude),
-        ],
-        [
-          Number(positionClient.latitude),
-          Number(positionClient.longitude),
-        ],
-      ]);
-
-      map.fitBounds(bounds, {
-        padding: [55, 55],
-        maxZoom: 16,
-      });
-
-      premierCadrage.current = false;
-
-      return;
-    }
-
-    const position =
-      positionLivreur || positionClient;
-
-    if (positionValide(position)) {
-      map.flyTo(
-        [
-          Number(position.latitude),
-          Number(position.longitude),
-        ],
-        15,
-        {
-          duration: 0.8,
-        },
-      );
-
-      premierCadrage.current = false;
-    }
-  }, [
-    map,
-    positionLivreur,
-    positionClient,
-    itineraire,
-  ]);
+    map.panTo([latitude, longitude], {
+      animate: true,
+      duration: 0.8,
+    });
+  }, [position, map]);
 
   return null;
 }
 
 // ======================================================
-// ITINÉRAIRE ROUTIER OSRM
+// ITINERAIRE ROUTIER
 // ======================================================
 
-function ItineraireRoutier({
-  positionLivreur,
-  positionClient,
-  onRouteUpdate,
-}) {
+function ItineraireRoutier({ positionLivreur, positionClient }) {
   const [route, setRoute] = useState(null);
 
-  const dernierePositionCalculee = useRef(null);
-
   useEffect(() => {
-    if (
-      !positionValide(positionLivreur) ||
-      !positionValide(positionClient)
-    ) {
+    if (!positionLivreur || !positionClient) {
       setRoute(null);
-      onRouteUpdate(null);
-
       return;
     }
 
-    const distanceDepuisDernierCalcul =
-      dernierePositionCalculee.current
-        ? calculerDistanceEntrePositions(
-            dernierePositionCalculee.current,
-            positionLivreur,
-          )
-        : Infinity;
+    const latitudeLivreur = Number(positionLivreur.latitude);
+    const longitudeLivreur = Number(positionLivreur.longitude);
 
-    /*
-      On ne recalcule pas la route pour chaque variation GPS.
-      La route est recalculée seulement si le livreur
-      s'est déplacé d'environ 25 mètres.
-    */
+    const latitudeClient = Number(positionClient.latitude);
+    const longitudeClient = Number(positionClient.longitude);
 
     if (
-      dernierePositionCalculee.current &&
-      distanceDepuisDernierCalcul < 25
+      !Number.isFinite(latitudeLivreur) ||
+      !Number.isFinite(longitudeLivreur) ||
+      !Number.isFinite(latitudeClient) ||
+      !Number.isFinite(longitudeClient)
     ) {
+      setRoute(null);
       return;
     }
 
     const controller = new AbortController();
 
+    // Petit délai pour éviter de recalculer l'itinéraire
+    // à chaque changement GPS.
     const timer = setTimeout(async () => {
       try {
-        const latitudeLivreur = Number(
-          positionLivreur.latitude,
-        );
-
-        const longitudeLivreur = Number(
-          positionLivreur.longitude,
-        );
-
-        const latitudeClient = Number(
-          positionClient.latitude,
-        );
-
-        const longitudeClient = Number(
-          positionClient.longitude,
-        );
-
         const url =
-          "https://router.project-osrm.org/route/v1/driving/" +
+          `https://router.project-osrm.org/route/v1/driving/` +
           `${longitudeLivreur},${latitudeLivreur};` +
           `${longitudeClient},${latitudeClient}` +
-          "?overview=full&geometries=geojson&steps=true";
+          `?overview=full&geometries=geojson`;
 
         const response = await fetch(url, {
           signal: controller.signal,
         });
 
         if (!response.ok) {
-          throw new Error(
-            "Impossible de récupérer l'itinéraire",
-          );
+          throw new Error("Erreur récupération itinéraire");
         }
 
         const data = await response.json();
 
-        if (
-          data.code !== "Ok" ||
-          !Array.isArray(data.routes) ||
-          data.routes.length === 0
-        ) {
-          throw new Error(
-            "Aucun itinéraire trouvé",
-          );
+        if (data.code !== "Ok" || !data.routes?.length) {
+          setRoute(null);
+          return;
         }
 
-        const routePrincipale = data.routes[0];
-
         const coordinates =
-          routePrincipale.geometry.coordinates.map(
-            ([longitude, latitude]) => [
-              latitude,
-              longitude,
-            ],
+          data.routes[0].geometry.coordinates.map(
+            ([longitude, latitude]) => [latitude, longitude],
           );
 
-        const nouvelleRoute = {
-          coordinates,
-          distance: routePrincipale.distance,
-          duration: routePrincipale.duration,
-        };
-
-        dernierePositionCalculee.current = {
-          latitude: latitudeLivreur,
-          longitude: longitudeLivreur,
-        };
-
-        setRoute(nouvelleRoute);
-
-        onRouteUpdate(nouvelleRoute);
+        setRoute(coordinates);
       } catch (error) {
         if (error.name === "AbortError") {
           return;
         }
 
-        console.error(
-          "Erreur calcul itinéraire :",
-          error,
-        );
-
+        console.error("Erreur itinéraire :", error);
         setRoute(null);
-
-        onRouteUpdate(null);
       }
     }, 1200);
 
     return () => {
       clearTimeout(timer);
-
       controller.abort();
     };
-  }, [
-    positionLivreur?.latitude,
-    positionLivreur?.longitude,
-    positionClient?.latitude,
-    positionClient?.longitude,
-    onRouteUpdate,
-  ]);
+  }, [positionLivreur, positionClient]);
 
-  if (!route?.coordinates?.length) {
+  if (!route?.length) {
     return null;
   }
 
   return (
     <>
-      {/* OMBRE SOUS L'ITINÉRAIRE */}
-
+      {/* Ombre du trajet */}
       <Polyline
-        positions={route.coordinates}
+        positions={route}
         pathOptions={{
-          color: "#000000",
+          color: "#000",
           weight: 9,
-          opacity: 0.12,
+          opacity: 0.15,
+          lineCap: "round",
+          lineJoin: "round",
         }}
       />
 
-      {/* ITINÉRAIRE PRINCIPAL */}
-
+      {/* Trajet réel */}
       <Polyline
-        positions={route.coordinates}
+        positions={route}
         pathOptions={{
           color: "#0071e3",
           weight: 6,
@@ -414,138 +212,127 @@ function ItineraireRoutier({
 }
 
 // ======================================================
-// PAGE LIVREUR ADMIN
+// PAGE
 // ======================================================
 
-function LivreurAdmin() {
+export default function SuiviCommande() {
+  const { commandeId, id } = useParams();
+  const navigate = useNavigate();
+
+  const currentCommandeId = commandeId || id;
+
+  const API_URL = import.meta.env.VITE_API_URL;
+
+  const [commande, setCommande] = useState(null);
+
+  const [positionLivreur, setPositionLivreur] = useState(null);
+
+  const [positionClient, setPositionClient] = useState(null);
+
   const [livreur, setLivreur] = useState(null);
-
-  const [
-    commandesDisponibles,
-    setCommandesDisponibles,
-  ] = useState([]);
-
-  const [mesCommandes, setMesCommandes] =
-    useState([]);
 
   const [loading, setLoading] = useState(true);
 
-  const [refreshing, setRefreshing] =
-    useState(false);
-
-  const [message, setMessage] = useState("");
-
   const [erreur, setErreur] = useState("");
 
-
-  const [
-    commandeEnCours,
-    setCommandeEnCours,
-  ] = useState(null);
-
-  const [
-    positionClient,
-    setPositionClient,
-  ] = useState(null);
-
-  const [
-    positionLivreur,
-    setPositionLivreur,
-  ] = useState(null);
-
-  const [itineraire, setItineraire] =
-    useState(null);
-
-  const navigate = useNavigate();
-
-  const token =
-    localStorage.getItem("tokenLivreur");
-
-    const removetoken = ()=>{
-        localStorage.removeItem("tokenLivreur");
-    }
-
-  const API_URL =
-    import.meta.env.VITE_API_URL;
-
-  const headers = {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
-  };
-
-  // ======================================================
-  // COMMANDE ACTIVE
-  // ======================================================
-
-  const commandeActive = mesCommandes.find(
-    (commande) =>
-      commande.livraison?.livreurId &&
-      commande.livraison.livreurId.toString() ===
-        livreur?.id?.toString() &&
-      [
-        "ACCEPTED",
-        "PICKING_UP",
-        "IN_DELIVERY",
-      ].includes(
-        commande.livraison?.statut,
-      ),
-  );
-
-  // ======================================================
-  // CALLBACK ROUTE
-  // ======================================================
-
-  const mettreAJourItineraire =
-    useCallback((route) => {
-      setItineraire(route);
-    }, []);
-
-  // ======================================================
-  // GPS TEMPS RÉEL DU LIVREUR
-  // ======================================================
+  // ====================================================
+  // GPS CLIENT
+  // ====================================================
 
   useEffect(() => {
+    if (!currentCommandeId) return;
+
+    const token = localStorage.getItem("token");
+
     if (!token) return;
 
     if (!navigator.geolocation) {
-      console.error(
-        "La géolocalisation n'est pas disponible.",
+      console.warn(
+        "La géolocalisation n'est pas disponible sur ce navigateur.",
       );
-
       return;
     }
 
-    if (
-      livreur?.statut !== "AVAILABLE" &&
-      livreur?.statut !== "BUSY"
-    ) {
-      return;
-    }
+    let watchId = null;
 
-    const envoyerPosition = async (
-      position,
-    ) => {
-      try {
-        const latitude =
-          position.coords.latitude;
+    // Dernière position réellement envoyée au serveur
+    let dernierePositionEnvoyee = null;
 
-        const longitude =
-          position.coords.longitude;
+    // Dernier envoi serveur
+    let dernierEnvoi = 0;
 
-        setPositionLivreur({
+    // --------------------------------------------------
+    // Calcul approximatif de distance en mètres
+    // --------------------------------------------------
+
+    const distanceEntrePositions = (lat1, lng1, lat2, lng2) => {
+      const R = 6371000;
+
+      const dLat = ((lat2 - lat1) * Math.PI) / 180;
+      const dLng = ((lng2 - lng1) * Math.PI) / 180;
+
+      const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos((lat1 * Math.PI) / 180) *
+          Math.cos((lat2 * Math.PI) / 180) *
+          Math.sin(dLng / 2) ** 2;
+
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+      return R * c;
+    };
+
+    // --------------------------------------------------
+    // ENVOI POSITION
+    // --------------------------------------------------
+
+    const envoyerPosition = async (position) => {
+      const latitude = Number(position.coords.latitude);
+      const longitude = Number(position.coords.longitude);
+
+      if (
+        !Number.isFinite(latitude) ||
+        !Number.isFinite(longitude)
+      ) {
+        return;
+      }
+
+      const nouvellePosition = {
+        latitude,
+        longitude,
+      };
+
+      // Affichage immédiat côté client
+      setPositionClient(nouvellePosition);
+
+      const maintenant = Date.now();
+
+      // Évite de spammer l'API
+      if (dernierePositionEnvoyee) {
+        const distance = distanceEntrePositions(
+          dernierePositionEnvoyee.latitude,
+          dernierePositionEnvoyee.longitude,
           latitude,
           longitude,
-        });
+        );
 
+        const tempsEcoule = maintenant - dernierEnvoi;
+
+        // Pas d'envoi si :
+        // moins de 20 mètres ET moins de 5 secondes
+        if (distance < 20 && tempsEcoule < 5000) {
+          return;
+        }
+      }
+
+      try {
         const response = await fetch(
-          `${API_URL}/api/livreurs/localisation`,
+          `${API_URL}/api/commandes/${currentCommandeId}/localisation-client`,
           {
             method: "PUT",
 
             headers: {
-              "Content-Type":
-                "application/json",
-
+              "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
 
@@ -556,188 +343,288 @@ function LivreurAdmin() {
           },
         );
 
-        if (!response.ok) {
-          const data =
-            await response
-              .json()
-              .catch(() => ({}));
+        const data = await response.json().catch(() => ({}));
 
-          throw new Error(
-            data.message ||
-              "Erreur mise à jour GPS",
+        if (!response.ok) {
+          console.error(
+            "Erreur envoi GPS client :",
+            data.message || response.statusText,
           );
+
+          return;
         }
-      } catch (error) {
-        console.error(
-          "Erreur envoi GPS :",
-          error,
+
+        dernierePositionEnvoyee = nouvellePosition;
+        dernierEnvoi = maintenant;
+
+        console.log(
+          "📍 Position client envoyée :",
+          latitude,
+          longitude,
         );
+      } catch (error) {
+        console.error("GPS CLIENT ERROR :", error);
       }
     };
 
+    // --------------------------------------------------
+    // ERREUR GPS
+    // --------------------------------------------------
+
     const erreurGPS = (error) => {
-      console.error(
-        "Erreur GPS :",
+      console.warn(
+        "Impossible de récupérer la position du client :",
         error.message,
       );
     };
 
-    const watchId =
-      navigator.geolocation.watchPosition(
-        envoyerPosition,
-        erreurGPS,
-        {
-          enableHighAccuracy: true,
-          maximumAge: 5000,
-          timeout: 15000,
-        },
-      );
+    // --------------------------------------------------
+    // WATCH GPS
+    // --------------------------------------------------
+
+    watchId = navigator.geolocation.watchPosition(
+      envoyerPosition,
+      erreurGPS,
+      {
+        enableHighAccuracy: true,
+        maximumAge: 5000,
+        timeout: 15000,
+      },
+    );
+
+    // --------------------------------------------------
+    // NETTOYAGE
+    // --------------------------------------------------
 
     return () => {
-      navigator.geolocation.clearWatch(
-        watchId,
-      );
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+      }
     };
+  }, [API_URL, currentCommandeId]);
+
+  // ====================================================
+  // CHARGER LA COMMANDE
+  // ====================================================
+
+  useEffect(() => {
+    if (!currentCommandeId) {
+      setErreur("Identifiant de commande manquant.");
+      setLoading(false);
+      return;
+    }
+
+    const chargerCommande = async () => {
+      try {
+        setLoading(true);
+        setErreur("");
+
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+          navigate("/login");
+          return;
+        }
+
+        const response = await fetch(
+          `${API_URL}/api/commandes/${currentCommandeId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ||
+              "Impossible de charger la commande",
+          );
+        }
+
+        const commandeData = data.commande || data;
+
+        setCommande(commandeData);
+
+        // ==============================================
+        // LIVREUR
+        // ==============================================
+
+        if (commandeData.livraison?.livreur) {
+          setLivreur(commandeData.livraison.livreur);
+        }
+
+        // ==============================================
+        // POSITION CLIENT
+        // ==============================================
+
+        const localisationClient =
+          commandeData.client?.localisation;
+
+        if (
+          localisationClient &&
+          localisationClient.latitude !== null &&
+          localisationClient.longitude !== null
+        ) {
+          const latitude = Number(
+            localisationClient.latitude,
+          );
+
+          const longitude = Number(
+            localisationClient.longitude,
+          );
+
+          if (
+            Number.isFinite(latitude) &&
+            Number.isFinite(longitude)
+          ) {
+            setPositionClient({
+              latitude,
+              longitude,
+            });
+          }
+        }
+
+        // ==============================================
+        // POSITION LIVREUR
+        // ==============================================
+
+        if (commandeData.livraison?.localisation) {
+          const localisation =
+            commandeData.livraison.localisation;
+
+          const latitude = Number(
+            localisation.latitude,
+          );
+
+          const longitude = Number(
+            localisation.longitude,
+          );
+
+          if (
+            Number.isFinite(latitude) &&
+            Number.isFinite(longitude)
+          ) {
+            setPositionLivreur({
+              latitude,
+              longitude,
+            });
+          }
+        }
+
+        // ==============================================
+        // FALLBACK :
+        // localisation directement dans le livreur
+        // ==============================================
+
+        if (
+          commandeData.livraison?.livreur?.localisation
+        ) {
+          const localisation =
+            commandeData.livraison.livreur.localisation;
+
+          const latitude = Number(
+            localisation.latitude,
+          );
+
+          const longitude = Number(
+            localisation.longitude,
+          );
+
+          if (
+            Number.isFinite(latitude) &&
+            Number.isFinite(longitude)
+          ) {
+            setPositionLivreur({
+              latitude,
+              longitude,
+            });
+          }
+        }
+      } catch (error) {
+        console.error(
+          "SUIVI COMMANDE ERROR:",
+          error,
+        );
+
+        setErreur(
+          error.message ||
+            "Impossible de charger le suivi.",
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    chargerCommande();
   }, [
-    token,
     API_URL,
-    livreur?.statut,
+    currentCommandeId,
+    navigate,
   ]);
 
-  // ======================================================
-  // POSITION CLIENT INITIALE
-  // ======================================================
+  // ====================================================
+  // SOCKET.IO
+  // ====================================================
 
   useEffect(() => {
-    if (!commandeActive) {
-      setPositionClient(null);
+    if (!currentCommandeId) return;
 
-      setItineraire(null);
-
-      return;
-    }
-
-    const localisation =
-      commandeActive.client?.localisation;
-
-    if (
-      localisation?.latitude != null &&
-      localisation?.longitude != null
-    ) {
-      setPositionClient({
-        latitude: Number(
-          localisation.latitude,
-        ),
-
-        longitude: Number(
-          localisation.longitude,
-        ),
-      });
-    } else {
-      setPositionClient(null);
-    }
-  }, [commandeActive?._id]);
-
-  // ======================================================
-  // POSITION LIVREUR INITIALE
-  // ======================================================
-
-  useEffect(() => {
-    const localisation =
-      livreur?.localisation;
-
-    if (
-      localisation?.latitude != null &&
-      localisation?.longitude != null
-    ) {
-      setPositionLivreur({
-        latitude: Number(
-          localisation.latitude,
-        ),
-
-        longitude: Number(
-          localisation.longitude,
-        ),
-      });
-    }
-  }, [
-    livreur?.localisation?.latitude,
-    livreur?.localisation?.longitude,
-  ]);
-
-  // ======================================================
-  // SOCKET.IO — SUIVI TEMPS RÉEL
-  // ======================================================
-
-  useEffect(() => {
-    if (!commandeActive?._id) {
-      return;
-    }
-
-    const commandeId =
-      commandeActive._id.toString();
+    // ================================================
+    // REJOINDRE LA ROOM COMMANDE
+    // ================================================
 
     socket.emit(
       "join_commande",
-      commandeId,
+      currentCommandeId,
     );
 
-    // ==================================================
-    // POSITION CLIENT
-    // ==================================================
+    // ================================================
+    // REJOINDRE LA ROOM CLIENT
+    // ================================================
 
-    const handleClientPosition = (
-      data,
-    ) => {
-      if (
-        data?.commandeId?.toString() !==
-        commandeId
-      ) {
-        return;
+    const token = localStorage.getItem("token");
+
+    try {
+      if (token) {
+        const payload = JSON.parse(
+          atob(
+            token
+              .split(".")[1]
+              .replace(/-/g, "+")
+              .replace(/_/g, "/"),
+          ),
+        );
+
+        if (payload?.userId) {
+          socket.emit(
+            "join_room",
+            payload.userId,
+          );
+        }
       }
-
-      const latitude = Number(
-        data.latitude,
+    } catch (error) {
+      console.warn(
+        "Impossible de lire le token client",
       );
+    }
 
-      const longitude = Number(
-        data.longitude,
-      );
-
-      if (
-        !Number.isFinite(latitude) ||
-        !Number.isFinite(longitude)
-      ) {
-        return;
-      }
-
-      setPositionClient({
-        latitude,
-        longitude,
-      });
-    };
-
-    // ==================================================
+    // ================================================
     // POSITION LIVREUR
-    // ==================================================
+    // ================================================
 
-    const handleLivreurPosition = (
-      data,
-    ) => {
+    const handlePositionLivreur = (data) => {
       if (
-        data?.commandeId?.toString() !==
-        commandeId
+        data.commandeId?.toString() !==
+        currentCommandeId.toString()
       ) {
         return;
       }
 
-      const latitude = Number(
-        data.latitude,
-      );
-
-      const longitude = Number(
-        data.longitude,
-      );
+      const latitude = Number(data.latitude);
+      const longitude = Number(data.longitude);
 
       if (
         !Number.isFinite(latitude) ||
@@ -752,2929 +639,1833 @@ function LivreurAdmin() {
       });
     };
 
-    socket.on(
-      "client_position",
-      handleClientPosition,
-    );
+    // ================================================
+    // POSITION CLIENT
+    // ================================================
+
+    const handlePositionClient = (data) => {
+      if (
+        data.commandeId?.toString() !==
+        currentCommandeId.toString()
+      ) {
+        return;
+      }
+
+      const latitude = Number(data.latitude);
+      const longitude = Number(data.longitude);
+
+      if (
+        !Number.isFinite(latitude) ||
+        !Number.isFinite(longitude)
+      ) {
+        return;
+      }
+
+      setPositionClient({
+        latitude,
+        longitude,
+      });
+    };
+
+    // ================================================
+    // UPDATE COMMANDE
+    // ================================================
+
+    const handleCommandeUpdate = (data) => {
+      if (
+        data.id?.toString() !==
+        currentCommandeId.toString()
+      ) {
+        return;
+      }
+
+      setCommande((prev) => {
+        if (!prev) return prev;
+
+        return {
+          ...prev,
+
+          livraison: {
+            ...prev.livraison,
+
+            statut:
+              data.statutLivraison ||
+              prev.livraison?.statut,
+
+            livreurId:
+              data.livreurId ||
+              prev.livraison?.livreurId,
+          },
+        };
+      });
+
+      // ==============================================
+      // NOUVEAU LIVREUR
+      // ==============================================
+
+      if (data.livreur) {
+        setLivreur(data.livreur);
+
+        if (data.livreur.localisation) {
+          const localisation =
+            data.livreur.localisation;
+
+          const latitude = Number(
+            localisation.latitude,
+          );
+
+          const longitude = Number(
+            localisation.longitude,
+          );
+
+          if (
+            Number.isFinite(latitude) &&
+            Number.isFinite(longitude)
+          ) {
+            setPositionLivreur({
+              latitude,
+              longitude,
+            });
+          }
+        }
+      }
+    };
+
+    // ================================================
+    // LISTENERS
+    // ================================================
 
     socket.on(
       "livreur_position",
-      handleLivreurPosition,
+      handlePositionLivreur,
     );
+
+    socket.on(
+      "client_position",
+      handlePositionClient,
+    );
+
+    socket.on(
+      "commande_update",
+      handleCommandeUpdate,
+    );
+
+    // ================================================
+    // CLEANUP
+    // ================================================
 
     return () => {
       socket.off(
-        "client_position",
-        handleClientPosition,
+        "livreur_position",
+        handlePositionLivreur,
       );
 
       socket.off(
-        "livreur_position",
-        handleLivreurPosition,
+        "client_position",
+        handlePositionClient,
+      );
+
+      socket.off(
+        "commande_update",
+        handleCommandeUpdate,
       );
 
       socket.emit(
         "leave_commande",
-        commandeId,
+        currentCommandeId,
       );
     };
-  }, [commandeActive?._id]);
+  }, [currentCommandeId]);
 
-  // ======================================================
-  // PROFIL
-  // ======================================================
-
-  const chargerProfil = async () => {
-    const response = await fetch(
-      `${API_URL}/api/livreurs/profil`,
-      {
-        method: "GET",
-        headers,
-      },
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.message ||
-          "Impossible de charger le profil",
-      );
-    }
-
-    setLivreur(data.livreur);
-  };
-
-  // ======================================================
-  // COMMANDES DISPONIBLES
-  // ======================================================
-
-  const chargerCommandesDisponibles =
-    async () => {
-      const response = await fetch(
-        `${API_URL}/api/livreurs/commandes-disponibles`,
-        {
-          method: "GET",
-          headers,
-        },
-      );
-
-      const data =
-        await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.message ||
-            "Impossible de charger les commandes disponibles",
-        );
-      }
-
-      setCommandesDisponibles(
-        data.commandes || [],
-      );
-    };
-
-  // ======================================================
-  // MES COMMANDES
-  // ======================================================
-
-  const chargerMesCommandes =
-    async () => {
-      const response = await fetch(
-        `${API_URL}/api/livreurs/commandes`,
-        {
-          method: "GET",
-          headers,
-        },
-      );
-
-      const data =
-        await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.message ||
-            "Impossible de charger vos commandes",
-        );
-      }
-
-      setMesCommandes(
-        data.commandes || [],
-      );
-    };
-
-  // ======================================================
-  // CHARGEMENT GLOBAL
-  // ======================================================
-
-  const chargerTout = async (
-    avecLoading = false,
-  ) => {
-    try {
-      setErreur("");
-
-      if (avecLoading) {
-        setLoading(true);
-      } else {
-        setRefreshing(true);
-      }
-
-      await Promise.all([
-        chargerProfil(),
-        chargerCommandesDisponibles(),
-        chargerMesCommandes(),
-      ]);
-    } catch (error) {
-      console.error(error);
-
-      setErreur(error.message);
-    } finally {
-      setLoading(false);
-
-      setRefreshing(false);
-    }
-  };
-
-  // ======================================================
-  // INITIALISATION
-  // ======================================================
-
-  useEffect(() => {
-    if (!token) {
-      navigate(
-        "/connexion-livreur",
-        {
-          replace: true,
-        },
-      );
-
-      return;
-    }
-
-    chargerTout(true);
-  }, [token, navigate]);
-
-  // ======================================================
-  // CHANGER STATUT
-  // ======================================================
-
-  const changerStatut = async (
-    statut,
-  ) => {
-    try {
-      setErreur("");
-
-      setMessage("");
-
-      if (statut === "BUSY") {
-        return;
-      }
-
-      if (
-        statut === "OFFLINE" &&
-        livreur?.commandeActuelle
-      ) {
-        setErreur(
-          "Vous avez une livraison en cours. Terminez-la avant de passer hors ligne.",
-        );
-
-        return;
-      }
-
-      const response = await fetch(
-        `${API_URL}/api/livreurs/statut`,
-        {
-          method: "PUT",
-
-          headers,
-
-          body: JSON.stringify({
-            statut,
-          }),
-        },
-      );
-
-      const data =
-        await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.message ||
-            "Impossible de modifier le statut",
-        );
-      }
-
-      setLivreur((prev) => ({
-        ...prev,
-        statut: data.statut,
-      }));
-
-      setMessage(
-        "Votre disponibilité a été mise à jour.",
-      );
-
-      setTimeout(() => {
-        setMessage("");
-      }, 3000);
-    } catch (error) {
-      setErreur(error.message);
-    }
-  };
-
-  // ======================================================
-  // ACCEPTER COMMANDE
-  // ======================================================
-
-  const accepterCommande = async (
-    commandeId,
-  ) => {
-    try {
-      setErreur("");
-
-      setMessage("");
-
-      setCommandeEnCours(
-        commandeId,
-      );
-
-      const response = await fetch(
-        `${API_URL}/api/livreurs/commandes/${commandeId}/accepter`,
-        {
-          method: "PUT",
-          headers,
-        },
-      );
-
-      const data =
-        await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.message ||
-            "Impossible d'accepter la commande",
-        );
-      }
-
-      setMessage(
-        "Commande acceptée. Elle vous est maintenant attribuée.",
-      );
-
-      await chargerTout();
-    } catch (error) {
-      setErreur(error.message);
-    } finally {
-      setCommandeEnCours(null);
-    }
-  };
-
-  // ======================================================
-  // ACCEPTED → PICKING_UP
-  // ======================================================
-
-  const commencerRecuperation =
-    async (commandeId) => {
-      try {
-        setErreur("");
-
-        setMessage("");
-
-        setCommandeEnCours(
-          commandeId,
-        );
-
-        const response = await fetch(
-          `${API_URL}/api/livreurs/commandes/${commandeId}/commencer-recuperation`,
-          {
-            method: "PUT",
-            headers,
-          },
-        );
-
-        const data =
-          await response.json();
-
-        if (!response.ok) {
-          throw new Error(
-            data.message ||
-              "Impossible de commencer la récupération",
-          );
-        }
-
-        setMessage(
-          "Récupération de la commande commencée.",
-        );
-
-        await chargerTout();
-      } catch (error) {
-        console.error(error);
-
-        setErreur(error.message);
-      } finally {
-        setCommandeEnCours(null);
-      }
-    };
-
-  // ======================================================
-  // PICKING_UP → IN_DELIVERY
-  // ======================================================
-
-  const recupererCommande =
-    async (commandeId) => {
-      try {
-        setErreur("");
-
-        setMessage("");
-
-        setCommandeEnCours(
-          commandeId,
-        );
-
-        const response = await fetch(
-          `${API_URL}/api/livreurs/commandes/${commandeId}/recuperer`,
-          {
-            method: "PUT",
-            headers,
-          },
-        );
-
-        const data =
-          await response.json();
-
-        if (!response.ok) {
-          throw new Error(
-            data.message ||
-              "Impossible de confirmer la récupération",
-          );
-        }
-
-        setMessage(
-          "Commande récupérée. Livraison en cours.",
-        );
-
-        await chargerTout();
-      } catch (error) {
-        console.error(error);
-
-        setErreur(error.message);
-      } finally {
-        setCommandeEnCours(null);
-      }
-    };
-
-  // ======================================================
-  // IN_DELIVERY → DELIVERED
-  // ======================================================
-
-  const livrerCommande = async (
-    commandeId,
-  ) => {
-    try {
-      setErreur("");
-
-      setMessage("");
-
-      setCommandeEnCours(
-        commandeId,
-      );
-
-      const response = await fetch(
-        `${API_URL}/api/livreurs/commandes/${commandeId}/livrer`,
-        {
-          method: "PUT",
-          headers,
-        },
-      );
-
-      const data =
-        await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.message ||
-            "Impossible de confirmer la livraison",
-        );
-      }
-
-      setMessage(
-        "Livraison terminée avec succès.",
-      );
-
-      setPositionClient(null);
-
-      setItineraire(null);
-
-      await chargerTout();
-    } catch (error) {
-      console.error(error);
-
-      setErreur(error.message);
-    } finally {
-      setCommandeEnCours(null);
-    }
-  };
-
-  // ======================================================
-  // FORMAT PRIX
-  // ======================================================
-
-  const formatPrix = (prix) =>
-    Number(prix || 0).toLocaleString(
-      "fr-FR",
-    );
-
-  // ======================================================
-  // FORMAT DISTANCE
-  // ======================================================
-
-  const formatDistance = (metres) => {
-    if (
-      metres == null ||
-      !Number.isFinite(Number(metres))
-    ) {
-      return "—";
-    }
-
-    const valeur = Number(metres);
-
-    if (valeur < 1000) {
-      return `${Math.round(valeur)} m`;
-    }
-
-    return `${(
-      valeur / 1000
-    ).toFixed(1)} km`;
-  };
-
-  // ======================================================
-  // FORMAT DURÉE
-  // ======================================================
-
-  const formatDuree = (secondes) => {
-    if (
-      secondes == null ||
-      !Number.isFinite(
-        Number(secondes),
-      )
-    ) {
-      return "—";
-    }
-
-    const minutes = Math.max(
-      1,
-      Math.round(
-        Number(secondes) / 60,
-      ),
-    );
-
-    if (minutes < 60) {
-      return `${minutes} min`;
-    }
-
-    const heures = Math.floor(
-      minutes / 60,
-    );
-
-    const reste = minutes % 60;
-
-    if (reste === 0) {
-      return `${heures} h`;
-    }
-
-    return `${heures} h ${reste} min`;
-  };
-
-  // ======================================================
-  // STATUT
-  // ======================================================
-
-  const statutLabel = {
-    OFFLINE: "Hors ligne",
-    AVAILABLE: "Disponible",
-    BUSY: "En livraison",
-  };
-
-  const livraisonLabel = {
-    ACCEPTED: "Commande acceptée",
-    PICKING_UP: "Récupération",
-    IN_DELIVERY: "En livraison",
-    DELIVERED: "Livrée",
-  };
-
-  // ======================================================
+  // ====================================================
   // LOADING
-  // ======================================================
+  // ====================================================
 
   if (loading) {
     return (
-      <LoadingPage>
-        <LoadingLogo>
-          NUMA
-        </LoadingLogo>
+      <Page>
+        <LoadingScreen>
+          <LoadingSpinner />
 
-        <LoadingSpinner />
+          <LoadingTitle>
+            Préparation de votre suivi
+          </LoadingTitle>
 
-        <LoadingText>
-          Préparation de votre espace...
-        </LoadingText>
-      </LoadingPage>
+          <LoadingText>
+            Nous récupérons les informations de votre
+            livraison...
+          </LoadingText>
+        </LoadingScreen>
+      </Page>
     );
   }
 
-  // ======================================================
-  // PAGE
-  // ======================================================
+  // ====================================================
+  // ERREUR
+  // ====================================================
+
+  if (erreur) {
+    return (
+      <Page>
+        <ErrorScreen>
+          <ErrorIcon>!</ErrorIcon>
+
+          <h2>
+            Impossible d'afficher le suivi
+          </h2>
+
+          <p>{erreur}</p>
+
+          <BackButton onClick={() => navigate(-1)}>
+            <FaArrowLeft />
+            Retour
+          </BackButton>
+        </ErrorScreen>
+      </Page>
+    );
+  }
+
+  // ====================================================
+  // COMMANDE ABSENTE
+  // ====================================================
+
+  if (!commande) {
+    return (
+      <Page>
+        <ErrorScreen>
+          <ErrorIcon>!</ErrorIcon>
+
+          <h2>Commande introuvable</h2>
+
+          <BackButton
+            onClick={() => navigate("/")}
+          >
+            Retour à l'accueil
+          </BackButton>
+        </ErrorScreen>
+      </Page>
+    );
+  }
+
+  // ====================================================
+  // DONNÉES
+  // ====================================================
+
+  const statut =
+    commande.livraison?.statut ||
+    "NOT_STARTED";
+
+  const destination = positionClient;
+
+  const positionCarte =
+    positionLivreur ||
+    destination ||
+    ABIDJAN;
+
+  const statutInfo =
+    statutConfig[statut] ||
+    statutConfig.NOT_STARTED;
+
+  const livreurDisponible =
+    Boolean(livreur);
+
+  // ====================================================
+  // RENDU
+  // ====================================================
 
   return (
     <Page>
-      {/* ==========================================
+      {/* =================================================
           HEADER
-      ========================================== */}
+      ================================================= */}
 
-      <Header>
-        <HeaderInner>
-          <Brand>
-            NUMA
-            <BrandDot />
-          </Brand>
+      <TopHeader>
+        <HeaderLeft>
+          <BackIcon
+            onClick={() => navigate(-1)}
+          >
+            <FaArrowLeft />
+          </BackIcon>
 
-           <Brand>
-            
-            <Deconnexion onClick={removetoken}>Déconnexion</Deconnexion>
-          </Brand>
+          <div>
+            <SmallTitle>
+              SUIVI DE LIVRAISON
+            </SmallTitle>
 
-          removetoken 
+            <OrderNumber>
+              #
+              {currentCommandeId
+                ?.slice(-8)
+                .toUpperCase()}
+            </OrderNumber>
+          </div>
+        </HeaderLeft>
 
-          <HeaderRight>
-            <StatusPill
-              $status={livreur?.statut}
+        <StatusBadge
+          $type={statutInfo.type}
+        >
+          <FaCircle />
+
+          <span>
+            {statutInfo.label}
+          </span>
+        </StatusBadge>
+      </TopHeader>
+
+      {/* =================================================
+          MAP
+      ================================================= */}
+
+      <MapSection>
+        <MapContainer
+          center={[
+            positionCarte.latitude,
+            positionCarte.longitude,
+          ]}
+          zoom={14}
+          zoomControl={false}
+          style={{
+            width: "100%",
+            height: "100%",
+          }}
+        >
+          <TileLayer
+            attribution="&copy; OpenStreetMap contributors"
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+
+          <ZoomControl position="bottomright" />
+
+          {/* ==========================================
+              LA CARTE SUIT AUTOMATIQUEMENT LE LIVREUR
+          ========================================== */}
+
+          <RecentrerCarte
+            position={positionLivreur}
+          />
+
+          {/* ==========================================
+              LIVREUR
+          ========================================== */}
+
+          {positionLivreur && (
+            <Marker
+              position={[
+                positionLivreur.latitude,
+                positionLivreur.longitude,
+              ]}
+              icon={livreurIcon}
             >
-              <StatusDot
-                $status={livreur?.statut}
+              <Popup>
+                <strong>
+                  {livreur?.username ||
+                    "Votre livreur"}
+                </strong>
+
+                <br />
+
+                Livreur en temps réel
+              </Popup>
+            </Marker>
+          )}
+
+          {/* ==========================================
+              CLIENT
+          ========================================== */}
+
+          {positionClient && (
+            <Marker
+              position={[
+                positionClient.latitude,
+                positionClient.longitude,
+              ]}
+              icon={destinationIcon}
+            >
+              <Popup>
+                <strong>
+                  Votre position
+                </strong>
+
+                <br />
+
+                Position GPS en temps réel
+              </Popup>
+            </Marker>
+          )}
+
+          {/* ==========================================
+              TRAJET ROUTIER
+          ========================================== */}
+
+          {positionLivreur &&
+            positionClient && (
+              <ItineraireRoutier
+                positionLivreur={
+                  positionLivreur
+                }
+                positionClient={
+                  positionClient
+                }
               />
+            )}
+        </MapContainer>
 
-              {statutLabel[
-                livreur?.statut
-              ] || "Hors ligne"}
-            </StatusPill>
+        {/* =================================================
+            OVERLAY CARTE
+        ================================================= */}
 
-            <RefreshButton
-              onClick={() =>
-                chargerTout()
-              }
-              disabled={refreshing}
-            >
-              <RefreshIcon
-                $loading={refreshing}
-              >
-                ↻
-              </RefreshIcon>
+        <MapOverlay>
+          <LiveBadge>
+            <LiveDot />
+            LIVE
+          </LiveBadge>
 
-              <span>
-                {refreshing
-                  ? "Actualisation..."
-                  : "Actualiser"}
-              </span>
-            </RefreshButton>
-          </HeaderRight>
-        </HeaderInner>
-      </Header>
+          <MapInfo>
+            <MapInfoIcon>
+              <FaLocationArrow />
+            </MapInfoIcon>
 
-      <Main>
-        {/* ==========================================
-            MESSAGES
-        ========================================== */}
-
-        {message && (
-          <Alert $success>
-            <AlertIcon>✓</AlertIcon>
-
-            <span>{message}</span>
-          </Alert>
-        )}
-
-        {erreur && (
-          <Alert>
-            <AlertIcon>!</AlertIcon>
-
-            <span>{erreur}</span>
-          </Alert>
-        )}
-
-        {/* ==========================================
-            HERO
-        ========================================== */}
-
-        <Hero>
-          <HeroText>
-            <Eyebrow>
-              ESPACE LIVREUR
-            </Eyebrow>
-
-            <HeroTitle>
-              Bonjour{" "}
-              <HeroName>
-                {livreur?.username ||
-                  "Livreur"}
-              </HeroName>
-              .
-            </HeroTitle>
-
-            <HeroSubtitle>
-              Gérez vos livraisons
-              simplement,
-              <br />
-              depuis un seul endroit.
-            </HeroSubtitle>
-          </HeroText>
-
-          <HeroAvatar>
-            {livreur?.username
-              ?.charAt(0)
-              ?.toUpperCase() || "L"}
-          </HeroAvatar>
-        </Hero>
-
-        {/* ==========================================
-            STATISTIQUES
-        ========================================== */}
-
-        <StatsGrid>
-          <StatCard>
-            <StatTop>
-              <StatLabel>
-                Disponibles
-              </StatLabel>
-
-              <StatIcon>◉</StatIcon>
-            </StatTop>
-
-            <StatNumber>
-              {
-                commandesDisponibles.length
-              }
-            </StatNumber>
-
-            <StatDescription>
-              Commandes à prendre
-            </StatDescription>
-          </StatCard>
-
-          <StatCard>
-            <StatTop>
-              <StatLabel>
-                Mes commandes
-              </StatLabel>
-
-              <StatIcon>≡</StatIcon>
-            </StatTop>
-
-            <StatNumber>
-              {mesCommandes.length}
-            </StatNumber>
-
-            <StatDescription>
-              Commandes attribuées
-            </StatDescription>
-          </StatCard>
-
-          <StatCard>
-            <StatTop>
-              <StatLabel>
-                État actuel
-              </StatLabel>
-
-              <StatIcon>●</StatIcon>
-            </StatTop>
-
-            <StatStatus
-              $status={livreur?.statut}
-            >
-              {statutLabel[
-                livreur?.statut
-              ] || "Hors ligne"}
-            </StatStatus>
-
-            <StatDescription>
-              Votre disponibilité
-            </StatDescription>
-          </StatCard>
-        </StatsGrid>
-
-        {/* ==========================================
-            PROFIL
-        ========================================== */}
-
-        <Section>
-          <SectionHeader>
             <div>
-              <SectionEyebrow>
-                VOTRE COMPTE
-              </SectionEyebrow>
+              <MapInfoTitle>
+                Position du livreur
+              </MapInfoTitle>
 
-              <SectionTitle>
-                Disponibilité
-              </SectionTitle>
-
-              <SectionDescription>
-                Indiquez aux clients et au
-                système si vous pouvez recevoir
-                une livraison.
-              </SectionDescription>
+              <MapInfoText>
+                Mise à jour en temps réel
+              </MapInfoText>
             </div>
-          </SectionHeader>
+          </MapInfo>
+        </MapOverlay>
 
-          <ProfileCard>
-            <ProfileInfo>
-              <ProfileAvatar>
-                {livreur?.username
-                  ?.charAt(0)
-                  ?.toUpperCase() || "L"}
-              </ProfileAvatar>
+        {/* =================================================
+            CARTE SANS GPS LIVREUR
+        ================================================= */}
+
+        {!positionLivreur &&
+          statut !== "DELIVERED" && (
+            <WaitingMapCard>
+              <WaitingMapIcon>
+                <FaMotorcycle />
+              </WaitingMapIcon>
 
               <div>
-                <ProfileName>
-                  {livreur?.username}
-                </ProfileName>
-
-                <ProfileEmail>
-                  {livreur?.email}
-                </ProfileEmail>
-
-                <ProfilePhone>
-                  {livreur?.telephone}
-                </ProfilePhone>
-              </div>
-            </ProfileInfo>
-
-            <StatusSelector>
-              <StatusButton
-                $active={
-                  livreur?.statut ===
-                  "AVAILABLE"
-                }
-                onClick={() =>
-                  changerStatut(
-                    "AVAILABLE",
-                  )
-                }
-                disabled={
-                  !!commandeActive
-                }
-              >
-                <ButtonDot />
-
-                Disponible
-              </StatusButton>
-
-              <StatusButton
-                $active={
-                  livreur?.statut ===
-                  "OFFLINE"
-                }
-                onClick={() =>
-                  changerStatut(
-                    "OFFLINE",
-                  )
-                }
-                disabled={
-                  !!commandeActive
-                }
-              >
-                <ButtonDot />
-
-                Hors ligne
-              </StatusButton>
-            </StatusSelector>
-          </ProfileCard>
-        </Section>
-
-        {/* ==========================================
-            LIVRAISON ACTUELLE
-        ========================================== */}
-
-        {commandeActive && (
-          <Section>
-            <SectionHeader>
-              <SectionEyebrow>
-                MISSION EN COURS
-              </SectionEyebrow>
-
-              <SectionTitle>
-                Livraison actuelle
-              </SectionTitle>
-
-              <SectionDescription>
-                Suivez les différentes étapes
-                de votre livraison depuis cet
-                espace.
-              </SectionDescription>
-            </SectionHeader>
-
-            <DeliveryCard>
-              <DeliveryTop>
-                <div>
-                  <DeliveryLabel>
-                    COMMANDE
-                  </DeliveryLabel>
-
-                  <DeliveryNumber>
-                    #
-                    {commandeActive._id.slice(
-                      -6,
-                    )}
-                  </DeliveryNumber>
-                </div>
-
-                <DeliveryStatus
-                  $status={
-                    commandeActive
-                      .livraison?.statut
-                  }
-                >
-                  {livraisonLabel[
-                    commandeActive
-                      .livraison?.statut
-                  ] ||
-                    commandeActive
-                      .livraison?.statut}
-                </DeliveryStatus>
-              </DeliveryTop>
-
-              <DeliveryDivider />
-
-              <DeliveryGrid>
-                <DeliveryInfo>
-                  <DeliveryInfoLabel>
-                    CLIENT
-                  </DeliveryInfoLabel>
-
-                  <DeliveryInfoValue>
-                    {
-                      commandeActive.client
-                        ?.prenom
-                    }{" "}
-                    {
-                      commandeActive.client
-                        ?.nom
-                    }
-                  </DeliveryInfoValue>
-                </DeliveryInfo>
-
-                <DeliveryInfo>
-                  <DeliveryInfoLabel>
-                    TÉLÉPHONE
-                  </DeliveryInfoLabel>
-
-                  <DeliveryInfoValue>
-                    {commandeActive.client
-                      ?.numero ||
-                      "Non renseigné"}
-                  </DeliveryInfoValue>
-                </DeliveryInfo>
-
-                <DeliveryInfo>
-                  <DeliveryInfoLabel>
-                    VILLE
-                  </DeliveryInfoLabel>
-
-                  <DeliveryInfoValue>
-                    {commandeActive.client
-                      ?.ville ||
-                      "Non renseignée"}
-                  </DeliveryInfoValue>
-                </DeliveryInfo>
-
-                <DeliveryInfo>
-                  <DeliveryInfoLabel>
-                    ADRESSE
-                  </DeliveryInfoLabel>
-
-                  <DeliveryInfoValue>
-                    {commandeActive.client
-                      ?.adresse ||
-                      "Non renseignée"}
-                  </DeliveryInfoValue>
-                </DeliveryInfo>
-              </DeliveryGrid>
-
-              {/* PRODUITS */}
-
-              <DeliveryProducts>
-                <DeliveryInfoLabel>
-                  PRODUITS
-                </DeliveryInfoLabel>
-
-                {commandeActive.panier?.map(
-                  (item, index) => (
-                    <DeliveryProduct
-                      key={
-                        item._id ||
-                        index
-                      }
-                    >
-                      <span>
-                        {item.quantite} ×{" "}
-                        {item.nom}
-                      </span>
-
-                      <strong>
-                        {formatPrix(
-                          item.prix *
-                            item.quantite,
-                        )}{" "}
-                        FCFA
-                      </strong>
-                    </DeliveryProduct>
-                  ),
-                )}
-              </DeliveryProducts>
-
-              {/* TOTAL */}
-
-              <DeliveryTotal>
-                <span>
-                  Total produits
-                </span>
-
                 <strong>
-                  {formatPrix(
-                    commandeActive
-                      .totalProduits,
-                  )}{" "}
-                  FCFA
+                  En attente de localisation
                 </strong>
-              </DeliveryTotal>
 
-              {/* ACTION */}
+                <span>
+                  La position du livreur apparaîtra
+                  ici dès qu'il sera connecté.
+                </span>
+              </div>
+            </WaitingMapCard>
+          )}
+      </MapSection>
 
-              <DeliveryAction>
-                {commandeActive.livraison
-                  ?.statut ===
-                  "ACCEPTED" && (
-                  <DeliveryButton
-                    onClick={() =>
-                      commencerRecuperation(
-                        commandeActive._id,
-                      )
-                    }
-                    disabled={
-                      commandeEnCours ===
-                      commandeActive._id
-                    }
+      {/* =================================================
+          CONTENU
+      ================================================= */}
+
+      <Content>
+        <MainGrid>
+          {/* =================================================
+              COLONNE PRINCIPALE
+          ================================================= */}
+
+          <MainColumn>
+            {/* =============================================
+                STATUT
+            ============================================= */}
+
+            <StatusCard>
+              <StatusCardTop>
+                <StatusTextBlock>
+                  <Eyebrow>
+                    ÉTAT DE LA LIVRAISON
+                  </Eyebrow>
+
+                  <StatusTitle>
+                    {statutInfo.label}
+                  </StatusTitle>
+
+                  <StatusDescription>
+                    {statutInfo.description}
+                  </StatusDescription>
+                </StatusTextBlock>
+
+                <BigStatusIcon
+                  $type={statutInfo.type}
+                >
+                  {statutInfo.icon}
+                </BigStatusIcon>
+              </StatusCardTop>
+            </StatusCard>
+
+            {/* =============================================
+                TIMELINE
+            ============================================= */}
+
+            <Card>
+              <CardHeader>
+                <CardHeaderIcon>
+                  <FaBox />
+                </CardHeaderIcon>
+
+                <div>
+                  <CardEyebrow>
+                    PROGRESSION
+                  </CardEyebrow>
+
+                  <CardTitle>
+                    Votre commande
+                  </CardTitle>
+                </div>
+              </CardHeader>
+
+              <Timeline>
+                {/* COMMANDE CONFIRMÉE */}
+
+                <TimelineItem
+                  $active={true}
+                >
+                  <TimelineLine />
+
+                  <TimelineDot $active>
+                    <FaCheck />
+                  </TimelineDot>
+
+                  <TimelineContent>
+                    <TimelineItemTitle>
+                      Commande confirmée
+                    </TimelineItemTitle>
+
+                    <TimelineItemText>
+                      Votre commande a été
+                      enregistrée.
+                    </TimelineItemText>
+                  </TimelineContent>
+                </TimelineItem>
+
+                {/* LIVREUR */}
+
+                <TimelineItem
+                  $active={[
+                    "ACCEPTED",
+                    "PICKING_UP",
+                    "IN_DELIVERY",
+                    "DELIVERED",
+                  ].includes(statut)}
+                >
+                  <TimelineLine />
+
+                  <TimelineDot
+                    $active={[
+                      "ACCEPTED",
+                      "PICKING_UP",
+                      "IN_DELIVERY",
+                      "DELIVERED",
+                    ].includes(statut)}
                   >
-                    {commandeEnCours ===
-                    commandeActive._id
-                      ? "Préparation..."
-                      : "Commencer la récupération"}
+                    <FaMotorcycle />
+                  </TimelineDot>
 
-                    <span>→</span>
-                  </DeliveryButton>
-                )}
+                  <TimelineContent>
+                    <TimelineItemTitle>
+                      Livreur attribué
+                    </TimelineItemTitle>
 
-                {commandeActive.livraison
-                  ?.statut ===
-                  "PICKING_UP" && (
-                  <DeliveryButton
-                    onClick={() =>
-                      recupererCommande(
-                        commandeActive._id,
-                      )
-                    }
-                    disabled={
-                      commandeEnCours ===
-                      commandeActive._id
-                    }
+                    <TimelineItemText>
+                      {livreur?.username
+                        ? `${livreur.username} prend en charge votre commande.`
+                        : "Nous recherchons un livreur disponible."}
+                    </TimelineItemText>
+                  </TimelineContent>
+                </TimelineItem>
+
+                {/* RÉCUPÉRATION */}
+
+                <TimelineItem
+                  $active={[
+                    "PICKING_UP",
+                    "IN_DELIVERY",
+                    "DELIVERED",
+                  ].includes(statut)}
+                >
+                  <TimelineLine />
+
+                  <TimelineDot
+                    $active={[
+                      "PICKING_UP",
+                      "IN_DELIVERY",
+                      "DELIVERED",
+                    ].includes(statut)}
                   >
-                    {commandeEnCours ===
-                    commandeActive._id
-                      ? "Confirmation..."
-                      : "J'ai récupéré la commande"}
+                    <FaBox />
+                  </TimelineDot>
 
-                    <span>→</span>
-                  </DeliveryButton>
-                )}
+                  <TimelineContent>
+                    <TimelineItemTitle>
+                      Commande en préparation
+                    </TimelineItemTitle>
 
-                {commandeActive.livraison
-                  ?.statut ===
-                  "IN_DELIVERY" && (
-                  <DeliveryButton
-                    onClick={() =>
-                      livrerCommande(
-                        commandeActive._id,
-                      )
-                    }
-                    disabled={
-                      commandeEnCours ===
-                      commandeActive._id
-                    }
+                    <TimelineItemText>
+                      Le livreur récupère votre
+                      commande.
+                    </TimelineItemText>
+                  </TimelineContent>
+                </TimelineItem>
+
+                {/* LIVRAISON */}
+
+                <TimelineItem
+                  $active={[
+                    "IN_DELIVERY",
+                    "DELIVERED",
+                  ].includes(statut)}
+                  $last
+                >
+                  <TimelineDot
+                    $active={[
+                      "IN_DELIVERY",
+                      "DELIVERED",
+                    ].includes(statut)}
                   >
-                    {commandeEnCours ===
-                    commandeActive._id
-                      ? "Confirmation..."
-                      : "Confirmer la livraison"}
+                    <FaLocationArrow />
+                  </TimelineDot>
 
-                    <span>✓</span>
-                  </DeliveryButton>
-                )}
-              </DeliveryAction>
+                  <TimelineContent>
+                    <TimelineItemTitle>
+                      Livraison
+                    </TimelineItemTitle>
 
-              {/* ========================================
-                  CARTE TEMPS RÉEL
-              ======================================== */}
+                    <TimelineItemText>
+                      {statut === "DELIVERED"
+                        ? "Votre commande a été livrée."
+                        : "Votre commande est en route vers vous."}
+                    </TimelineItemText>
+                  </TimelineContent>
+                </TimelineItem>
+              </Timeline>
+            </Card>
+          </MainColumn>
 
-              <MapSection>
-                <MapHeader>
-                  <div>
-                    <MapTitle>
-                      Suivi de la
-                      livraison
-                    </MapTitle>
+          {/* =================================================
+              SIDEBAR
+          ================================================= */}
 
-                    <MapSubtitle>
-                      Position du client et
-                      itinéraire en temps
-                      réel
-                    </MapSubtitle>
-                  </div>
+          <SideColumn>
+            {/* =============================================
+                LIVREUR
+            ============================================= */}
 
-                  <LiveBadge>
+            {livreurDisponible && (
+              <DriverCard>
+                <DriverCardHeader>
+                  <DriverLabel>
+                    VOTRE LIVREUR
+                  </DriverLabel>
+
+                  <OnlineBadge>
                     <LiveDot />
-                    EN DIRECT
-                  </LiveBadge>
-                </MapHeader>
+                    EN LIGNE
+                  </OnlineBadge>
+                </DriverCardHeader>
 
-                {positionClient ||
-                positionLivreur ? (
-                  <>
-                    <MapBox>
-                      <MapContainer
-                        center={[
-                          Number(
-                            positionLivreur
-                              ?.latitude ??
-                              positionClient
-                                ?.latitude ??
-                              5.3364,
-                          ),
+                <DriverMain>
+                  <DriverAvatar>
+                    {livreur.username
+                      ?.charAt(0)
+                      ?.toUpperCase() ||
+                      "L"}
+                  </DriverAvatar>
 
-                          Number(
-                            positionLivreur
-                              ?.longitude ??
-                              positionClient
-                                ?.longitude ??
-                              -4.0267,
-                          ),
-                        ]}
-                        zoom={14}
-                        scrollWheelZoom
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                        }}
-                      >
-                        <TileLayer
-                          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        />
+                  <DriverIdentity>
+                    <DriverName>
+                      {livreur.username}
+                    </DriverName>
 
-                        <AjusterCarte
-                          positionLivreur={
-                            positionLivreur
-                          }
-                          positionClient={
-                            positionClient
-                          }
-                          itineraire={
-                            itineraire
-                          }
-                        />
+                    <DriverRole>
+                      Livreur partenaire
+                    </DriverRole>
 
-                        {/* ROUTE */}
-
-                        <ItineraireRoutier
-                          positionLivreur={
-                            positionLivreur
-                          }
-                          positionClient={
-                            positionClient
-                          }
-                          onRouteUpdate={
-                            mettreAJourItineraire
-                          }
-                        />
-
-                        {/* LIVREUR */}
-
-                        {positionValide(
-                          positionLivreur,
-                        ) && (
-                          <Marker
-                            position={[
-                              Number(
-                                positionLivreur.latitude,
-                              ),
-                              Number(
-                                positionLivreur.longitude,
-                              ),
-                            ]}
-                            icon={
-                              livreurIcon
-                            }
-                            zIndexOffset={
-                              1000
-                            }
-                          >
-                            <Popup>
-                              <strong>
-                                🚴 Votre
-                                position
-                              </strong>
-
-                              <br />
-
-                              Position GPS
-                              actuelle
-                            </Popup>
-                          </Marker>
-                        )}
-
-                        {/* CLIENT */}
-
-                        {positionValide(
-                          positionClient,
-                        ) && (
-                          <Marker
-                            position={[
-                              Number(
-                                positionClient.latitude,
-                              ),
-                              Number(
-                                positionClient.longitude,
-                              ),
-                            ]}
-                            icon={
-                              clientIcon
-                            }
-                            zIndexOffset={
-                              900
-                            }
-                          >
-                            <Popup>
-                              <strong>
-                                👤 Client
-                              </strong>
-
-                              <br />
-
-                              {commandeActive
-                                .client
-                                ?.prenom ||
-                                ""}{" "}
-                              {commandeActive
-                                .client
-                                ?.nom ||
-                                ""}
-
-                              <br />
-
-                              {commandeActive
-                                .client
-                                ?.adresse ||
-                                "Adresse non renseignée"}
-                            </Popup>
-                          </Marker>
-                        )}
-                      </MapContainer>
-                    </MapBox>
-
-                    {/* INFORMATIONS ITINÉRAIRE */}
-
-                    <RouteInfo>
-                      <RouteInfoItem>
-                        <RouteIcon>
-                          🛣️
-                        </RouteIcon>
-
-                        <div>
-                          <RouteLabel>
-                            DISTANCE
-                          </RouteLabel>
-
-                          <RouteValue>
-                            {positionClient &&
-                            positionLivreur
-                              ? itineraire
-                                ? formatDistance(
-                                    itineraire.distance,
-                                  )
-                                : "Calcul..."
-                              : "—"}
-                          </RouteValue>
-                        </div>
-                      </RouteInfoItem>
-
-                      <RouteSeparator />
-
-                      <RouteInfoItem>
-                        <RouteIcon>
-                          ⏱️
-                        </RouteIcon>
-
-                        <div>
-                          <RouteLabel>
-                            TEMPS ESTIMÉ
-                          </RouteLabel>
-
-                          <RouteValue>
-                            {positionClient &&
-                            positionLivreur
-                              ? itineraire
-                                ? formatDuree(
-                                    itineraire.duration,
-                                  )
-                                : "Calcul..."
-                              : "—"}
-                          </RouteValue>
-                        </div>
-                      </RouteInfoItem>
-
-                      <RouteSeparator />
-
-                      <RouteInfoItem>
-                        <RouteIcon>
-                          📍
-                        </RouteIcon>
-
-                        <RouteAddress>
-                          <RouteLabel>
-                            DESTINATION
-                          </RouteLabel>
-
-                          <RouteValue>
-                            {commandeActive
-                              .client
-                              ?.adresse ||
-                              "Adresse client"}
-                          </RouteValue>
-                        </RouteAddress>
-                      </RouteInfoItem>
-                    </RouteInfo>
-
-                    {/* ÉTAT GPS */}
-
-                    <GpsStatusGrid>
-                      <GpsStatus
-                        $active={
-                          !!positionLivreur
-                        }
-                      >
-                        <GpsIndicator
-                          $active={
-                            !!positionLivreur
-                          }
-                        />
-
-                        <div>
-                          <GpsTitle>
-                            Votre GPS
-                          </GpsTitle>
-
-                          <GpsText>
-                            {positionLivreur
-                              ? "Position reçue"
-                              : "En attente..."}
-                          </GpsText>
-                        </div>
-                      </GpsStatus>
-
-                      <GpsStatus
-                        $active={
-                          !!positionClient
-                        }
-                      >
-                        <GpsIndicator
-                          $active={
-                            !!positionClient
-                          }
-                        />
-
-                        <div>
-                          <GpsTitle>
-                            GPS client
-                          </GpsTitle>
-
-                          <GpsText>
-                            {positionClient
-                              ? "Position reçue"
-                              : "En attente du client..."}
-                          </GpsText>
-                        </div>
-                      </GpsStatus>
-                    </GpsStatusGrid>
-
-                    {!positionClient && (
-                      <GpsWarning>
-                        <span>📍</span>
-
-                        <div>
-                          <strong>
-                            Position du
-                            client en attente
-                          </strong>
-
-                          <p>
-                            Le client doit
-                            ouvrir sa page de
-                            suivi et autoriser
-                            la géolocalisation
-                            pour apparaître sur
-                            votre carte.
-                          </p>
-                        </div>
-                      </GpsWarning>
+                    {positionLivreur && (
+                      <DriverLocation>
+                        <FaLocationArrow />
+                        Position active
+                      </DriverLocation>
                     )}
-                  </>
-                ) : (
-                  <MapEmpty>
-                    <MapEmptyIcon>
-                      📍
-                    </MapEmptyIcon>
+                  </DriverIdentity>
+                </DriverMain>
 
-                    <strong>
-                      Position GPS
-                      indisponible
-                    </strong>
+                <DriverActions>
+                  {livreur.telephone && (
+                    <DriverAction
+                      as="a"
+                      href={`tel:${livreur.telephone}`}
+                    >
+                      <FaPhone />
+
+                      <span>
+                        Appeler
+                      </span>
+                    </DriverAction>
+                  )}
+
+                  <DriverAction
+                    onClick={() =>
+                      alert(
+                        "Le chat sera activé à la prochaine étape.",
+                      )
+                    }
+                  >
+                    <FaComments />
 
                     <span>
-                      La carte apparaîtra dès
-                      que le livreur ou le
-                      client partagera sa
-                      position.
+                      Discuter
                     </span>
-                  </MapEmpty>
+                  </DriverAction>
+                </DriverActions>
+              </DriverCard>
+            )}
+
+            {/* =============================================
+                DESTINATION
+            ============================================= */}
+
+            <DestinationCard>
+              <DestinationIcon>
+                <FaMapMarkerAlt />
+              </DestinationIcon>
+
+              <div>
+                <DestinationLabel>
+                  DESTINATION
+                </DestinationLabel>
+
+                <DestinationAddress>
+                  {commande.client?.adresse ||
+                    "Adresse de livraison"}
+                </DestinationAddress>
+
+                {commande.client?.ville && (
+                  <DestinationCity>
+                    {commande.client.ville}
+                  </DestinationCity>
                 )}
-              </MapSection>
-            </DeliveryCard>
-          </Section>
-        )}
+              </div>
+            </DestinationCard>
 
-        {/* ==========================================
-            COMMANDES DISPONIBLES
-        ========================================== */}
+            {/* =============================================
+                SÉCURITÉ
+            ============================================= */}
 
-        <Section>
-          <SectionHeaderRow>
-            <div>
-              <SectionEyebrow>
-                À VOUS DE JOUER
-              </SectionEyebrow>
+            <SecurityCard>
+              <SecurityIcon>
+                <FaShieldAlt />
+              </SecurityIcon>
 
-              <SectionTitle>
-                Commandes disponibles
-              </SectionTitle>
+              <div>
+                <SecurityTitle>
+                  Suivi sécurisé
+                </SecurityTitle>
 
-              <SectionDescription>
-                Les nouvelles commandes en
-                attente d'un livreur.
-              </SectionDescription>
-            </div>
+                <SecurityText>
+                  La position du livreur est
+                  transmise en temps réel pendant
+                  votre livraison.
+                </SecurityText>
+              </div>
+            </SecurityCard>
 
-            <CountBadge>
-              {
-                commandesDisponibles.length
-              }
-            </CountBadge>
-          </SectionHeaderRow>
+            {/* =============================================
+                TEMPS RÉEL
+            ============================================= */}
 
-          {commandesDisponibles.length ===
-          0 ? (
-            <EmptyCard>
-              <EmptyIcon>✓</EmptyIcon>
+            <RealtimeCard>
+              <RealtimeIcon>
+                <FaClock />
+              </RealtimeIcon>
 
-              <EmptyTitle>
-                Tout est calme pour le
-                moment.
-              </EmptyTitle>
+              <div>
+                <RealtimeTitle>
+                  Suivi en temps réel
+                </RealtimeTitle>
 
-              <EmptyText>
-                Aucune nouvelle commande
-                n'attend actuellement un
-                livreur.
-              </EmptyText>
-
-              <EmptyButton
-                onClick={() =>
-                  chargerTout()
-                }
-              >
-                Vérifier à nouveau
-              </EmptyButton>
-            </EmptyCard>
-          ) : (
-            <OrdersGrid>
-              {commandesDisponibles.map(
-                (commande) => (
-                  <OrderCard
-                    key={commande._id}
-                  >
-                    <OrderHeader>
-                      <div>
-                        <OrderEyebrow>
-                          COMMANDE
-                        </OrderEyebrow>
-
-                        <OrderNumber>
-                          #
-                          {commande._id.slice(
-                            -6,
-                          )}
-                        </OrderNumber>
-                      </div>
-
-                      <OrderBadge>
-                        Nouvelle
-                      </OrderBadge>
-                    </OrderHeader>
-
-                    <OrderPrice>
-                      {formatPrix(
-                        commande.totalProduits,
-                      )}{" "}
-                      <small>
-                        FCFA
-                      </small>
-                    </OrderPrice>
-
-                    <OrderDivider />
-
-                    <InfoList>
-                      <InfoRow>
-                        <InfoIcon>
-                          ●
-                        </InfoIcon>
-
-                        <InfoContent>
-                          <InfoLabel>
-                            CLIENT
-                          </InfoLabel>
-
-                          <InfoValue>
-                            {commande
-                              .client
-                              ?.username ||
-                              commande
-                                .client
-                                ?.nom ||
-                              "Client"}
-                          </InfoValue>
-                        </InfoContent>
-                      </InfoRow>
-
-                      <InfoRow>
-                        <InfoIcon>
-                          ◉
-                        </InfoIcon>
-
-                        <InfoContent>
-                          <InfoLabel>
-                            VILLE
-                          </InfoLabel>
-
-                          <InfoValue>
-                            {commande
-                              .client
-                              ?.ville ||
-                              "Non renseignée"}
-                          </InfoValue>
-                        </InfoContent>
-                      </InfoRow>
-
-                      <InfoRow>
-                        <InfoIcon>
-                          ⌖
-                        </InfoIcon>
-
-                        <InfoContent>
-                          <InfoLabel>
-                            ADRESSE
-                          </InfoLabel>
-
-                          <InfoValue>
-                            {commande
-                              .client
-                              ?.adresse ||
-                              "Non renseignée"}
-                          </InfoValue>
-                        </InfoContent>
-                      </InfoRow>
-
-                      <InfoRow>
-                        <InfoIcon>
-                          ●
-                        </InfoIcon>
-
-                        <InfoContent>
-                          <InfoLabel>
-                            NUMÉRO
-                          </InfoLabel>
-
-                          <InfoValue>
-                            {commande
-                              .client
-                              ?.numero ||
-                              "Non renseigné"}
-                          </InfoValue>
-                        </InfoContent>
-                      </InfoRow>
-                    </InfoList>
-
-                    <OrderFooter>
-                      <ArticleCount>
-                        {commande.panier
-                          ?.length ||
-                          0}{" "}
-                        article
-                        {commande.panier
-                          ?.length > 1
-                          ? "s"
-                          : ""}
-                      </ArticleCount>
-
-                      <AcceptButton
-                        onClick={() =>
-                          accepterCommande(
-                            commande._id,
-                          )
-                        }
-                        disabled={
-                          livreur?.statut ===
-                            "BUSY" ||
-                          !!livreur?.commandeActuelle ||
-                          commandeEnCours ===
-                            commande._id
-                        }
-                      >
-                        {commandeEnCours ===
-                        commande._id
-                          ? "Acceptation..."
-                          : "Accepter"}
-
-                        <span>→</span>
-                      </AcceptButton>
-                    </OrderFooter>
-                  </OrderCard>
-                ),
-              )}
-            </OrdersGrid>
-          )}
-        </Section>
-
-        {/* ==========================================
-            MES COMMANDES
-        ========================================== */}
-
-        <Section>
-          <SectionHeaderRow>
-            <div>
-              <SectionEyebrow>
-                VOTRE ACTIVITÉ
-              </SectionEyebrow>
-
-              <SectionTitle>
-                Mes commandes
-              </SectionTitle>
-
-              <SectionDescription>
-                Les commandes actuellement
-                associées à votre compte.
-              </SectionDescription>
-            </div>
-
-            <CountBadge>
-              {mesCommandes.length}
-            </CountBadge>
-          </SectionHeaderRow>
-
-          {mesCommandes.length === 0 ? (
-            <EmptyCard>
-              <EmptyIcon>—</EmptyIcon>
-
-              <EmptyTitle>
-                Aucune commande.
-              </EmptyTitle>
-
-              <EmptyText>
-                Vos commandes apparaîtront
-                ici lorsqu'elles vous seront
-                attribuées.
-              </EmptyText>
-            </EmptyCard>
-          ) : (
-            <MyOrders>
-              {mesCommandes.map(
-                (commande) => (
-                  <MyOrderCard
-                    key={commande._id}
-                  >
-                    <MyOrderMain>
-                      <MyOrderNumber>
-                        #
-                        {commande._id.slice(
-                          -6,
-                        )}
-                      </MyOrderNumber>
-
-                      <MyOrderLocation>
-                        {commande.client
-                          ?.ville ||
-                          "Ville inconnue"}
-                      </MyOrderLocation>
-
-                      <MyOrderAddress>
-                        {commande.client
-                          ?.adresse ||
-                          "Adresse non renseignée"}
-                      </MyOrderAddress>
-                    </MyOrderMain>
-
-                    <MyOrderStatus
-                      $status={
-                        commande
-                          .livraison
-                          ?.statut
-                      }
-                    >
-                      {commande.livraison
-                        ?.statut ||
-                        "INCONNU"}
-                    </MyOrderStatus>
-
-                    <MyOrderPrice>
-                      {formatPrix(
-                        commande.totalProduits,
-                      )}{" "}
-                      FCFA
-                    </MyOrderPrice>
-                  </MyOrderCard>
-                ),
-              )}
-            </MyOrders>
-          )}
-        </Section>
-
-        {/* ==========================================
-            FOOTER
-        ========================================== */}
-
-        <Footer>
-          <FooterBrand>
-            NUMA
-          </FooterBrand>
-
-          <FooterText>
-            Espace professionnel livreur
-          </FooterText>
-        </Footer>
-      </Main>
+                <RealtimeText>
+                  Cette page se met automatiquement
+                  à jour sans avoir besoin de la
+                  recharger.
+                </RealtimeText>
+              </div>
+            </RealtimeCard>
+          </SideColumn>
+        </MainGrid>
+      </Content>
     </Page>
   );
 }
 
 // ======================================================
-// STYLED COMPONENTS
+// STATUTS
+// ======================================================
+
+const statutConfig = {
+  NOT_STARTED: {
+    label: "Recherche non démarrée",
+    description:
+      "La recherche d'un livreur n'a pas encore commencé.",
+    icon: "⏳",
+    type: "neutral",
+  },
+
+  SEARCHING: {
+    label: "Recherche d'un livreur",
+    description:
+      "Nous recherchons actuellement un livreur disponible.",
+    icon: "🔎",
+    type: "searching",
+  },
+
+  REQUESTED: {
+    label: "Livreur recherché",
+    description:
+      "Votre demande de livraison est en cours.",
+    icon: "🔎",
+    type: "searching",
+  },
+
+  ACCEPTED: {
+    label: "Livreur attribué",
+    description:
+      "Un livreur a accepté votre commande.",
+    icon: "🚴",
+    type: "success",
+  },
+
+  PICKING_UP: {
+    label: "Récupération en cours",
+    description:
+      "Votre livreur récupère actuellement votre commande.",
+    icon: "📦",
+    type: "warning",
+  },
+
+  IN_DELIVERY: {
+    label: "Votre commande est en route",
+    description:
+      "Votre livreur se dirige vers votre adresse.",
+    icon: "🚚",
+    type: "success",
+  },
+
+  DELIVERED: {
+    label: "Commande livrée",
+    description:
+      "Votre commande a été livrée avec succès.",
+    icon: "✓",
+    type: "success",
+  },
+
+  CANCELLED: {
+    label: "Commande annulée",
+    description:
+      "Cette livraison a été annulée.",
+    icon: "×",
+    type: "danger",
+  },
+};
+
+// ======================================================
+// PAGE
 // ======================================================
 
 const Page = styled.div`
   min-height: 100vh;
-  background: #f5f5f7;
-  color: #1d1d1f;
-  font-family:
-    Inter,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-`;
-
-const Header = styled.header`
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-  background: rgba(255, 255, 255, 0.88);
-  border-bottom: 1px solid
-    rgba(0, 0, 0, 0.07);
-  backdrop-filter: blur(20px);
-`;
-
-const HeaderInner = styled.div`
-  width: min(1180px, calc(100% - 40px));
-  min-height: 72px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-
-  @media (max-width: 650px) {
-    width: min(100% - 24px, 1180px);
-  }
-`;
-
-const Brand = styled.div`
-  display: flex;
-  align-items: flex-start;
-  font-size: 22px;
-  font-weight: 900;
-  letter-spacing: -1px;
-`;
-
-const BrandDot = styled.span`
-  width: 6px;
-  height: 6px;
-  margin: 5px 0 0 3px;
-  border-radius: 50%;
-  background: #0071e3;
-`;
-
-const HeaderRight = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-`;
-
-const StatusPill = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  min-height: 36px;
-  padding: 0 13px;
-  background: ${({ $status }) =>
-    $status === "AVAILABLE"
-      ? "#ecfdf3"
-      : $status === "BUSY"
-        ? "#fff7ed"
-        : "#f2f2f4"};
-  border-radius: 999px;
-  color: ${({ $status }) =>
-    $status === "AVAILABLE"
-      ? "#087a35"
-      : $status === "BUSY"
-        ? "#b45309"
-        : "#6e6e73"};
-  font-size: 12px;
-  font-weight: 750;
-
-  @media (max-width: 500px) {
-    padding: 0 10px;
-    font-size: 11px;
-  }
-`;
-
-const StatusDot = styled.span`
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: ${({ $status }) =>
-    $status === "AVAILABLE"
-      ? "#16a34a"
-      : $status === "BUSY"
-        ? "#f59e0b"
-        : "#8e8e93"};
-`;
-
-const RefreshButton = styled.button`
-  min-height: 38px;
-  padding: 0 14px;
-  border: 1px solid #dedee3;
-  border-radius: 11px;
-  background: white;
-  color: #1d1d1f;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-
-  &:hover:not(:disabled) {
-    background: #f7f7f8;
-  }
-
-  &:disabled {
-    opacity: 0.55;
-    cursor: default;
-  }
-
-  @media (max-width: 500px) {
-    span {
-      display: none;
-    }
-  }
-`;
-
-const RefreshIcon = styled.span`
-  display: inline-block;
-  font-size: 18px;
-  animation: ${({ $loading }) =>
-    $loading
-      ? "rotation 0.8s linear infinite"
-      : "none"};
-
-  @keyframes rotation {
-    from {
-      transform: rotate(0);
-    }
-
-    to {
-      transform: rotate(360deg);
-    }
-  }
-`;
-
-const Main = styled.main`
-  width: min(1180px, calc(100% - 40px));
-  margin: 0 auto;
-  padding: 40px 0 60px;
-
-  @media (max-width: 650px) {
-    width: min(100% - 24px, 1180px);
-    padding-top: 25px;
-  }
-`;
-
-const Alert = styled.div`
-  margin-bottom: 16px;
-  padding: 13px 15px;
-  border-radius: 13px;
-  background: ${({ $success }) =>
-    $success ? "#ecfdf3" : "#fff0f0"};
-  border: 1px solid
-    ${({ $success }) =>
-      $success ? "#c5f1d3" : "#ffd1d1"};
-  color: ${({ $success }) =>
-    $success ? "#087a35" : "#bb1e1e"};
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 13px;
-  font-weight: 650;
-`;
-
-const AlertIcon = styled.div`
-  width: 25px;
-  height: 25px;
-  border-radius: 50%;
-  background: currentColor;
-  color: white;
-  display: grid;
-  place-items: center;
-  font-size: 12px;
-`;
-
-const Hero = styled.section`
-  min-height: 270px;
-  padding: 45px;
-  margin-bottom: 28px;
-  border-radius: 30px;
-  background: #111;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  overflow: hidden;
-
-  @media (max-width: 650px) {
-    min-height: 220px;
-    padding: 30px 24px;
-    border-radius: 22px;
-  }
-`;
-
-const HeroText = styled.div``;
-
-const Eyebrow = styled.div`
-  margin-bottom: 16px;
-  color: #a1a1a6;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 1.5px;
-`;
-
-const HeroTitle = styled.h1`
-  margin: 0;
-  font-size: clamp(36px, 6vw, 62px);
-  line-height: 0.98;
-  letter-spacing: -3px;
-`;
-
-const HeroName = styled.span`
-  color: #8e8e93;
-`;
-
-const HeroSubtitle = styled.p`
-  margin: 22px 0 0;
-  color: #b9b9bd;
-  font-size: 16px;
-  line-height: 1.6;
-`;
-
-const HeroAvatar = styled.div`
-  width: 115px;
-  height: 115px;
-  border-radius: 50%;
-  background: #242426;
-  border: 1px solid #333336;
-  display: grid;
-  place-items: center;
-  font-size: 42px;
-  font-weight: 800;
-
-  @media (max-width: 650px) {
-    width: 70px;
-    height: 70px;
-    font-size: 26px;
-  }
-`;
-
-const StatsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(
-    3,
-    minmax(0, 1fr)
-  );
-  gap: 15px;
-  margin-bottom: 55px;
-
-  @media (max-width: 750px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const StatCard = styled.div`
-  min-height: 165px;
-  padding: 23px;
-  background: white;
-  border: 1px solid #e7e7ea;
-  border-radius: 20px;
-`;
-
-const StatTop = styled.div`
-  display: flex;
-  justify-content: space-between;
-`;
-
-const StatLabel = styled.div`
-  color: #6e6e73;
-  font-size: 12px;
-  font-weight: 700;
-`;
-
-const StatIcon = styled.div`
-  color: #a1a1a6;
-`;
-
-const StatNumber = styled.div`
-  margin-top: 23px;
-  font-size: 38px;
-  font-weight: 800;
-  letter-spacing: -1.5px;
-`;
-
-const StatStatus = styled.div`
-  margin-top: 29px;
-  font-size: 24px;
-  font-weight: 800;
-  color: ${({ $status }) =>
-    $status === "AVAILABLE"
-      ? "#159447"
-      : $status === "BUSY"
-        ? "#d97706"
-        : "#86868b"};
-`;
-
-const StatDescription = styled.div`
-  margin-top: 5px;
-  color: #9a9a9f;
-  font-size: 11px;
-`;
-
-const Section = styled.section`
-  margin-top: 55px;
-`;
-
-const SectionHeader = styled.div`
-  margin-bottom: 20px;
-`;
-
-const SectionHeaderRow = styled.div`
-  margin-bottom: 20px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 20px;
-`;
-
-const SectionEyebrow = styled.div`
-  margin-bottom: 7px;
-  color: #86868b;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 1.3px;
-`;
-
-const SectionTitle = styled.h2`
-  margin: 0;
-  color: #1d1d1f;
-  font-size: 27px;
-  line-height: 1.15;
-  letter-spacing: -1px;
-`;
-
-const SectionDescription = styled.p`
-  max-width: 570px;
-  margin: 8px 0 0;
-  color: #86868b;
-  font-size: 13px;
-  line-height: 1.6;
-`;
-
-const ProfileCard = styled.div`
-  padding: 24px;
-  border-radius: 21px;
-  background: white;
-  border: 1px solid #e7e7ea;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 25px;
-
-  @media (max-width: 650px) {
-    flex-direction: column;
-    align-items: stretch;
-  }
-`;
-
-const ProfileInfo = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 15px;
-`;
-
-const ProfileAvatar = styled.div`
-  width: 58px;
-  height: 58px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  background: #111;
-  color: white;
-  display: grid;
-  place-items: center;
-  font-size: 21px;
-  font-weight: 800;
-`;
-
-const ProfileName = styled.div`
-  font-size: 16px;
-  font-weight: 800;
-`;
-
-const ProfileEmail = styled.div`
-  margin-top: 3px;
-  color: #86868b;
-  font-size: 12px;
-`;
-
-const ProfilePhone = styled.div`
-  margin-top: 2px;
-  color: #86868b;
-  font-size: 12px;
-`;
-
-const StatusSelector = styled.div`
-  padding: 4px;
-  border-radius: 13px;
-  background: #f1f1f3;
-  display: flex;
-  gap: 4px;
-
-  @media (max-width: 650px) {
-    width: 100%;
-  }
-`;
-
-const StatusButton = styled.button`
-  min-height: 42px;
-  padding: 0 17px;
-  border: 0;
-  border-radius: 10px;
-  background: ${({ $active }) =>
-    $active ? "white" : "transparent"};
-  color: ${({ $active }) =>
-    $active ? "#111" : "#86868b"};
-  box-shadow: ${({ $active }) =>
-    $active
-      ? "0 2px 8px rgba(0,0,0,.06)"
-      : "none"};
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 12px;
-  font-weight: 750;
-  cursor: pointer;
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
-  }
-
-  @media (max-width: 650px) {
-    flex: 1;
-    justify-content: center;
-  }
-`;
-
-const ButtonDot = styled.span`
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-`;
-
-const DeliveryCard = styled.div`
-  padding: 28px;
-  border-radius: 25px;
-  background: #111;
-  color: white;
-
-  @media (max-width: 650px) {
-    padding: 20px;
-    border-radius: 20px;
-  }
-`;
-
-const DeliveryTop = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 15px;
-`;
-
-const DeliveryLabel = styled.div`
-  color: #77777d;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 1px;
-`;
-
-const DeliveryNumber = styled.div`
-  margin-top: 4px;
-  font-size: 22px;
-  font-weight: 800;
-`;
-
-const DeliveryStatus = styled.div`
-  padding: 8px 11px;
-  border-radius: 999px;
-  background: ${({ $status }) =>
-    $status === "IN_DELIVERY"
-      ? "#ecfdf3"
-      : "#29292c"};
-  color: ${({ $status }) =>
-    $status === "IN_DELIVERY"
-      ? "#138a42"
-      : "#d6d6da"};
-  font-size: 10px;
-  font-weight: 750;
-`;
-
-const DeliveryDivider = styled.div`
-  height: 1px;
-  margin: 23px 0;
-  background: #29292c;
-`;
-
-const DeliveryGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(
-    4,
-    minmax(0, 1fr)
-  );
-  gap: 25px;
-
-  @media (max-width: 800px) {
-    grid-template-columns: repeat(
-      2,
-      1fr
-    );
-  }
-
-  @media (max-width: 450px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const DeliveryInfo = styled.div`
-  min-width: 0;
-`;
-
-const DeliveryInfoLabel = styled.div`
-  margin-bottom: 5px;
-  color: #77777d;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.8px;
-`;
-
-const DeliveryInfoValue = styled.div`
-  font-size: 13px;
-  font-weight: 650;
-  overflow-wrap: anywhere;
-`;
-
-const DeliveryProducts = styled.div`
-  margin-top: 26px;
-  padding: 18px;
-  background: #1b1b1d;
-  border-radius: 15px;
-`;
-
-const DeliveryProduct = styled.div`
-  padding: 9px 0;
-  display: flex;
-  justify-content: space-between;
-  gap: 15px;
-  border-bottom: 1px solid #2b2b2e;
-  font-size: 12px;
-
-  &:last-child {
-    border-bottom: 0;
-  }
-
-  span {
-    color: #c3c3c7;
-  }
-
-  strong {
-    white-space: nowrap;
-  }
-`;
-
-const DeliveryTotal = styled.div`
-  padding: 18px 0;
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-
-  strong {
-    font-size: 15px;
-  }
-`;
-
-const DeliveryAction = styled.div`
-  display: flex;
-  justify-content: flex-end;
-`;
-
-const DeliveryButton = styled.button`
-  min-height: 48px;
-  padding: 0 20px;
-  border: none;
-  border-radius: 13px;
-  background: white;
+  background: #f4f5f7;
   color: #111;
-  display: flex;
-  align-items: center;
-  gap: 25px;
-  font-size: 12px;
-  font-weight: 800;
-  cursor: pointer;
-
-  &:hover:not(:disabled) {
-    background: #eeeeef;
-  }
-
-  &:disabled {
-    opacity: 0.55;
-    cursor: default;
-  }
-
-  @media (max-width: 550px) {
-    width: 100%;
-    justify-content: space-between;
-  }
 `;
 
 // ======================================================
-// CARTE
+// HEADER
 // ======================================================
 
-const MapSection = styled.div`
-  margin-top: 30px;
-  padding: 20px;
-  background: white;
-  color: #1d1d1f;
-  border-radius: 20px;
+const TopHeader = styled.header`
+  height: 78px;
+  padding: 0 5%;
 
-  @media (max-width: 550px) {
-    padding: 14px;
-  }
-`;
+  background: rgba(255, 255, 255, 0.96);
 
-const MapHeader = styled.div`
-  margin-bottom: 15px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 15px;
-`;
 
-const MapTitle = styled.div`
-  font-size: 16px;
-  font-weight: 800;
-  letter-spacing: -0.4px;
-`;
+  border-bottom: 1px solid #e9e9eb;
 
-const MapSubtitle = styled.div`
-  margin-top: 3px;
-  color: #86868b;
-  font-size: 11px;
-`;
-
-const LiveBadge = styled.div`
-  flex-shrink: 0;
-  min-height: 30px;
-  padding: 0 10px;
-  border-radius: 999px;
-  background: #ecfdf3;
-  color: #138a42;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 9px;
-  font-weight: 850;
-  letter-spacing: 0.5px;
-`;
-
-const LiveDot = styled.span`
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #16a34a;
-  box-shadow: 0 0 0 4px
-    rgba(22, 163, 74, 0.12);
-`;
-
-const MapBox = styled.div`
-  width: 100%;
-  height: 460px;
-  overflow: hidden;
-  border-radius: 17px;
-  border: 1px solid #e5e5e7;
-
-  .leaflet-container {
-    font-family: inherit;
-    background: #eeeeef;
-  }
-
-  .leaflet-control-zoom {
-    border: none;
-    box-shadow: 0 4px 18px
-      rgba(0, 0, 0, 0.12);
-  }
-
-  .leaflet-control-zoom a {
-    border: 0;
-  }
+  position: relative;
+  z-index: 20;
 
   @media (max-width: 700px) {
-    height: 390px;
-  }
-
-  @media (max-width: 450px) {
-    height: 340px;
+    padding: 0 18px;
   }
 `;
 
-const RouteInfo = styled.div`
-  margin-top: 13px;
-  padding: 14px 16px;
-  border: 1px solid #e7e7ea;
-  border-radius: 15px;
-  background: #f7f7f8;
+const HeaderLeft = styled.div`
   display: flex;
   align-items: center;
-  gap: 16px;
-
-  @media (max-width: 720px) {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 11px;
-  }
+  gap: 14px;
 `;
 
-const RouteInfoItem = styled.div`
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-`;
+const BackIcon = styled.button`
+  width: 40px;
+  height: 40px;
 
-const RouteIcon = styled.div`
-  width: 35px;
-  height: 35px;
-  flex-shrink: 0;
-  border-radius: 10px;
-  border: 1px solid #e4e4e7;
+  border: 1px solid #e5e5e7;
+  border-radius: 12px;
+
   background: white;
-  display: grid;
-  place-items: center;
-  font-size: 16px;
-`;
 
-const RouteAddress = styled.div`
-  min-width: 0;
-`;
-
-const RouteLabel = styled.div`
-  color: #86868b;
-  font-size: 8px;
-  font-weight: 850;
-  letter-spacing: 0.8px;
-`;
-
-const RouteValue = styled.div`
-  margin-top: 2px;
-  color: #1d1d1f;
-  font-size: 13px;
-  font-weight: 750;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-`;
-
-const RouteSeparator = styled.div`
-  width: 1px;
-  height: 34px;
-  flex-shrink: 0;
-  background: #dedee1;
-
-  @media (max-width: 720px) {
-    width: 100%;
-    height: 1px;
-  }
-`;
-
-const GpsStatusGrid = styled.div`
-  margin-top: 12px;
-  display: grid;
-  grid-template-columns: repeat(
-    2,
-    minmax(0, 1fr)
-  );
-  gap: 10px;
-
-  @media (max-width: 500px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const GpsStatus = styled.div`
-  min-height: 58px;
-  padding: 10px 13px;
-  border: 1px solid
-    ${({ $active }) =>
-      $active ? "#cfeedd" : "#e6e6e9"};
-  border-radius: 13px;
-  background: ${({ $active }) =>
-    $active ? "#f4fff8" : "#fafafa"};
   display: flex;
-  align-items: center;
-  gap: 10px;
-`;
-
-const GpsIndicator = styled.div`
-  width: 9px;
-  height: 9px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  background: ${({ $active }) =>
-    $active ? "#16a34a" : "#b8b8bd"};
-  box-shadow: ${({ $active }) =>
-    $active
-      ? "0 0 0 5px rgba(22,163,74,.10)"
-      : "none"};
-`;
-
-const GpsTitle = styled.div`
-  font-size: 11px;
-  font-weight: 800;
-`;
-
-const GpsText = styled.div`
-  margin-top: 2px;
-  color: #86868b;
-  font-size: 10px;
-`;
-
-const GpsWarning = styled.div`
-  margin-top: 12px;
-  padding: 13px;
-  border-radius: 13px;
-  border: 1px solid #ffe1a8;
-  background: #fffaf0;
-  color: #8a5b08;
-  display: flex;
-  gap: 10px;
-  font-size: 11px;
-
-  strong {
-    font-size: 11px;
-  }
-
-  p {
-    margin: 3px 0 0;
-    color: #9a711f;
-    line-height: 1.5;
-  }
-`;
-
-const MapEmpty = styled.div`
-  min-height: 260px;
-  border-radius: 17px;
-  border: 1px dashed #d9d9dd;
-  background: #f7f7f8;
-  display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  text-align: center;
 
-  strong {
-    font-size: 14px;
-  }
+  cursor: pointer;
 
-  span {
-    max-width: 340px;
-    color: #86868b;
-    font-size: 11px;
-    line-height: 1.5;
+  transition: 0.2s;
+
+  &:hover {
+    background: #f5f5f5;
   }
 `;
 
-const MapEmptyIcon = styled.div`
-  margin-bottom: 3px;
-  font-size: 28px;
-`;
-
-// ======================================================
-// COMMANDES DISPONIBLES
-// ======================================================
-
-const CountBadge = styled.div`
-  min-width: 35px;
-  height: 35px;
-  padding: 0 10px;
-  border-radius: 999px;
-  background: #111;
-  color: white;
-  display: grid;
-  place-items: center;
-  font-size: 12px;
+const SmallTitle = styled.div`
+  font-size: 10px;
   font-weight: 800;
-`;
 
-const OrdersGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(
-    2,
-    minmax(0, 1fr)
-  );
-  gap: 15px;
+  letter-spacing: 0.13em;
 
-  @media (max-width: 760px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const OrderCard = styled.div`
-  padding: 22px;
-  background: white;
-  border: 1px solid #e6e6e9;
-  border-radius: 20px;
-`;
-
-const OrderHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-`;
-
-const OrderEyebrow = styled.div`
-  color: #9a9a9f;
-  font-size: 8px;
-  font-weight: 800;
-  letter-spacing: 1px;
+  color: #8a8a8f;
 `;
 
 const OrderNumber = styled.div`
   margin-top: 3px;
-  font-size: 18px;
+
+  font-size: 19px;
   font-weight: 800;
+
+  letter-spacing: -0.02em;
 `;
 
-const OrderBadge = styled.div`
-  padding: 6px 9px;
+const StatusBadge = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  padding: 10px 14px;
+
   border-radius: 999px;
-  background: #ecfdf3;
-  color: #138a42;
-  font-size: 9px;
-  font-weight: 800;
-`;
 
-const OrderPrice = styled.div`
-  margin-top: 20px;
-  font-size: 28px;
-  font-weight: 850;
-  letter-spacing: -1px;
+  background: ${({ $type }) => {
+    if ($type === "success") return "#e9f8ef";
+    if ($type === "searching") return "#fff7df";
+    if ($type === "danger") return "#ffecec";
+    return "#f1f1f3";
+  }};
 
-  small {
-    font-size: 11px;
-    color: #86868b;
-    letter-spacing: 0;
-  }
-`;
+  color: ${({ $type }) => {
+    if ($type === "success") return "#168344";
+    if ($type === "searching") return "#946d00";
+    if ($type === "danger") return "#b42318";
+    return "#555";
+  }};
 
-const OrderDivider = styled.div`
-  height: 1px;
-  margin: 20px 0;
-  background: #ededf0;
-`;
-
-const InfoList = styled.div`
-  display: grid;
-  gap: 13px;
-`;
-
-const InfoRow = styled.div`
-  display: flex;
-  gap: 10px;
-`;
-
-const InfoIcon = styled.div`
-  width: 26px;
-  height: 26px;
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  color: #86868b;
-  font-size: 10px;
-  background: #f4f4f5;
-  border-radius: 8px;
-`;
-
-const InfoContent = styled.div`
-  min-width: 0;
-`;
-
-const InfoLabel = styled.div`
-  color: #9a9a9f;
-  font-size: 8px;
-  font-weight: 800;
-  letter-spacing: 0.7px;
-`;
-
-const InfoValue = styled.div`
-  margin-top: 1px;
   font-size: 12px;
-  font-weight: 650;
-  overflow-wrap: anywhere;
-`;
+  font-weight: 800;
 
-const OrderFooter = styled.div`
-  margin-top: 20px;
-  padding-top: 17px;
-  border-top: 1px solid #ededf0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 15px;
-`;
-
-const ArticleCount = styled.div`
-  color: #86868b;
-  font-size: 10px;
-`;
-
-const AcceptButton = styled.button`
-  min-height: 40px;
-  padding: 0 15px;
-  border: 0;
-  border-radius: 10px;
-  background: #111;
-  color: white;
-  display: flex;
-  align-items: center;
-  gap: 13px;
-  font-size: 11px;
-  font-weight: 750;
-  cursor: pointer;
-
-  &:hover:not(:disabled) {
-    background: #2c2c2e;
+  svg {
+    font-size: 7px;
   }
 
-  &:disabled {
-    opacity: 0.45;
-    cursor: default;
+  @media (max-width: 550px) {
+    span {
+      display: none;
+    }
+
+    padding: 10px;
   }
 `;
 
 // ======================================================
-// MES COMMANDES
+// MAP
 // ======================================================
 
-const MyOrders = styled.div`
-  display: grid;
-  gap: 10px;
-`;
+const MapSection = styled.section`
+  height: 57vh;
+  min-height: 430px;
 
-const MyOrderCard = styled.div`
-  padding: 18px 20px;
-  background: white;
-  border: 1px solid #e7e7ea;
-  border-radius: 16px;
-  display: grid;
-  grid-template-columns:
-    minmax(0, 1fr) auto auto;
-  align-items: center;
-  gap: 20px;
+  position: relative;
 
-  @media (max-width: 650px) {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-`;
+  background: #dfe2e5;
 
-const MyOrderMain = styled.div`
-  min-width: 0;
-`;
-
-const MyOrderNumber = styled.div`
-  font-size: 13px;
-  font-weight: 800;
-`;
-
-const MyOrderLocation = styled.div`
-  margin-top: 5px;
-  font-size: 12px;
-  font-weight: 650;
-`;
-
-const MyOrderAddress = styled.div`
-  margin-top: 2px;
-  color: #86868b;
-  font-size: 10px;
   overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+
+  .leaflet-container {
+    font-family: inherit;
+  }
+
+  .leaflet-popup-content-wrapper {
+    border-radius: 14px;
+  }
+
+  .leaflet-popup-content {
+    margin: 13px 16px;
+  }
+
+  .driver-marker {
+    position: relative;
+
+    width: 58px;
+    height: 58px;
+  }
+
+  .driver-marker-inner {
+    width: 48px;
+    height: 48px;
+
+    margin: 5px;
+
+    border-radius: 50%;
+
+    background: #111;
+
+    border: 4px solid white;
+
+    box-shadow:
+      0 8px 25px rgba(0, 0, 0, 0.3);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 23px;
+
+    position: relative;
+    z-index: 2;
+  }
+
+  .driver-pulse {
+    position: absolute;
+
+    width: 48px;
+    height: 48px;
+
+    top: 5px;
+    left: 5px;
+
+    border-radius: 50%;
+
+    border: 2px solid rgba(17, 17, 17, 0.25);
+
+    animation: driverPulse 2s infinite;
+  }
+
+  .destination-marker-inner {
+    width: 42px;
+    height: 42px;
+
+    border-radius: 50%;
+
+    background: white;
+
+    border: 3px solid #111;
+
+    box-shadow:
+      0 5px 18px rgba(0, 0, 0, 0.22);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 22px;
+  }
+
+  @keyframes driverPulse {
+    0% {
+      transform: scale(0.8);
+      opacity: 0.8;
+    }
+
+    70% {
+      transform: scale(1.45);
+      opacity: 0;
+    }
+
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @media (max-width: 700px) {
+    min-height: 400px;
+    height: 52vh;
+  }
 `;
 
-const MyOrderStatus = styled.div`
-  padding: 7px 10px;
-  border-radius: 999px;
-  background: ${({ $status }) =>
-    $status === "DELIVERED"
-      ? "#ecfdf3"
-      : $status === "IN_DELIVERY"
-        ? "#eef6ff"
-        : "#f2f2f4"};
-  color: ${({ $status }) =>
-    $status === "DELIVERED"
-      ? "#138a42"
-      : $status === "IN_DELIVERY"
-        ? "#0071e3"
-        : "#6e6e73"};
-  font-size: 9px;
-  font-weight: 800;
-`;
+const MapOverlay = styled.div`
+  position: absolute;
 
-const MyOrderPrice = styled.div`
-  white-space: nowrap;
-  font-size: 12px;
-  font-weight: 800;
-`;
+  top: 18px;
+  left: 20px;
 
-// ======================================================
-// EMPTY
-// ======================================================
+  z-index: 500;
 
-const EmptyCard = styled.div`
-  min-height: 245px;
-  padding: 25px;
-  border: 1px dashed #d4d4d8;
-  border-radius: 20px;
-  background: white;
   display: flex;
   flex-direction: column;
+  gap: 10px;
+
+  pointer-events: none;
+`;
+
+const LiveBadge = styled.div`
+  width: fit-content;
+
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  padding: 7px 11px;
+
+  border-radius: 999px;
+
+  background: rgba(17, 17, 17, 0.92);
+
+  color: white;
+
+  font-size: 10px;
+  font-weight: 900;
+
+  letter-spacing: 0.08em;
+
+  backdrop-filter: blur(10px);
+`;
+
+const LiveDot = styled.span`
+  width: 7px;
+  height: 7px;
+
+  border-radius: 50%;
+
+  background: #23c66b;
+
+  box-shadow:
+    0 0 0 4px rgba(35, 198, 107, 0.15);
+`;
+
+const MapInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 11px 14px;
+
+  background: rgba(255, 255, 255, 0.94);
+
+  border-radius: 15px;
+
+  box-shadow:
+    0 8px 30px rgba(0, 0, 0, 0.12);
+
+  backdrop-filter: blur(12px);
+`;
+
+const MapInfoIcon = styled.div`
+  width: 34px;
+  height: 34px;
+
+  border-radius: 10px;
+
+  background: #111;
+  color: white;
+
+  display: flex;
   align-items: center;
   justify-content: center;
-  text-align: center;
+
+  font-size: 13px;
 `;
 
-const EmptyIcon = styled.div`
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: #f1f1f3;
-  color: #77777c;
-  display: grid;
-  place-items: center;
-  margin-bottom: 12px;
+const MapInfoTitle = styled.div`
+  font-size: 12px;
   font-weight: 800;
 `;
 
-const EmptyTitle = styled.div`
-  font-size: 15px;
-  font-weight: 800;
-`;
+const MapInfoText = styled.div`
+  margin-top: 2px;
 
-const EmptyText = styled.div`
-  max-width: 380px;
-  margin-top: 6px;
-  color: #86868b;
-  font-size: 11px;
-  line-height: 1.55;
-`;
+  color: #777;
 
-const EmptyButton = styled.button`
-  margin-top: 16px;
-  min-height: 38px;
-  padding: 0 14px;
-  border: 1px solid #dedee2;
-  border-radius: 10px;
-  background: white;
   font-size: 10px;
-  font-weight: 750;
+`;
+
+const WaitingMapCard = styled.div`
+  position: absolute;
+
+  bottom: 20px;
+  left: 50%;
+
+  transform: translateX(-50%);
+
+  z-index: 500;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  width: min(420px, calc(100% - 40px));
+
+  padding: 13px 15px;
+
+  background: rgba(255, 255, 255, 0.95);
+
+  border-radius: 17px;
+
+  box-shadow:
+    0 10px 35px rgba(0, 0, 0, 0.14);
+
+  backdrop-filter: blur(12px);
+
+  strong {
+    display: block;
+    font-size: 12px;
+  }
+
+  span {
+    display: block;
+    margin-top: 3px;
+
+    color: #777;
+
+    font-size: 10px;
+    line-height: 1.4;
+  }
+`;
+
+const WaitingMapIcon = styled.div`
+  width: 38px;
+  height: 38px;
+
+  flex: 0 0 auto;
+
+  border-radius: 12px;
+
+  background: #f0f0f2;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+// ======================================================
+// CONTENT
+// ======================================================
+
+const Content = styled.main`
+  max-width: 1180px;
+
+  margin: -48px auto 0;
+
+  position: relative;
+  z-index: 10;
+
+  padding: 0 22px 60px;
+
+  @media (max-width: 700px) {
+    margin-top: -25px;
+    padding: 0 14px 40px;
+  }
+`;
+
+const MainGrid = styled.div`
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    350px;
+
+  gap: 22px;
+
+  @media (max-width: 950px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const MainColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+`;
+
+const SideColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+`;
+
+// ======================================================
+// STATUS CARD
+// ======================================================
+
+const StatusCard = styled.section`
+  padding: 25px;
+
+  border-radius: 24px;
+
+  background: #111;
+  color: white;
+
+  box-shadow:
+    0 18px 45px rgba(0, 0, 0, 0.16);
+`;
+
+const StatusCardTop = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 20px;
+`;
+
+const StatusTextBlock = styled.div``;
+
+const Eyebrow = styled.div`
+  font-size: 10px;
+
+  font-weight: 800;
+
+  letter-spacing: 0.13em;
+
+  color: #96969c;
+`;
+
+const StatusTitle = styled.h2`
+  margin: 7px 0 6px;
+
+  font-size: 25px;
+
+  letter-spacing: -0.03em;
+`;
+
+const StatusDescription = styled.p`
+  margin: 0;
+
+  color: #aaaab0;
+
+  font-size: 13px;
+
+  line-height: 1.5;
+`;
+
+const BigStatusIcon = styled.div`
+  width: 62px;
+  height: 62px;
+
+  flex: 0 0 auto;
+
+  border-radius: 19px;
+
+  background: ${({ $type }) =>
+    $type === "success"
+      ? "#1d5f3b"
+      : $type === "danger"
+        ? "#672525"
+        : "#29292d"};
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 27px;
+`;
+
+// ======================================================
+// CARD
+// ======================================================
+
+const Card = styled.section`
+  background: white;
+
+  border: 1px solid #e8e8ea;
+
+  border-radius: 24px;
+
+  padding: 25px;
+
+  box-shadow:
+    0 10px 35px rgba(0, 0, 0, 0.045);
+`;
+
+const CardHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 13px;
+`;
+
+const CardHeaderIcon = styled.div`
+  width: 42px;
+  height: 42px;
+
+  border-radius: 13px;
+
+  background: #f1f1f3;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 14px;
+`;
+
+const CardEyebrow = styled.div`
+  font-size: 9px;
+
+  font-weight: 800;
+
+  letter-spacing: 0.12em;
+
+  color: #96969c;
+`;
+
+const CardTitle = styled.h3`
+  margin: 3px 0 0;
+
+  font-size: 18px;
+
+  letter-spacing: -0.02em;
+`;
+
+// ======================================================
+// TIMELINE
+// ======================================================
+
+const Timeline = styled.div`
+  margin-top: 28px;
+`;
+
+const TimelineItem = styled.div`
+  display: grid;
+
+  grid-template-columns: 42px 1fr;
+
+  column-gap: 14px;
+
+  min-height: 78px;
+
+  opacity: ${({ $active }) =>
+    $active ? 1 : 0.35};
+
+  position: relative;
+`;
+
+const TimelineLine = styled.div`
+  position: absolute;
+
+  left: 20px;
+  top: 42px;
+
+  height: 60px;
+
+  width: 1px;
+
+  background: #dedee1;
+`;
+
+const TimelineDot = styled.div`
+  width: 42px;
+  height: 42px;
+
+  border-radius: 50%;
+
+  background: ${({ $active }) =>
+    $active ? "#111" : "#f0f0f2"};
+
+  color: ${({ $active }) =>
+    $active ? "white" : "#999"};
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 13px;
+
+  position: relative;
+  z-index: 2;
+`;
+
+const TimelineContent = styled.div`
+  padding-top: 3px;
+`;
+
+const TimelineItemTitle = styled.div`
+  font-size: 14px;
+
+  font-weight: 800;
+`;
+
+const TimelineItemText = styled.div`
+  margin-top: 5px;
+
+  color: #777;
+
+  font-size: 12px;
+
+  line-height: 1.5;
+`;
+
+// ======================================================
+// DRIVER
+// ======================================================
+
+const DriverCard = styled.section`
+  padding: 22px;
+
+  background: white;
+
+  border: 1px solid #e8e8ea;
+
+  border-radius: 24px;
+
+  box-shadow:
+    0 10px 35px rgba(0, 0, 0, 0.045);
+`;
+
+const DriverCardHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const DriverLabel = styled.div`
+  font-size: 10px;
+
+  color: #888;
+
+  font-weight: 800;
+
+  letter-spacing: 0.12em;
+`;
+
+const OnlineBadge = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  font-size: 9px;
+
+  font-weight: 900;
+
+  color: #168344;
+`;
+
+const DriverMain = styled.div`
+  display: flex;
+
+  align-items: center;
+
+  gap: 14px;
+
+  margin-top: 19px;
+`;
+
+const DriverAvatar = styled.div`
+  width: 58px;
+  height: 58px;
+
+  border-radius: 18px;
+
+  background: #111;
+
+  color: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 22px;
+
+  font-weight: 800;
+`;
+
+const DriverIdentity = styled.div`
+  min-width: 0;
+`;
+
+const DriverName = styled.div`
+  font-size: 17px;
+
+  font-weight: 800;
+`;
+
+const DriverRole = styled.div`
+  margin-top: 3px;
+
+  font-size: 11px;
+
+  color: #888;
+`;
+
+const DriverLocation = styled.div`
+  margin-top: 7px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 5px;
+
+  color: #168344;
+
+  font-size: 10px;
+
+  font-weight: 700;
+`;
+
+const DriverActions = styled.div`
+  display: grid;
+
+  grid-template-columns: 1fr 1fr;
+
+  gap: 9px;
+
+  margin-top: 20px;
+`;
+
+const DriverAction = styled.button`
+  min-height: 45px;
+
+  border: 1px solid #e3e3e5;
+
+  border-radius: 13px;
+
+  background: white;
+
+  color: #111;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 7px;
+
+  font-size: 12px;
+
+  font-weight: 800;
+
+  text-decoration: none;
+
   cursor: pointer;
 
+  transition: 0.2s;
+
   &:hover {
-    background: #f5f5f7;
+    background: #f4f4f5;
   }
 `;
 
 // ======================================================
-// FOOTER
+// DESTINATION
 // ======================================================
 
-const Footer = styled.footer`
-  margin-top: 70px;
-  padding: 25px 0 10px;
-  border-top: 1px solid #dedee1;
+const DestinationCard = styled.section`
   display: flex;
-  justify-content: space-between;
-  gap: 15px;
-  color: #86868b;
+
+  align-items: flex-start;
+
+  gap: 13px;
+
+  padding: 18px;
+
+  background: white;
+
+  border: 1px solid #e8e8ea;
+
+  border-radius: 20px;
 `;
 
-const FooterBrand = styled.div`
-  color: #1d1d1f;
+const DestinationIcon = styled.div`
+  width: 42px;
+  height: 42px;
+
+  flex: 0 0 auto;
+
+  border-radius: 13px;
+
+  background: #f2f2f3;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const DestinationLabel = styled.div`
+  font-size: 9px;
+
+  font-weight: 800;
+
+  color: #999;
+
+  letter-spacing: 0.12em;
+`;
+
+const DestinationAddress = styled.div`
+  margin-top: 5px;
+
+  font-size: 13px;
+
+  font-weight: 800;
+
+  line-height: 1.4;
+`;
+
+const DestinationCity = styled.div`
+  margin-top: 3px;
+
+  font-size: 11px;
+
+  color: #888;
+`;
+
+// ======================================================
+// SECURITY
+// ======================================================
+
+const SecurityCard = styled.section`
+  display: flex;
+
+  gap: 12px;
+
+  padding: 17px;
+
+  border-radius: 18px;
+
+  background: #f0f7f3;
+
+  color: #1b6c42;
+`;
+
+const SecurityIcon = styled.div`
+  width: 34px;
+  height: 34px;
+
+  flex: 0 0 auto;
+
+  border-radius: 10px;
+
+  background: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   font-size: 12px;
-  font-weight: 900;
 `;
 
-const FooterText = styled.div`
+const SecurityTitle = styled.div`
+  font-size: 12px;
+
+  font-weight: 800;
+`;
+
+const SecurityText = styled.div`
+  margin-top: 3px;
+
   font-size: 10px;
+
+  line-height: 1.5;
+
+  color: #4b8064;
+`;
+
+// ======================================================
+// REALTIME
+// ======================================================
+
+const RealtimeCard = styled.section`
+  display: flex;
+
+  gap: 12px;
+
+  padding: 17px;
+
+  border-radius: 18px;
+
+  background: #f6f6f7;
+`;
+
+const RealtimeIcon = styled.div`
+  width: 34px;
+  height: 34px;
+
+  flex: 0 0 auto;
+
+  border-radius: 10px;
+
+  background: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 12px;
+`;
+
+const RealtimeTitle = styled.div`
+  font-size: 12px;
+
+  font-weight: 800;
+`;
+
+const RealtimeText = styled.div`
+  margin-top: 3px;
+
+  font-size: 10px;
+
+  line-height: 1.5;
+
+  color: #777;
 `;
 
 // ======================================================
 // LOADING
 // ======================================================
 
-const LoadingPage = styled.div`
+const LoadingScreen = styled.div`
   min-height: 100vh;
-  background: #f5f5f7;
+
   display: flex;
   flex-direction: column;
+
   align-items: center;
   justify-content: center;
-`;
 
-const LoadingLogo = styled.div`
-  margin-bottom: 25px;
-  font-size: 25px;
-  font-weight: 900;
-  letter-spacing: -1px;
+  background: #f5f5f6;
+
+  text-align: center;
+
+  padding: 20px;
 `;
 
 const LoadingSpinner = styled.div`
-  width: 30px;
-  height: 30px;
-  border: 3px solid #dedee2;
+  width: 40px;
+  height: 40px;
+
+  border: 3px solid #ddd;
+
   border-top-color: #111;
+
   border-radius: 50%;
-  animation: spin 0.75s linear infinite;
+
+  animation: spin 0.8s linear infinite;
 
   @keyframes spin {
     to {
@@ -3683,16 +2474,94 @@ const LoadingSpinner = styled.div`
   }
 `;
 
-const LoadingText = styled.div`
-  margin-top: 14px;
-  color: #86868b;
-  font-size: 11px;
+const LoadingTitle = styled.h2`
+  margin: 18px 0 5px;
+
+  font-size: 18px;
 `;
-const Deconnexion = styled.button`
-border: none;
-background: red;
-font-weight: bold;
-border-radius: 4px;
-color: white;
-`
-export default LivreurAdmin;
+
+const LoadingText = styled.p`
+  margin: 0;
+
+  color: #777;
+
+  font-size: 13px;
+`;
+
+// ======================================================
+// ERROR
+// ======================================================
+
+const ErrorScreen = styled.div`
+  max-width: 450px;
+
+  margin: 100px auto;
+
+  padding: 35px 25px;
+
+  text-align: center;
+
+  background: white;
+
+  border-radius: 25px;
+
+  box-shadow:
+    0 15px 50px rgba(0, 0, 0, 0.08);
+
+  h2 {
+    margin: 15px 0 8px;
+  }
+
+  p {
+    color: #777;
+
+    font-size: 13px;
+
+    line-height: 1.5;
+  }
+`;
+
+const ErrorIcon = styled.div`
+  width: 55px;
+  height: 55px;
+
+  margin: auto;
+
+  border-radius: 50%;
+
+  background: #ffecec;
+
+  color: #c62828;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 24px;
+
+  font-weight: 900;
+`;
+
+const BackButton = styled.button`
+  margin-top: 15px;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  padding: 11px 16px;
+
+  border: 0;
+
+  border-radius: 12px;
+
+  background: #111;
+
+  color: white;
+
+  cursor: pointer;
+
+  font-weight: 700;
+`;
