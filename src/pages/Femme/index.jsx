@@ -189,7 +189,7 @@ const SearchInput = styled.input`
 
   outline: none;
 
-  font-size: 0.78rem;
+  font-size: 16px;
 
   transition: border 0.2s ease;
 
