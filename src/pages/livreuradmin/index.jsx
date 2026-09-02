@@ -1,9 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import styled from "styled-components";
 
@@ -99,35 +94,22 @@ const positionValide = (position) => {
 // DISTANCE ENTRE DEUX POSITIONS
 // ======================================================
 
-const calculerDistanceEntrePositions = (
-  position1,
-  position2,
-) => {
-  if (
-    !positionValide(position1) ||
-    !positionValide(position2)
-  ) {
+const calculerDistanceEntrePositions = (position1, position2) => {
+  if (!positionValide(position1) || !positionValide(position2)) {
     return Infinity;
   }
 
   const rayonTerre = 6371000;
 
-  const lat1 =
-    (Number(position1.latitude) * Math.PI) / 180;
+  const lat1 = (Number(position1.latitude) * Math.PI) / 180;
 
-  const lat2 =
-    (Number(position2.latitude) * Math.PI) / 180;
+  const lat2 = (Number(position2.latitude) * Math.PI) / 180;
 
   const deltaLat =
-    ((Number(position2.latitude) -
-      Number(position1.latitude)) *
-      Math.PI) /
-    180;
+    ((Number(position2.latitude) - Number(position1.latitude)) * Math.PI) / 180;
 
   const deltaLng =
-    ((Number(position2.longitude) -
-      Number(position1.longitude)) *
-      Math.PI) /
+    ((Number(position2.longitude) - Number(position1.longitude)) * Math.PI) /
     180;
 
   const a =
@@ -137,12 +119,7 @@ const calculerDistanceEntrePositions = (
       Math.sin(deltaLng / 2) *
       Math.sin(deltaLng / 2);
 
-  const c =
-    2 *
-    Math.atan2(
-      Math.sqrt(a),
-      Math.sqrt(1 - a),
-    );
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
   return rayonTerre * c;
 };
@@ -151,11 +128,7 @@ const calculerDistanceEntrePositions = (
 // AJUSTEMENT AUTOMATIQUE DE LA CARTE
 // ======================================================
 
-function AjusterCarte({
-  positionLivreur,
-  positionClient,
-  itineraire,
-}) {
+function AjusterCarte({ positionLivreur, positionClient, itineraire }) {
   const map = useMap();
 
   const premierCadrage = useRef(true);
@@ -165,12 +138,8 @@ function AjusterCarte({
       return;
     }
 
-    if (
-      itineraire?.coordinates?.length > 1
-    ) {
-      const bounds = L.latLngBounds(
-        itineraire.coordinates,
-      );
+    if (itineraire?.coordinates?.length > 1) {
+      const bounds = L.latLngBounds(itineraire.coordinates);
 
       map.fitBounds(bounds, {
         padding: [55, 55],
@@ -182,19 +151,10 @@ function AjusterCarte({
       return;
     }
 
-    if (
-      positionValide(positionLivreur) &&
-      positionValide(positionClient)
-    ) {
+    if (positionValide(positionLivreur) && positionValide(positionClient)) {
       const bounds = L.latLngBounds([
-        [
-          Number(positionLivreur.latitude),
-          Number(positionLivreur.longitude),
-        ],
-        [
-          Number(positionClient.latitude),
-          Number(positionClient.longitude),
-        ],
+        [Number(positionLivreur.latitude), Number(positionLivreur.longitude)],
+        [Number(positionClient.latitude), Number(positionClient.longitude)],
       ]);
 
       map.fitBounds(bounds, {
@@ -207,29 +167,16 @@ function AjusterCarte({
       return;
     }
 
-    const position =
-      positionLivreur || positionClient;
+    const position = positionLivreur || positionClient;
 
     if (positionValide(position)) {
-      map.flyTo(
-        [
-          Number(position.latitude),
-          Number(position.longitude),
-        ],
-        15,
-        {
-          duration: 0.8,
-        },
-      );
+      map.flyTo([Number(position.latitude), Number(position.longitude)], 15, {
+        duration: 0.8,
+      });
 
       premierCadrage.current = false;
     }
-  }, [
-    map,
-    positionLivreur,
-    positionClient,
-    itineraire,
-  ]);
+  }, [map, positionLivreur, positionClient, itineraire]);
 
   return null;
 }
@@ -238,33 +185,25 @@ function AjusterCarte({
 // ITINÉRAIRE ROUTIER OSRM
 // ======================================================
 
-function ItineraireRoutier({
-  positionLivreur,
-  positionClient,
-  onRouteUpdate,
-}) {
+function ItineraireRoutier({ positionLivreur, positionClient, onRouteUpdate }) {
   const [route, setRoute] = useState(null);
 
   const dernierePositionCalculee = useRef(null);
 
   useEffect(() => {
-    if (
-      !positionValide(positionLivreur) ||
-      !positionValide(positionClient)
-    ) {
+    if (!positionValide(positionLivreur) || !positionValide(positionClient)) {
       setRoute(null);
       onRouteUpdate(null);
 
       return;
     }
 
-    const distanceDepuisDernierCalcul =
-      dernierePositionCalculee.current
-        ? calculerDistanceEntrePositions(
-            dernierePositionCalculee.current,
-            positionLivreur,
-          )
-        : Infinity;
+    const distanceDepuisDernierCalcul = dernierePositionCalculee.current
+      ? calculerDistanceEntrePositions(
+          dernierePositionCalculee.current,
+          positionLivreur,
+        )
+      : Infinity;
 
     /*
       On ne recalcule pas la route pour chaque variation GPS.
@@ -272,10 +211,7 @@ function ItineraireRoutier({
       s'est déplacé d'environ 25 mètres.
     */
 
-    if (
-      dernierePositionCalculee.current &&
-      distanceDepuisDernierCalcul < 25
-    ) {
+    if (dernierePositionCalculee.current && distanceDepuisDernierCalcul < 25) {
       return;
     }
 
@@ -283,21 +219,13 @@ function ItineraireRoutier({
 
     const timer = setTimeout(async () => {
       try {
-        const latitudeLivreur = Number(
-          positionLivreur.latitude,
-        );
+        const latitudeLivreur = Number(positionLivreur.latitude);
 
-        const longitudeLivreur = Number(
-          positionLivreur.longitude,
-        );
+        const longitudeLivreur = Number(positionLivreur.longitude);
 
-        const latitudeClient = Number(
-          positionClient.latitude,
-        );
+        const latitudeClient = Number(positionClient.latitude);
 
-        const longitudeClient = Number(
-          positionClient.longitude,
-        );
+        const longitudeClient = Number(positionClient.longitude);
 
         const url =
           "https://router.project-osrm.org/route/v1/driving/" +
@@ -310,9 +238,7 @@ function ItineraireRoutier({
         });
 
         if (!response.ok) {
-          throw new Error(
-            "Impossible de récupérer l'itinéraire",
-          );
+          throw new Error("Impossible de récupérer l'itinéraire");
         }
 
         const data = await response.json();
@@ -322,20 +248,14 @@ function ItineraireRoutier({
           !Array.isArray(data.routes) ||
           data.routes.length === 0
         ) {
-          throw new Error(
-            "Aucun itinéraire trouvé",
-          );
+          throw new Error("Aucun itinéraire trouvé");
         }
 
         const routePrincipale = data.routes[0];
 
-        const coordinates =
-          routePrincipale.geometry.coordinates.map(
-            ([longitude, latitude]) => [
-              latitude,
-              longitude,
-            ],
-          );
+        const coordinates = routePrincipale.geometry.coordinates.map(
+          ([longitude, latitude]) => [latitude, longitude],
+        );
 
         const nouvelleRoute = {
           coordinates,
@@ -356,10 +276,7 @@ function ItineraireRoutier({
           return;
         }
 
-        console.error(
-          "Erreur calcul itinéraire :",
-          error,
-        );
+        console.error("Erreur calcul itinéraire :", error);
 
         setRoute(null);
 
@@ -420,48 +337,31 @@ function ItineraireRoutier({
 function LivreurAdmin() {
   const [livreur, setLivreur] = useState(null);
 
-  const [
-    commandesDisponibles,
-    setCommandesDisponibles,
-  ] = useState([]);
+  const [commandesDisponibles, setCommandesDisponibles] = useState([]);
 
-  const [mesCommandes, setMesCommandes] =
-    useState([]);
+  const [mesCommandes, setMesCommandes] = useState([]);
 
   const [loading, setLoading] = useState(true);
 
-  const [refreshing, setRefreshing] =
-    useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const [message, setMessage] = useState("");
 
   const [erreur, setErreur] = useState("");
 
-  const [
-    commandeEnCours,
-    setCommandeEnCours,
-  ] = useState(null);
+  const [commandeEnCours, setCommandeEnCours] = useState(null);
 
-  const [
-    positionClient,
-    setPositionClient,
-  ] = useState(null);
+  const [positionClient, setPositionClient] = useState(null);
 
-  const [
-    positionLivreur,
-    setPositionLivreur,
-  ] = useState(null);
+  const [positionLivreur, setPositionLivreur] = useState(null);
 
-  const [itineraire, setItineraire] =
-    useState(null);
+  const [itineraire, setItineraire] = useState(null);
 
   const navigate = useNavigate();
 
-  const token =
-    localStorage.getItem("tokenLivreur");
+  const token = localStorage.getItem("tokenLivreur");
 
-  const API_URL =
-    import.meta.env.VITE_API_URL;
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const headers = {
     "Content-Type": "application/json",
@@ -475,13 +375,8 @@ function LivreurAdmin() {
   const commandeActive = mesCommandes.find(
     (commande) =>
       commande.livraison?.livreurId &&
-      commande.livraison.livreurId.toString() ===
-        livreur?.id?.toString() &&
-      [
-        "ACCEPTED",
-        "PICKING_UP",
-        "IN_DELIVERY",
-      ].includes(
+      commande.livraison.livreurId.toString() === livreur?.id?.toString() &&
+      ["ACCEPTED", "PICKING_UP", "IN_DELIVERY"].includes(
         commande.livraison?.statut,
       ),
   );
@@ -490,10 +385,9 @@ function LivreurAdmin() {
   // CALLBACK ROUTE
   // ======================================================
 
-  const mettreAJourItineraire =
-    useCallback((route) => {
-      setItineraire(route);
-    }, []);
+  const mettreAJourItineraire = useCallback((route) => {
+    setItineraire(route);
+  }, []);
 
   // ======================================================
   // GPS TEMPS RÉEL DU LIVREUR
@@ -503,101 +397,69 @@ function LivreurAdmin() {
     if (!token) return;
 
     if (!navigator.geolocation) {
-      console.error(
-        "La géolocalisation n'est pas disponible.",
-      );
+      console.error("La géolocalisation n'est pas disponible.");
 
       return;
     }
 
-    if (
-      livreur?.statut !== "AVAILABLE" &&
-      livreur?.statut !== "BUSY"
-    ) {
+    if (livreur?.statut !== "AVAILABLE" && livreur?.statut !== "BUSY") {
       return;
     }
 
-    const envoyerPosition = async (
-      position,
-    ) => {
+    const envoyerPosition = async (position) => {
       try {
-        const latitude =
-          position.coords.latitude;
+        const latitude = position.coords.latitude;
 
-        const longitude =
-          position.coords.longitude;
+        const longitude = position.coords.longitude;
 
         setPositionLivreur({
           latitude,
           longitude,
         });
 
-        const response = await fetch(
-          `${API_URL}/api/livreurs/localisation`,
-          {
-            method: "PUT",
+        const response = await fetch(`${API_URL}/api/livreurs/localisation`, {
+          method: "PUT",
 
-            headers: {
-              "Content-Type":
-                "application/json",
+          headers: {
+            "Content-Type": "application/json",
 
-              Authorization: `Bearer ${token}`,
-            },
-
-            body: JSON.stringify({
-              latitude,
-              longitude,
-            }),
+            Authorization: `Bearer ${token}`,
           },
-        );
+
+          body: JSON.stringify({
+            latitude,
+            longitude,
+          }),
+        });
 
         if (!response.ok) {
-          const data =
-            await response
-              .json()
-              .catch(() => ({}));
+          const data = await response.json().catch(() => ({}));
 
-          throw new Error(
-            data.message ||
-              "Erreur mise à jour GPS",
-          );
+          throw new Error(data.message || "Erreur mise à jour GPS");
         }
       } catch (error) {
-        console.error(
-          "Erreur envoi GPS :",
-          error,
-        );
+        console.error("Erreur envoi GPS :", error);
       }
     };
 
     const erreurGPS = (error) => {
-      console.error(
-        "Erreur GPS :",
-        error.message,
-      );
+      console.error("Erreur GPS :", error.message);
     };
 
-    const watchId =
-      navigator.geolocation.watchPosition(
-        envoyerPosition,
-        erreurGPS,
-        {
-          enableHighAccuracy: true,
-          maximumAge: 5000,
-          timeout: 15000,
-        },
-      );
+    const watchId = navigator.geolocation.watchPosition(
+      envoyerPosition,
+      erreurGPS,
+      {
+        enableHighAccuracy: true,
+        maximumAge: 5000,
+        timeout: 15000,
+      },
+    );
 
     return () => {
-      navigator.geolocation.clearWatch(
-        watchId,
-      );
+      navigator.geolocation.clearWatch(watchId);
     };
-  }, [
-    token,
-    API_URL,
-    livreur?.statut,
-  ]);
+  }, [token, API_URL, livreur?.statut]);
 
   // ======================================================
   // POSITION CLIENT INITIALE
@@ -612,21 +474,13 @@ function LivreurAdmin() {
       return;
     }
 
-    const localisation =
-      commandeActive.client?.localisation;
+    const localisation = commandeActive.client?.localisation;
 
-    if (
-      localisation?.latitude != null &&
-      localisation?.longitude != null
-    ) {
+    if (localisation?.latitude != null && localisation?.longitude != null) {
       setPositionClient({
-        latitude: Number(
-          localisation.latitude,
-        ),
+        latitude: Number(localisation.latitude),
 
-        longitude: Number(
-          localisation.longitude,
-        ),
+        longitude: Number(localisation.longitude),
       });
     } else {
       setPositionClient(null);
@@ -638,27 +492,16 @@ function LivreurAdmin() {
   // ======================================================
 
   useEffect(() => {
-    const localisation =
-      livreur?.localisation;
+    const localisation = livreur?.localisation;
 
-    if (
-      localisation?.latitude != null &&
-      localisation?.longitude != null
-    ) {
+    if (localisation?.latitude != null && localisation?.longitude != null) {
       setPositionLivreur({
-        latitude: Number(
-          localisation.latitude,
-        ),
+        latitude: Number(localisation.latitude),
 
-        longitude: Number(
-          localisation.longitude,
-        ),
+        longitude: Number(localisation.longitude),
       });
     }
-  }, [
-    livreur?.localisation?.latitude,
-    livreur?.localisation?.longitude,
-  ]);
+  }, [livreur?.localisation?.latitude, livreur?.localisation?.longitude]);
 
   // ======================================================
   // SOCKET.IO — SUIVI TEMPS RÉEL
@@ -669,40 +512,24 @@ function LivreurAdmin() {
       return;
     }
 
-    const commandeId =
-      commandeActive._id.toString();
+    const commandeId = commandeActive._id.toString();
 
-    socket.emit(
-      "join_commande",
-      commandeId,
-    );
+    socket.emit("join_commande", commandeId);
 
     // ==================================================
     // POSITION CLIENT
     // ==================================================
 
-    const handleClientPosition = (
-      data,
-    ) => {
-      if (
-        data?.commandeId?.toString() !==
-        commandeId
-      ) {
+    const handleClientPosition = (data) => {
+      if (data?.commandeId?.toString() !== commandeId) {
         return;
       }
 
-      const latitude = Number(
-        data.latitude,
-      );
+      const latitude = Number(data.latitude);
 
-      const longitude = Number(
-        data.longitude,
-      );
+      const longitude = Number(data.longitude);
 
-      if (
-        !Number.isFinite(latitude) ||
-        !Number.isFinite(longitude)
-      ) {
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
         return;
       }
 
@@ -716,28 +543,16 @@ function LivreurAdmin() {
     // POSITION LIVREUR
     // ==================================================
 
-    const handleLivreurPosition = (
-      data,
-    ) => {
-      if (
-        data?.commandeId?.toString() !==
-        commandeId
-      ) {
+    const handleLivreurPosition = (data) => {
+      if (data?.commandeId?.toString() !== commandeId) {
         return;
       }
 
-      const latitude = Number(
-        data.latitude,
-      );
+      const latitude = Number(data.latitude);
 
-      const longitude = Number(
-        data.longitude,
-      );
+      const longitude = Number(data.longitude);
 
-      if (
-        !Number.isFinite(latitude) ||
-        !Number.isFinite(longitude)
-      ) {
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
         return;
       }
 
@@ -747,31 +562,16 @@ function LivreurAdmin() {
       });
     };
 
-    socket.on(
-      "client_position",
-      handleClientPosition,
-    );
+    socket.on("client_position", handleClientPosition);
 
-    socket.on(
-      "livreur_position",
-      handleLivreurPosition,
-    );
+    socket.on("livreur_position", handleLivreurPosition);
 
     return () => {
-      socket.off(
-        "client_position",
-        handleClientPosition,
-      );
+      socket.off("client_position", handleClientPosition);
 
-      socket.off(
-        "livreur_position",
-        handleLivreurPosition,
-      );
+      socket.off("livreur_position", handleLivreurPosition);
 
-      socket.emit(
-        "leave_commande",
-        commandeId,
-      );
+      socket.emit("leave_commande", commandeId);
     };
   }, [commandeActive?._id]);
 
@@ -780,8 +580,27 @@ function LivreurAdmin() {
   // ======================================================
 
   const chargerProfil = async () => {
+    const response = await fetch(`${API_URL}/api/livreurs/profil`, {
+      method: "GET",
+      headers,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Impossible de charger le profil");
+    }
+
+    setLivreur(data.livreur);
+  };
+
+  // ======================================================
+  // COMMANDES DISPONIBLES
+  // ======================================================
+
+  const chargerCommandesDisponibles = async () => {
     const response = await fetch(
-      `${API_URL}/api/livreurs/profil`,
+      `${API_URL}/api/livreurs/commandes-disponibles`,
       {
         method: "GET",
         headers,
@@ -792,79 +611,37 @@ function LivreurAdmin() {
 
     if (!response.ok) {
       throw new Error(
-        data.message ||
-          "Impossible de charger le profil",
+        data.message || "Impossible de charger les commandes disponibles",
       );
     }
 
-    setLivreur(data.livreur);
+    setCommandesDisponibles(data.commandes || []);
   };
-
-  // ======================================================
-  // COMMANDES DISPONIBLES
-  // ======================================================
-
-  const chargerCommandesDisponibles =
-    async () => {
-      const response = await fetch(
-        `${API_URL}/api/livreurs/commandes-disponibles`,
-        {
-          method: "GET",
-          headers,
-        },
-      );
-
-      const data =
-        await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.message ||
-            "Impossible de charger les commandes disponibles",
-        );
-      }
-
-      setCommandesDisponibles(
-        data.commandes || [],
-      );
-    };
 
   // ======================================================
   // MES COMMANDES
   // ======================================================
 
-  const chargerMesCommandes =
-    async () => {
-      const response = await fetch(
-        `${API_URL}/api/livreurs/commandes`,
-        {
-          method: "GET",
-          headers,
-        },
-      );
+  const chargerMesCommandes = async () => {
+    const response = await fetch(`${API_URL}/api/livreurs/commandes`, {
+      method: "GET",
+      headers,
+    });
 
-      const data =
-        await response.json();
+    const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(
-          data.message ||
-            "Impossible de charger vos commandes",
-        );
-      }
-
-      setMesCommandes(
-        data.commandes || [],
-      );
-    };
+    if (!response.ok) {
+      throw new Error(data.message || "Impossible de charger vos commandes");
+    }
+    console.log("MES COMMANDES APRÈS RECONNEXION :", data.commandes);
+    setMesCommandes(data.commandes || []);
+  };
 
   // ======================================================
   // CHARGEMENT GLOBAL
   // ======================================================
 
-  const chargerTout = async (
-    avecLoading = false,
-  ) => {
+  const chargerTout = async (avecLoading = false) => {
     try {
       setErreur("");
 
@@ -896,12 +673,9 @@ function LivreurAdmin() {
 
   useEffect(() => {
     if (!token) {
-      navigate(
-        "/connexion-livreur",
-        {
-          replace: true,
-        },
-      );
+      navigate("/connexion-livreur", {
+        replace: true,
+      });
 
       return;
     }
@@ -913,9 +687,7 @@ function LivreurAdmin() {
   // CHANGER STATUT
   // ======================================================
 
-  const changerStatut = async (
-    statut,
-  ) => {
+  const changerStatut = async (statut) => {
     try {
       setErreur("");
 
@@ -925,10 +697,7 @@ function LivreurAdmin() {
         return;
       }
 
-      if (
-        statut === "OFFLINE" &&
-        livreur?.commandeActuelle
-      ) {
+      if (statut === "OFFLINE" && livreur?.commandeActuelle) {
         setErreur(
           "Vous avez une livraison en cours. Terminez-la avant de passer hors ligne.",
         );
@@ -936,27 +705,20 @@ function LivreurAdmin() {
         return;
       }
 
-      const response = await fetch(
-        `${API_URL}/api/livreurs/statut`,
-        {
-          method: "PUT",
+      const response = await fetch(`${API_URL}/api/livreurs/statut`, {
+        method: "PUT",
 
-          headers,
+        headers,
 
-          body: JSON.stringify({
-            statut,
-          }),
-        },
-      );
+        body: JSON.stringify({
+          statut,
+        }),
+      });
 
-      const data =
-        await response.json();
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.message ||
-            "Impossible de modifier le statut",
-        );
+        throw new Error(data.message || "Impossible de modifier le statut");
       }
 
       setLivreur((prev) => ({
@@ -964,9 +726,7 @@ function LivreurAdmin() {
         statut: data.statut,
       }));
 
-      setMessage(
-        "Votre disponibilité a été mise à jour.",
-      );
+      setMessage("Votre disponibilité a été mise à jour.");
 
       setTimeout(() => {
         setMessage("");
@@ -980,17 +740,13 @@ function LivreurAdmin() {
   // ACCEPTER COMMANDE
   // ======================================================
 
-  const accepterCommande = async (
-    commandeId,
-  ) => {
+  const accepterCommande = async (commandeId) => {
     try {
       setErreur("");
 
       setMessage("");
 
-      setCommandeEnCours(
-        commandeId,
-      );
+      setCommandeEnCours(commandeId);
 
       const response = await fetch(
         `${API_URL}/api/livreurs/commandes/${commandeId}/accepter`,
@@ -1000,19 +756,13 @@ function LivreurAdmin() {
         },
       );
 
-      const data =
-        await response.json();
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.message ||
-            "Impossible d'accepter la commande",
-        );
+        throw new Error(data.message || "Impossible d'accepter la commande");
       }
 
-      setMessage(
-        "Commande acceptée. Elle vous est maintenant attribuée.",
-      );
+      setMessage("Commande acceptée. Elle vous est maintenant attribuée.");
 
       await chargerTout();
     } catch (error) {
@@ -1026,111 +776,93 @@ function LivreurAdmin() {
   // ACCEPTED → PICKING_UP
   // ======================================================
 
-  const commencerRecuperation =
-    async (commandeId) => {
-      try {
-        setErreur("");
-
-        setMessage("");
-
-        setCommandeEnCours(
-          commandeId,
-        );
-
-        const response = await fetch(
-          `${API_URL}/api/livreurs/commandes/${commandeId}/commencer-recuperation`,
-          {
-            method: "PUT",
-            headers,
-          },
-        );
-
-        const data =
-          await response.json();
-
-        if (!response.ok) {
-          throw new Error(
-            data.message ||
-              "Impossible de commencer la récupération",
-          );
-        }
-
-        setMessage(
-          "Récupération de la commande commencée.",
-        );
-
-        await chargerTout();
-      } catch (error) {
-        console.error(error);
-
-        setErreur(error.message);
-      } finally {
-        setCommandeEnCours(null);
-      }
-    };
-
-  // ======================================================
-  // PICKING_UP → IN_DELIVERY
-  // ======================================================
-
-  const recupererCommande =
-    async (commandeId) => {
-      try {
-        setErreur("");
-
-        setMessage("");
-
-        setCommandeEnCours(
-          commandeId,
-        );
-
-        const response = await fetch(
-          `${API_URL}/api/livreurs/commandes/${commandeId}/recuperer`,
-          {
-            method: "PUT",
-            headers,
-          },
-        );
-
-        const data =
-          await response.json();
-
-        if (!response.ok) {
-          throw new Error(
-            data.message ||
-              "Impossible de confirmer la récupération",
-          );
-        }
-
-        setMessage(
-          "Commande récupérée. Livraison en cours.",
-        );
-
-        await chargerTout();
-      } catch (error) {
-        console.error(error);
-
-        setErreur(error.message);
-      } finally {
-        setCommandeEnCours(null);
-      }
-    };
-
-  // ======================================================
-  // IN_DELIVERY → DELIVERED
-  // ======================================================
-
-  const livrerCommande = async (
-    commandeId,
-  ) => {
+  const commencerRecuperation = async (commandeId) => {
     try {
       setErreur("");
 
       setMessage("");
 
-      setCommandeEnCours(
-        commandeId,
+      setCommandeEnCours(commandeId);
+
+      const response = await fetch(
+        `${API_URL}/api/livreurs/commandes/${commandeId}/commencer-recuperation`,
+        {
+          method: "PUT",
+          headers,
+        },
       );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Impossible de commencer la récupération",
+        );
+      }
+
+      setMessage("Récupération de la commande commencée.");
+
+      await chargerTout();
+    } catch (error) {
+      console.error(error);
+
+      setErreur(error.message);
+    } finally {
+      setCommandeEnCours(null);
+    }
+  };
+
+  // ======================================================
+  // PICKING_UP → IN_DELIVERY
+  // ======================================================
+
+  const recupererCommande = async (commandeId) => {
+    try {
+      setErreur("");
+
+      setMessage("");
+
+      setCommandeEnCours(commandeId);
+
+      const response = await fetch(
+        `${API_URL}/api/livreurs/commandes/${commandeId}/recuperer`,
+        {
+          method: "PUT",
+          headers,
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Impossible de confirmer la récupération",
+        );
+      }
+
+      setMessage("Commande récupérée. Livraison en cours.");
+
+      await chargerTout();
+    } catch (error) {
+      console.error(error);
+
+      setErreur(error.message);
+    } finally {
+      setCommandeEnCours(null);
+    }
+  };
+
+  // ======================================================
+  // IN_DELIVERY → DELIVERED
+  // ======================================================
+
+  const livrerCommande = async (commandeId) => {
+    try {
+      setErreur("");
+
+      setMessage("");
+
+      setCommandeEnCours(commandeId);
 
       const response = await fetch(
         `${API_URL}/api/livreurs/commandes/${commandeId}/livrer`,
@@ -1140,19 +872,13 @@ function LivreurAdmin() {
         },
       );
 
-      const data =
-        await response.json();
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.message ||
-            "Impossible de confirmer la livraison",
-        );
+        throw new Error(data.message || "Impossible de confirmer la livraison");
       }
 
-      setMessage(
-        "Livraison terminée avec succès.",
-      );
+      setMessage("Livraison terminée avec succès.");
 
       setPositionClient(null);
 
@@ -1172,20 +898,14 @@ function LivreurAdmin() {
   // FORMAT PRIX
   // ======================================================
 
-  const formatPrix = (prix) =>
-    Number(prix || 0).toLocaleString(
-      "fr-FR",
-    );
+  const formatPrix = (prix) => Number(prix || 0).toLocaleString("fr-FR");
 
   // ======================================================
   // FORMAT DISTANCE
   // ======================================================
 
   const formatDistance = (metres) => {
-    if (
-      metres == null ||
-      !Number.isFinite(Number(metres))
-    ) {
+    if (metres == null || !Number.isFinite(Number(metres))) {
       return "—";
     }
 
@@ -1195,9 +915,7 @@ function LivreurAdmin() {
       return `${Math.round(valeur)} m`;
     }
 
-    return `${(
-      valeur / 1000
-    ).toFixed(1)} km`;
+    return `${(valeur / 1000).toFixed(1)} km`;
   };
 
   // ======================================================
@@ -1205,29 +923,17 @@ function LivreurAdmin() {
   // ======================================================
 
   const formatDuree = (secondes) => {
-    if (
-      secondes == null ||
-      !Number.isFinite(
-        Number(secondes),
-      )
-    ) {
+    if (secondes == null || !Number.isFinite(Number(secondes))) {
       return "—";
     }
 
-    const minutes = Math.max(
-      1,
-      Math.round(
-        Number(secondes) / 60,
-      ),
-    );
+    const minutes = Math.max(1, Math.round(Number(secondes) / 60));
 
     if (minutes < 60) {
       return `${minutes} min`;
     }
 
-    const heures = Math.floor(
-      minutes / 60,
-    );
+    const heures = Math.floor(minutes / 60);
 
     const reste = minutes % 60;
 
@@ -1262,15 +968,11 @@ function LivreurAdmin() {
   if (loading) {
     return (
       <LoadingPage>
-        <LoadingLogo>
-          NUMA
-        </LoadingLogo>
+        <LoadingLogo>NUMA</LoadingLogo>
 
         <LoadingSpinner />
 
-        <LoadingText>
-          Préparation de votre espace...
-        </LoadingText>
+        <LoadingText>Préparation de votre espace...</LoadingText>
       </LoadingPage>
     );
   }
@@ -1293,35 +995,16 @@ function LivreurAdmin() {
           </Brand>
 
           <HeaderRight>
-            <StatusPill
-              $status={livreur?.statut}
-            >
-              <StatusDot
-                $status={livreur?.statut}
-              />
+            <StatusPill $status={livreur?.statut}>
+              <StatusDot $status={livreur?.statut} />
 
-              {statutLabel[
-                livreur?.statut
-              ] || "Hors ligne"}
+              {statutLabel[livreur?.statut] || "Hors ligne"}
             </StatusPill>
 
-            <RefreshButton
-              onClick={() =>
-                chargerTout()
-              }
-              disabled={refreshing}
-            >
-              <RefreshIcon
-                $loading={refreshing}
-              >
-                ↻
-              </RefreshIcon>
+            <RefreshButton onClick={() => chargerTout()} disabled={refreshing}>
+              <RefreshIcon $loading={refreshing}>↻</RefreshIcon>
 
-              <span>
-                {refreshing
-                  ? "Actualisation..."
-                  : "Actualiser"}
-              </span>
+              <span>{refreshing ? "Actualisation..." : "Actualiser"}</span>
             </RefreshButton>
           </HeaderRight>
         </HeaderInner>
@@ -1354,31 +1037,21 @@ function LivreurAdmin() {
 
         <Hero>
           <HeroText>
-            <Eyebrow>
-              ESPACE LIVREUR
-            </Eyebrow>
+            <Eyebrow>ESPACE LIVREUR</Eyebrow>
 
             <HeroTitle>
-              Bonjour{" "}
-              <HeroName>
-                {livreur?.username ||
-                  "Livreur"}
-              </HeroName>
-              .
+              Bonjour <HeroName>{livreur?.username || "Livreur"}</HeroName>.
             </HeroTitle>
 
             <HeroSubtitle>
-              Gérez vos livraisons
-              simplement,
+              Gérez vos livraisons simplement,
               <br />
               depuis un seul endroit.
             </HeroSubtitle>
           </HeroText>
 
           <HeroAvatar>
-            {livreur?.username
-              ?.charAt(0)
-              ?.toUpperCase() || "L"}
+            {livreur?.username?.charAt(0)?.toUpperCase() || "L"}
           </HeroAvatar>
         </Hero>
 
@@ -1389,62 +1062,40 @@ function LivreurAdmin() {
         <StatsGrid>
           <StatCard>
             <StatTop>
-              <StatLabel>
-                Disponibles
-              </StatLabel>
+              <StatLabel>Disponibles</StatLabel>
 
               <StatIcon>◉</StatIcon>
             </StatTop>
 
-            <StatNumber>
-              {
-                commandesDisponibles.length
-              }
-            </StatNumber>
+            <StatNumber>{commandesDisponibles.length}</StatNumber>
 
-            <StatDescription>
-              Commandes à prendre
-            </StatDescription>
+            <StatDescription>Commandes à prendre</StatDescription>
           </StatCard>
 
           <StatCard>
             <StatTop>
-              <StatLabel>
-                Mes commandes
-              </StatLabel>
+              <StatLabel>Mes commandes</StatLabel>
 
               <StatIcon>≡</StatIcon>
             </StatTop>
 
-            <StatNumber>
-              {mesCommandes.length}
-            </StatNumber>
+            <StatNumber>{mesCommandes.length}</StatNumber>
 
-            <StatDescription>
-              Commandes attribuées
-            </StatDescription>
+            <StatDescription>Commandes attribuées</StatDescription>
           </StatCard>
 
           <StatCard>
             <StatTop>
-              <StatLabel>
-                État actuel
-              </StatLabel>
+              <StatLabel>État actuel</StatLabel>
 
               <StatIcon>●</StatIcon>
             </StatTop>
 
-            <StatStatus
-              $status={livreur?.statut}
-            >
-              {statutLabel[
-                livreur?.statut
-              ] || "Hors ligne"}
+            <StatStatus $status={livreur?.statut}>
+              {statutLabel[livreur?.statut] || "Hors ligne"}
             </StatStatus>
 
-            <StatDescription>
-              Votre disponibilité
-            </StatDescription>
+            <StatDescription>Votre disponibilité</StatDescription>
           </StatCard>
         </StatsGrid>
 
@@ -1455,18 +1106,13 @@ function LivreurAdmin() {
         <Section>
           <SectionHeader>
             <div>
-              <SectionEyebrow>
-                VOTRE COMPTE
-              </SectionEyebrow>
+              <SectionEyebrow>VOTRE COMPTE</SectionEyebrow>
 
-              <SectionTitle>
-                Disponibilité
-              </SectionTitle>
+              <SectionTitle>Disponibilité</SectionTitle>
 
               <SectionDescription>
-                Indiquez aux clients et au
-                système si vous pouvez recevoir
-                une livraison.
+                Indiquez aux clients et au système si vous pouvez recevoir une
+                livraison.
               </SectionDescription>
             </div>
           </SectionHeader>
@@ -1474,62 +1120,34 @@ function LivreurAdmin() {
           <ProfileCard>
             <ProfileInfo>
               <ProfileAvatar>
-                {livreur?.username
-                  ?.charAt(0)
-                  ?.toUpperCase() || "L"}
+                {livreur?.username?.charAt(0)?.toUpperCase() || "L"}
               </ProfileAvatar>
 
               <div>
-                <ProfileName>
-                  {livreur?.username}
-                </ProfileName>
+                <ProfileName>{livreur?.username}</ProfileName>
 
-                <ProfileEmail>
-                  {livreur?.email}
-                </ProfileEmail>
+                <ProfileEmail>{livreur?.email}</ProfileEmail>
 
-                <ProfilePhone>
-                  {livreur?.telephone}
-                </ProfilePhone>
+                <ProfilePhone>{livreur?.telephone}</ProfilePhone>
               </div>
             </ProfileInfo>
 
             <StatusSelector>
               <StatusButton
-                $active={
-                  livreur?.statut ===
-                  "AVAILABLE"
-                }
-                onClick={() =>
-                  changerStatut(
-                    "AVAILABLE",
-                  )
-                }
-                disabled={
-                  !!commandeActive
-                }
+                $active={livreur?.statut === "AVAILABLE"}
+                onClick={() => changerStatut("AVAILABLE")}
+                disabled={!!commandeActive}
               >
                 <ButtonDot />
-
                 Disponible
               </StatusButton>
 
               <StatusButton
-                $active={
-                  livreur?.statut ===
-                  "OFFLINE"
-                }
-                onClick={() =>
-                  changerStatut(
-                    "OFFLINE",
-                  )
-                }
-                disabled={
-                  !!commandeActive
-                }
+                $active={livreur?.statut === "OFFLINE"}
+                onClick={() => changerStatut("OFFLINE")}
+                disabled={!!commandeActive}
               >
                 <ButtonDot />
-
                 Hors ligne
               </StatusButton>
             </StatusSelector>
@@ -1543,17 +1161,12 @@ function LivreurAdmin() {
         {commandeActive && (
           <Section>
             <SectionHeader>
-              <SectionEyebrow>
-                MISSION EN COURS
-              </SectionEyebrow>
+              <SectionEyebrow>MISSION EN COURS</SectionEyebrow>
 
-              <SectionTitle>
-                Livraison actuelle
-              </SectionTitle>
+              <SectionTitle>Livraison actuelle</SectionTitle>
 
               <SectionDescription>
-                Suivez les différentes étapes
-                de votre livraison depuis cet
+                Suivez les différentes étapes de votre livraison depuis cet
                 espace.
               </SectionDescription>
             </SectionHeader>
@@ -1561,30 +1174,16 @@ function LivreurAdmin() {
             <DeliveryCard>
               <DeliveryTop>
                 <div>
-                  <DeliveryLabel>
-                    COMMANDE
-                  </DeliveryLabel>
+                  <DeliveryLabel>COMMANDE</DeliveryLabel>
 
                   <DeliveryNumber>
-                    #
-                    {commandeActive._id.slice(
-                      -6,
-                    )}
+                    #{commandeActive._id.slice(-6)}
                   </DeliveryNumber>
                 </div>
 
-                <DeliveryStatus
-                  $status={
-                    commandeActive
-                      .livraison?.statut
-                  }
-                >
-                  {livraisonLabel[
-                    commandeActive
-                      .livraison?.statut
-                  ] ||
-                    commandeActive
-                      .livraison?.statut}
+                <DeliveryStatus $status={commandeActive.livraison?.statut}>
+                  {livraisonLabel[commandeActive.livraison?.statut] ||
+                    commandeActive.livraison?.statut}
                 </DeliveryStatus>
               </DeliveryTop>
 
@@ -1592,55 +1191,34 @@ function LivreurAdmin() {
 
               <DeliveryGrid>
                 <DeliveryInfo>
-                  <DeliveryInfoLabel>
-                    CLIENT
-                  </DeliveryInfoLabel>
+                  <DeliveryInfoLabel>CLIENT</DeliveryInfoLabel>
 
                   <DeliveryInfoValue>
-                    {
-                      commandeActive.client
-                        ?.prenom
-                    }{" "}
-                    {
-                      commandeActive.client
-                        ?.nom
-                    }
+                    {commandeActive.client?.prenom} {commandeActive.client?.nom}
                   </DeliveryInfoValue>
                 </DeliveryInfo>
 
                 <DeliveryInfo>
-                  <DeliveryInfoLabel>
-                    TÉLÉPHONE
-                  </DeliveryInfoLabel>
+                  <DeliveryInfoLabel>TÉLÉPHONE</DeliveryInfoLabel>
 
                   <DeliveryInfoValue>
-                    {commandeActive.client
-                      ?.numero ||
-                      "Non renseigné"}
+                    {commandeActive.client?.numero || "Non renseigné"}
                   </DeliveryInfoValue>
                 </DeliveryInfo>
 
                 <DeliveryInfo>
-                  <DeliveryInfoLabel>
-                    VILLE
-                  </DeliveryInfoLabel>
+                  <DeliveryInfoLabel>VILLE</DeliveryInfoLabel>
 
                   <DeliveryInfoValue>
-                    {commandeActive.client
-                      ?.ville ||
-                      "Non renseignée"}
+                    {commandeActive.client?.ville || "Non renseignée"}
                   </DeliveryInfoValue>
                 </DeliveryInfo>
 
                 <DeliveryInfo>
-                  <DeliveryInfoLabel>
-                    ADRESSE
-                  </DeliveryInfoLabel>
+                  <DeliveryInfoLabel>ADRESSE</DeliveryInfoLabel>
 
                   <DeliveryInfoValue>
-                    {commandeActive.client
-                      ?.adresse ||
-                      "Non renseignée"}
+                    {commandeActive.client?.adresse || "Non renseignée"}
                   </DeliveryInfoValue>
                 </DeliveryInfo>
               </DeliveryGrid>
@@ -1648,70 +1226,38 @@ function LivreurAdmin() {
               {/* PRODUITS */}
 
               <DeliveryProducts>
-                <DeliveryInfoLabel>
-                  PRODUITS
-                </DeliveryInfoLabel>
+                <DeliveryInfoLabel>PRODUITS</DeliveryInfoLabel>
 
-                {commandeActive.panier?.map(
-                  (item, index) => (
-                    <DeliveryProduct
-                      key={
-                        item._id ||
-                        index
-                      }
-                    >
-                      <span>
-                        {item.quantite} ×{" "}
-                        {item.nom}
-                      </span>
+                {commandeActive.panier?.map((item, index) => (
+                  <DeliveryProduct key={item._id || index}>
+                    <span>
+                      {item.quantite} × {item.nom}
+                    </span>
 
-                      <strong>
-                        {formatPrix(
-                          item.prix *
-                            item.quantite,
-                        )}{" "}
-                        FCFA
-                      </strong>
-                    </DeliveryProduct>
-                  ),
-                )}
+                    <strong>
+                      {formatPrix(item.prix * item.quantite)} FCFA
+                    </strong>
+                  </DeliveryProduct>
+                ))}
               </DeliveryProducts>
 
               {/* TOTAL */}
 
               <DeliveryTotal>
-                <span>
-                  Total produits
-                </span>
+                <span>Total produits</span>
 
-                <strong>
-                  {formatPrix(
-                    commandeActive
-                      .totalProduits,
-                  )}{" "}
-                  FCFA
-                </strong>
+                <strong>{formatPrix(commandeActive.totalProduits)} FCFA</strong>
               </DeliveryTotal>
 
               {/* ACTION */}
 
               <DeliveryAction>
-                {commandeActive.livraison
-                  ?.statut ===
-                  "ACCEPTED" && (
+                {commandeActive.livraison?.statut === "ACCEPTED" && (
                   <DeliveryButton
-                    onClick={() =>
-                      commencerRecuperation(
-                        commandeActive._id,
-                      )
-                    }
-                    disabled={
-                      commandeEnCours ===
-                      commandeActive._id
-                    }
+                    onClick={() => commencerRecuperation(commandeActive._id)}
+                    disabled={commandeEnCours === commandeActive._id}
                   >
-                    {commandeEnCours ===
-                    commandeActive._id
+                    {commandeEnCours === commandeActive._id
                       ? "Préparation..."
                       : "Commencer la récupération"}
 
@@ -1719,22 +1265,12 @@ function LivreurAdmin() {
                   </DeliveryButton>
                 )}
 
-                {commandeActive.livraison
-                  ?.statut ===
-                  "PICKING_UP" && (
+                {commandeActive.livraison?.statut === "PICKING_UP" && (
                   <DeliveryButton
-                    onClick={() =>
-                      recupererCommande(
-                        commandeActive._id,
-                      )
-                    }
-                    disabled={
-                      commandeEnCours ===
-                      commandeActive._id
-                    }
+                    onClick={() => recupererCommande(commandeActive._id)}
+                    disabled={commandeEnCours === commandeActive._id}
                   >
-                    {commandeEnCours ===
-                    commandeActive._id
+                    {commandeEnCours === commandeActive._id
                       ? "Confirmation..."
                       : "J'ai récupéré la commande"}
 
@@ -1742,22 +1278,12 @@ function LivreurAdmin() {
                   </DeliveryButton>
                 )}
 
-                {commandeActive.livraison
-                  ?.statut ===
-                  "IN_DELIVERY" && (
+                {commandeActive.livraison?.statut === "IN_DELIVERY" && (
                   <DeliveryButton
-                    onClick={() =>
-                      livrerCommande(
-                        commandeActive._id,
-                      )
-                    }
-                    disabled={
-                      commandeEnCours ===
-                      commandeActive._id
-                    }
+                    onClick={() => livrerCommande(commandeActive._id)}
+                    disabled={commandeEnCours === commandeActive._id}
                   >
-                    {commandeEnCours ===
-                    commandeActive._id
+                    {commandeEnCours === commandeActive._id
                       ? "Confirmation..."
                       : "Confirmer la livraison"}
 
@@ -1773,15 +1299,10 @@ function LivreurAdmin() {
               <MapSection>
                 <MapHeader>
                   <div>
-                    <MapTitle>
-                      Suivi de la
-                      livraison
-                    </MapTitle>
+                    <MapTitle>Suivi de la livraison</MapTitle>
 
                     <MapSubtitle>
-                      Position du client et
-                      itinéraire en temps
-                      réel
+                      Position du client et itinéraire en temps réel
                     </MapSubtitle>
                   </div>
 
@@ -1791,25 +1312,20 @@ function LivreurAdmin() {
                   </LiveBadge>
                 </MapHeader>
 
-                {positionClient ||
-                positionLivreur ? (
+                {positionClient || positionLivreur ? (
                   <>
                     <MapBox>
                       <MapContainer
                         center={[
                           Number(
-                            positionLivreur
-                              ?.latitude ??
-                              positionClient
-                                ?.latitude ??
+                            positionLivreur?.latitude ??
+                              positionClient?.latitude ??
                               5.3364,
                           ),
 
                           Number(
-                            positionLivreur
-                              ?.longitude ??
-                              positionClient
-                                ?.longitude ??
+                            positionLivreur?.longitude ??
+                              positionClient?.longitude ??
                               -4.0267,
                           ),
                         ]}
@@ -1826,108 +1342,56 @@ function LivreurAdmin() {
                         />
 
                         <AjusterCarte
-                          positionLivreur={
-                            positionLivreur
-                          }
-                          positionClient={
-                            positionClient
-                          }
-                          itineraire={
-                            itineraire
-                          }
+                          positionLivreur={positionLivreur}
+                          positionClient={positionClient}
+                          itineraire={itineraire}
                         />
 
                         {/* ROUTE */}
 
                         <ItineraireRoutier
-                          positionLivreur={
-                            positionLivreur
-                          }
-                          positionClient={
-                            positionClient
-                          }
-                          onRouteUpdate={
-                            mettreAJourItineraire
-                          }
+                          positionLivreur={positionLivreur}
+                          positionClient={positionClient}
+                          onRouteUpdate={mettreAJourItineraire}
                         />
 
                         {/* LIVREUR */}
 
-                        {positionValide(
-                          positionLivreur,
-                        ) && (
+                        {positionValide(positionLivreur) && (
                           <Marker
                             position={[
-                              Number(
-                                positionLivreur.latitude,
-                              ),
-                              Number(
-                                positionLivreur.longitude,
-                              ),
+                              Number(positionLivreur.latitude),
+                              Number(positionLivreur.longitude),
                             ]}
-                            icon={
-                              livreurIcon
-                            }
-                            zIndexOffset={
-                              1000
-                            }
+                            icon={livreurIcon}
+                            zIndexOffset={1000}
                           >
                             <Popup>
-                              <strong>
-                                🚴 Votre
-                                position
-                              </strong>
-
+                              <strong>🚴 Votre position</strong>
                               <br />
-
-                              Position GPS
-                              actuelle
+                              Position GPS actuelle
                             </Popup>
                           </Marker>
                         )}
 
                         {/* CLIENT */}
 
-                        {positionValide(
-                          positionClient,
-                        ) && (
+                        {positionValide(positionClient) && (
                           <Marker
                             position={[
-                              Number(
-                                positionClient.latitude,
-                              ),
-                              Number(
-                                positionClient.longitude,
-                              ),
+                              Number(positionClient.latitude),
+                              Number(positionClient.longitude),
                             ]}
-                            icon={
-                              clientIcon
-                            }
-                            zIndexOffset={
-                              900
-                            }
+                            icon={clientIcon}
+                            zIndexOffset={900}
                           >
                             <Popup>
-                              <strong>
-                                👤 Client
-                              </strong>
-
+                              <strong>👤 Client</strong>
                               <br />
-
-                              {commandeActive
-                                .client
-                                ?.prenom ||
-                                ""}{" "}
-                              {commandeActive
-                                .client
-                                ?.nom ||
-                                ""}
-
+                              {commandeActive.client?.prenom || ""}{" "}
+                              {commandeActive.client?.nom || ""}
                               <br />
-
-                              {commandeActive
-                                .client
-                                ?.adresse ||
+                              {commandeActive.client?.adresse ||
                                 "Adresse non renseignée"}
                             </Popup>
                           </Marker>
@@ -1939,22 +1403,15 @@ function LivreurAdmin() {
 
                     <RouteInfo>
                       <RouteInfoItem>
-                        <RouteIcon>
-                          🛣️
-                        </RouteIcon>
+                        <RouteIcon>🛣️</RouteIcon>
 
                         <div>
-                          <RouteLabel>
-                            DISTANCE
-                          </RouteLabel>
+                          <RouteLabel>DISTANCE</RouteLabel>
 
                           <RouteValue>
-                            {positionClient &&
-                            positionLivreur
+                            {positionClient && positionLivreur
                               ? itineraire
-                                ? formatDistance(
-                                    itineraire.distance,
-                                  )
+                                ? formatDistance(itineraire.distance)
                                 : "Calcul..."
                               : "—"}
                           </RouteValue>
@@ -1964,22 +1421,15 @@ function LivreurAdmin() {
                       <RouteSeparator />
 
                       <RouteInfoItem>
-                        <RouteIcon>
-                          ⏱️
-                        </RouteIcon>
+                        <RouteIcon>⏱️</RouteIcon>
 
                         <div>
-                          <RouteLabel>
-                            TEMPS ESTIMÉ
-                          </RouteLabel>
+                          <RouteLabel>TEMPS ESTIMÉ</RouteLabel>
 
                           <RouteValue>
-                            {positionClient &&
-                            positionLivreur
+                            {positionClient && positionLivreur
                               ? itineraire
-                                ? formatDuree(
-                                    itineraire.duration,
-                                  )
+                                ? formatDuree(itineraire.duration)
                                 : "Calcul..."
                               : "—"}
                           </RouteValue>
@@ -1989,20 +1439,13 @@ function LivreurAdmin() {
                       <RouteSeparator />
 
                       <RouteInfoItem>
-                        <RouteIcon>
-                          📍
-                        </RouteIcon>
+                        <RouteIcon>📍</RouteIcon>
 
                         <RouteAddress>
-                          <RouteLabel>
-                            DESTINATION
-                          </RouteLabel>
+                          <RouteLabel>DESTINATION</RouteLabel>
 
                           <RouteValue>
-                            {commandeActive
-                              .client
-                              ?.adresse ||
-                              "Adresse client"}
+                            {commandeActive.client?.adresse || "Adresse client"}
                           </RouteValue>
                         </RouteAddress>
                       </RouteInfoItem>
@@ -2011,21 +1454,11 @@ function LivreurAdmin() {
                     {/* ÉTAT GPS */}
 
                     <GpsStatusGrid>
-                      <GpsStatus
-                        $active={
-                          !!positionLivreur
-                        }
-                      >
-                        <GpsIndicator
-                          $active={
-                            !!positionLivreur
-                          }
-                        />
+                      <GpsStatus $active={!!positionLivreur}>
+                        <GpsIndicator $active={!!positionLivreur} />
 
                         <div>
-                          <GpsTitle>
-                            Votre GPS
-                          </GpsTitle>
+                          <GpsTitle>Votre GPS</GpsTitle>
 
                           <GpsText>
                             {positionLivreur
@@ -2035,21 +1468,11 @@ function LivreurAdmin() {
                         </div>
                       </GpsStatus>
 
-                      <GpsStatus
-                        $active={
-                          !!positionClient
-                        }
-                      >
-                        <GpsIndicator
-                          $active={
-                            !!positionClient
-                          }
-                        />
+                      <GpsStatus $active={!!positionClient}>
+                        <GpsIndicator $active={!!positionClient} />
 
                         <div>
-                          <GpsTitle>
-                            GPS client
-                          </GpsTitle>
+                          <GpsTitle>GPS client</GpsTitle>
 
                           <GpsText>
                             {positionClient
@@ -2065,18 +1488,11 @@ function LivreurAdmin() {
                         <span>📍</span>
 
                         <div>
-                          <strong>
-                            Position du
-                            client en attente
-                          </strong>
+                          <strong>Position du client en attente</strong>
 
                           <p>
-                            Le client doit
-                            ouvrir sa page de
-                            suivi et autoriser
-                            la géolocalisation
-                            pour apparaître sur
-                            votre carte.
+                            Le client doit ouvrir sa page de suivi et autoriser
+                            la géolocalisation pour apparaître sur votre carte.
                           </p>
                         </div>
                       </GpsWarning>
@@ -2084,20 +1500,13 @@ function LivreurAdmin() {
                   </>
                 ) : (
                   <MapEmpty>
-                    <MapEmptyIcon>
-                      📍
-                    </MapEmptyIcon>
+                    <MapEmptyIcon>📍</MapEmptyIcon>
 
-                    <strong>
-                      Position GPS
-                      indisponible
-                    </strong>
+                    <strong>Position GPS indisponible</strong>
 
                     <span>
-                      La carte apparaîtra dès
-                      que le livreur ou le
-                      client partagera sa
-                      position.
+                      La carte apparaîtra dès que le livreur ou le client
+                      partagera sa position.
                     </span>
                   </MapEmpty>
                 )}
@@ -2113,206 +1522,127 @@ function LivreurAdmin() {
         <Section>
           <SectionHeaderRow>
             <div>
-              <SectionEyebrow>
-                À VOUS DE JOUER
-              </SectionEyebrow>
+              <SectionEyebrow>À VOUS DE JOUER</SectionEyebrow>
 
-              <SectionTitle>
-                Commandes disponibles
-              </SectionTitle>
+              <SectionTitle>Commandes disponibles</SectionTitle>
 
               <SectionDescription>
-                Les nouvelles commandes en
-                attente d'un livreur.
+                Les nouvelles commandes en attente d'un livreur.
               </SectionDescription>
             </div>
 
-            <CountBadge>
-              {
-                commandesDisponibles.length
-              }
-            </CountBadge>
+            <CountBadge>{commandesDisponibles.length}</CountBadge>
           </SectionHeaderRow>
 
-          {commandesDisponibles.length ===
-          0 ? (
+          {commandesDisponibles.length === 0 ? (
             <EmptyCard>
               <EmptyIcon>✓</EmptyIcon>
 
-              <EmptyTitle>
-                Tout est calme pour le
-                moment.
-              </EmptyTitle>
+              <EmptyTitle>Tout est calme pour le moment.</EmptyTitle>
 
               <EmptyText>
-                Aucune nouvelle commande
-                n'attend actuellement un
-                livreur.
+                Aucune nouvelle commande n'attend actuellement un livreur.
               </EmptyText>
 
-              <EmptyButton
-                onClick={() =>
-                  chargerTout()
-                }
-              >
+              <EmptyButton onClick={() => chargerTout()}>
                 Vérifier à nouveau
               </EmptyButton>
             </EmptyCard>
           ) : (
             <OrdersGrid>
-              {commandesDisponibles.map(
-                (commande) => (
-                  <OrderCard
-                    key={commande._id}
-                  >
-                    <OrderHeader>
-                      <div>
-                        <OrderEyebrow>
-                          COMMANDE
-                        </OrderEyebrow>
+              {commandesDisponibles.map((commande) => (
+                <OrderCard key={commande._id}>
+                  <OrderHeader>
+                    <div>
+                      <OrderEyebrow>COMMANDE</OrderEyebrow>
 
-                        <OrderNumber>
-                          #
-                          {commande._id.slice(
-                            -6,
-                          )}
-                        </OrderNumber>
-                      </div>
+                      <OrderNumber>#{commande._id.slice(-6)}</OrderNumber>
+                    </div>
 
-                      <OrderBadge>
-                        Nouvelle
-                      </OrderBadge>
-                    </OrderHeader>
+                    <OrderBadge>Nouvelle</OrderBadge>
+                  </OrderHeader>
 
-                    <OrderPrice>
-                      {formatPrix(
-                        commande.totalProduits,
-                      )}{" "}
-                      <small>
-                        FCFA
-                      </small>
-                    </OrderPrice>
+                  <OrderPrice>
+                    {formatPrix(commande.totalProduits)} <small>FCFA</small>
+                  </OrderPrice>
 
-                    <OrderDivider />
+                  <OrderDivider />
 
-                    <InfoList>
-                      <InfoRow>
-                        <InfoIcon>
-                          ●
-                        </InfoIcon>
+                  <InfoList>
+                    <InfoRow>
+                      <InfoIcon>●</InfoIcon>
 
-                        <InfoContent>
-                          <InfoLabel>
-                            CLIENT
-                          </InfoLabel>
+                      <InfoContent>
+                        <InfoLabel>CLIENT</InfoLabel>
 
-                          <InfoValue>
-                            {commande
-                              .client
-                              ?.username ||
-                              commande
-                                .client
-                                ?.nom ||
-                              "Client"}
-                          </InfoValue>
-                        </InfoContent>
-                      </InfoRow>
+                        <InfoValue>
+                          {commande.client?.username ||
+                            commande.client?.nom ||
+                            "Client"}
+                        </InfoValue>
+                      </InfoContent>
+                    </InfoRow>
 
-                      <InfoRow>
-                        <InfoIcon>
-                          ◉
-                        </InfoIcon>
+                    <InfoRow>
+                      <InfoIcon>◉</InfoIcon>
 
-                        <InfoContent>
-                          <InfoLabel>
-                            VILLE
-                          </InfoLabel>
+                      <InfoContent>
+                        <InfoLabel>VILLE</InfoLabel>
 
-                          <InfoValue>
-                            {commande
-                              .client
-                              ?.ville ||
-                              "Non renseignée"}
-                          </InfoValue>
-                        </InfoContent>
-                      </InfoRow>
+                        <InfoValue>
+                          {commande.client?.ville || "Non renseignée"}
+                        </InfoValue>
+                      </InfoContent>
+                    </InfoRow>
 
-                      <InfoRow>
-                        <InfoIcon>
-                          ⌖
-                        </InfoIcon>
+                    <InfoRow>
+                      <InfoIcon>⌖</InfoIcon>
 
-                        <InfoContent>
-                          <InfoLabel>
-                            ADRESSE
-                          </InfoLabel>
+                      <InfoContent>
+                        <InfoLabel>ADRESSE</InfoLabel>
 
-                          <InfoValue>
-                            {commande
-                              .client
-                              ?.adresse ||
-                              "Non renseignée"}
-                          </InfoValue>
-                        </InfoContent>
-                      </InfoRow>
+                        <InfoValue>
+                          {commande.client?.adresse || "Non renseignée"}
+                        </InfoValue>
+                      </InfoContent>
+                    </InfoRow>
 
-                      <InfoRow>
-                        <InfoIcon>
-                          ●
-                        </InfoIcon>
+                    <InfoRow>
+                      <InfoIcon>●</InfoIcon>
 
-                        <InfoContent>
-                          <InfoLabel>
-                            NUMÉRO
-                          </InfoLabel>
+                      <InfoContent>
+                        <InfoLabel>NUMÉRO</InfoLabel>
 
-                          <InfoValue>
-                            {commande
-                              .client
-                              ?.numero ||
-                              "Non renseigné"}
-                          </InfoValue>
-                        </InfoContent>
-                      </InfoRow>
-                    </InfoList>
+                        <InfoValue>
+                          {commande.client?.numero || "Non renseigné"}
+                        </InfoValue>
+                      </InfoContent>
+                    </InfoRow>
+                  </InfoList>
 
-                    <OrderFooter>
-                      <ArticleCount>
-                        {commande.panier
-                          ?.length ||
-                          0}{" "}
-                        article
-                        {commande.panier
-                          ?.length > 1
-                          ? "s"
-                          : ""}
-                      </ArticleCount>
+                  <OrderFooter>
+                    <ArticleCount>
+                      {commande.panier?.length || 0} article
+                      {commande.panier?.length > 1 ? "s" : ""}
+                    </ArticleCount>
 
-                      <AcceptButton
-                        onClick={() =>
-                          accepterCommande(
-                            commande._id,
-                          )
-                        }
-                        disabled={
-                          livreur?.statut ===
-                            "BUSY" ||
-                          !!livreur?.commandeActuelle ||
-                          commandeEnCours ===
-                            commande._id
-                        }
-                      >
-                        {commandeEnCours ===
-                        commande._id
-                          ? "Acceptation..."
-                          : "Accepter"}
+                    <AcceptButton
+                      onClick={() => accepterCommande(commande._id)}
+                      disabled={
+                        livreur?.statut === "BUSY" ||
+                        !!livreur?.commandeActuelle ||
+                        commandeEnCours === commande._id
+                      }
+                    >
+                      {commandeEnCours === commande._id
+                        ? "Acceptation..."
+                        : "Accepter"}
 
-                        <span>→</span>
-                      </AcceptButton>
-                    </OrderFooter>
-                  </OrderCard>
-                ),
-              )}
+                      <span>→</span>
+                    </AcceptButton>
+                  </OrderFooter>
+                </OrderCard>
+              ))}
             </OrdersGrid>
           )}
         </Section>
@@ -2324,88 +1654,54 @@ function LivreurAdmin() {
         <Section>
           <SectionHeaderRow>
             <div>
-              <SectionEyebrow>
-                VOTRE ACTIVITÉ
-              </SectionEyebrow>
+              <SectionEyebrow>VOTRE ACTIVITÉ</SectionEyebrow>
 
-              <SectionTitle>
-                Mes commandes
-              </SectionTitle>
+              <SectionTitle>Mes commandes</SectionTitle>
 
               <SectionDescription>
-                Les commandes actuellement
-                associées à votre compte.
+                Les commandes actuellement associées à votre compte.
               </SectionDescription>
             </div>
 
-            <CountBadge>
-              {mesCommandes.length}
-            </CountBadge>
+            <CountBadge>{mesCommandes.length}</CountBadge>
           </SectionHeaderRow>
 
           {mesCommandes.length === 0 ? (
             <EmptyCard>
               <EmptyIcon>—</EmptyIcon>
 
-              <EmptyTitle>
-                Aucune commande.
-              </EmptyTitle>
+              <EmptyTitle>Aucune commande.</EmptyTitle>
 
               <EmptyText>
-                Vos commandes apparaîtront
-                ici lorsqu'elles vous seront
+                Vos commandes apparaîtront ici lorsqu'elles vous seront
                 attribuées.
               </EmptyText>
             </EmptyCard>
           ) : (
             <MyOrders>
-              {mesCommandes.map(
-                (commande) => (
-                  <MyOrderCard
-                    key={commande._id}
-                  >
-                    <MyOrderMain>
-                      <MyOrderNumber>
-                        #
-                        {commande._id.slice(
-                          -6,
-                        )}
-                      </MyOrderNumber>
+              {mesCommandes.map((commande) => (
+                <MyOrderCard key={commande._id}>
+                  <MyOrderMain>
+                    <MyOrderNumber>#{commande._id.slice(-6)}</MyOrderNumber>
 
-                      <MyOrderLocation>
-                        {commande.client
-                          ?.ville ||
-                          "Ville inconnue"}
-                      </MyOrderLocation>
+                    <MyOrderLocation>
+                      {commande.client?.ville || "Ville inconnue"}
+                    </MyOrderLocation>
 
-                      <MyOrderAddress>
-                        {commande.client
-                          ?.adresse ||
-                          "Adresse non renseignée"}
-                      </MyOrderAddress>
-                    </MyOrderMain>
+                    <MyOrderAddress>
+                      {commande.client?.adresse || "Adresse non renseignée"}
+                    </MyOrderAddress>
+                  </MyOrderMain>
 
-                    <MyOrderStatus
-                      $status={
-                        commande
-                          .livraison
-                          ?.statut
-                      }
-                    >
-                      {commande.livraison
-                        ?.statut ||
-                        "INCONNU"}
-                    </MyOrderStatus>
+                  <MyOrderStatus $status={commande.livraison?.statut}>
+                    {commande.livraison?.statut || "INCONNU"}
+                  </MyOrderStatus>
 
-                    <MyOrderPrice>
-                      {formatPrix(
-                        commande.totalProduits,
-                      )}{" "}
-                      FCFA
-                    </MyOrderPrice>
-                  </MyOrderCard>
-                ),
-              )}
+                  <MyOrderPrice>
+                    {formatPrix(commande.totalProduits)} FCFA
+                  </MyOrderPrice>
+                </MyOrderCard>
+              ))}
             </MyOrders>
           )}
         </Section>
@@ -2415,13 +1711,9 @@ function LivreurAdmin() {
         ========================================== */}
 
         <Footer>
-          <FooterBrand>
-            NUMA
-          </FooterBrand>
+          <FooterBrand>NUMA</FooterBrand>
 
-          <FooterText>
-            Espace professionnel livreur
-          </FooterText>
+          <FooterText>Espace professionnel livreur</FooterText>
         </Footer>
       </Main>
     </Page>
@@ -2449,8 +1741,7 @@ const Header = styled.header`
   top: 0;
   z-index: 1000;
   background: rgba(255, 255, 255, 0.88);
-  border-bottom: 1px solid
-    rgba(0, 0, 0, 0.07);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
   backdrop-filter: blur(20px);
 `;
 
@@ -2564,9 +1855,7 @@ const RefreshIcon = styled.span`
   display: inline-block;
   font-size: 18px;
   animation: ${({ $loading }) =>
-    $loading
-      ? "rotation 0.8s linear infinite"
-      : "none"};
+    $loading ? "rotation 0.8s linear infinite" : "none"};
 
   @keyframes rotation {
     from {
@@ -2594,13 +1883,9 @@ const Alert = styled.div`
   margin-bottom: 16px;
   padding: 13px 15px;
   border-radius: 13px;
-  background: ${({ $success }) =>
-    $success ? "#ecfdf3" : "#fff0f0"};
-  border: 1px solid
-    ${({ $success }) =>
-      $success ? "#c5f1d3" : "#ffd1d1"};
-  color: ${({ $success }) =>
-    $success ? "#087a35" : "#bb1e1e"};
+  background: ${({ $success }) => ($success ? "#ecfdf3" : "#fff0f0")};
+  border: 1px solid ${({ $success }) => ($success ? "#c5f1d3" : "#ffd1d1")};
+  color: ${({ $success }) => ($success ? "#087a35" : "#bb1e1e")};
   display: flex;
   align-items: center;
   gap: 10px;
@@ -2686,10 +1971,7 @@ const HeroAvatar = styled.div`
 
 const StatsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(
-    3,
-    minmax(0, 1fr)
-  );
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 15px;
   margin-bottom: 55px;
 
@@ -2855,14 +2137,10 @@ const StatusButton = styled.button`
   padding: 0 17px;
   border: 0;
   border-radius: 10px;
-  background: ${({ $active }) =>
-    $active ? "white" : "transparent"};
-  color: ${({ $active }) =>
-    $active ? "#111" : "#86868b"};
+  background: ${({ $active }) => ($active ? "white" : "transparent")};
+  color: ${({ $active }) => ($active ? "#111" : "#86868b")};
   box-shadow: ${({ $active }) =>
-    $active
-      ? "0 2px 8px rgba(0,0,0,.06)"
-      : "none"};
+    $active ? "0 2px 8px rgba(0,0,0,.06)" : "none"};
   display: flex;
   align-items: center;
   gap: 7px;
@@ -2924,13 +2202,9 @@ const DeliveryStatus = styled.div`
   padding: 8px 11px;
   border-radius: 999px;
   background: ${({ $status }) =>
-    $status === "IN_DELIVERY"
-      ? "#ecfdf3"
-      : "#29292c"};
+    $status === "IN_DELIVERY" ? "#ecfdf3" : "#29292c"};
   color: ${({ $status }) =>
-    $status === "IN_DELIVERY"
-      ? "#138a42"
-      : "#d6d6da"};
+    $status === "IN_DELIVERY" ? "#138a42" : "#d6d6da"};
   font-size: 10px;
   font-weight: 750;
 `;
@@ -2943,17 +2217,11 @@ const DeliveryDivider = styled.div`
 
 const DeliveryGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(
-    4,
-    minmax(0, 1fr)
-  );
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 25px;
 
   @media (max-width: 800px) {
-    grid-template-columns: repeat(
-      2,
-      1fr
-    );
+    grid-template-columns: repeat(2, 1fr);
   }
 
   @media (max-width: 450px) {
@@ -3108,8 +2376,7 @@ const LiveDot = styled.span`
   height: 6px;
   border-radius: 50%;
   background: #16a34a;
-  box-shadow: 0 0 0 4px
-    rgba(22, 163, 74, 0.12);
+  box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.12);
 `;
 
 const MapBox = styled.div`
@@ -3126,8 +2393,7 @@ const MapBox = styled.div`
 
   .leaflet-control-zoom {
     border: none;
-    box-shadow: 0 4px 18px
-      rgba(0, 0, 0, 0.12);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.12);
   }
 
   .leaflet-control-zoom a {
@@ -3216,10 +2482,7 @@ const RouteSeparator = styled.div`
 const GpsStatusGrid = styled.div`
   margin-top: 12px;
   display: grid;
-  grid-template-columns: repeat(
-    2,
-    minmax(0, 1fr)
-  );
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
 
   @media (max-width: 500px) {
@@ -3230,12 +2493,9 @@ const GpsStatusGrid = styled.div`
 const GpsStatus = styled.div`
   min-height: 58px;
   padding: 10px 13px;
-  border: 1px solid
-    ${({ $active }) =>
-      $active ? "#cfeedd" : "#e6e6e9"};
+  border: 1px solid ${({ $active }) => ($active ? "#cfeedd" : "#e6e6e9")};
   border-radius: 13px;
-  background: ${({ $active }) =>
-    $active ? "#f4fff8" : "#fafafa"};
+  background: ${({ $active }) => ($active ? "#f4fff8" : "#fafafa")};
   display: flex;
   align-items: center;
   gap: 10px;
@@ -3246,12 +2506,9 @@ const GpsIndicator = styled.div`
   height: 9px;
   flex-shrink: 0;
   border-radius: 50%;
-  background: ${({ $active }) =>
-    $active ? "#16a34a" : "#b8b8bd"};
+  background: ${({ $active }) => ($active ? "#16a34a" : "#b8b8bd")};
   box-shadow: ${({ $active }) =>
-    $active
-      ? "0 0 0 5px rgba(22,163,74,.10)"
-      : "none"};
+    $active ? "0 0 0 5px rgba(22,163,74,.10)" : "none"};
 `;
 
 const GpsTitle = styled.div`
@@ -3335,10 +2592,7 @@ const CountBadge = styled.div`
 
 const OrdersGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(
-    2,
-    minmax(0, 1fr)
-  );
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 15px;
 
   @media (max-width: 760px) {
@@ -3494,8 +2748,7 @@ const MyOrderCard = styled.div`
   border: 1px solid #e7e7ea;
   border-radius: 16px;
   display: grid;
-  grid-template-columns:
-    minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 20px;
 
