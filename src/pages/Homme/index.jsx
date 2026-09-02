@@ -279,7 +279,7 @@ const SearchInput = styled.input`
 
   outline: none;
 
-  font-size: 0.88rem;
+  font-size: 16px;
 
   border-radius: 999px;
 
