@@ -1307,11 +1307,11 @@ export default function Merci() {
                 <FaBox />
               </ModalIcon>
 
-              <ModalTitle>Paiement en cours de validation</ModalTitle>
+              <ModalTitle>Commande en cours de validation</ModalTitle>
 
               <ModalText $isdark={$isdark}>
                 Votre commande est bien enregistrée. La validation de votre
-                paiement peut prendre quelques instants. Vous pourrez suivre
+                commande peut prendre quelques instants. Vous pourrez suivre
                 chaque étape depuis votre coffre.
               </ModalText>
 

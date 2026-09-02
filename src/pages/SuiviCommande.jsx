@@ -26,6 +26,7 @@ import {
   FaClock,
   FaShieldAlt,
   FaCircle,
+  FaSearch,
 } from "react-icons/fa";
 
 import { socket } from "../services/socket";
@@ -87,7 +88,10 @@ function RecentrerCarte({ position }) {
     const latitude = Number(position.latitude);
     const longitude = Number(position.longitude);
 
-    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    if (
+      !Number.isFinite(latitude) ||
+      !Number.isFinite(longitude)
+    ) {
       return;
     }
 
@@ -104,7 +108,10 @@ function RecentrerCarte({ position }) {
 // ITINERAIRE ROUTIER
 // ======================================================
 
-function ItineraireRoutier({ positionLivreur, positionClient }) {
+function ItineraireRoutier({
+  positionLivreur,
+  positionClient,
+}) {
   const [route, setRoute] = useState(null);
 
   useEffect(() => {
@@ -113,11 +120,21 @@ function ItineraireRoutier({ positionLivreur, positionClient }) {
       return;
     }
 
-    const latitudeLivreur = Number(positionLivreur.latitude);
-    const longitudeLivreur = Number(positionLivreur.longitude);
+    const latitudeLivreur = Number(
+      positionLivreur.latitude,
+    );
 
-    const latitudeClient = Number(positionClient.latitude);
-    const longitudeClient = Number(positionClient.longitude);
+    const longitudeLivreur = Number(
+      positionLivreur.longitude,
+    );
+
+    const latitudeClient = Number(
+      positionClient.latitude,
+    );
+
+    const longitudeClient = Number(
+      positionClient.longitude,
+    );
 
     if (
       !Number.isFinite(latitudeLivreur) ||
@@ -131,8 +148,6 @@ function ItineraireRoutier({ positionLivreur, positionClient }) {
 
     const controller = new AbortController();
 
-    // Petit délai pour éviter de recalculer l'itinéraire
-    // à chaque changement GPS.
     const timer = setTimeout(async () => {
       try {
         const url =
@@ -146,19 +161,27 @@ function ItineraireRoutier({ positionLivreur, positionClient }) {
         });
 
         if (!response.ok) {
-          throw new Error("Erreur récupération itinéraire");
+          throw new Error(
+            "Erreur récupération itinéraire",
+          );
         }
 
         const data = await response.json();
 
-        if (data.code !== "Ok" || !data.routes?.length) {
+        if (
+          data.code !== "Ok" ||
+          !data.routes?.length
+        ) {
           setRoute(null);
           return;
         }
 
         const coordinates =
           data.routes[0].geometry.coordinates.map(
-            ([longitude, latitude]) => [latitude, longitude],
+            ([longitude, latitude]) => [
+              latitude,
+              longitude,
+            ],
           );
 
         setRoute(coordinates);
@@ -167,7 +190,11 @@ function ItineraireRoutier({ positionLivreur, positionClient }) {
           return;
         }
 
-        console.error("Erreur itinéraire :", error);
+        console.error(
+          "Erreur itinéraire :",
+          error,
+        );
+
         setRoute(null);
       }
     }, 1200);
@@ -184,7 +211,6 @@ function ItineraireRoutier({ positionLivreur, positionClient }) {
 
   return (
     <>
-      {/* Ombre du trajet */}
       <Polyline
         positions={route}
         pathOptions={{
@@ -196,7 +222,6 @@ function ItineraireRoutier({ positionLivreur, positionClient }) {
         }}
       />
 
-      {/* Trajet réel */}
       <Polyline
         positions={route}
         pathOptions={{
@@ -225,15 +250,23 @@ export default function SuiviCommande() {
 
   const [commande, setCommande] = useState(null);
 
-  const [positionLivreur, setPositionLivreur] = useState(null);
+  const [positionLivreur, setPositionLivreur] =
+    useState(null);
 
-  const [positionClient, setPositionClient] = useState(null);
+  const [positionClient, setPositionClient] =
+    useState(null);
 
   const [livreur, setLivreur] = useState(null);
 
   const [loading, setLoading] = useState(true);
 
+  const [rechercheEnCours, setRechercheEnCours] =
+    useState(false);
+
   const [erreur, setErreur] = useState("");
+
+  const [messageRecherche, setMessageRecherche] =
+    useState("");
 
   // ====================================================
   // GPS CLIENT
@@ -255,21 +288,23 @@ export default function SuiviCommande() {
 
     let watchId = null;
 
-    // Dernière position réellement envoyée au serveur
     let dernierePositionEnvoyee = null;
 
-    // Dernier envoi serveur
     let dernierEnvoi = 0;
 
-    // --------------------------------------------------
-    // Calcul approximatif de distance en mètres
-    // --------------------------------------------------
-
-    const distanceEntrePositions = (lat1, lng1, lat2, lng2) => {
+    const distanceEntrePositions = (
+      lat1,
+      lng1,
+      lat2,
+      lng2,
+    ) => {
       const R = 6371000;
 
-      const dLat = ((lat2 - lat1) * Math.PI) / 180;
-      const dLng = ((lng2 - lng1) * Math.PI) / 180;
+      const dLat =
+        ((lat2 - lat1) * Math.PI) / 180;
+
+      const dLng =
+        ((lng2 - lng1) * Math.PI) / 180;
 
       const a =
         Math.sin(dLat / 2) ** 2 +
@@ -277,18 +312,24 @@ export default function SuiviCommande() {
           Math.cos((lat2 * Math.PI) / 180) *
           Math.sin(dLng / 2) ** 2;
 
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      const c =
+        2 *
+        Math.atan2(
+          Math.sqrt(a),
+          Math.sqrt(1 - a),
+        );
 
       return R * c;
     };
 
-    // --------------------------------------------------
-    // ENVOI POSITION
-    // --------------------------------------------------
-
     const envoyerPosition = async (position) => {
-      const latitude = Number(position.coords.latitude);
-      const longitude = Number(position.coords.longitude);
+      const latitude = Number(
+        position.coords.latitude,
+      );
+
+      const longitude = Number(
+        position.coords.longitude,
+      );
 
       if (
         !Number.isFinite(latitude) ||
@@ -302,25 +343,26 @@ export default function SuiviCommande() {
         longitude,
       };
 
-      // Affichage immédiat côté client
       setPositionClient(nouvellePosition);
 
       const maintenant = Date.now();
 
-      // Évite de spammer l'API
       if (dernierePositionEnvoyee) {
-        const distance = distanceEntrePositions(
-          dernierePositionEnvoyee.latitude,
-          dernierePositionEnvoyee.longitude,
-          latitude,
-          longitude,
-        );
+        const distance =
+          distanceEntrePositions(
+            dernierePositionEnvoyee.latitude,
+            dernierePositionEnvoyee.longitude,
+            latitude,
+            longitude,
+          );
 
-        const tempsEcoule = maintenant - dernierEnvoi;
+        const tempsEcoule =
+          maintenant - dernierEnvoi;
 
-        // Pas d'envoi si :
-        // moins de 20 mètres ET moins de 5 secondes
-        if (distance < 20 && tempsEcoule < 5000) {
+        if (
+          distance < 20 &&
+          tempsEcoule < 5000
+        ) {
           return;
         }
       }
@@ -330,12 +372,10 @@ export default function SuiviCommande() {
           `${API_URL}/api/commandes/${currentCommandeId}/localisation-client`,
           {
             method: "PUT",
-
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
-
             body: JSON.stringify({
               latitude,
               longitude,
@@ -343,33 +383,32 @@ export default function SuiviCommande() {
           },
         );
 
-        const data = await response.json().catch(() => ({}));
+        const data =
+          await response
+            .json()
+            .catch(() => ({}));
 
         if (!response.ok) {
           console.error(
             "Erreur envoi GPS client :",
-            data.message || response.statusText,
+            data.message ||
+              response.statusText,
           );
 
           return;
         }
 
-        dernierePositionEnvoyee = nouvellePosition;
-        dernierEnvoi = maintenant;
+        dernierePositionEnvoyee =
+          nouvellePosition;
 
-        console.log(
-          "📍 Position client envoyée :",
-          latitude,
-          longitude,
-        );
+        dernierEnvoi = maintenant;
       } catch (error) {
-        console.error("GPS CLIENT ERROR :", error);
+        console.error(
+          "GPS CLIENT ERROR :",
+          error,
+        );
       }
     };
-
-    // --------------------------------------------------
-    // ERREUR GPS
-    // --------------------------------------------------
 
     const erreurGPS = (error) => {
       console.warn(
@@ -378,27 +417,22 @@ export default function SuiviCommande() {
       );
     };
 
-    // --------------------------------------------------
-    // WATCH GPS
-    // --------------------------------------------------
-
-    watchId = navigator.geolocation.watchPosition(
-      envoyerPosition,
-      erreurGPS,
-      {
-        enableHighAccuracy: true,
-        maximumAge: 5000,
-        timeout: 15000,
-      },
-    );
-
-    // --------------------------------------------------
-    // NETTOYAGE
-    // --------------------------------------------------
+    watchId =
+      navigator.geolocation.watchPosition(
+        envoyerPosition,
+        erreurGPS,
+        {
+          enableHighAccuracy: true,
+          maximumAge: 5000,
+          timeout: 15000,
+        },
+      );
 
     return () => {
       if (watchId !== null) {
-        navigator.geolocation.clearWatch(watchId);
+        navigator.geolocation.clearWatch(
+          watchId,
+        );
       }
     };
   }, [API_URL, currentCommandeId]);
@@ -409,7 +443,10 @@ export default function SuiviCommande() {
 
   useEffect(() => {
     if (!currentCommandeId) {
-      setErreur("Identifiant de commande manquant.");
+      setErreur(
+        "Identifiant de commande manquant.",
+      );
+
       setLoading(false);
       return;
     }
@@ -419,7 +456,8 @@ export default function SuiviCommande() {
         setLoading(true);
         setErreur("");
 
-        const token = localStorage.getItem("token");
+        const token =
+          localStorage.getItem("token");
 
         if (!token) {
           navigate("/login");
@@ -444,7 +482,8 @@ export default function SuiviCommande() {
           );
         }
 
-        const commandeData = data.commande || data;
+        const commandeData =
+          data.commande || data;
 
         setCommande(commandeData);
 
@@ -452,8 +491,12 @@ export default function SuiviCommande() {
         // LIVREUR
         // ==============================================
 
-        if (commandeData.livraison?.livreur) {
-          setLivreur(commandeData.livraison.livreur);
+        if (
+          commandeData.livraison?.livreur
+        ) {
+          setLivreur(
+            commandeData.livraison.livreur,
+          );
         }
 
         // ==============================================
@@ -465,8 +508,10 @@ export default function SuiviCommande() {
 
         if (
           localisationClient &&
-          localisationClient.latitude !== null &&
-          localisationClient.longitude !== null
+          localisationClient.latitude !==
+            null &&
+          localisationClient.longitude !==
+            null
         ) {
           const latitude = Number(
             localisationClient.latitude,
@@ -491,7 +536,9 @@ export default function SuiviCommande() {
         // POSITION LIVREUR
         // ==============================================
 
-        if (commandeData.livraison?.localisation) {
+        if (
+          commandeData.livraison?.localisation
+        ) {
           const localisation =
             commandeData.livraison.localisation;
 
@@ -515,15 +562,16 @@ export default function SuiviCommande() {
         }
 
         // ==============================================
-        // FALLBACK :
-        // localisation directement dans le livreur
+        // FALLBACK LIVREUR
         // ==============================================
 
         if (
-          commandeData.livraison?.livreur?.localisation
+          commandeData.livraison?.livreur
+            ?.localisation
         ) {
           const localisation =
-            commandeData.livraison.livreur.localisation;
+            commandeData.livraison.livreur
+              .localisation;
 
           const latitude = Number(
             localisation.latitude,
@@ -566,26 +614,126 @@ export default function SuiviCommande() {
   ]);
 
   // ====================================================
+  // LANCER RECHERCHE LIVREUR
+  // ====================================================
+
+  const lancerRechercheLivreur =
+    async () => {
+      if (!currentCommandeId) return;
+
+      if (!commande) return;
+
+      if (
+        commande.statusCommande !==
+        "CONFIRMED"
+      ) {
+        setMessageRecherche(
+          "Cette commande doit être confirmée avant de rechercher un livreur.",
+        );
+
+        return;
+      }
+
+      if (
+        commande.livraison?.livreurId ||
+        livreur
+      ) {
+        setMessageRecherche(
+          "Un livreur est déjà attribué à cette commande.",
+        );
+
+        return;
+      }
+
+      if (
+        commande.livraison?.statut !==
+        "NOT_STARTED"
+      ) {
+        return;
+      }
+
+      try {
+        setRechercheEnCours(true);
+        setMessageRecherche("");
+
+        const token =
+          localStorage.getItem("token");
+
+        if (!token) {
+          navigate("/login");
+          return;
+        }
+
+        const response = await fetch(
+          `${API_URL}/api/livreurs/commande/${currentCommandeId}/rechercher-livreur`,
+          {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type":
+                "application/json",
+            },
+          },
+        );
+
+        const data =
+          await response
+            .json()
+            .catch(() => ({}));
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ||
+              "Impossible de lancer la recherche.",
+          );
+        }
+
+        const nouvelleCommande =
+          data.commande || data;
+
+        setCommande((prev) => ({
+          ...prev,
+          ...(nouvelleCommande || {}),
+          livraison: {
+            ...prev?.livraison,
+            ...(nouvelleCommande?.livraison ||
+              {}),
+            statut: "SEARCHING",
+          },
+        }));
+
+        setMessageRecherche(
+          "Recherche d'un livreur lancée. Nous recherchons un livreur disponible.",
+        );
+      } catch (error) {
+        console.error(
+          "RECHERCHE LIVREUR ERROR:",
+          error,
+        );
+
+        setMessageRecherche(
+          error.message ||
+            "Impossible de lancer la recherche.",
+        );
+      } finally {
+        setRechercheEnCours(false);
+      }
+    };
+
+  // ====================================================
   // SOCKET.IO
   // ====================================================
 
   useEffect(() => {
     if (!currentCommandeId) return;
 
-    // ================================================
-    // REJOINDRE LA ROOM COMMANDE
-    // ================================================
-
     socket.emit(
       "join_commande",
       currentCommandeId,
     );
 
-    // ================================================
-    // REJOINDRE LA ROOM CLIENT
-    // ================================================
-
-    const token = localStorage.getItem("token");
+    const token =
+      localStorage.getItem("token");
 
     try {
       if (token) {
@@ -615,7 +763,9 @@ export default function SuiviCommande() {
     // POSITION LIVREUR
     // ================================================
 
-    const handlePositionLivreur = (data) => {
+    const handlePositionLivreur = (
+      data,
+    ) => {
       if (
         data.commandeId?.toString() !==
         currentCommandeId.toString()
@@ -623,8 +773,13 @@ export default function SuiviCommande() {
         return;
       }
 
-      const latitude = Number(data.latitude);
-      const longitude = Number(data.longitude);
+      const latitude = Number(
+        data.latitude,
+      );
+
+      const longitude = Number(
+        data.longitude,
+      );
 
       if (
         !Number.isFinite(latitude) ||
@@ -643,7 +798,9 @@ export default function SuiviCommande() {
     // POSITION CLIENT
     // ================================================
 
-    const handlePositionClient = (data) => {
+    const handlePositionClient = (
+      data,
+    ) => {
       if (
         data.commandeId?.toString() !==
         currentCommandeId.toString()
@@ -651,8 +808,13 @@ export default function SuiviCommande() {
         return;
       }
 
-      const latitude = Number(data.latitude);
-      const longitude = Number(data.longitude);
+      const latitude = Number(
+        data.latitude,
+      );
+
+      const longitude = Number(
+        data.longitude,
+      );
 
       if (
         !Number.isFinite(latitude) ||
@@ -671,7 +833,9 @@ export default function SuiviCommande() {
     // UPDATE COMMANDE
     // ================================================
 
-    const handleCommandeUpdate = (data) => {
+    const handleCommandeUpdate = (
+      data,
+    ) => {
       if (
         data.id?.toString() !==
         currentCommandeId.toString()
@@ -706,7 +870,11 @@ export default function SuiviCommande() {
       if (data.livreur) {
         setLivreur(data.livreur);
 
-        if (data.livreur.localisation) {
+        setMessageRecherche("");
+
+        if (
+          data.livreur.localisation
+        ) {
           const localisation =
             data.livreur.localisation;
 
@@ -731,10 +899,6 @@ export default function SuiviCommande() {
       }
     };
 
-    // ================================================
-    // LISTENERS
-    // ================================================
-
     socket.on(
       "livreur_position",
       handlePositionLivreur,
@@ -749,10 +913,6 @@ export default function SuiviCommande() {
       "commande_update",
       handleCommandeUpdate,
     );
-
-    // ================================================
-    // CLEANUP
-    // ================================================
 
     return () => {
       socket.off(
@@ -792,8 +952,8 @@ export default function SuiviCommande() {
           </LoadingTitle>
 
           <LoadingText>
-            Nous récupérons les informations de votre
-            livraison...
+            Nous récupérons les informations
+            de votre livraison...
           </LoadingText>
         </LoadingScreen>
       </Page>
@@ -816,7 +976,9 @@ export default function SuiviCommande() {
 
           <p>{erreur}</p>
 
-          <BackButton onClick={() => navigate(-1)}>
+          <BackButton
+            onClick={() => navigate(-1)}
+          >
             <FaArrowLeft />
             Retour
           </BackButton>
@@ -868,6 +1030,13 @@ export default function SuiviCommande() {
 
   const livreurDisponible =
     Boolean(livreur);
+
+  const peutRechercherLivreur =
+    commande.statusCommande ===
+      "CONFIRMED" &&
+    !commande.livraison?.livreurId &&
+    !livreur &&
+    statut === "NOT_STARTED";
 
   // ====================================================
   // RENDU
@@ -936,17 +1105,13 @@ export default function SuiviCommande() {
 
           <ZoomControl position="bottomright" />
 
-          {/* ==========================================
-              LA CARTE SUIT AUTOMATIQUEMENT LE LIVREUR
-          ========================================== */}
+          {/* RECENTRAGE AUTOMATIQUE LIVREUR */}
 
           <RecentrerCarte
             position={positionLivreur}
           />
 
-          {/* ==========================================
-              LIVREUR
-          ========================================== */}
+          {/* LIVREUR */}
 
           {positionLivreur && (
             <Marker
@@ -969,9 +1134,7 @@ export default function SuiviCommande() {
             </Marker>
           )}
 
-          {/* ==========================================
-              CLIENT
-          ========================================== */}
+          {/* CLIENT */}
 
           {positionClient && (
             <Marker
@@ -993,9 +1156,7 @@ export default function SuiviCommande() {
             </Marker>
           )}
 
-          {/* ==========================================
-              TRAJET ROUTIER
-          ========================================== */}
+          {/* TRAJET */}
 
           {positionLivreur &&
             positionClient && (
@@ -1010,9 +1171,7 @@ export default function SuiviCommande() {
             )}
         </MapContainer>
 
-        {/* =================================================
-            OVERLAY CARTE
-        ================================================= */}
+        {/* OVERLAY */}
 
         <MapOverlay>
           <LiveBadge>
@@ -1037,9 +1196,7 @@ export default function SuiviCommande() {
           </MapInfo>
         </MapOverlay>
 
-        {/* =================================================
-            CARTE SANS GPS LIVREUR
-        ================================================= */}
+        {/* ATTENTE LIVREUR */}
 
         {!positionLivreur &&
           statut !== "DELIVERED" && (
@@ -1054,8 +1211,9 @@ export default function SuiviCommande() {
                 </strong>
 
                 <span>
-                  La position du livreur apparaîtra
-                  ici dès qu'il sera connecté.
+                  La position du livreur
+                  apparaîtra ici dès qu'il
+                  sera connecté.
                 </span>
               </div>
             </WaitingMapCard>
@@ -1073,9 +1231,7 @@ export default function SuiviCommande() {
           ================================================= */}
 
           <MainColumn>
-            {/* =============================================
-                STATUT
-            ============================================= */}
+            {/* STATUT */}
 
             <StatusCard>
               <StatusCardTop>
@@ -1101,9 +1257,73 @@ export default function SuiviCommande() {
               </StatusCardTop>
             </StatusCard>
 
-            {/* =============================================
+            {/* =================================================
+                RECHERCHE LIVREUR
+            ================================================= */}
+
+            {peutRechercherLivreur && (
+              <SearchDriverCard>
+                <SearchDriverIcon>
+                  <FaMotorcycle />
+                </SearchDriverIcon>
+
+                <SearchDriverContent>
+                  <SearchDriverTitle>
+                    Aucun livreur attribué
+                  </SearchDriverTitle>
+
+                  <SearchDriverText>
+                    Votre commande est confirmée.
+                    Vous pouvez maintenant
+                    rechercher un livreur
+                    disponible.
+                  </SearchDriverText>
+
+                  <SearchDriverButton
+                    onClick={
+                      lancerRechercheLivreur
+                    }
+                    disabled={
+                      rechercheEnCours
+                    }
+                  >
+                    <FaSearch />
+
+                    {rechercheEnCours
+                      ? "Recherche en cours..."
+                      : "Rechercher un livreur"}
+                  </SearchDriverButton>
+                </SearchDriverContent>
+              </SearchDriverCard>
+            )}
+
+            {/* MESSAGE RECHERCHE */}
+
+            {messageRecherche && (
+              <SearchMessage
+                $error={
+                  messageRecherche.includes(
+                    "doit être",
+                  ) ||
+                  messageRecherche.includes(
+                    "Impossible",
+                  ) ||
+                  messageRecherche.includes(
+                    "déjà attribué",
+                  )
+                }
+              >
+                <FaSearch />
+
+                <span>
+                  {messageRecherche}
+                </span>
+              </SearchMessage>
+            )}
+
+            {/* =================================================
                 TIMELINE
-            ============================================= */}
+            ================================================= */}
 
             <Card>
               <CardHeader>
@@ -1126,11 +1346,33 @@ export default function SuiviCommande() {
                 {/* COMMANDE CONFIRMÉE */}
 
                 <TimelineItem
-                  $active={true}
+                  $active={
+                    commande.statusCommande ===
+                      "CONFIRMED" ||
+                    [
+                      "SEARCHING",
+                      "ACCEPTED",
+                      "PICKING_UP",
+                      "IN_DELIVERY",
+                      "DELIVERED",
+                    ].includes(statut)
+                  }
                 >
                   <TimelineLine />
 
-                  <TimelineDot $active>
+                  <TimelineDot
+                    $active={
+                      commande.statusCommande ===
+                        "CONFIRMED" ||
+                      [
+                        "SEARCHING",
+                        "ACCEPTED",
+                        "PICKING_UP",
+                        "IN_DELIVERY",
+                        "DELIVERED",
+                      ].includes(statut)
+                    }
+                  >
                     <FaCheck />
                   </TimelineDot>
 
@@ -1141,7 +1383,7 @@ export default function SuiviCommande() {
 
                     <TimelineItemText>
                       Votre commande a été
-                      enregistrée.
+                      confirmée.
                     </TimelineItemText>
                   </TimelineContent>
                 </TimelineItem>
@@ -1150,6 +1392,7 @@ export default function SuiviCommande() {
 
                 <TimelineItem
                   $active={[
+                    "SEARCHING",
                     "ACCEPTED",
                     "PICKING_UP",
                     "IN_DELIVERY",
@@ -1160,6 +1403,7 @@ export default function SuiviCommande() {
 
                   <TimelineDot
                     $active={[
+                      "SEARCHING",
                       "ACCEPTED",
                       "PICKING_UP",
                       "IN_DELIVERY",
@@ -1171,13 +1415,16 @@ export default function SuiviCommande() {
 
                   <TimelineContent>
                     <TimelineItemTitle>
-                      Livreur attribué
+                      Livreur
                     </TimelineItemTitle>
 
                     <TimelineItemText>
                       {livreur?.username
                         ? `${livreur.username} prend en charge votre commande.`
-                        : "Nous recherchons un livreur disponible."}
+                        : statut ===
+                          "SEARCHING"
+                        ? "Nous recherchons actuellement un livreur disponible."
+                        : "Aucun livreur n'a encore été attribué."}
                     </TimelineItemText>
                   </TimelineContent>
                 </TimelineItem>
@@ -1254,9 +1501,7 @@ export default function SuiviCommande() {
           ================================================= */}
 
           <SideColumn>
-            {/* =============================================
-                LIVREUR
-            ============================================= */}
+            {/* LIVREUR */}
 
             {livreurDisponible && (
               <DriverCard>
@@ -1328,9 +1573,7 @@ export default function SuiviCommande() {
               </DriverCard>
             )}
 
-            {/* =============================================
-                DESTINATION
-            ============================================= */}
+            {/* DESTINATION */}
 
             <DestinationCard>
               <DestinationIcon>
@@ -1355,9 +1598,7 @@ export default function SuiviCommande() {
               </div>
             </DestinationCard>
 
-            {/* =============================================
-                SÉCURITÉ
-            ============================================= */}
+            {/* SÉCURITÉ */}
 
             <SecurityCard>
               <SecurityIcon>
@@ -1371,15 +1612,13 @@ export default function SuiviCommande() {
 
                 <SecurityText>
                   La position du livreur est
-                  transmise en temps réel pendant
-                  votre livraison.
+                  transmise en temps réel
+                  pendant votre livraison.
                 </SecurityText>
               </div>
             </SecurityCard>
 
-            {/* =============================================
-                TEMPS RÉEL
-            ============================================= */}
+            {/* TEMPS RÉEL */}
 
             <RealtimeCard>
               <RealtimeIcon>
@@ -1392,8 +1631,9 @@ export default function SuiviCommande() {
                 </RealtimeTitle>
 
                 <RealtimeText>
-                  Cette page se met automatiquement
-                  à jour sans avoir besoin de la
+                  Cette page se met
+                  automatiquement à jour
+                  sans avoir besoin de la
                   recharger.
                 </RealtimeText>
               </div>
@@ -1565,16 +1805,28 @@ const StatusBadge = styled.div`
   border-radius: 999px;
 
   background: ${({ $type }) => {
-    if ($type === "success") return "#e9f8ef";
-    if ($type === "searching") return "#fff7df";
-    if ($type === "danger") return "#ffecec";
+    if ($type === "success")
+      return "#e9f8ef";
+
+    if ($type === "searching")
+      return "#fff7df";
+
+    if ($type === "danger")
+      return "#ffecec";
+
     return "#f1f1f3";
   }};
 
   color: ${({ $type }) => {
-    if ($type === "success") return "#168344";
-    if ($type === "searching") return "#946d00";
-    if ($type === "danger") return "#b42318";
+    if ($type === "success")
+      return "#168344";
+
+    if ($type === "searching")
+      return "#946d00";
+
+    if ($type === "danger")
+      return "#b42318";
+
     return "#555";
   }};
 
@@ -1622,7 +1874,6 @@ const MapSection = styled.section`
 
   .driver-marker {
     position: relative;
-
     width: 58px;
     height: 58px;
   }
@@ -1663,7 +1914,8 @@ const MapSection = styled.section`
 
     border-radius: 50%;
 
-    border: 2px solid rgba(17, 17, 17, 0.25);
+    border: 2px solid
+      rgba(17, 17, 17, 0.25);
 
     animation: driverPulse 2s infinite;
   }
@@ -1984,6 +2236,132 @@ const BigStatusIcon = styled.div`
   justify-content: center;
 
   font-size: 27px;
+`;
+
+// ======================================================
+// RECHERCHE LIVREUR
+// ======================================================
+
+const SearchDriverCard = styled.section`
+  display: flex;
+  align-items: center;
+  gap: 17px;
+
+  padding: 22px;
+
+  background: white;
+
+  border: 1px solid #e8e8ea;
+
+  border-radius: 24px;
+
+  box-shadow:
+    0 10px 35px rgba(0, 0, 0, 0.045);
+
+  @media (max-width: 600px) {
+    align-items: flex-start;
+  }
+`;
+
+const SearchDriverIcon = styled.div`
+  width: 54px;
+  height: 54px;
+
+  flex: 0 0 auto;
+
+  border-radius: 17px;
+
+  background: #111;
+  color: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 20px;
+`;
+
+const SearchDriverContent = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const SearchDriverTitle = styled.div`
+  font-size: 16px;
+  font-weight: 800;
+`;
+
+const SearchDriverText = styled.div`
+  margin-top: 5px;
+
+  color: #777;
+
+  font-size: 12px;
+
+  line-height: 1.5;
+`;
+
+const SearchDriverButton = styled.button`
+  margin-top: 15px;
+
+  min-height: 44px;
+
+  padding: 0 17px;
+
+  border: 0;
+
+  border-radius: 13px;
+
+  background: #111;
+
+  color: white;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  font-size: 12px;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+
+  &:hover:not(:disabled) {
+    background: #2a2a2a;
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: wait;
+  }
+`;
+
+const SearchMessage = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 14px 16px;
+
+  border-radius: 15px;
+
+  background: ${({ $error }) =>
+    $error ? "#fff0f0" : "#eef8f2"};
+
+  color: ${({ $error }) =>
+    $error ? "#b42318" : "#168344"};
+
+  border: 1px solid
+    ${({ $error }) =>
+      $error ? "#ffd4d4" : "#d6efdf"};
+
+  font-size: 12px;
+
+  font-weight: 700;
 `;
 
 // ======================================================
