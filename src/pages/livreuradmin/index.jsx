@@ -1,4 +1,9 @@
-import { useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import styled from "styled-components";
 
@@ -69,37 +74,343 @@ const clientIcon = new L.DivIcon({
 });
 
 // ======================================================
+// VALIDATION POSITION
+// ======================================================
+
+const positionValide = (position) => {
+  if (!position) {
+    return false;
+  }
+
+  const latitude = Number(position.latitude);
+  const longitude = Number(position.longitude);
+
+  return (
+    Number.isFinite(latitude) &&
+    Number.isFinite(longitude) &&
+    latitude >= -90 &&
+    latitude <= 90 &&
+    longitude >= -180 &&
+    longitude <= 180
+  );
+};
+
+// ======================================================
+// DISTANCE ENTRE DEUX POSITIONS
+// ======================================================
+
+const calculerDistanceEntrePositions = (
+  position1,
+  position2,
+) => {
+  if (
+    !positionValide(position1) ||
+    !positionValide(position2)
+  ) {
+    return Infinity;
+  }
+
+  const rayonTerre = 6371000;
+
+  const lat1 =
+    (Number(position1.latitude) * Math.PI) / 180;
+
+  const lat2 =
+    (Number(position2.latitude) * Math.PI) / 180;
+
+  const deltaLat =
+    ((Number(position2.latitude) -
+      Number(position1.latitude)) *
+      Math.PI) /
+    180;
+
+  const deltaLng =
+    ((Number(position2.longitude) -
+      Number(position1.longitude)) *
+      Math.PI) /
+    180;
+
+  const a =
+    Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+    Math.cos(lat1) *
+      Math.cos(lat2) *
+      Math.sin(deltaLng / 2) *
+      Math.sin(deltaLng / 2);
+
+  const c =
+    2 *
+    Math.atan2(
+      Math.sqrt(a),
+      Math.sqrt(1 - a),
+    );
+
+  return rayonTerre * c;
+};
+
+// ======================================================
 // AJUSTEMENT AUTOMATIQUE DE LA CARTE
 // ======================================================
 
-function AjusterCarte({ positionLivreur, positionClient }) {
+function AjusterCarte({
+  positionLivreur,
+  positionClient,
+  itineraire,
+}) {
   const map = useMap();
 
+  const premierCadrage = useRef(true);
+
   useEffect(() => {
-    if (positionLivreur && positionClient) {
-      const bounds = L.latLngBounds([
-        [positionLivreur.latitude, positionLivreur.longitude],
-        [positionClient.latitude, positionClient.longitude],
-      ]);
+    if (!premierCadrage.current) {
+      return;
+    }
+
+    if (
+      itineraire?.coordinates?.length > 1
+    ) {
+      const bounds = L.latLngBounds(
+        itineraire.coordinates,
+      );
 
       map.fitBounds(bounds, {
-        padding: [60, 60],
+        padding: [55, 55],
         maxZoom: 16,
       });
+
+      premierCadrage.current = false;
 
       return;
     }
 
-    const position = positionLivreur || positionClient;
+    if (
+      positionValide(positionLivreur) &&
+      positionValide(positionClient)
+    ) {
+      const bounds = L.latLngBounds([
+        [
+          Number(positionLivreur.latitude),
+          Number(positionLivreur.longitude),
+        ],
+        [
+          Number(positionClient.latitude),
+          Number(positionClient.longitude),
+        ],
+      ]);
 
-    if (position) {
-      map.flyTo([position.latitude, position.longitude], 15, {
-        duration: 0.8,
+      map.fitBounds(bounds, {
+        padding: [55, 55],
+        maxZoom: 16,
       });
+
+      premierCadrage.current = false;
+
+      return;
     }
-  }, [map, positionLivreur, positionClient]);
+
+    const position =
+      positionLivreur || positionClient;
+
+    if (positionValide(position)) {
+      map.flyTo(
+        [
+          Number(position.latitude),
+          Number(position.longitude),
+        ],
+        15,
+        {
+          duration: 0.8,
+        },
+      );
+
+      premierCadrage.current = false;
+    }
+  }, [
+    map,
+    positionLivreur,
+    positionClient,
+    itineraire,
+  ]);
 
   return null;
+}
+
+// ======================================================
+// ITINÉRAIRE ROUTIER OSRM
+// ======================================================
+
+function ItineraireRoutier({
+  positionLivreur,
+  positionClient,
+  onRouteUpdate,
+}) {
+  const [route, setRoute] = useState(null);
+
+  const dernierePositionCalculee = useRef(null);
+
+  useEffect(() => {
+    if (
+      !positionValide(positionLivreur) ||
+      !positionValide(positionClient)
+    ) {
+      setRoute(null);
+      onRouteUpdate(null);
+
+      return;
+    }
+
+    const distanceDepuisDernierCalcul =
+      dernierePositionCalculee.current
+        ? calculerDistanceEntrePositions(
+            dernierePositionCalculee.current,
+            positionLivreur,
+          )
+        : Infinity;
+
+    /*
+      On ne recalcule pas la route pour chaque variation GPS.
+      La route est recalculée seulement si le livreur
+      s'est déplacé d'environ 25 mètres.
+    */
+
+    if (
+      dernierePositionCalculee.current &&
+      distanceDepuisDernierCalcul < 25
+    ) {
+      return;
+    }
+
+    const controller = new AbortController();
+
+    const timer = setTimeout(async () => {
+      try {
+        const latitudeLivreur = Number(
+          positionLivreur.latitude,
+        );
+
+        const longitudeLivreur = Number(
+          positionLivreur.longitude,
+        );
+
+        const latitudeClient = Number(
+          positionClient.latitude,
+        );
+
+        const longitudeClient = Number(
+          positionClient.longitude,
+        );
+
+        const url =
+          "https://router.project-osrm.org/route/v1/driving/" +
+          `${longitudeLivreur},${latitudeLivreur};` +
+          `${longitudeClient},${latitudeClient}` +
+          "?overview=full&geometries=geojson&steps=true";
+
+        const response = await fetch(url, {
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            "Impossible de récupérer l'itinéraire",
+          );
+        }
+
+        const data = await response.json();
+
+        if (
+          data.code !== "Ok" ||
+          !Array.isArray(data.routes) ||
+          data.routes.length === 0
+        ) {
+          throw new Error(
+            "Aucun itinéraire trouvé",
+          );
+        }
+
+        const routePrincipale = data.routes[0];
+
+        const coordinates =
+          routePrincipale.geometry.coordinates.map(
+            ([longitude, latitude]) => [
+              latitude,
+              longitude,
+            ],
+          );
+
+        const nouvelleRoute = {
+          coordinates,
+          distance: routePrincipale.distance,
+          duration: routePrincipale.duration,
+        };
+
+        dernierePositionCalculee.current = {
+          latitude: latitudeLivreur,
+          longitude: longitudeLivreur,
+        };
+
+        setRoute(nouvelleRoute);
+
+        onRouteUpdate(nouvelleRoute);
+      } catch (error) {
+        if (error.name === "AbortError") {
+          return;
+        }
+
+        console.error(
+          "Erreur calcul itinéraire :",
+          error,
+        );
+
+        setRoute(null);
+
+        onRouteUpdate(null);
+      }
+    }, 1200);
+
+    return () => {
+      clearTimeout(timer);
+
+      controller.abort();
+    };
+  }, [
+    positionLivreur?.latitude,
+    positionLivreur?.longitude,
+    positionClient?.latitude,
+    positionClient?.longitude,
+    onRouteUpdate,
+  ]);
+
+  if (!route?.coordinates?.length) {
+    return null;
+  }
+
+  return (
+    <>
+      {/* OMBRE SOUS L'ITINÉRAIRE */}
+
+      <Polyline
+        positions={route.coordinates}
+        pathOptions={{
+          color: "#000000",
+          weight: 9,
+          opacity: 0.12,
+        }}
+      />
+
+      {/* ITINÉRAIRE PRINCIPAL */}
+
+      <Polyline
+        positions={route.coordinates}
+        pathOptions={{
+          color: "#0071e3",
+          weight: 6,
+          opacity: 0.95,
+          lineCap: "round",
+          lineJoin: "round",
+        }}
+      />
+    </>
+  );
 }
 
 // ======================================================
@@ -109,29 +420,48 @@ function AjusterCarte({ positionLivreur, positionClient }) {
 function LivreurAdmin() {
   const [livreur, setLivreur] = useState(null);
 
-  const [commandesDisponibles, setCommandesDisponibles] = useState([]);
+  const [
+    commandesDisponibles,
+    setCommandesDisponibles,
+  ] = useState([]);
 
-  const [mesCommandes, setMesCommandes] = useState([]);
+  const [mesCommandes, setMesCommandes] =
+    useState([]);
 
   const [loading, setLoading] = useState(true);
 
-  const [refreshing, setRefreshing] = useState(false);
+  const [refreshing, setRefreshing] =
+    useState(false);
 
   const [message, setMessage] = useState("");
 
   const [erreur, setErreur] = useState("");
 
-  const [commandeEnCours, setCommandeEnCours] = useState(null);
+  const [
+    commandeEnCours,
+    setCommandeEnCours,
+  ] = useState(null);
 
-  const [positionClient, setPositionClient] = useState(null);
+  const [
+    positionClient,
+    setPositionClient,
+  ] = useState(null);
 
-  const [positionLivreur, setPositionLivreur] = useState(null);
+  const [
+    positionLivreur,
+    setPositionLivreur,
+  ] = useState(null);
+
+  const [itineraire, setItineraire] =
+    useState(null);
 
   const navigate = useNavigate();
 
-  const token = localStorage.getItem("tokenLivreur");
+  const token =
+    localStorage.getItem("tokenLivreur");
 
-  const API_URL = import.meta.env.VITE_API_URL;
+  const API_URL =
+    import.meta.env.VITE_API_URL;
 
   const headers = {
     "Content-Type": "application/json",
@@ -147,10 +477,23 @@ function LivreurAdmin() {
       commande.livraison?.livreurId &&
       commande.livraison.livreurId.toString() ===
         livreur?.id?.toString() &&
-      ["ACCEPTED", "PICKING_UP", "IN_DELIVERY"].includes(
+      [
+        "ACCEPTED",
+        "PICKING_UP",
+        "IN_DELIVERY",
+      ].includes(
         commande.livraison?.statut,
       ),
   );
+
+  // ======================================================
+  // CALLBACK ROUTE
+  // ======================================================
+
+  const mettreAJourItineraire =
+    useCallback((route) => {
+      setItineraire(route);
+    }, []);
 
   // ======================================================
   // GPS TEMPS RÉEL DU LIVREUR
@@ -160,7 +503,10 @@ function LivreurAdmin() {
     if (!token) return;
 
     if (!navigator.geolocation) {
-      console.error("La géolocalisation n'est pas disponible.");
+      console.error(
+        "La géolocalisation n'est pas disponible.",
+      );
+
       return;
     }
 
@@ -171,52 +517,87 @@ function LivreurAdmin() {
       return;
     }
 
-    const envoyerPosition = async (position) => {
+    const envoyerPosition = async (
+      position,
+    ) => {
       try {
-        const latitude = position.coords.latitude;
+        const latitude =
+          position.coords.latitude;
 
-        const longitude = position.coords.longitude;
+        const longitude =
+          position.coords.longitude;
 
-        // Mise à jour immédiate de la position locale
         setPositionLivreur({
           latitude,
           longitude,
         });
 
-        await fetch(`${API_URL}/api/livreurs/localisation`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+        const response = await fetch(
+          `${API_URL}/api/livreurs/localisation`,
+          {
+            method: "PUT",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+
+              Authorization: `Bearer ${token}`,
+            },
+
+            body: JSON.stringify({
+              latitude,
+              longitude,
+            }),
           },
-          body: JSON.stringify({
-            latitude,
-            longitude,
-          }),
-        });
+        );
+
+        if (!response.ok) {
+          const data =
+            await response
+              .json()
+              .catch(() => ({}));
+
+          throw new Error(
+            data.message ||
+              "Erreur mise à jour GPS",
+          );
+        }
       } catch (error) {
-        console.error("Erreur envoi GPS :", error);
+        console.error(
+          "Erreur envoi GPS :",
+          error,
+        );
       }
     };
 
     const erreurGPS = (error) => {
-      console.error("Erreur GPS :", error.message);
+      console.error(
+        "Erreur GPS :",
+        error.message,
+      );
     };
 
-    const watchId = navigator.geolocation.watchPosition(
-      envoyerPosition,
-      erreurGPS,
-      {
-        enableHighAccuracy: true,
-        maximumAge: 5000,
-        timeout: 15000,
-      },
-    );
+    const watchId =
+      navigator.geolocation.watchPosition(
+        envoyerPosition,
+        erreurGPS,
+        {
+          enableHighAccuracy: true,
+          maximumAge: 5000,
+          timeout: 15000,
+        },
+      );
 
     return () => {
-      navigator.geolocation.clearWatch(watchId);
+      navigator.geolocation.clearWatch(
+        watchId,
+      );
     };
-  }, [token, API_URL, livreur?.statut]);
+  }, [
+    token,
+    API_URL,
+    livreur?.statut,
+  ]);
 
   // ======================================================
   // POSITION CLIENT INITIALE
@@ -225,41 +606,59 @@ function LivreurAdmin() {
   useEffect(() => {
     if (!commandeActive) {
       setPositionClient(null);
+
+      setItineraire(null);
+
       return;
     }
 
-    const localisation = commandeActive.client?.localisation;
+    const localisation =
+      commandeActive.client?.localisation;
 
     if (
       localisation?.latitude != null &&
       localisation?.longitude != null
     ) {
       setPositionClient({
-        latitude: Number(localisation.latitude),
-        longitude: Number(localisation.longitude),
+        latitude: Number(
+          localisation.latitude,
+        ),
+
+        longitude: Number(
+          localisation.longitude,
+        ),
       });
     } else {
       setPositionClient(null);
     }
-  }, [commandeActive]);
+  }, [commandeActive?._id]);
 
   // ======================================================
   // POSITION LIVREUR INITIALE
   // ======================================================
 
   useEffect(() => {
-    const localisation = livreur?.localisation;
+    const localisation =
+      livreur?.localisation;
 
     if (
       localisation?.latitude != null &&
       localisation?.longitude != null
     ) {
       setPositionLivreur({
-        latitude: Number(localisation.latitude),
-        longitude: Number(localisation.longitude),
+        latitude: Number(
+          localisation.latitude,
+        ),
+
+        longitude: Number(
+          localisation.longitude,
+        ),
       });
     }
-  }, [livreur]);
+  }, [
+    livreur?.localisation?.latitude,
+    livreur?.localisation?.longitude,
+  ]);
 
   // ======================================================
   // SOCKET.IO — SUIVI TEMPS RÉEL
@@ -270,25 +669,40 @@ function LivreurAdmin() {
       return;
     }
 
-    const commandeId = commandeActive._id.toString();
+    const commandeId =
+      commandeActive._id.toString();
 
-    // Rejoindre la room de la commande
-    socket.emit("join_commande", commandeId);
+    socket.emit(
+      "join_commande",
+      commandeId,
+    );
 
     // ==================================================
     // POSITION CLIENT
     // ==================================================
 
-    const handleClientPosition = (data) => {
-      if (data?.commandeId?.toString() !== commandeId) {
+    const handleClientPosition = (
+      data,
+    ) => {
+      if (
+        data?.commandeId?.toString() !==
+        commandeId
+      ) {
         return;
       }
 
-      const latitude = Number(data.latitude);
+      const latitude = Number(
+        data.latitude,
+      );
 
-      const longitude = Number(data.longitude);
+      const longitude = Number(
+        data.longitude,
+      );
 
-      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      if (
+        !Number.isFinite(latitude) ||
+        !Number.isFinite(longitude)
+      ) {
         return;
       }
 
@@ -302,16 +716,28 @@ function LivreurAdmin() {
     // POSITION LIVREUR
     // ==================================================
 
-    const handleLivreurPosition = (data) => {
-      if (data?.commandeId?.toString() !== commandeId) {
+    const handleLivreurPosition = (
+      data,
+    ) => {
+      if (
+        data?.commandeId?.toString() !==
+        commandeId
+      ) {
         return;
       }
 
-      const latitude = Number(data.latitude);
+      const latitude = Number(
+        data.latitude,
+      );
 
-      const longitude = Number(data.longitude);
+      const longitude = Number(
+        data.longitude,
+      );
 
-      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      if (
+        !Number.isFinite(latitude) ||
+        !Number.isFinite(longitude)
+      ) {
         return;
       }
 
@@ -321,16 +747,31 @@ function LivreurAdmin() {
       });
     };
 
-    socket.on("client_position", handleClientPosition);
+    socket.on(
+      "client_position",
+      handleClientPosition,
+    );
 
-    socket.on("livreur_position", handleLivreurPosition);
+    socket.on(
+      "livreur_position",
+      handleLivreurPosition,
+    );
 
     return () => {
-      socket.off("client_position", handleClientPosition);
+      socket.off(
+        "client_position",
+        handleClientPosition,
+      );
 
-      socket.off("livreur_position", handleLivreurPosition);
+      socket.off(
+        "livreur_position",
+        handleLivreurPosition,
+      );
 
-      socket.emit("leave_commande", commandeId);
+      socket.emit(
+        "leave_commande",
+        commandeId,
+      );
     };
   }, [commandeActive?._id]);
 
@@ -339,29 +780,8 @@ function LivreurAdmin() {
   // ======================================================
 
   const chargerProfil = async () => {
-    const response = await fetch(`${API_URL}/api/livreurs/profil`, {
-      method: "GET",
-      headers,
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.message || "Impossible de charger le profil",
-      );
-    }
-
-    setLivreur(data.livreur);
-  };
-
-  // ======================================================
-  // COMMANDES DISPONIBLES
-  // ======================================================
-
-  const chargerCommandesDisponibles = async () => {
     const response = await fetch(
-      `${API_URL}/api/livreurs/commandes-disponibles`,
+      `${API_URL}/api/livreurs/profil`,
       {
         method: "GET",
         headers,
@@ -373,42 +793,78 @@ function LivreurAdmin() {
     if (!response.ok) {
       throw new Error(
         data.message ||
-          "Impossible de charger les commandes disponibles",
+          "Impossible de charger le profil",
       );
     }
 
-    setCommandesDisponibles(data.commandes || []);
+    setLivreur(data.livreur);
   };
+
+  // ======================================================
+  // COMMANDES DISPONIBLES
+  // ======================================================
+
+  const chargerCommandesDisponibles =
+    async () => {
+      const response = await fetch(
+        `${API_URL}/api/livreurs/commandes-disponibles`,
+        {
+          method: "GET",
+          headers,
+        },
+      );
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message ||
+            "Impossible de charger les commandes disponibles",
+        );
+      }
+
+      setCommandesDisponibles(
+        data.commandes || [],
+      );
+    };
 
   // ======================================================
   // MES COMMANDES
   // ======================================================
 
-  const chargerMesCommandes = async () => {
-    const response = await fetch(
-      `${API_URL}/api/livreurs/commandes`,
-      {
-        method: "GET",
-        headers,
-      },
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.message || "Impossible de charger vos commandes",
+  const chargerMesCommandes =
+    async () => {
+      const response = await fetch(
+        `${API_URL}/api/livreurs/commandes`,
+        {
+          method: "GET",
+          headers,
+        },
       );
-    }
 
-    setMesCommandes(data.commandes || []);
-  };
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message ||
+            "Impossible de charger vos commandes",
+        );
+      }
+
+      setMesCommandes(
+        data.commandes || [],
+      );
+    };
 
   // ======================================================
   // CHARGEMENT GLOBAL
   // ======================================================
 
-  const chargerTout = async (avecLoading = false) => {
+  const chargerTout = async (
+    avecLoading = false,
+  ) => {
     try {
       setErreur("");
 
@@ -440,9 +896,12 @@ function LivreurAdmin() {
 
   useEffect(() => {
     if (!token) {
-      navigate("/connexion-livreur", {
-        replace: true,
-      });
+      navigate(
+        "/connexion-livreur",
+        {
+          replace: true,
+        },
+      );
 
       return;
     }
@@ -454,7 +913,9 @@ function LivreurAdmin() {
   // CHANGER STATUT
   // ======================================================
 
-  const changerStatut = async (statut) => {
+  const changerStatut = async (
+    statut,
+  ) => {
     try {
       setErreur("");
 
@@ -464,7 +925,10 @@ function LivreurAdmin() {
         return;
       }
 
-      if (statut === "OFFLINE" && livreur?.commandeActuelle) {
+      if (
+        statut === "OFFLINE" &&
+        livreur?.commandeActuelle
+      ) {
         setErreur(
           "Vous avez une livraison en cours. Terminez-la avant de passer hors ligne.",
         );
@@ -476,16 +940,22 @@ function LivreurAdmin() {
         `${API_URL}/api/livreurs/statut`,
         {
           method: "PUT",
+
           headers,
-          body: JSON.stringify({ statut }),
+
+          body: JSON.stringify({
+            statut,
+          }),
         },
       );
 
-      const data = await response.json();
+      const data =
+        await response.json();
 
       if (!response.ok) {
         throw new Error(
-          data.message || "Impossible de modifier le statut",
+          data.message ||
+            "Impossible de modifier le statut",
         );
       }
 
@@ -494,7 +964,9 @@ function LivreurAdmin() {
         statut: data.statut,
       }));
 
-      setMessage("Votre disponibilité a été mise à jour.");
+      setMessage(
+        "Votre disponibilité a été mise à jour.",
+      );
 
       setTimeout(() => {
         setMessage("");
@@ -508,13 +980,17 @@ function LivreurAdmin() {
   // ACCEPTER COMMANDE
   // ======================================================
 
-  const accepterCommande = async (commandeId) => {
+  const accepterCommande = async (
+    commandeId,
+  ) => {
     try {
       setErreur("");
 
       setMessage("");
 
-      setCommandeEnCours(commandeId);
+      setCommandeEnCours(
+        commandeId,
+      );
 
       const response = await fetch(
         `${API_URL}/api/livreurs/commandes/${commandeId}/accepter`,
@@ -524,11 +1000,13 @@ function LivreurAdmin() {
         },
       );
 
-      const data = await response.json();
+      const data =
+        await response.json();
 
       if (!response.ok) {
         throw new Error(
-          data.message || "Impossible d'accepter la commande",
+          data.message ||
+            "Impossible d'accepter la commande",
         );
       }
 
@@ -545,101 +1023,114 @@ function LivreurAdmin() {
   };
 
   // ======================================================
-  // COMMENCER RÉCUPÉRATION
   // ACCEPTED → PICKING_UP
   // ======================================================
 
-  const commencerRecuperation = async (commandeId) => {
-    try {
-      setErreur("");
+  const commencerRecuperation =
+    async (commandeId) => {
+      try {
+        setErreur("");
 
-      setMessage("");
+        setMessage("");
 
-      setCommandeEnCours(commandeId);
-
-      const response = await fetch(
-        `${API_URL}/api/livreurs/commandes/${commandeId}/commencer-recuperation`,
-        {
-          method: "PUT",
-          headers,
-        },
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.message ||
-            "Impossible de commencer la récupération",
+        setCommandeEnCours(
+          commandeId,
         );
+
+        const response = await fetch(
+          `${API_URL}/api/livreurs/commandes/${commandeId}/commencer-recuperation`,
+          {
+            method: "PUT",
+            headers,
+          },
+        );
+
+        const data =
+          await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ||
+              "Impossible de commencer la récupération",
+          );
+        }
+
+        setMessage(
+          "Récupération de la commande commencée.",
+        );
+
+        await chargerTout();
+      } catch (error) {
+        console.error(error);
+
+        setErreur(error.message);
+      } finally {
+        setCommandeEnCours(null);
       }
-
-      setMessage("Récupération de la commande commencée.");
-
-      await chargerTout();
-    } catch (error) {
-      console.error(error);
-
-      setErreur(error.message);
-    } finally {
-      setCommandeEnCours(null);
-    }
-  };
+    };
 
   // ======================================================
-  // COMMANDE RÉCUPÉRÉE
   // PICKING_UP → IN_DELIVERY
   // ======================================================
 
-  const recupererCommande = async (commandeId) => {
-    try {
-      setErreur("");
+  const recupererCommande =
+    async (commandeId) => {
+      try {
+        setErreur("");
 
-      setMessage("");
+        setMessage("");
 
-      setCommandeEnCours(commandeId);
-
-      const response = await fetch(
-        `${API_URL}/api/livreurs/commandes/${commandeId}/recuperer`,
-        {
-          method: "PUT",
-          headers,
-        },
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.message ||
-            "Impossible de confirmer la récupération",
+        setCommandeEnCours(
+          commandeId,
         );
+
+        const response = await fetch(
+          `${API_URL}/api/livreurs/commandes/${commandeId}/recuperer`,
+          {
+            method: "PUT",
+            headers,
+          },
+        );
+
+        const data =
+          await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ||
+              "Impossible de confirmer la récupération",
+          );
+        }
+
+        setMessage(
+          "Commande récupérée. Livraison en cours.",
+        );
+
+        await chargerTout();
+      } catch (error) {
+        console.error(error);
+
+        setErreur(error.message);
+      } finally {
+        setCommandeEnCours(null);
       }
-
-      setMessage("Commande récupérée. Livraison en cours.");
-
-      await chargerTout();
-    } catch (error) {
-      console.error(error);
-
-      setErreur(error.message);
-    } finally {
-      setCommandeEnCours(null);
-    }
-  };
+    };
 
   // ======================================================
-  // LIVRER
   // IN_DELIVERY → DELIVERED
   // ======================================================
 
-  const livrerCommande = async (commandeId) => {
+  const livrerCommande = async (
+    commandeId,
+  ) => {
     try {
       setErreur("");
 
       setMessage("");
 
-      setCommandeEnCours(commandeId);
+      setCommandeEnCours(
+        commandeId,
+      );
 
       const response = await fetch(
         `${API_URL}/api/livreurs/commandes/${commandeId}/livrer`,
@@ -649,7 +1140,8 @@ function LivreurAdmin() {
         },
       );
 
-      const data = await response.json();
+      const data =
+        await response.json();
 
       if (!response.ok) {
         throw new Error(
@@ -658,7 +1150,13 @@ function LivreurAdmin() {
         );
       }
 
-      setMessage("Livraison terminée avec succès.");
+      setMessage(
+        "Livraison terminée avec succès.",
+      );
+
+      setPositionClient(null);
+
+      setItineraire(null);
 
       await chargerTout();
     } catch (error) {
@@ -674,8 +1172,70 @@ function LivreurAdmin() {
   // FORMAT PRIX
   // ======================================================
 
-  const formatPrix = (prix) => {
-    return Number(prix || 0).toLocaleString("fr-FR");
+  const formatPrix = (prix) =>
+    Number(prix || 0).toLocaleString(
+      "fr-FR",
+    );
+
+  // ======================================================
+  // FORMAT DISTANCE
+  // ======================================================
+
+  const formatDistance = (metres) => {
+    if (
+      metres == null ||
+      !Number.isFinite(Number(metres))
+    ) {
+      return "—";
+    }
+
+    const valeur = Number(metres);
+
+    if (valeur < 1000) {
+      return `${Math.round(valeur)} m`;
+    }
+
+    return `${(
+      valeur / 1000
+    ).toFixed(1)} km`;
+  };
+
+  // ======================================================
+  // FORMAT DURÉE
+  // ======================================================
+
+  const formatDuree = (secondes) => {
+    if (
+      secondes == null ||
+      !Number.isFinite(
+        Number(secondes),
+      )
+    ) {
+      return "—";
+    }
+
+    const minutes = Math.max(
+      1,
+      Math.round(
+        Number(secondes) / 60,
+      ),
+    );
+
+    if (minutes < 60) {
+      return `${minutes} min`;
+    }
+
+    const heures = Math.floor(
+      minutes / 60,
+    );
+
+    const reste = minutes % 60;
+
+    if (reste === 0) {
+      return `${heures} h`;
+    }
+
+    return `${heures} h ${reste} min`;
   };
 
   // ======================================================
@@ -688,6 +1248,13 @@ function LivreurAdmin() {
     BUSY: "En livraison",
   };
 
+  const livraisonLabel = {
+    ACCEPTED: "Commande acceptée",
+    PICKING_UP: "Récupération",
+    IN_DELIVERY: "En livraison",
+    DELIVERED: "Livrée",
+  };
+
   // ======================================================
   // LOADING
   // ======================================================
@@ -695,7 +1262,9 @@ function LivreurAdmin() {
   if (loading) {
     return (
       <LoadingPage>
-        <LoadingLogo>NUMA</LoadingLogo>
+        <LoadingLogo>
+          NUMA
+        </LoadingLogo>
 
         <LoadingSpinner />
 
@@ -724,17 +1293,27 @@ function LivreurAdmin() {
           </Brand>
 
           <HeaderRight>
-            <StatusPill $status={livreur?.statut}>
-              <StatusDot $status={livreur?.statut} />
+            <StatusPill
+              $status={livreur?.statut}
+            >
+              <StatusDot
+                $status={livreur?.statut}
+              />
 
-              {statutLabel[livreur?.statut] || "Hors ligne"}
+              {statutLabel[
+                livreur?.statut
+              ] || "Hors ligne"}
             </StatusPill>
 
             <RefreshButton
-              onClick={() => chargerTout()}
+              onClick={() =>
+                chargerTout()
+              }
               disabled={refreshing}
             >
-              <RefreshIcon $loading={refreshing}>
+              <RefreshIcon
+                $loading={refreshing}
+              >
                 ↻
               </RefreshIcon>
 
@@ -775,18 +1354,22 @@ function LivreurAdmin() {
 
         <Hero>
           <HeroText>
-            <Eyebrow>ESPACE LIVREUR</Eyebrow>
+            <Eyebrow>
+              ESPACE LIVREUR
+            </Eyebrow>
 
             <HeroTitle>
               Bonjour{" "}
               <HeroName>
-                {livreur?.username || "Livreur"}
+                {livreur?.username ||
+                  "Livreur"}
               </HeroName>
               .
             </HeroTitle>
 
             <HeroSubtitle>
-              Gérez vos livraisons simplement,
+              Gérez vos livraisons
+              simplement,
               <br />
               depuis un seul endroit.
             </HeroSubtitle>
@@ -806,13 +1389,17 @@ function LivreurAdmin() {
         <StatsGrid>
           <StatCard>
             <StatTop>
-              <StatLabel>Disponibles</StatLabel>
+              <StatLabel>
+                Disponibles
+              </StatLabel>
 
               <StatIcon>◉</StatIcon>
             </StatTop>
 
             <StatNumber>
-              {commandesDisponibles.length}
+              {
+                commandesDisponibles.length
+              }
             </StatNumber>
 
             <StatDescription>
@@ -822,7 +1409,9 @@ function LivreurAdmin() {
 
           <StatCard>
             <StatTop>
-              <StatLabel>Mes commandes</StatLabel>
+              <StatLabel>
+                Mes commandes
+              </StatLabel>
 
               <StatIcon>≡</StatIcon>
             </StatTop>
@@ -838,14 +1427,19 @@ function LivreurAdmin() {
 
           <StatCard>
             <StatTop>
-              <StatLabel>État actuel</StatLabel>
+              <StatLabel>
+                État actuel
+              </StatLabel>
 
               <StatIcon>●</StatIcon>
             </StatTop>
 
-            <StatStatus $status={livreur?.statut}>
-              {statutLabel[livreur?.statut] ||
-                "Hors ligne"}
+            <StatStatus
+              $status={livreur?.statut}
+            >
+              {statutLabel[
+                livreur?.statut
+              ] || "Hors ligne"}
             </StatStatus>
 
             <StatDescription>
@@ -870,8 +1464,9 @@ function LivreurAdmin() {
               </SectionTitle>
 
               <SectionDescription>
-                Indiquez aux clients et au système si vous
-                pouvez recevoir une livraison.
+                Indiquez aux clients et au
+                système si vous pouvez recevoir
+                une livraison.
               </SectionDescription>
             </div>
           </SectionHeader>
@@ -901,11 +1496,18 @@ function LivreurAdmin() {
 
             <StatusSelector>
               <StatusButton
-                $active={livreur?.statut === "AVAILABLE"}
-                onClick={() =>
-                  changerStatut("AVAILABLE")
+                $active={
+                  livreur?.statut ===
+                  "AVAILABLE"
                 }
-                disabled={!!commandeActive}
+                onClick={() =>
+                  changerStatut(
+                    "AVAILABLE",
+                  )
+                }
+                disabled={
+                  !!commandeActive
+                }
               >
                 <ButtonDot />
 
@@ -913,11 +1515,18 @@ function LivreurAdmin() {
               </StatusButton>
 
               <StatusButton
-                $active={livreur?.statut === "OFFLINE"}
-                onClick={() =>
-                  changerStatut("OFFLINE")
+                $active={
+                  livreur?.statut ===
+                  "OFFLINE"
                 }
-                disabled={!!commandeActive}
+                onClick={() =>
+                  changerStatut(
+                    "OFFLINE",
+                  )
+                }
+                disabled={
+                  !!commandeActive
+                }
               >
                 <ButtonDot />
 
@@ -943,8 +1552,9 @@ function LivreurAdmin() {
               </SectionTitle>
 
               <SectionDescription>
-                Suivez les différentes étapes de votre
-                livraison depuis cet espace.
+                Suivez les différentes étapes
+                de votre livraison depuis cet
+                espace.
               </SectionDescription>
             </SectionHeader>
 
@@ -956,16 +1566,25 @@ function LivreurAdmin() {
                   </DeliveryLabel>
 
                   <DeliveryNumber>
-                    #{commandeActive._id.slice(-6)}
+                    #
+                    {commandeActive._id.slice(
+                      -6,
+                    )}
                   </DeliveryNumber>
                 </div>
 
                 <DeliveryStatus
                   $status={
-                    commandeActive.livraison?.statut
+                    commandeActive
+                      .livraison?.statut
                   }
                 >
-                  {commandeActive.livraison?.statut}
+                  {livraisonLabel[
+                    commandeActive
+                      .livraison?.statut
+                  ] ||
+                    commandeActive
+                      .livraison?.statut}
                 </DeliveryStatus>
               </DeliveryTop>
 
@@ -978,8 +1597,14 @@ function LivreurAdmin() {
                   </DeliveryInfoLabel>
 
                   <DeliveryInfoValue>
-                    {commandeActive.client?.prenom}{" "}
-                    {commandeActive.client?.nom}
+                    {
+                      commandeActive.client
+                        ?.prenom
+                    }{" "}
+                    {
+                      commandeActive.client
+                        ?.nom
+                    }
                   </DeliveryInfoValue>
                 </DeliveryInfo>
 
@@ -989,7 +1614,8 @@ function LivreurAdmin() {
                   </DeliveryInfoLabel>
 
                   <DeliveryInfoValue>
-                    {commandeActive.client?.numero ||
+                    {commandeActive.client
+                      ?.numero ||
                       "Non renseigné"}
                   </DeliveryInfoValue>
                 </DeliveryInfo>
@@ -1000,7 +1626,8 @@ function LivreurAdmin() {
                   </DeliveryInfoLabel>
 
                   <DeliveryInfoValue>
-                    {commandeActive.client?.ville ||
+                    {commandeActive.client
+                      ?.ville ||
                       "Non renseignée"}
                   </DeliveryInfoValue>
                 </DeliveryInfo>
@@ -1011,15 +1638,14 @@ function LivreurAdmin() {
                   </DeliveryInfoLabel>
 
                   <DeliveryInfoValue>
-                    {commandeActive.client?.adresse ||
+                    {commandeActive.client
+                      ?.adresse ||
                       "Non renseignée"}
                   </DeliveryInfoValue>
                 </DeliveryInfo>
               </DeliveryGrid>
 
-              {/* ========================================
-                  PRODUITS
-              ======================================== */}
+              {/* PRODUITS */}
 
               <DeliveryProducts>
                 <DeliveryInfoLabel>
@@ -1028,14 +1654,21 @@ function LivreurAdmin() {
 
                 {commandeActive.panier?.map(
                   (item, index) => (
-                    <DeliveryProduct key={index}>
+                    <DeliveryProduct
+                      key={
+                        item._id ||
+                        index
+                      }
+                    >
                       <span>
-                        {item.quantite} × {item.nom}
+                        {item.quantite} ×{" "}
+                        {item.nom}
                       </span>
 
                       <strong>
                         {formatPrix(
-                          item.prix * item.quantite,
+                          item.prix *
+                            item.quantite,
                         )}{" "}
                         FCFA
                       </strong>
@@ -1044,27 +1677,27 @@ function LivreurAdmin() {
                 )}
               </DeliveryProducts>
 
-              {/* ========================================
-                  TOTAL
-              ======================================== */}
+              {/* TOTAL */}
 
               <DeliveryTotal>
-                <span>Total produits</span>
+                <span>
+                  Total produits
+                </span>
 
                 <strong>
                   {formatPrix(
-                    commandeActive.totalProduits,
+                    commandeActive
+                      .totalProduits,
                   )}{" "}
                   FCFA
                 </strong>
               </DeliveryTotal>
 
-              {/* ========================================
-                  ACTION
-              ======================================== */}
+              {/* ACTION */}
 
               <DeliveryAction>
-                {commandeActive.livraison?.statut ===
+                {commandeActive.livraison
+                  ?.statut ===
                   "ACCEPTED" && (
                   <DeliveryButton
                     onClick={() =>
@@ -1086,7 +1719,8 @@ function LivreurAdmin() {
                   </DeliveryButton>
                 )}
 
-                {commandeActive.livraison?.statut ===
+                {commandeActive.livraison
+                  ?.statut ===
                   "PICKING_UP" && (
                   <DeliveryButton
                     onClick={() =>
@@ -1108,7 +1742,8 @@ function LivreurAdmin() {
                   </DeliveryButton>
                 )}
 
-                {commandeActive.livraison?.statut ===
+                {commandeActive.livraison
+                  ?.statut ===
                   "IN_DELIVERY" && (
                   <DeliveryButton
                     onClick={() =>
@@ -1139,125 +1774,314 @@ function LivreurAdmin() {
                 <MapHeader>
                   <div>
                     <MapTitle>
-                      Suivi de la livraison
+                      Suivi de la
+                      livraison
                     </MapTitle>
 
                     <MapSubtitle>
-                      Position du client et du livreur en
-                      temps réel
+                      Position du client et
+                      itinéraire en temps
+                      réel
                     </MapSubtitle>
                   </div>
 
                   <LiveBadge>
                     <LiveDot />
-
                     EN DIRECT
                   </LiveBadge>
                 </MapHeader>
 
-                {positionClient || positionLivreur ? (
-                  <MapBox>
-                    <MapContainer
-                      center={[
-                        positionLivreur?.latitude ||
-                          positionClient?.latitude ||
-                          5.3364,
+                {positionClient ||
+                positionLivreur ? (
+                  <>
+                    <MapBox>
+                      <MapContainer
+                        center={[
+                          Number(
+                            positionLivreur
+                              ?.latitude ??
+                              positionClient
+                                ?.latitude ??
+                              5.3364,
+                          ),
 
-                        positionLivreur?.longitude ||
-                          positionClient?.longitude ||
-                          -4.0267,
-                      ]}
-                      zoom={14}
-                      scrollWheelZoom={true}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                      }}
-                    >
-                      <TileLayer
-                        attribution="&copy; OpenStreetMap contributors"
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                      />
+                          Number(
+                            positionLivreur
+                              ?.longitude ??
+                              positionClient
+                                ?.longitude ??
+                              -4.0267,
+                          ),
+                        ]}
+                        zoom={14}
+                        scrollWheelZoom
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                        }}
+                      >
+                        <TileLayer
+                          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        />
 
-                      <AjusterCarte
-                        positionLivreur={
-                          positionLivreur
-                        }
-                        positionClient={
-                          positionClient
-                        }
-                      />
+                        <AjusterCarte
+                          positionLivreur={
+                            positionLivreur
+                          }
+                          positionClient={
+                            positionClient
+                          }
+                          itineraire={
+                            itineraire
+                          }
+                        />
 
-                      {/* LIVREUR */}
+                        {/* ROUTE */}
 
-                      {positionLivreur && (
-                        <Marker
-                          position={[
-                            positionLivreur.latitude,
-                            positionLivreur.longitude,
-                          ]}
-                          icon={livreurIcon}
-                        >
-                          <Popup>
-                            <strong>
-                              🚴 Votre position
-                            </strong>
-                            <br />
-                            Livreur en temps réel
-                          </Popup>
-                        </Marker>
-                      )}
+                        <ItineraireRoutier
+                          positionLivreur={
+                            positionLivreur
+                          }
+                          positionClient={
+                            positionClient
+                          }
+                          onRouteUpdate={
+                            mettreAJourItineraire
+                          }
+                        />
 
-                      {/* CLIENT */}
+                        {/* LIVREUR */}
 
-                      {positionClient && (
-                        <Marker
-                          position={[
-                            positionClient.latitude,
-                            positionClient.longitude,
-                          ]}
-                          icon={clientIcon}
-                        >
-                          <Popup>
-                            <strong>
-                              👤 Client
-                            </strong>
-
-                            <br />
-
-                            {commandeActive.client
-                              ?.prenom || ""}{" "}
-                            {commandeActive.client
-                              ?.nom || ""}
-
-                            <br />
-
-                            {commandeActive.client
-                              ?.adresse ||
-                              "Adresse non renseignée"}
-                          </Popup>
-                        </Marker>
-                      )}
-
-                      {/* TRAJET DIRECT */}
-
-                      {positionLivreur &&
-                        positionClient && (
-                          <Polyline
-                            positions={[
-                              [
+                        {positionValide(
+                          positionLivreur,
+                        ) && (
+                          <Marker
+                            position={[
+                              Number(
                                 positionLivreur.latitude,
+                              ),
+                              Number(
                                 positionLivreur.longitude,
-                              ],
-                              [
-                                positionClient.latitude,
-                                positionClient.longitude,
-                              ],
+                              ),
                             ]}
-                          />
+                            icon={
+                              livreurIcon
+                            }
+                            zIndexOffset={
+                              1000
+                            }
+                          >
+                            <Popup>
+                              <strong>
+                                🚴 Votre
+                                position
+                              </strong>
+
+                              <br />
+
+                              Position GPS
+                              actuelle
+                            </Popup>
+                          </Marker>
                         )}
-                    </MapContainer>
-                  </MapBox>
+
+                        {/* CLIENT */}
+
+                        {positionValide(
+                          positionClient,
+                        ) && (
+                          <Marker
+                            position={[
+                              Number(
+                                positionClient.latitude,
+                              ),
+                              Number(
+                                positionClient.longitude,
+                              ),
+                            ]}
+                            icon={
+                              clientIcon
+                            }
+                            zIndexOffset={
+                              900
+                            }
+                          >
+                            <Popup>
+                              <strong>
+                                👤 Client
+                              </strong>
+
+                              <br />
+
+                              {commandeActive
+                                .client
+                                ?.prenom ||
+                                ""}{" "}
+                              {commandeActive
+                                .client
+                                ?.nom ||
+                                ""}
+
+                              <br />
+
+                              {commandeActive
+                                .client
+                                ?.adresse ||
+                                "Adresse non renseignée"}
+                            </Popup>
+                          </Marker>
+                        )}
+                      </MapContainer>
+                    </MapBox>
+
+                    {/* INFORMATIONS ITINÉRAIRE */}
+
+                    <RouteInfo>
+                      <RouteInfoItem>
+                        <RouteIcon>
+                          🛣️
+                        </RouteIcon>
+
+                        <div>
+                          <RouteLabel>
+                            DISTANCE
+                          </RouteLabel>
+
+                          <RouteValue>
+                            {positionClient &&
+                            positionLivreur
+                              ? itineraire
+                                ? formatDistance(
+                                    itineraire.distance,
+                                  )
+                                : "Calcul..."
+                              : "—"}
+                          </RouteValue>
+                        </div>
+                      </RouteInfoItem>
+
+                      <RouteSeparator />
+
+                      <RouteInfoItem>
+                        <RouteIcon>
+                          ⏱️
+                        </RouteIcon>
+
+                        <div>
+                          <RouteLabel>
+                            TEMPS ESTIMÉ
+                          </RouteLabel>
+
+                          <RouteValue>
+                            {positionClient &&
+                            positionLivreur
+                              ? itineraire
+                                ? formatDuree(
+                                    itineraire.duration,
+                                  )
+                                : "Calcul..."
+                              : "—"}
+                          </RouteValue>
+                        </div>
+                      </RouteInfoItem>
+
+                      <RouteSeparator />
+
+                      <RouteInfoItem>
+                        <RouteIcon>
+                          📍
+                        </RouteIcon>
+
+                        <RouteAddress>
+                          <RouteLabel>
+                            DESTINATION
+                          </RouteLabel>
+
+                          <RouteValue>
+                            {commandeActive
+                              .client
+                              ?.adresse ||
+                              "Adresse client"}
+                          </RouteValue>
+                        </RouteAddress>
+                      </RouteInfoItem>
+                    </RouteInfo>
+
+                    {/* ÉTAT GPS */}
+
+                    <GpsStatusGrid>
+                      <GpsStatus
+                        $active={
+                          !!positionLivreur
+                        }
+                      >
+                        <GpsIndicator
+                          $active={
+                            !!positionLivreur
+                          }
+                        />
+
+                        <div>
+                          <GpsTitle>
+                            Votre GPS
+                          </GpsTitle>
+
+                          <GpsText>
+                            {positionLivreur
+                              ? "Position reçue"
+                              : "En attente..."}
+                          </GpsText>
+                        </div>
+                      </GpsStatus>
+
+                      <GpsStatus
+                        $active={
+                          !!positionClient
+                        }
+                      >
+                        <GpsIndicator
+                          $active={
+                            !!positionClient
+                          }
+                        />
+
+                        <div>
+                          <GpsTitle>
+                            GPS client
+                          </GpsTitle>
+
+                          <GpsText>
+                            {positionClient
+                              ? "Position reçue"
+                              : "En attente du client..."}
+                          </GpsText>
+                        </div>
+                      </GpsStatus>
+                    </GpsStatusGrid>
+
+                    {!positionClient && (
+                      <GpsWarning>
+                        <span>📍</span>
+
+                        <div>
+                          <strong>
+                            Position du
+                            client en attente
+                          </strong>
+
+                          <p>
+                            Le client doit
+                            ouvrir sa page de
+                            suivi et autoriser
+                            la géolocalisation
+                            pour apparaître sur
+                            votre carte.
+                          </p>
+                        </div>
+                      </GpsWarning>
+                    )}
+                  </>
                 ) : (
                   <MapEmpty>
                     <MapEmptyIcon>
@@ -1265,12 +2089,14 @@ function LivreurAdmin() {
                     </MapEmptyIcon>
 
                     <strong>
-                      Position GPS indisponible
+                      Position GPS
+                      indisponible
                     </strong>
 
                     <span>
-                      La carte apparaîtra dès que le
-                      livreur ou le client partagera sa
+                      La carte apparaîtra dès
+                      que le livreur ou le
+                      client partagera sa
                       position.
                     </span>
                   </MapEmpty>
@@ -1296,160 +2122,197 @@ function LivreurAdmin() {
               </SectionTitle>
 
               <SectionDescription>
-                Les nouvelles commandes en attente d'un
-                livreur.
+                Les nouvelles commandes en
+                attente d'un livreur.
               </SectionDescription>
             </div>
 
             <CountBadge>
-              {commandesDisponibles.length}
+              {
+                commandesDisponibles.length
+              }
             </CountBadge>
           </SectionHeaderRow>
 
-          {commandesDisponibles.length === 0 ? (
+          {commandesDisponibles.length ===
+          0 ? (
             <EmptyCard>
               <EmptyIcon>✓</EmptyIcon>
 
               <EmptyTitle>
-                Tout est calme pour le moment.
+                Tout est calme pour le
+                moment.
               </EmptyTitle>
 
               <EmptyText>
-                Aucune nouvelle commande n'attend
-                actuellement un livreur.
+                Aucune nouvelle commande
+                n'attend actuellement un
+                livreur.
               </EmptyText>
 
               <EmptyButton
-                onClick={() => chargerTout()}
+                onClick={() =>
+                  chargerTout()
+                }
               >
                 Vérifier à nouveau
               </EmptyButton>
             </EmptyCard>
           ) : (
             <OrdersGrid>
-              {commandesDisponibles.map((commande) => (
-                <OrderCard key={commande._id}>
-                  <OrderHeader>
-                    <div>
-                      <OrderEyebrow>
-                        COMMANDE
-                      </OrderEyebrow>
+              {commandesDisponibles.map(
+                (commande) => (
+                  <OrderCard
+                    key={commande._id}
+                  >
+                    <OrderHeader>
+                      <div>
+                        <OrderEyebrow>
+                          COMMANDE
+                        </OrderEyebrow>
 
-                      <OrderNumber>
-                        #{commande._id.slice(-6)}
-                      </OrderNumber>
-                    </div>
+                        <OrderNumber>
+                          #
+                          {commande._id.slice(
+                            -6,
+                          )}
+                        </OrderNumber>
+                      </div>
 
-                    <OrderBadge>
-                      Nouvelle
-                    </OrderBadge>
-                  </OrderHeader>
+                      <OrderBadge>
+                        Nouvelle
+                      </OrderBadge>
+                    </OrderHeader>
 
-                  <OrderPrice>
-                    {formatPrix(
-                      commande.totalProduits,
-                    )}{" "}
-                    <small>FCFA</small>
-                  </OrderPrice>
+                    <OrderPrice>
+                      {formatPrix(
+                        commande.totalProduits,
+                      )}{" "}
+                      <small>
+                        FCFA
+                      </small>
+                    </OrderPrice>
 
-                  <OrderDivider />
+                    <OrderDivider />
 
-                  <InfoList>
-                    <InfoRow>
-                      <InfoIcon>●</InfoIcon>
+                    <InfoList>
+                      <InfoRow>
+                        <InfoIcon>
+                          ●
+                        </InfoIcon>
 
-                      <InfoContent>
-                        <InfoLabel>
-                          CLIENT
-                        </InfoLabel>
+                        <InfoContent>
+                          <InfoLabel>
+                            CLIENT
+                          </InfoLabel>
 
-                        <InfoValue>
-                          {commande.client
-                            ?.username ||
-                            commande.client?.nom ||
-                            "Client"}
-                        </InfoValue>
-                      </InfoContent>
-                    </InfoRow>
+                          <InfoValue>
+                            {commande
+                              .client
+                              ?.username ||
+                              commande
+                                .client
+                                ?.nom ||
+                              "Client"}
+                          </InfoValue>
+                        </InfoContent>
+                      </InfoRow>
 
-                    <InfoRow>
-                      <InfoIcon>◉</InfoIcon>
+                      <InfoRow>
+                        <InfoIcon>
+                          ◉
+                        </InfoIcon>
 
-                      <InfoContent>
-                        <InfoLabel>
-                          VILLE
-                        </InfoLabel>
+                        <InfoContent>
+                          <InfoLabel>
+                            VILLE
+                          </InfoLabel>
 
-                        <InfoValue>
-                          {commande.client?.ville ||
-                            "Non renseignée"}
-                        </InfoValue>
-                      </InfoContent>
-                    </InfoRow>
+                          <InfoValue>
+                            {commande
+                              .client
+                              ?.ville ||
+                              "Non renseignée"}
+                          </InfoValue>
+                        </InfoContent>
+                      </InfoRow>
 
-                    <InfoRow>
-                      <InfoIcon>⌖</InfoIcon>
+                      <InfoRow>
+                        <InfoIcon>
+                          ⌖
+                        </InfoIcon>
 
-                      <InfoContent>
-                        <InfoLabel>
-                          ADRESSE
-                        </InfoLabel>
+                        <InfoContent>
+                          <InfoLabel>
+                            ADRESSE
+                          </InfoLabel>
 
-                        <InfoValue>
-                          {commande.client?.adresse ||
-                            "Non renseignée"}
-                        </InfoValue>
-                      </InfoContent>
-                    </InfoRow>
+                          <InfoValue>
+                            {commande
+                              .client
+                              ?.adresse ||
+                              "Non renseignée"}
+                          </InfoValue>
+                        </InfoContent>
+                      </InfoRow>
 
-                    <InfoRow>
-                      <InfoIcon>●</InfoIcon>
+                      <InfoRow>
+                        <InfoIcon>
+                          ●
+                        </InfoIcon>
 
-                      <InfoContent>
-                        <InfoLabel>
-                          NUMÉRO
-                        </InfoLabel>
+                        <InfoContent>
+                          <InfoLabel>
+                            NUMÉRO
+                          </InfoLabel>
 
-                        <InfoValue>
-                          {commande.client?.numero ||
-                            "Non renseigné"}
-                        </InfoValue>
-                      </InfoContent>
-                    </InfoRow>
-                  </InfoList>
+                          <InfoValue>
+                            {commande
+                              .client
+                              ?.numero ||
+                              "Non renseigné"}
+                          </InfoValue>
+                        </InfoContent>
+                      </InfoRow>
+                    </InfoList>
 
-                  <OrderFooter>
-                    <ArticleCount>
-                      {commande.panier?.length || 0}{" "}
-                      article
-                      {commande.panier?.length > 1
-                        ? "s"
-                        : ""}
-                    </ArticleCount>
+                    <OrderFooter>
+                      <ArticleCount>
+                        {commande.panier
+                          ?.length ||
+                          0}{" "}
+                        article
+                        {commande.panier
+                          ?.length > 1
+                          ? "s"
+                          : ""}
+                      </ArticleCount>
 
-                    <AcceptButton
-                      onClick={() =>
-                        accepterCommande(
-                          commande._id,
-                        )
-                      }
-                      disabled={
-                        livreur?.statut === "BUSY" ||
-                        !!livreur?.commandeActuelle ||
-                        commandeEnCours ===
-                          commande._id
-                      }
-                    >
-                      {commandeEnCours ===
-                      commande._id
-                        ? "Acceptation..."
-                        : "Accepter"}
+                      <AcceptButton
+                        onClick={() =>
+                          accepterCommande(
+                            commande._id,
+                          )
+                        }
+                        disabled={
+                          livreur?.statut ===
+                            "BUSY" ||
+                          !!livreur?.commandeActuelle ||
+                          commandeEnCours ===
+                            commande._id
+                        }
+                      >
+                        {commandeEnCours ===
+                        commande._id
+                          ? "Acceptation..."
+                          : "Accepter"}
 
-                      <span>→</span>
-                    </AcceptButton>
-                  </OrderFooter>
-                </OrderCard>
-              ))}
+                        <span>→</span>
+                      </AcceptButton>
+                    </OrderFooter>
+                  </OrderCard>
+                ),
+              )}
             </OrdersGrid>
           )}
         </Section>
@@ -1470,8 +2333,8 @@ function LivreurAdmin() {
               </SectionTitle>
 
               <SectionDescription>
-                Les commandes actuellement associées à
-                votre compte.
+                Les commandes actuellement
+                associées à votre compte.
               </SectionDescription>
             </div>
 
@@ -1489,47 +2352,60 @@ function LivreurAdmin() {
               </EmptyTitle>
 
               <EmptyText>
-                Vos commandes apparaîtront ici lorsqu'elles
-                vous seront attribuées.
+                Vos commandes apparaîtront
+                ici lorsqu'elles vous seront
+                attribuées.
               </EmptyText>
             </EmptyCard>
           ) : (
             <MyOrders>
-              {mesCommandes.map((commande) => (
-                <MyOrderCard key={commande._id}>
-                  <MyOrderMain>
-                    <MyOrderNumber>
-                      #{commande._id.slice(-6)}
-                    </MyOrderNumber>
-
-                    <MyOrderLocation>
-                      {commande.client?.ville ||
-                        "Ville inconnue"}
-                    </MyOrderLocation>
-
-                    <MyOrderAddress>
-                      {commande.client?.adresse ||
-                        "Adresse non renseignée"}
-                    </MyOrderAddress>
-                  </MyOrderMain>
-
-                  <MyOrderStatus
-                    $status={
-                      commande.livraison?.statut
-                    }
+              {mesCommandes.map(
+                (commande) => (
+                  <MyOrderCard
+                    key={commande._id}
                   >
-                    {commande.livraison?.statut ||
-                      "INCONNU"}
-                  </MyOrderStatus>
+                    <MyOrderMain>
+                      <MyOrderNumber>
+                        #
+                        {commande._id.slice(
+                          -6,
+                        )}
+                      </MyOrderNumber>
 
-                  <MyOrderPrice>
-                    {formatPrix(
-                      commande.totalProduits,
-                    )}{" "}
-                    FCFA
-                  </MyOrderPrice>
-                </MyOrderCard>
-              ))}
+                      <MyOrderLocation>
+                        {commande.client
+                          ?.ville ||
+                          "Ville inconnue"}
+                      </MyOrderLocation>
+
+                      <MyOrderAddress>
+                        {commande.client
+                          ?.adresse ||
+                          "Adresse non renseignée"}
+                      </MyOrderAddress>
+                    </MyOrderMain>
+
+                    <MyOrderStatus
+                      $status={
+                        commande
+                          .livraison
+                          ?.statut
+                      }
+                    >
+                      {commande.livraison
+                        ?.statut ||
+                        "INCONNU"}
+                    </MyOrderStatus>
+
+                    <MyOrderPrice>
+                      {formatPrix(
+                        commande.totalProduits,
+                      )}{" "}
+                      FCFA
+                    </MyOrderPrice>
+                  </MyOrderCard>
+                ),
+              )}
             </MyOrders>
           )}
         </Section>
@@ -1539,7 +2415,9 @@ function LivreurAdmin() {
         ========================================== */}
 
         <Footer>
-          <FooterBrand>NUMA</FooterBrand>
+          <FooterBrand>
+            NUMA
+          </FooterBrand>
 
           <FooterText>
             Espace professionnel livreur
@@ -1556,174 +2434,143 @@ function LivreurAdmin() {
 
 const Page = styled.div`
   min-height: 100vh;
-
-  background: radial-gradient(
-    circle at 50% -20%,
-    rgba(255, 255, 255, 1) 0%,
-    rgba(246, 246, 248, 1) 45%,
-    rgba(242, 242, 245, 1) 100%
-  );
-
+  background: #f5f5f7;
   color: #1d1d1f;
-
   font-family:
+    Inter,
     -apple-system,
     BlinkMacSystemFont,
-    "SF Pro Display",
-    "SF Pro Text",
-    "Helvetica Neue",
-    Arial,
+    "Segoe UI",
     sans-serif;
-
-  -webkit-font-smoothing: antialiased;
 `;
 
 const Header = styled.header`
   position: sticky;
   top: 0;
-  z-index: 100;
-
-  background: rgba(255, 255, 255, 0.78);
-
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-
-  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.88);
+  border-bottom: 1px solid
+    rgba(0, 0, 0, 0.07);
+  backdrop-filter: blur(20px);
 `;
 
 const HeaderInner = styled.div`
-  max-width: 1280px;
-
-  margin: auto;
-
-  padding: 18px 28px;
-
+  width: min(1180px, calc(100% - 40px));
+  min-height: 72px;
+  margin: 0 auto;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  gap: 20px;
 
   @media (max-width: 650px) {
-    padding: 16px 18px;
+    width: min(100% - 24px, 1180px);
   }
 `;
 
 const Brand = styled.div`
-  font-size: 21px;
-
-  font-weight: 800;
-
+  display: flex;
+  align-items: flex-start;
+  font-size: 22px;
+  font-weight: 900;
   letter-spacing: -1px;
 `;
 
 const BrandDot = styled.span`
-  display: inline-block;
-
   width: 6px;
   height: 6px;
-
-  background: #0071e3;
-
+  margin: 5px 0 0 3px;
   border-radius: 50%;
-
-  margin-left: 3px;
+  background: #0071e3;
 `;
 
 const HeaderRight = styled.div`
   display: flex;
-
   align-items: center;
-
   gap: 10px;
 `;
 
 const StatusPill = styled.div`
   display: flex;
-
   align-items: center;
-
   gap: 7px;
-
-  padding: 8px 12px;
-
-  background: rgba(0, 0, 0, 0.045);
-
+  min-height: 36px;
+  padding: 0 13px;
+  background: ${({ $status }) =>
+    $status === "AVAILABLE"
+      ? "#ecfdf3"
+      : $status === "BUSY"
+        ? "#fff7ed"
+        : "#f2f2f4"};
   border-radius: 999px;
+  color: ${({ $status }) =>
+    $status === "AVAILABLE"
+      ? "#087a35"
+      : $status === "BUSY"
+        ? "#b45309"
+        : "#6e6e73"};
+  font-size: 12px;
+  font-weight: 750;
 
-  font-size: 13px;
-
-  font-weight: 600;
-
-  @media (max-width: 600px) {
-    display: none;
+  @media (max-width: 500px) {
+    padding: 0 10px;
+    font-size: 11px;
   }
 `;
 
 const StatusDot = styled.span`
   width: 7px;
   height: 7px;
-
   border-radius: 50%;
-
   background: ${({ $status }) =>
     $status === "AVAILABLE"
-      ? "#34c759"
+      ? "#16a34a"
       : $status === "BUSY"
-        ? "#ff9f0a"
+        ? "#f59e0b"
         : "#8e8e93"};
 `;
 
 const RefreshButton = styled.button`
-  border: none;
-
-  background: #1d1d1f;
-
-  color: white;
-
-  padding: 9px 15px;
-
-  border-radius: 999px;
-
-  font-size: 13px;
-
-  font-weight: 600;
-
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid #dedee3;
+  border-radius: 11px;
+  background: white;
+  color: #1d1d1f;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 700;
   cursor: pointer;
 
-  display: flex;
-
-  align-items: center;
-
-  gap: 7px;
-
-  transition:
-    transform 0.2s ease,
-    opacity 0.2s ease;
-
-  &:hover {
-    transform: scale(1.03);
+  &:hover:not(:disabled) {
+    background: #f7f7f8;
   }
 
   &:disabled {
-    opacity: 0.6;
-
+    opacity: 0.55;
     cursor: default;
+  }
+
+  @media (max-width: 500px) {
+    span {
+      display: none;
+    }
   }
 `;
 
 const RefreshIcon = styled.span`
   display: inline-block;
+  font-size: 18px;
+  animation: ${({ $loading }) =>
+    $loading
+      ? "rotation 0.8s linear infinite"
+      : "none"};
 
-  font-size: 17px;
-
-  ${({ $loading }) =>
-    $loading &&
-    `
-      animation: spin 0.8s linear infinite;
-    `}
-
-  @keyframes spin {
+  @keyframes rotation {
     from {
-      transform: rotate(0deg);
+      transform: rotate(0);
     }
 
     to {
@@ -1733,1008 +2580,383 @@ const RefreshIcon = styled.span`
 `;
 
 const Main = styled.main`
-  max-width: 1280px;
-
-  margin: auto;
-
-  padding: 55px 28px 80px;
+  width: min(1180px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 40px 0 60px;
 
   @media (max-width: 650px) {
-    padding: 35px 18px 60px;
+    width: min(100% - 24px, 1180px);
+    padding-top: 25px;
   }
 `;
 
 const Alert = styled.div`
-  display: flex;
-
-  align-items: center;
-
-  gap: 10px;
-
-  padding: 14px 18px;
-
-  margin-bottom: 25px;
-
-  border-radius: 16px;
-
+  margin-bottom: 16px;
+  padding: 13px 15px;
+  border-radius: 13px;
   background: ${({ $success }) =>
-    $success ? "#eaf8ef" : "#fff0f0"};
-
+    $success ? "#ecfdf3" : "#fff0f0"};
+  border: 1px solid
+    ${({ $success }) =>
+      $success ? "#c5f1d3" : "#ffd1d1"};
   color: ${({ $success }) =>
-    $success ? "#16743a" : "#b42318"};
-
-  font-size: 14px;
-
-  font-weight: 500;
+    $success ? "#087a35" : "#bb1e1e"};
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 650;
 `;
 
-const AlertIcon = styled.span`
-  width: 23px;
-  height: 23px;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
+const AlertIcon = styled.div`
+  width: 25px;
+  height: 25px;
   border-radius: 50%;
-
   background: currentColor;
-
   color: white;
-
+  display: grid;
+  place-items: center;
   font-size: 12px;
-
-  font-weight: 800;
 `;
 
-const Hero = styled.div`
+const Hero = styled.section`
+  min-height: 270px;
+  padding: 45px;
+  margin-bottom: 28px;
+  border-radius: 30px;
+  background: #111;
+  color: white;
   display: flex;
-
-  justify-content: space-between;
-
   align-items: center;
+  justify-content: space-between;
+  overflow: hidden;
 
-  margin-bottom: 55px;
+  @media (max-width: 650px) {
+    min-height: 220px;
+    padding: 30px 24px;
+    border-radius: 22px;
+  }
 `;
 
 const HeroText = styled.div``;
 
 const Eyebrow = styled.div`
-  color: #86868b;
-
-  font-size: 12px;
-
-  font-weight: 700;
-
+  margin-bottom: 16px;
+  color: #a1a1a6;
+  font-size: 10px;
+  font-weight: 800;
   letter-spacing: 1.5px;
-
-  margin-bottom: 13px;
 `;
 
 const HeroTitle = styled.h1`
   margin: 0;
-
-  font-size: clamp(42px, 6vw, 72px);
-
+  font-size: clamp(36px, 6vw, 62px);
   line-height: 0.98;
-
-  letter-spacing: -4px;
-
-  font-weight: 700;
-
-  color: #1d1d1f;
-
-  @media (max-width: 600px) {
-    letter-spacing: -2.5px;
-  }
+  letter-spacing: -3px;
 `;
 
 const HeroName = styled.span`
-  color: #0071e3;
+  color: #8e8e93;
 `;
 
 const HeroSubtitle = styled.p`
   margin: 22px 0 0;
-
-  color: #6e6e73;
-
-  font-size: 19px;
-
-  line-height: 1.45;
-
-  letter-spacing: -0.3px;
-
-  @media (max-width: 600px) {
-    font-size: 16px;
-  }
+  color: #b9b9bd;
+  font-size: 16px;
+  line-height: 1.6;
 `;
 
 const HeroAvatar = styled.div`
-  width: 86px;
-  height: 86px;
+  width: 115px;
+  height: 115px;
+  border-radius: 50%;
+  background: #242426;
+  border: 1px solid #333336;
+  display: grid;
+  place-items: center;
+  font-size: 42px;
+  font-weight: 800;
 
-  border-radius: 28px;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  background: #1d1d1f;
-
-  color: white;
-
-  font-size: 34px;
-
-  font-weight: 700;
-
-  box-shadow:
-    0 20px 50px rgba(0, 0, 0, 0.15);
-
-  @media (max-width: 600px) {
-    width: 58px;
-    height: 58px;
-
-    border-radius: 20px;
-
-    font-size: 24px;
+  @media (max-width: 650px) {
+    width: 70px;
+    height: 70px;
+    font-size: 26px;
   }
 `;
 
 const StatsGrid = styled.div`
   display: grid;
+  grid-template-columns: repeat(
+    3,
+    minmax(0, 1fr)
+  );
+  gap: 15px;
+  margin-bottom: 55px;
 
-  grid-template-columns: repeat(3, 1fr);
-
-  gap: 18px;
-
-  margin-bottom: 75px;
-
-  @media (max-width: 800px) {
+  @media (max-width: 750px) {
     grid-template-columns: 1fr;
   }
 `;
 
 const StatCard = styled.div`
-  padding: 27px;
-
-  min-height: 155px;
-
-  background: rgba(255, 255, 255, 0.72);
-
-  border: 1px solid rgba(0, 0, 0, 0.07);
-
-  border-radius: 24px;
-
-  box-shadow:
-    0 10px 40px rgba(0, 0, 0, 0.035);
-
-  transition:
-    transform 0.25s ease,
-    box-shadow 0.25s ease;
-
-  &:hover {
-    transform: translateY(-3px);
-
-    box-shadow:
-      0 18px 50px rgba(0, 0, 0, 0.08);
-  }
+  min-height: 165px;
+  padding: 23px;
+  background: white;
+  border: 1px solid #e7e7ea;
+  border-radius: 20px;
 `;
 
 const StatTop = styled.div`
   display: flex;
-
   justify-content: space-between;
-
-  align-items: center;
 `;
 
-const StatLabel = styled.span`
-  color: #86868b;
-
-  font-size: 13px;
-
-  font-weight: 600;
+const StatLabel = styled.div`
+  color: #6e6e73;
+  font-size: 12px;
+  font-weight: 700;
 `;
 
-const StatIcon = styled.span`
-  color: #0071e3;
-
-  font-size: 18px;
+const StatIcon = styled.div`
+  color: #a1a1a6;
 `;
 
 const StatNumber = styled.div`
-  margin-top: 25px;
-
+  margin-top: 23px;
   font-size: 38px;
-
-  font-weight: 700;
-
-  letter-spacing: -2px;
-`;
-
-const StatDescription = styled.div`
-  margin-top: 4px;
-
-  color: #86868b;
-
-  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: -1.5px;
 `;
 
 const StatStatus = styled.div`
-  margin-top: 25px;
-
-  font-size: 25px;
-
-  font-weight: 700;
-
-  letter-spacing: -1px;
-
+  margin-top: 29px;
+  font-size: 24px;
+  font-weight: 800;
   color: ${({ $status }) =>
     $status === "AVAILABLE"
-      ? "#248a3d"
+      ? "#159447"
       : $status === "BUSY"
-        ? "#b45309"
-        : "#6e6e73"};
+        ? "#d97706"
+        : "#86868b"};
+`;
+
+const StatDescription = styled.div`
+  margin-top: 5px;
+  color: #9a9a9f;
+  font-size: 11px;
 `;
 
 const Section = styled.section`
-  margin-bottom: 75px;
+  margin-top: 55px;
 `;
 
 const SectionHeader = styled.div`
-  margin-bottom: 25px;
+  margin-bottom: 20px;
 `;
 
 const SectionHeaderRow = styled.div`
+  margin-bottom: 20px;
   display: flex;
-
-  justify-content: space-between;
-
   align-items: flex-end;
-
-  margin-bottom: 25px;
+  justify-content: space-between;
+  gap: 20px;
 `;
 
 const SectionEyebrow = styled.div`
+  margin-bottom: 7px;
   color: #86868b;
-
-  font-size: 11px;
-
-  font-weight: 700;
-
-  letter-spacing: 1.4px;
-
-  margin-bottom: 8px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.3px;
 `;
 
 const SectionTitle = styled.h2`
   margin: 0;
-
-  font-size: 34px;
-
-  letter-spacing: -1.7px;
-
-  font-weight: 700;
-
-  @media (max-width: 600px) {
-    font-size: 28px;
-  }
+  color: #1d1d1f;
+  font-size: 27px;
+  line-height: 1.15;
+  letter-spacing: -1px;
 `;
 
 const SectionDescription = styled.p`
-  max-width: 600px;
-
-  margin: 10px 0 0;
-
+  max-width: 570px;
+  margin: 8px 0 0;
   color: #86868b;
-
-  font-size: 15px;
-
-  line-height: 1.5;
-`;
-
-const CountBadge = styled.div`
-  min-width: 40px;
-
-  height: 40px;
-
-  padding: 0 13px;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  border-radius: 50%;
-
-  background: #1d1d1f;
-
-  color: white;
-
   font-size: 13px;
-
-  font-weight: 700;
+  line-height: 1.6;
 `;
 
 const ProfileCard = styled.div`
+  padding: 24px;
+  border-radius: 21px;
+  background: white;
+  border: 1px solid #e7e7ea;
   display: flex;
-
   align-items: center;
-
   justify-content: space-between;
+  gap: 25px;
 
-  gap: 30px;
-
-  padding: 25px;
-
-  background: rgba(255, 255, 255, 0.8);
-
-  border: 1px solid rgba(0, 0, 0, 0.07);
-
-  border-radius: 24px;
-
-  @media (max-width: 800px) {
+  @media (max-width: 650px) {
     flex-direction: column;
-
     align-items: stretch;
   }
 `;
 
 const ProfileInfo = styled.div`
   display: flex;
-
   align-items: center;
-
-  gap: 16px;
+  gap: 15px;
 `;
 
 const ProfileAvatar = styled.div`
-  width: 56px;
-  height: 56px;
-
+  width: 58px;
+  height: 58px;
   flex-shrink: 0;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  background: #f2f2f7;
-
-  border-radius: 18px;
-
+  border-radius: 50%;
+  background: #111;
+  color: white;
+  display: grid;
+  place-items: center;
   font-size: 21px;
-
-  font-weight: 700;
+  font-weight: 800;
 `;
 
 const ProfileName = styled.div`
-  font-size: 17px;
-
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 800;
 `;
 
 const ProfileEmail = styled.div`
   margin-top: 3px;
-
   color: #86868b;
-
-  font-size: 13px;
+  font-size: 12px;
 `;
 
 const ProfilePhone = styled.div`
   margin-top: 2px;
-
   color: #86868b;
-
-  font-size: 13px;
+  font-size: 12px;
 `;
 
 const StatusSelector = styled.div`
+  padding: 4px;
+  border-radius: 13px;
+  background: #f1f1f3;
   display: flex;
+  gap: 4px;
 
-  gap: 8px;
-
-  padding: 5px;
-
-  background: #f2f2f7;
-
-  border-radius: 14px;
-
-  @media (max-width: 600px) {
-    display: grid;
-
-    grid-template-columns: 1fr;
+  @media (max-width: 650px) {
+    width: 100%;
   }
 `;
 
 const StatusButton = styled.button`
-  border: none;
-
-  padding: 11px 15px;
-
+  min-height: 42px;
+  padding: 0 17px;
+  border: 0;
   border-radius: 10px;
-
   background: ${({ $active }) =>
-    $active ? "#fff" : "transparent"};
-
+    $active ? "white" : "transparent"};
   color: ${({ $active }) =>
-    $active ? "#1d1d1f" : "#6e6e73"};
-
+    $active ? "#111" : "#86868b"};
   box-shadow: ${({ $active }) =>
     $active
-      ? "0 2px 8px rgba(0,0,0,.08)"
+      ? "0 2px 8px rgba(0,0,0,.06)"
       : "none"};
-
-  font-size: 13px;
-
-  font-weight: 600;
-
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 750;
   cursor: pointer;
 
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  gap: 7px;
-
-  transition: all 0.2s ease;
-
-  &:hover {
-    color: #1d1d1f;
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
   }
 
-  &:disabled {
-    opacity: 0.45;
-
-    cursor: not-allowed;
+  @media (max-width: 650px) {
+    flex: 1;
+    justify-content: center;
   }
 `;
 
 const ButtonDot = styled.span`
   width: 6px;
   height: 6px;
-
   border-radius: 50%;
-
   background: currentColor;
 `;
 
-const OrdersGrid = styled.div`
-  display: grid;
-
-  grid-template-columns:
-    repeat(2, minmax(0, 1fr));
-
-  gap: 18px;
-
-  @media (max-width: 900px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const OrderCard = styled.article`
-  padding: 26px;
-
-  background: #fff;
-
-  border: 1px solid rgba(0, 0, 0, 0.08);
-
+const DeliveryCard = styled.div`
+  padding: 28px;
   border-radius: 25px;
-
-  box-shadow:
-    0 12px 45px rgba(0, 0, 0, 0.045);
-
-  transition:
-    transform 0.25s ease,
-    box-shadow 0.25s ease;
-
-  &:hover {
-    transform: translateY(-4px);
-
-    box-shadow:
-      0 22px 60px rgba(0, 0, 0, 0.09);
-  }
-`;
-
-const OrderHeader = styled.div`
-  display: flex;
-
-  justify-content: space-between;
-
-  align-items: flex-start;
-`;
-
-const OrderEyebrow = styled.div`
-  color: #86868b;
-
-  font-size: 10px;
-
-  font-weight: 700;
-
-  letter-spacing: 1.5px;
-`;
-
-const OrderNumber = styled.div`
-  margin-top: 4px;
-
-  font-size: 21px;
-
-  font-weight: 700;
-
-  letter-spacing: -0.8px;
-`;
-
-const OrderBadge = styled.span`
-  padding: 7px 10px;
-
-  background: #eaf4ff;
-
-  color: #0071e3;
-
-  border-radius: 999px;
-
-  font-size: 11px;
-
-  font-weight: 700;
-`;
-
-const OrderPrice = styled.div`
-  margin-top: 30px;
-
-  font-size: 32px;
-
-  font-weight: 700;
-
-  letter-spacing: -1.5px;
-
-  small {
-    font-size: 14px;
-
-    font-weight: 600;
-
-    letter-spacing: 0;
-
-    color: #86868b;
-  }
-`;
-
-const OrderDivider = styled.div`
-  height: 1px;
-
-  background: #eeeeef;
-
-  margin: 24px 0;
-`;
-
-const InfoList = styled.div`
-  display: flex;
-
-  flex-direction: column;
-
-  gap: 17px;
-`;
-
-const InfoRow = styled.div`
-  display: flex;
-
-  gap: 12px;
-`;
-
-const InfoIcon = styled.div`
-  width: 30px;
-  height: 30px;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  flex-shrink: 0;
-
-  background: #f5f5f7;
-
-  border-radius: 9px;
-
-  color: #0071e3;
-
-  font-size: 12px;
-`;
-
-const InfoContent = styled.div`
-  min-width: 0;
-`;
-
-const InfoLabel = styled.div`
-  color: #86868b;
-
-  font-size: 9px;
-
-  font-weight: 700;
-
-  letter-spacing: 1px;
-
-  margin-bottom: 3px;
-`;
-
-const InfoValue = styled.div`
-  font-size: 14px;
-
-  font-weight: 600;
-
-  overflow: hidden;
-
-  text-overflow: ellipsis;
-
-  white-space: nowrap;
-`;
-
-const OrderFooter = styled.div`
-  display: flex;
-
-  align-items: center;
-
-  justify-content: space-between;
-
-  gap: 15px;
-
-  margin-top: 25px;
-`;
-
-const ArticleCount = styled.span`
-  color: #86868b;
-
-  font-size: 12px;
-`;
-
-const AcceptButton = styled.button`
-  border: none;
-
-  background: #1d1d1f;
-
+  background: #111;
   color: white;
 
-  padding: 12px 17px;
-
-  border-radius: 999px;
-
-  font-size: 13px;
-
-  font-weight: 600;
-
-  cursor: pointer;
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 12px;
-
-  transition:
-    transform 0.2s ease,
-    opacity 0.2s ease;
-
-  span {
-    font-size: 18px;
-
-    line-height: 0;
-  }
-
-  &:hover:not(:disabled) {
-    transform: scale(1.035);
-  }
-
-  &:disabled {
-    opacity: 0.45;
-
-    cursor: not-allowed;
-  }
-`;
-
-const EmptyCard = styled.div`
-  text-align: center;
-
-  padding: 70px 25px;
-
-  background: rgba(255, 255, 255, 0.7);
-
-  border: 1px solid rgba(0, 0, 0, 0.06);
-
-  border-radius: 25px;
-`;
-
-const EmptyIcon = styled.div`
-  width: 54px;
-  height: 54px;
-
-  margin: 0 auto 18px;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  border-radius: 18px;
-
-  background: #f2f2f7;
-
-  color: #0071e3;
-
-  font-size: 22px;
-
-  font-weight: 700;
-`;
-
-const EmptyTitle = styled.h3`
-  margin: 0;
-
-  font-size: 20px;
-
-  letter-spacing: -0.5px;
-`;
-
-const EmptyText = styled.p`
-  max-width: 400px;
-
-  margin: 9px auto 20px;
-
-  color: #86868b;
-
-  font-size: 14px;
-
-  line-height: 1.5;
-`;
-
-const EmptyButton = styled.button`
-  border: none;
-
-  background: #1d1d1f;
-
-  color: white;
-
-  padding: 11px 18px;
-
-  border-radius: 999px;
-
-  font-size: 13px;
-
-  font-weight: 600;
-
-  cursor: pointer;
-`;
-
-const MyOrders = styled.div`
-  display: flex;
-
-  flex-direction: column;
-
-  gap: 10px;
-`;
-
-const MyOrderCard = styled.div`
-  display: grid;
-
-  grid-template-columns:
-    1.2fr 1fr auto auto;
-
-  align-items: center;
-
-  gap: 25px;
-
-  padding: 21px 23px;
-
-  background: rgba(255, 255, 255, 0.75);
-
-  border: 1px solid rgba(0, 0, 0, 0.06);
-
-  border-radius: 18px;
-
-  transition: background 0.2s ease;
-
-  &:hover {
-    background: #fff;
-  }
-
-  @media (max-width: 800px) {
-    grid-template-columns: 1fr auto;
-  }
-`;
-
-const MyOrderMain = styled.div``;
-
-const MyOrderNumber = styled.div`
-  font-size: 15px;
-
-  font-weight: 700;
-`;
-
-const MyOrderLocation = styled.div`
-  margin-top: 5px;
-
-  font-size: 13px;
-
-  font-weight: 600;
-`;
-
-const MyOrderAddress = styled.div`
-  margin-top: 2px;
-
-  color: #86868b;
-
-  font-size: 12px;
-`;
-
-const MyOrderStatus = styled.div`
-  padding: 7px 10px;
-
-  background: #f2f2f7;
-
-  border-radius: 999px;
-
-  font-size: 10px;
-
-  font-weight: 700;
-
-  color: ${({ $status }) =>
-    $status === "ACCEPTED"
-      ? "#248a3d"
-      : $status === "PICKING_UP"
-        ? "#b45309"
-        : $status === "IN_DELIVERY"
-          ? "#0071e3"
-          : "#6e6e73"};
-
-  @media (max-width: 800px) {
-    justify-self: end;
-  }
-`;
-
-const MyOrderPrice = styled.div`
-  font-size: 14px;
-
-  font-weight: 700;
-
-  white-space: nowrap;
-
-  @media (max-width: 800px) {
-    grid-column: 2;
-
-    justify-self: end;
-  }
-`;
-
-const Footer = styled.footer`
-  padding-top: 25px;
-
-  border-top: 1px solid rgba(0, 0, 0, 0.07);
-
-  display: flex;
-
-  justify-content: space-between;
-
-  color: #86868b;
-
-  @media (max-width: 600px) {
-    flex-direction: column;
-
-    gap: 8px;
-  }
-`;
-
-const FooterBrand = styled.div`
-  color: #1d1d1f;
-
-  font-size: 15px;
-
-  font-weight: 800;
-
-  letter-spacing: -0.5px;
-`;
-
-const FooterText = styled.div`
-  font-size: 12px;
-`;
-
-// ======================================================
-// LIVRAISON ACTIVE
-// ======================================================
-
-const DeliveryCard = styled.article`
-  padding: 30px;
-
-  background: #1d1d1f;
-
-  color: white;
-
-  border-radius: 28px;
-
-  box-shadow:
-    0 25px 70px rgba(0, 0, 0, 0.15);
-
-  @media (max-width: 600px) {
+  @media (max-width: 650px) {
     padding: 20px;
-
-    border-radius: 22px;
+    border-radius: 20px;
   }
 `;
 
 const DeliveryTop = styled.div`
   display: flex;
-
-  align-items: flex-start;
-
   justify-content: space-between;
-
-  gap: 20px;
+  align-items: center;
+  gap: 15px;
 `;
 
 const DeliveryLabel = styled.div`
-  color: #86868b;
-
-  font-size: 10px;
-
-  font-weight: 700;
-
-  letter-spacing: 1.5px;
+  color: #77777d;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1px;
 `;
 
 const DeliveryNumber = styled.div`
-  margin-top: 6px;
-
-  font-size: 27px;
-
-  font-weight: 700;
-
-  letter-spacing: -1px;
+  margin-top: 4px;
+  font-size: 22px;
+  font-weight: 800;
 `;
 
 const DeliveryStatus = styled.div`
-  padding: 8px 12px;
-
+  padding: 8px 11px;
   border-radius: 999px;
-
   background: ${({ $status }) =>
-    $status === "ACCEPTED"
-      ? "rgba(52,199,89,.15)"
-      : $status === "PICKING_UP"
-        ? "rgba(255,159,10,.15)"
-        : "rgba(0,113,227,.15)"};
-
+    $status === "IN_DELIVERY"
+      ? "#ecfdf3"
+      : "#29292c"};
   color: ${({ $status }) =>
-    $status === "ACCEPTED"
-      ? "#34c759"
-      : $status === "PICKING_UP"
-        ? "#ff9f0a"
-        : "#5aa9ff"};
-
+    $status === "IN_DELIVERY"
+      ? "#138a42"
+      : "#d6d6da"};
   font-size: 10px;
-
-  font-weight: 700;
+  font-weight: 750;
 `;
 
 const DeliveryDivider = styled.div`
   height: 1px;
-
-  margin: 25px 0;
-
-  background: rgba(255, 255, 255, 0.1);
+  margin: 23px 0;
+  background: #29292c;
 `;
 
 const DeliveryGrid = styled.div`
   display: grid;
-
-  grid-template-columns: repeat(2, 1fr);
-
+  grid-template-columns: repeat(
+    4,
+    minmax(0, 1fr)
+  );
   gap: 25px;
 
-  @media (max-width: 650px) {
+  @media (max-width: 800px) {
+    grid-template-columns: repeat(
+      2,
+      1fr
+    );
+  }
+
+  @media (max-width: 450px) {
     grid-template-columns: 1fr;
   }
 `;
@@ -2744,126 +2966,89 @@ const DeliveryInfo = styled.div`
 `;
 
 const DeliveryInfoLabel = styled.div`
-  margin-bottom: 6px;
-
-  color: #86868b;
-
+  margin-bottom: 5px;
+  color: #77777d;
   font-size: 9px;
-
-  font-weight: 700;
-
-  letter-spacing: 1px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
 `;
 
 const DeliveryInfoValue = styled.div`
-  font-size: 15px;
-
-  font-weight: 600;
-
-  line-height: 1.4;
+  font-size: 13px;
+  font-weight: 650;
+  overflow-wrap: anywhere;
 `;
 
 const DeliveryProducts = styled.div`
-  margin-top: 30px;
-
-  padding-top: 25px;
-
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 26px;
+  padding: 18px;
+  background: #1b1b1d;
+  border-radius: 15px;
 `;
 
 const DeliveryProduct = styled.div`
+  padding: 9px 0;
   display: flex;
-
   justify-content: space-between;
+  gap: 15px;
+  border-bottom: 1px solid #2b2b2e;
+  font-size: 12px;
 
-  align-items: center;
+  &:last-child {
+    border-bottom: 0;
+  }
 
-  gap: 20px;
-
-  padding: 10px 0;
-
-  color: #d2d2d7;
-
-  font-size: 13px;
+  span {
+    color: #c3c3c7;
+  }
 
   strong {
-    color: white;
-
     white-space: nowrap;
   }
 `;
 
 const DeliveryTotal = styled.div`
+  padding: 18px 0;
   display: flex;
-
   justify-content: space-between;
-
-  align-items: center;
-
-  margin-top: 20px;
-
-  padding-top: 20px;
-
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-
-  color: #86868b;
-
   font-size: 13px;
 
   strong {
-    color: white;
-
-    font-size: 18px;
+    font-size: 15px;
   }
 `;
 
 const DeliveryAction = styled.div`
-  margin-top: 28px;
+  display: flex;
+  justify-content: flex-end;
 `;
 
 const DeliveryButton = styled.button`
-  width: 100%;
-
+  min-height: 48px;
+  padding: 0 20px;
   border: none;
-
-  padding: 15px 20px;
-
-  border-radius: 14px;
-
+  border-radius: 13px;
   background: white;
-
-  color: #1d1d1f;
-
-  font-size: 14px;
-
-  font-weight: 700;
-
+  color: #111;
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  font-size: 12px;
+  font-weight: 800;
   cursor: pointer;
 
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  gap: 12px;
-
-  transition:
-    transform 0.2s ease,
-    opacity 0.2s ease;
-
-  span {
-    font-size: 18px;
-  }
-
   &:hover:not(:disabled) {
-    transform: translateY(-2px);
+    background: #eeeeef;
   }
 
   &:disabled {
-    opacity: 0.5;
+    opacity: 0.55;
+    cursor: default;
+  }
 
-    cursor: not-allowed;
+  @media (max-width: 550px) {
+    width: 100%;
+    justify-content: space-between;
   }
 `;
 
@@ -2872,172 +3057,583 @@ const DeliveryButton = styled.button`
 // ======================================================
 
 const MapSection = styled.div`
-  margin-top: 28px;
+  margin-top: 30px;
+  padding: 20px;
+  background: white;
+  color: #1d1d1f;
+  border-radius: 20px;
 
-  padding: 22px;
-
-  background: #fff;
-
-  color: #111;
-
-  border-radius: 22px;
-
-  border: 1px solid rgba(255, 255, 255, 0.08);
-
-  @media (max-width: 600px) {
-    padding: 15px;
-
-    border-radius: 18px;
+  @media (max-width: 550px) {
+    padding: 14px;
   }
 `;
 
 const MapHeader = styled.div`
+  margin-bottom: 15px;
   display: flex;
-
   align-items: center;
-
   justify-content: space-between;
-
-  gap: 16px;
-
-  margin-bottom: 16px;
-
-  @media (max-width: 600px) {
-    align-items: flex-start;
-  }
+  gap: 15px;
 `;
 
 const MapTitle = styled.div`
-  font-size: 17px;
-
+  font-size: 16px;
   font-weight: 800;
-
-  color: #111;
+  letter-spacing: -0.4px;
 `;
 
 const MapSubtitle = styled.div`
-  margin-top: 4px;
-
-  font-size: 13px;
-
-  color: #777;
+  margin-top: 3px;
+  color: #86868b;
+  font-size: 11px;
 `;
 
 const LiveBadge = styled.div`
-  display: flex;
-
-  align-items: center;
-
-  gap: 7px;
-
-  padding: 8px 11px;
-
   flex-shrink: 0;
-
+  min-height: 30px;
+  padding: 0 10px;
   border-radius: 999px;
-
-  background: #f3f3f3;
-
-  font-size: 11px;
-
-  font-weight: 800;
-
-  letter-spacing: 0.04em;
-
-  color: #222;
+  background: #ecfdf3;
+  color: #138a42;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.5px;
 `;
 
 const LiveDot = styled.span`
-  width: 8px;
-
-  height: 8px;
-
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-
-  background: #22c55e;
-
-  display: block;
-
-  box-shadow:
-    0 0 0 4px rgba(34, 197, 94, 0.12);
+  background: #16a34a;
+  box-shadow: 0 0 0 4px
+    rgba(22, 163, 74, 0.12);
 `;
 
 const MapBox = styled.div`
   width: 100%;
-
-  height: 390px;
-
+  height: 460px;
   overflow: hidden;
-
-  border-radius: 20px;
-
-  border: 1px solid #e8e8e8;
+  border-radius: 17px;
+  border: 1px solid #e5e5e7;
 
   .leaflet-container {
-    width: 100%;
-
-    height: 100%;
-
     font-family: inherit;
+    background: #eeeeef;
   }
 
-  .leaflet-popup-content-wrapper {
-    border-radius: 12px;
+  .leaflet-control-zoom {
+    border: none;
+    box-shadow: 0 4px 18px
+      rgba(0, 0, 0, 0.12);
   }
 
-  .leaflet-popup-content {
-    font-size: 13px;
+  .leaflet-control-zoom a {
+    border: 0;
+  }
 
+  @media (max-width: 700px) {
+    height: 390px;
+  }
+
+  @media (max-width: 450px) {
+    height: 340px;
+  }
+`;
+
+const RouteInfo = styled.div`
+  margin-top: 13px;
+  padding: 14px 16px;
+  border: 1px solid #e7e7ea;
+  border-radius: 15px;
+  background: #f7f7f8;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  @media (max-width: 720px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 11px;
+  }
+`;
+
+const RouteInfoItem = styled.div`
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`;
+
+const RouteIcon = styled.div`
+  width: 35px;
+  height: 35px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  border: 1px solid #e4e4e7;
+  background: white;
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+`;
+
+const RouteAddress = styled.div`
+  min-width: 0;
+`;
+
+const RouteLabel = styled.div`
+  color: #86868b;
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: 0.8px;
+`;
+
+const RouteValue = styled.div`
+  margin-top: 2px;
+  color: #1d1d1f;
+  font-size: 13px;
+  font-weight: 750;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+`;
+
+const RouteSeparator = styled.div`
+  width: 1px;
+  height: 34px;
+  flex-shrink: 0;
+  background: #dedee1;
+
+  @media (max-width: 720px) {
+    width: 100%;
+    height: 1px;
+  }
+`;
+
+const GpsStatusGrid = styled.div`
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(
+    2,
+    minmax(0, 1fr)
+  );
+  gap: 10px;
+
+  @media (max-width: 500px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const GpsStatus = styled.div`
+  min-height: 58px;
+  padding: 10px 13px;
+  border: 1px solid
+    ${({ $active }) =>
+      $active ? "#cfeedd" : "#e6e6e9"};
+  border-radius: 13px;
+  background: ${({ $active }) =>
+    $active ? "#f4fff8" : "#fafafa"};
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`;
+
+const GpsIndicator = styled.div`
+  width: 9px;
+  height: 9px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: ${({ $active }) =>
+    $active ? "#16a34a" : "#b8b8bd"};
+  box-shadow: ${({ $active }) =>
+    $active
+      ? "0 0 0 5px rgba(22,163,74,.10)"
+      : "none"};
+`;
+
+const GpsTitle = styled.div`
+  font-size: 11px;
+  font-weight: 800;
+`;
+
+const GpsText = styled.div`
+  margin-top: 2px;
+  color: #86868b;
+  font-size: 10px;
+`;
+
+const GpsWarning = styled.div`
+  margin-top: 12px;
+  padding: 13px;
+  border-radius: 13px;
+  border: 1px solid #ffe1a8;
+  background: #fffaf0;
+  color: #8a5b08;
+  display: flex;
+  gap: 10px;
+  font-size: 11px;
+
+  strong {
+    font-size: 11px;
+  }
+
+  p {
+    margin: 3px 0 0;
+    color: #9a711f;
     line-height: 1.5;
-  }
-
-  @media (max-width: 600px) {
-    height: 320px;
-
-    border-radius: 16px;
   }
 `;
 
 const MapEmpty = styled.div`
-  min-height: 220px;
-
-  border-radius: 20px;
-
-  border: 1px dashed #d8d8d8;
-
-  background: #fafafa;
-
+  min-height: 260px;
+  border-radius: 17px;
+  border: 1px dashed #d9d9dd;
+  background: #f7f7f8;
   display: flex;
-
   flex-direction: column;
-
   align-items: center;
-
   justify-content: center;
-
+  gap: 7px;
   text-align: center;
 
-  padding: 30px;
-
-  color: #111;
+  strong {
+    font-size: 14px;
+  }
 
   span {
-    margin-top: 7px;
-
-    max-width: 380px;
-
-    color: #777;
-
-    font-size: 13px;
-
-    line-height: 1.6;
+    max-width: 340px;
+    color: #86868b;
+    font-size: 11px;
+    line-height: 1.5;
   }
 `;
 
 const MapEmptyIcon = styled.div`
-  font-size: 30px;
+  margin-bottom: 3px;
+  font-size: 28px;
+`;
 
-  margin-bottom: 10px;
+// ======================================================
+// COMMANDES DISPONIBLES
+// ======================================================
+
+const CountBadge = styled.div`
+  min-width: 35px;
+  height: 35px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #111;
+  color: white;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 800;
+`;
+
+const OrdersGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(
+    2,
+    minmax(0, 1fr)
+  );
+  gap: 15px;
+
+  @media (max-width: 760px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const OrderCard = styled.div`
+  padding: 22px;
+  background: white;
+  border: 1px solid #e6e6e9;
+  border-radius: 20px;
+`;
+
+const OrderHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+`;
+
+const OrderEyebrow = styled.div`
+  color: #9a9a9f;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 1px;
+`;
+
+const OrderNumber = styled.div`
+  margin-top: 3px;
+  font-size: 18px;
+  font-weight: 800;
+`;
+
+const OrderBadge = styled.div`
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: #ecfdf3;
+  color: #138a42;
+  font-size: 9px;
+  font-weight: 800;
+`;
+
+const OrderPrice = styled.div`
+  margin-top: 20px;
+  font-size: 28px;
+  font-weight: 850;
+  letter-spacing: -1px;
+
+  small {
+    font-size: 11px;
+    color: #86868b;
+    letter-spacing: 0;
+  }
+`;
+
+const OrderDivider = styled.div`
+  height: 1px;
+  margin: 20px 0;
+  background: #ededf0;
+`;
+
+const InfoList = styled.div`
+  display: grid;
+  gap: 13px;
+`;
+
+const InfoRow = styled.div`
+  display: flex;
+  gap: 10px;
+`;
+
+const InfoIcon = styled.div`
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  color: #86868b;
+  font-size: 10px;
+  background: #f4f4f5;
+  border-radius: 8px;
+`;
+
+const InfoContent = styled.div`
+  min-width: 0;
+`;
+
+const InfoLabel = styled.div`
+  color: #9a9a9f;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.7px;
+`;
+
+const InfoValue = styled.div`
+  margin-top: 1px;
+  font-size: 12px;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+`;
+
+const OrderFooter = styled.div`
+  margin-top: 20px;
+  padding-top: 17px;
+  border-top: 1px solid #ededf0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+`;
+
+const ArticleCount = styled.div`
+  color: #86868b;
+  font-size: 10px;
+`;
+
+const AcceptButton = styled.button`
+  min-height: 40px;
+  padding: 0 15px;
+  border: 0;
+  border-radius: 10px;
+  background: #111;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  font-size: 11px;
+  font-weight: 750;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: #2c2c2e;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+`;
+
+// ======================================================
+// MES COMMANDES
+// ======================================================
+
+const MyOrders = styled.div`
+  display: grid;
+  gap: 10px;
+`;
+
+const MyOrderCard = styled.div`
+  padding: 18px 20px;
+  background: white;
+  border: 1px solid #e7e7ea;
+  border-radius: 16px;
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 20px;
+
+  @media (max-width: 650px) {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+`;
+
+const MyOrderMain = styled.div`
+  min-width: 0;
+`;
+
+const MyOrderNumber = styled.div`
+  font-size: 13px;
+  font-weight: 800;
+`;
+
+const MyOrderLocation = styled.div`
+  margin-top: 5px;
+  font-size: 12px;
+  font-weight: 650;
+`;
+
+const MyOrderAddress = styled.div`
+  margin-top: 2px;
+  color: #86868b;
+  font-size: 10px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+`;
+
+const MyOrderStatus = styled.div`
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: ${({ $status }) =>
+    $status === "DELIVERED"
+      ? "#ecfdf3"
+      : $status === "IN_DELIVERY"
+        ? "#eef6ff"
+        : "#f2f2f4"};
+  color: ${({ $status }) =>
+    $status === "DELIVERED"
+      ? "#138a42"
+      : $status === "IN_DELIVERY"
+        ? "#0071e3"
+        : "#6e6e73"};
+  font-size: 9px;
+  font-weight: 800;
+`;
+
+const MyOrderPrice = styled.div`
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 800;
+`;
+
+// ======================================================
+// EMPTY
+// ======================================================
+
+const EmptyCard = styled.div`
+  min-height: 245px;
+  padding: 25px;
+  border: 1px dashed #d4d4d8;
+  border-radius: 20px;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+`;
+
+const EmptyIcon = styled.div`
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #f1f1f3;
+  color: #77777c;
+  display: grid;
+  place-items: center;
+  margin-bottom: 12px;
+  font-weight: 800;
+`;
+
+const EmptyTitle = styled.div`
+  font-size: 15px;
+  font-weight: 800;
+`;
+
+const EmptyText = styled.div`
+  max-width: 380px;
+  margin-top: 6px;
+  color: #86868b;
+  font-size: 11px;
+  line-height: 1.55;
+`;
+
+const EmptyButton = styled.button`
+  margin-top: 16px;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid #dedee2;
+  border-radius: 10px;
+  background: white;
+  font-size: 10px;
+  font-weight: 750;
+  cursor: pointer;
+
+  &:hover {
+    background: #f5f5f7;
+  }
+`;
+
+// ======================================================
+// FOOTER
+// ======================================================
+
+const Footer = styled.footer`
+  margin-top: 70px;
+  padding: 25px 0 10px;
+  border-top: 1px solid #dedee1;
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  color: #86868b;
+`;
+
+const FooterBrand = styled.div`
+  color: #1d1d1f;
+  font-size: 12px;
+  font-weight: 900;
+`;
+
+const FooterText = styled.div`
+  font-size: 10px;
 `;
 
 // ======================================================
@@ -3046,50 +3642,27 @@ const MapEmptyIcon = styled.div`
 
 const LoadingPage = styled.div`
   min-height: 100vh;
-
-  display: flex;
-
-  flex-direction: column;
-
-  align-items: center;
-
-  justify-content: center;
-
   background: #f5f5f7;
-
-  color: #1d1d1f;
-
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "SF Pro Display",
-    "Helvetica Neue",
-    Arial,
-    sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 `;
 
 const LoadingLogo = styled.div`
-  font-size: 28px;
-
-  font-weight: 800;
-
-  letter-spacing: -1.5px;
+  margin-bottom: 25px;
+  font-size: 25px;
+  font-weight: 900;
+  letter-spacing: -1px;
 `;
 
 const LoadingSpinner = styled.div`
-  width: 22px;
-
-  height: 22px;
-
-  margin-top: 30px;
-
-  border: 2px solid #d2d2d7;
-
-  border-top-color: #1d1d1f;
-
+  width: 30px;
+  height: 30px;
+  border: 3px solid #dedee2;
+  border-top-color: #111;
   border-radius: 50%;
-
-  animation: spin 0.8s linear infinite;
+  animation: spin 0.75s linear infinite;
 
   @keyframes spin {
     to {
@@ -3099,12 +3672,9 @@ const LoadingSpinner = styled.div`
 `;
 
 const LoadingText = styled.div`
-  margin-top: 15px;
-
+  margin-top: 14px;
   color: #86868b;
-
-  font-size: 13px;
+  font-size: 11px;
 `;
 
 export default LivreurAdmin;
-
