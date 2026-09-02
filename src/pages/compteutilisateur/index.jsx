@@ -1192,7 +1192,7 @@ const EmptyIcon = styled.div`
   color: #111;
 `;
 
-const ShopLink = styled.a`
+const ShopLink = styled(Link)`
   color: #111;
 
   font-weight: 800;
@@ -1248,7 +1248,7 @@ const FavoriteInfo = styled.div`
   padding: 16px;
 `;
 
-const FavoriteLink = styled.a`
+const FavoriteLink = styled(Link)`
   color: #111;
 
   font-weight: 800;
@@ -1468,7 +1468,7 @@ const OrderProductInfo = styled.div`
   flex: 1;
 `;
 
-const OrderProductLink = styled.a`
+const OrderProductLink = styled(Link)`
   color: #111;
 
   text-decoration: none;
