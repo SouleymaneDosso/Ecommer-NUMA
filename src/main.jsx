@@ -54,6 +54,7 @@ import ConnexionLivreur from "./connexionlivreur/connexion";
 import LivreurAdmin from "./pages/livreuradmin";
 import { Toaster } from "react-hot-toast";
 import SuiviCommande from "./pages/SuiviCommande";
+import AdminLivreurs from "./pages/AdminLivreurs";
 import "./i18n";
 
 const PublicLayout = ({ children }) => {
@@ -330,6 +331,7 @@ createRoot(document.getElementById("root")).render(
                 </PublicLayout>
               }
             />
+            <Route path="/admin/livreurs" element={<AdminLivreurs />} />
 
             <Route
               path="*"
