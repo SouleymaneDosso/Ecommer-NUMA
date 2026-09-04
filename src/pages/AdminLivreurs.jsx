@@ -56,9 +56,7 @@ const apiRequest = async (url, options = {}) => {
   }
 
   if (!response.ok) {
-    throw new Error(
-      data.message || "Une erreur est survenue avec le serveur.",
-    );
+    throw new Error(data.message || "Une erreur est survenue avec le serveur.");
   }
 
   return data;
@@ -158,10 +156,7 @@ export default function AdminLivreur() {
           livreur.limiteCourses !== null
         ) {
           limits[livreur._id] = livreur.limiteCourses;
-        } else if (
-          livreur.limite !== undefined &&
-          livreur.limite !== null
-        ) {
+        } else if (livreur.limite !== undefined && livreur.limite !== null) {
           limits[livreur._id] = livreur.limite;
         } else {
           limits[livreur._id] = "";
@@ -274,8 +269,6 @@ export default function AdminLivreur() {
     }
   };
 
-  
-  
   // =====================================================
   // LIMITER
   // =====================================================
@@ -429,22 +422,17 @@ export default function AdminLivreur() {
   const stats = useMemo(() => {
     const total = livreurs.length;
 
-    const actifs = livreurs.filter(
-      (livreur) => livreur.actif === true,
-    ).length;
+    const actifs = livreurs.filter((livreur) => livreur.actif === true).length;
 
     const bloques = livreurs.filter(
-      (livreur) =>
-        livreur.bloque === true || livreur.actif === false,
+      (livreur) => livreur.bloque === true || livreur.actif === false,
     ).length;
 
     const disponibles = livreurs.filter(
       (livreur) => livreur.statut === "AVAILABLE",
     ).length;
 
-    const busy = livreurs.filter(
-      (livreur) => livreur.statut === "BUSY",
-    ).length;
+    const busy = livreurs.filter((livreur) => livreur.statut === "BUSY").length;
 
     return {
       total,
@@ -485,10 +473,7 @@ export default function AdminLivreur() {
           <FaTimes />
           <span>{error}</span>
 
-          <CloseAlert
-            type="button"
-            onClick={() => setError("")}
-          >
+          <CloseAlert type="button" onClick={() => setError("")}>
             <FaTimes />
           </CloseAlert>
         </Alert>
@@ -499,10 +484,7 @@ export default function AdminLivreur() {
           <FaCheckCircle />
           <span>{success}</span>
 
-          <CloseAlert
-            type="button"
-            onClick={() => setSuccess("")}
-          >
+          <CloseAlert type="button" onClick={() => setSuccess("")}>
             <FaTimes />
           </CloseAlert>
         </Alert>
@@ -601,16 +583,13 @@ export default function AdminLivreur() {
 
           <h3>Aucun livreur trouvé</h3>
 
-          <p>
-            Aucun livreur ne correspond aux critères sélectionnés.
-          </p>
+          <p>Aucun livreur ne correspond aux critères sélectionnés.</p>
         </EmptyState>
       ) : (
         <LivreursGrid>
           {livreursFiltres.map((livreur) => {
             const isBlocked =
-              livreur.bloque === true ||
-              livreur.actif === false;
+              livreur.bloque === true || livreur.actif === false;
 
             const limite =
               livreur.limiteCoursesParJour ??
@@ -624,24 +603,18 @@ export default function AdminLivreur() {
               livreur.coursesDuJour ??
               0;
 
-            const hasLimit =
-              limite !== null &&
-              limite !== undefined;
+            const hasLimit = limite !== null && limite !== undefined;
 
             return (
               <LivreurCard key={livreur._id}>
                 <CardTop>
                   <Identity>
                     <Avatar>
-                      {(livreur.username || "L")
-                        .charAt(0)
-                        .toUpperCase()}
+                      {(livreur.username || "L").charAt(0).toUpperCase()}
                     </Avatar>
 
                     <div>
-                      <Username>
-                        {livreur.username || "Livreur"}
-                      </Username>
+                      <Username>{livreur.username || "Livreur"}</Username>
 
                       <Email>
                         <FaEnvelope />
@@ -650,9 +623,7 @@ export default function AdminLivreur() {
                     </div>
                   </Identity>
 
-                  <AccountBadge
-                    className={isBlocked ? "blocked" : "active"}
-                  >
+                  <AccountBadge className={isBlocked ? "blocked" : "active"}>
                     {isBlocked ? (
                       <>
                         <FaBan />
@@ -691,11 +662,7 @@ export default function AdminLivreur() {
                     <div>
                       <InfoLabel>Statut du livreur</InfoLabel>
 
-                      <StatusBadge
-                        className={getStatutClass(
-                          livreur.statut,
-                        )}
-                      >
+                      <StatusBadge className={getStatutClass(livreur.statut)}>
                         <span />
                         {getStatutLabel(livreur.statut)}
                       </StatusBadge>
@@ -713,9 +680,9 @@ export default function AdminLivreur() {
                       <InfoValue>
                         {livreur.localisation?.latitude != null &&
                         livreur.localisation?.longitude != null
-                          ? `${Number(
-                              livreur.localisation.latitude,
-                            ).toFixed(5)}, ${Number(
+                          ? `${Number(livreur.localisation.latitude).toFixed(
+                              5,
+                            )}, ${Number(
                               livreur.localisation.longitude,
                             ).toFixed(5)}`
                           : "Position inconnue"}
@@ -733,8 +700,7 @@ export default function AdminLivreur() {
 
                       <InfoValue>
                         {livreur.commandeActuelle
-                          ? typeof livreur.commandeActuelle ===
-                            "object"
+                          ? typeof livreur.commandeActuelle === "object"
                             ? livreur.commandeActuelle._id ||
                               livreur.commandeActuelle.id ||
                               "En cours"
@@ -748,9 +714,7 @@ export default function AdminLivreur() {
                 <LimitSection>
                   <LimitHeader>
                     <div>
-                      <LimitTitle>
-                        Limite de courses
-                      </LimitTitle>
+                      <LimitTitle>Limite de courses</LimitTitle>
 
                       <LimitDescription>
                         {hasLimit
@@ -760,9 +724,7 @@ export default function AdminLivreur() {
                     </div>
 
                     {hasLimit ? (
-                      <LimitBadge>
-                        {limite} / jour
-                      </LimitBadge>
+                      <LimitBadge>{limite} / jour</LimitBadge>
                     ) : (
                       <UnlimitedBadge>
                         <FaInfinity />
@@ -788,8 +750,7 @@ export default function AdminLivreur() {
                             width: `${Math.min(
                               100,
                               limite > 0
-                                ? (coursesAujourdHui / limite) *
-                                    100
+                                ? (coursesAujourdHui / limite) * 100
                                 : 100,
                             )}%`,
                           }}
@@ -819,42 +780,30 @@ export default function AdminLivreur() {
 
                     <SmallButton
                       type="button"
-                      onClick={() =>
-                        limiterLivreur(livreur._id)
-                      }
-                      disabled={
-                        actionLoading ===
-                        `${livreur._id}-limite`
-                      }
+                      onClick={() => limiterLivreur(livreur._id)}
+                      disabled={actionLoading === `${livreur._id}-limite`}
                     >
-                      {actionLoading ===
-                      `${livreur._id}-limite` ? (
+                      {actionLoading === `${livreur._id}-limite` ? (
                         <FaSpinner className="spin" />
                       ) : (
                         <FaSave />
                       )}
-
                       Limiter
                     </SmallButton>
 
                     {hasLimit && (
                       <SmallDangerButton
                         type="button"
-                        onClick={() =>
-                          retirerLimite(livreur._id)
-                        }
+                        onClick={() => retirerLimite(livreur._id)}
                         disabled={
-                          actionLoading ===
-                          `${livreur._id}-retirer-limite`
+                          actionLoading === `${livreur._id}-retirer-limite`
                         }
                       >
-                        {actionLoading ===
-                        `${livreur._id}-retirer-limite` ? (
+                        {actionLoading === `${livreur._id}-retirer-limite` ? (
                           <FaSpinner className="spin" />
                         ) : (
                           <FaInfinity />
                         )}
-
                         Retirer
                       </SmallDangerButton>
                     )}
@@ -862,96 +811,36 @@ export default function AdminLivreur() {
                 </LimitSection>
 
                 <ActionsSection>
-                  <ActionTitle>
-                    Gestion du compte
-                  </ActionTitle>
+                  <ActionTitle>Gestion du compte</ActionTitle>
 
                   <ActionsGrid>
                     {livreur.bloque === true ? (
                       <ActionButton
                         type="button"
                         className="success"
-                        onClick={() =>
-                          debloquerLivreur(livreur._id)
-                        }
-                        disabled={
-                          actionLoading ===
-                          `${livreur._id}-debloquer`
-                        }
+                        onClick={() => debloquerLivreur(livreur._id)}
+                        disabled={actionLoading === `${livreur._id}-debloquer`}
                       >
-                        {actionLoading ===
-                        `${livreur._id}-debloquer` ? (
+                        {actionLoading === `${livreur._id}-debloquer` ? (
                           <FaSpinner className="spin" />
                         ) : (
                           <FaLockOpen />
                         )}
-
                         Débloquer
                       </ActionButton>
                     ) : (
                       <ActionButton
                         type="button"
                         className="danger"
-                        onClick={() =>
-                          bloquerLivreur(livreur._id)
-                        }
-                        disabled={
-                          actionLoading ===
-                          `${livreur._id}-bloquer`
-                        }
+                        onClick={() => bloquerLivreur(livreur._id)}
+                        disabled={actionLoading === `${livreur._id}-bloquer`}
                       >
-                        {actionLoading ===
-                        `${livreur._id}-bloquer` ? (
+                        {actionLoading === `${livreur._id}-bloquer` ? (
                           <FaSpinner className="spin" />
                         ) : (
                           <FaLock />
                         )}
-
                         Bloquer
-                      </ActionButton>
-                    )}
-
-                    {livreur.actif === true ? (
-                      <ActionButton
-                        type="button"
-                        className="warning"
-                        onClick={() =>
-                          desactiverLivreur(livreur._id)
-                        }
-                        disabled={
-                          actionLoading ===
-                          `${livreur._id}-inactif`
-                        }
-                      >
-                        {actionLoading ===
-                        `${livreur._id}-inactif` ? (
-                          <FaSpinner className="spin" />
-                        ) : (
-                          <FaUserSlash />
-                        )}
-
-                        Désactiver
-                      </ActionButton>
-                    ) : (
-                      <ActionButton
-                        type="button"
-                        className="success"
-                        onClick={() =>
-                          activerLivreur(livreur._id)
-                        }
-                        disabled={
-                          actionLoading ===
-                          `${livreur._id}-actif`
-                        }
-                      >
-                        {actionLoading ===
-                        `${livreur._id}-actif` ? (
-                          <FaSpinner className="spin" />
-                        ) : (
-                          <FaUserCheck />
-                        )}
-
-                        Activer
                       </ActionButton>
                     )}
                   </ActionsGrid>
@@ -961,10 +850,7 @@ export default function AdminLivreur() {
                   <FooterNote>
                     <FaTruck />
 
-                    <span>
-                      Le statut opérationnel est géré par le
-                      livreur.
-                    </span>
+                    <span>Le statut opérationnel est géré par le livreur.</span>
                   </FooterNote>
                 </CardFooter>
               </LivreurCard>
