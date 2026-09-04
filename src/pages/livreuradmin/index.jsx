@@ -131,7 +131,8 @@ const calculerDistanceEntrePositions = (
     180;
 
   const a =
-    Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+    Math.sin(deltaLat / 2) *
+      Math.sin(deltaLat / 2) +
     Math.cos(lat1) *
       Math.cos(lat2) *
       Math.sin(deltaLng / 2) *
@@ -245,7 +246,8 @@ function ItineraireRoutier({
 }) {
   const [route, setRoute] = useState(null);
 
-  const dernierePositionCalculee = useRef(null);
+  const dernierePositionCalculee =
+    useRef(null);
 
   useEffect(() => {
     if (
@@ -266,12 +268,6 @@ function ItineraireRoutier({
           )
         : Infinity;
 
-    /*
-      On ne recalcule pas la route pour chaque variation GPS.
-      La route est recalculée seulement si le livreur
-      s'est déplacé d'environ 25 mètres.
-    */
-
     if (
       dernierePositionCalculee.current &&
       distanceDepuisDernierCalcul < 25
@@ -279,97 +275,125 @@ function ItineraireRoutier({
       return;
     }
 
-    const controller = new AbortController();
+    const controller =
+      new AbortController();
 
-    const timer = setTimeout(async () => {
-      try {
-        const latitudeLivreur = Number(
-          positionLivreur.latitude,
-        );
+    const timer = setTimeout(
+      async () => {
+        try {
+          const latitudeLivreur =
+            Number(
+              positionLivreur.latitude,
+            );
 
-        const longitudeLivreur = Number(
-          positionLivreur.longitude,
-        );
+          const longitudeLivreur =
+            Number(
+              positionLivreur.longitude,
+            );
 
-        const latitudeClient = Number(
-          positionClient.latitude,
-        );
+          const latitudeClient =
+            Number(
+              positionClient.latitude,
+            );
 
-        const longitudeClient = Number(
-          positionClient.longitude,
-        );
+          const longitudeClient =
+            Number(
+              positionClient.longitude,
+            );
 
-        const url =
-          "https://router.project-osrm.org/route/v1/driving/" +
-          `${longitudeLivreur},${latitudeLivreur};` +
-          `${longitudeClient},${latitudeClient}` +
-          "?overview=full&geometries=geojson&steps=true";
+          const url =
+            "https://router.project-osrm.org/route/v1/driving/" +
+            `${longitudeLivreur},${latitudeLivreur};` +
+            `${longitudeClient},${latitudeClient}` +
+            "?overview=full&geometries=geojson&steps=true";
 
-        const response = await fetch(url, {
-          signal: controller.signal,
-        });
-
-        if (!response.ok) {
-          throw new Error(
-            "Impossible de récupérer l'itinéraire",
-          );
-        }
-
-        const data = await response.json();
-
-        if (
-          data.code !== "Ok" ||
-          !Array.isArray(data.routes) ||
-          data.routes.length === 0
-        ) {
-          throw new Error(
-            "Aucun itinéraire trouvé",
-          );
-        }
-
-        const routePrincipale = data.routes[0];
-
-        const coordinates =
-          routePrincipale.geometry.coordinates.map(
-            ([longitude, latitude]) => [
-              latitude,
-              longitude,
-            ],
+          const response = await fetch(
+            url,
+            {
+              signal:
+                controller.signal,
+            },
           );
 
-        const nouvelleRoute = {
-          coordinates,
-          distance: routePrincipale.distance,
-          duration: routePrincipale.duration,
-        };
+          if (!response.ok) {
+            throw new Error(
+              "Impossible de récupérer l'itinéraire",
+            );
+          }
 
-        dernierePositionCalculee.current = {
-          latitude: latitudeLivreur,
-          longitude: longitudeLivreur,
-        };
+          const data =
+            await response.json();
 
-        setRoute(nouvelleRoute);
+          if (
+            data.code !== "Ok" ||
+            !Array.isArray(
+              data.routes,
+            ) ||
+            data.routes.length === 0
+          ) {
+            throw new Error(
+              "Aucun itinéraire trouvé",
+            );
+          }
 
-        onRouteUpdate(nouvelleRoute);
-      } catch (error) {
-        if (error.name === "AbortError") {
-          return;
+          const routePrincipale =
+            data.routes[0];
+
+          const coordinates =
+            routePrincipale.geometry.coordinates.map(
+              ([
+                longitude,
+                latitude,
+              ]) => [
+                latitude,
+                longitude,
+              ],
+            );
+
+          const nouvelleRoute = {
+            coordinates,
+            distance:
+              routePrincipale.distance,
+            duration:
+              routePrincipale.duration,
+          };
+
+          dernierePositionCalculee.current =
+            {
+              latitude:
+                latitudeLivreur,
+              longitude:
+                longitudeLivreur,
+            };
+
+          setRoute(nouvelleRoute);
+
+          onRouteUpdate(
+            nouvelleRoute,
+          );
+        } catch (error) {
+          if (
+            error.name ===
+            "AbortError"
+          ) {
+            return;
+          }
+
+          console.error(
+            "Erreur calcul itinéraire :",
+            error,
+          );
+
+          setRoute(null);
+
+          onRouteUpdate(null);
         }
-
-        console.error(
-          "Erreur calcul itinéraire :",
-          error,
-        );
-
-        setRoute(null);
-
-        onRouteUpdate(null);
-      }
-    }, 1200);
+      },
+      1200,
+    );
 
     return () => {
       clearTimeout(timer);
-
       controller.abort();
     };
   }, [
@@ -380,14 +404,14 @@ function ItineraireRoutier({
     onRouteUpdate,
   ]);
 
-  if (!route?.coordinates?.length) {
+  if (
+    !route?.coordinates?.length
+  ) {
     return null;
   }
 
   return (
     <>
-      {/* OMBRE SOUS L'ITINÉRAIRE */}
-
       <Polyline
         positions={route.coordinates}
         pathOptions={{
@@ -396,8 +420,6 @@ function ItineraireRoutier({
           opacity: 0.12,
         }}
       />
-
-      {/* ITINÉRAIRE PRINCIPAL */}
 
       <Polyline
         positions={route.coordinates}
@@ -414,11 +436,12 @@ function ItineraireRoutier({
 }
 
 // ======================================================
-// PAGE LIVREUR ADMIN
+// PAGE LIVREUR
 // ======================================================
 
 function LivreurAdmin() {
-  const [livreur, setLivreur] = useState(null);
+  const [livreur, setLivreur] =
+    useState(null);
 
   const [
     commandesDisponibles,
@@ -428,15 +451,17 @@ function LivreurAdmin() {
   const [mesCommandes, setMesCommandes] =
     useState([]);
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] =
+    useState(true);
 
   const [refreshing, setRefreshing] =
     useState(false);
 
-  const [message, setMessage] = useState("");
+  const [message, setMessage] =
+    useState("");
 
-  const [erreur, setErreur] = useState("");
-
+  const [erreur, setErreur] =
+    useState("");
 
   const [
     commandeEnCours,
@@ -453,43 +478,101 @@ function LivreurAdmin() {
     setPositionLivreur,
   ] = useState(null);
 
-  const [itineraire, setItineraire] =
-    useState(null);
+  const [
+    itineraire,
+    setItineraire,
+  ] = useState(null);
 
   const navigate = useNavigate();
 
   const token =
-    localStorage.getItem("tokenLivreur");
-
-    const removetoken = ()=>{
-        localStorage.removeItem("tokenLivreur");
-    }
+    localStorage.getItem(
+      "tokenLivreur",
+    );
 
   const API_URL =
-    import.meta.env.VITE_API_URL;
+    import.meta.env.VITE_API_URL || "";
 
   const headers = {
-    "Content-Type": "application/json",
+    "Content-Type":
+      "application/json",
     Authorization: `Bearer ${token}`,
   };
 
   // ======================================================
-  // COMMANDE ACTIVE
+  // DÉCONNEXION
   // ======================================================
 
-  const commandeActive = mesCommandes.find(
-    (commande) =>
-      commande.livraison?.livreurId &&
-      commande.livraison.livreurId.toString() ===
-        livreur?.id?.toString() &&
-      [
-        "ACCEPTED",
-        "PICKING_UP",
+  const deconnexion = () => {
+    localStorage.removeItem(
+      "tokenLivreur",
+    );
+
+    navigate(
+      "/connexion-livreur",
+      {
+        replace: true,
+      },
+    );
+  };
+
+  // ======================================================
+  // COMMANDES ACTIVES
+  // ======================================================
+
+  const commandesActives =
+    mesCommandes.filter(
+      (commande) =>
+        commande.livraison?.livreurId &&
+        commande.livraison.livreurId
+          .toString() ===
+          livreur?.id?.toString() &&
+        [
+          "ACCEPTED",
+          "PICKING_UP",
+          "IN_DELIVERY",
+        ].includes(
+          commande.livraison
+            ?.statut,
+        ),
+    );
+
+  // ======================================================
+  // COMMANDE ACTUELLE
+  // UNE SEULE IN_DELIVERY
+  // ======================================================
+
+  const commandeActive =
+    commandesActives.find(
+      (commande) =>
+        commande.livraison
+          ?.statut ===
         "IN_DELIVERY",
-      ].includes(
-        commande.livraison?.statut,
-      ),
-  );
+    );
+
+  // ======================================================
+  // COMMANDES ACCEPTÉES
+  // ======================================================
+
+  const commandesAcceptees =
+    commandesActives.filter(
+      (commande) =>
+        commande.livraison
+          ?.statut ===
+        "ACCEPTED",
+    );
+
+  // ======================================================
+  // COMMANDES EN RÉCUPÉRATION
+  // ======================================================
+
+  const commandesEnRecuperation =
+    commandesActives.filter(
+      (commande) =>
+        commande.livraison
+          ?.statut ===
+        "PICKING_UP",
+    );
 
   // ======================================================
   // CALLBACK ROUTE
@@ -505,7 +588,9 @@ function LivreurAdmin() {
   // ======================================================
 
   useEffect(() => {
-    if (!token) return;
+    if (!token) {
+      return;
+    }
 
     if (!navigator.geolocation) {
       console.error(
@@ -516,66 +601,71 @@ function LivreurAdmin() {
     }
 
     if (
-      livreur?.statut !== "AVAILABLE" &&
-      livreur?.statut !== "BUSY"
+      livreur?.statut !==
+        "AVAILABLE" &&
+      livreur?.statut !==
+        "BUSY"
     ) {
       return;
     }
 
-    const envoyerPosition = async (
-      position,
-    ) => {
-      try {
-        const latitude =
-          position.coords.latitude;
+    const envoyerPosition =
+      async (position) => {
+        try {
+          const latitude =
+            position.coords
+              .latitude;
 
-        const longitude =
-          position.coords.longitude;
+          const longitude =
+            position.coords
+              .longitude;
 
-        setPositionLivreur({
-          latitude,
-          longitude,
-        });
+          setPositionLivreur({
+            latitude,
+            longitude,
+          });
 
-        const response = await fetch(
-          `${API_URL}/api/livreurs/localisation`,
-          {
-            method: "PUT",
+          const response =
+            await fetch(
+              `${API_URL}/api/livreurs/localisation`,
+              {
+                method: "PUT",
+                headers: {
+                  "Content-Type":
+                    "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                  latitude,
+                  longitude,
+                }),
+              },
+            );
 
-            headers: {
-              "Content-Type":
-                "application/json",
+          if (!response.ok) {
+            const data =
+              await response
+                .json()
+                .catch(
+                  () => ({}),
+                );
 
-              Authorization: `Bearer ${token}`,
-            },
-
-            body: JSON.stringify({
-              latitude,
-              longitude,
-            }),
-          },
-        );
-
-        if (!response.ok) {
-          const data =
-            await response
-              .json()
-              .catch(() => ({}));
-
-          throw new Error(
-            data.message ||
-              "Erreur mise à jour GPS",
+            throw new Error(
+              data.message ||
+                "Erreur mise à jour GPS",
+            );
+          }
+        } catch (error) {
+          console.error(
+            "Erreur envoi GPS :",
+            error,
           );
         }
-      } catch (error) {
-        console.error(
-          "Erreur envoi GPS :",
-          error,
-        );
-      }
-    };
+      };
 
-    const erreurGPS = (error) => {
+    const erreurGPS = (
+      error,
+    ) => {
       console.error(
         "Erreur GPS :",
         error.message,
@@ -611,24 +701,25 @@ function LivreurAdmin() {
   useEffect(() => {
     if (!commandeActive) {
       setPositionClient(null);
-
       setItineraire(null);
 
       return;
     }
 
     const localisation =
-      commandeActive.client?.localisation;
+      commandeActive.client
+        ?.localisation;
 
     if (
-      localisation?.latitude != null &&
-      localisation?.longitude != null
+      localisation?.latitude !=
+        null &&
+      localisation?.longitude !=
+        null
     ) {
       setPositionClient({
         latitude: Number(
           localisation.latitude,
         ),
-
         longitude: Number(
           localisation.longitude,
         ),
@@ -636,7 +727,9 @@ function LivreurAdmin() {
     } else {
       setPositionClient(null);
     }
-  }, [commandeActive?._id]);
+  }, [
+    commandeActive?._id,
+  ]);
 
   // ======================================================
   // POSITION LIVREUR INITIALE
@@ -647,26 +740,29 @@ function LivreurAdmin() {
       livreur?.localisation;
 
     if (
-      localisation?.latitude != null &&
-      localisation?.longitude != null
+      localisation?.latitude !=
+        null &&
+      localisation?.longitude !=
+        null
     ) {
       setPositionLivreur({
         latitude: Number(
           localisation.latitude,
         ),
-
         longitude: Number(
           localisation.longitude,
         ),
       });
     }
   }, [
-    livreur?.localisation?.latitude,
-    livreur?.localisation?.longitude,
+    livreur?.localisation
+      ?.latitude,
+    livreur?.localisation
+      ?.longitude,
   ]);
 
   // ======================================================
-  // SOCKET.IO — SUIVI TEMPS RÉEL
+  // SOCKET.IO
   // ======================================================
 
   useEffect(() => {
@@ -686,71 +782,75 @@ function LivreurAdmin() {
     // POSITION CLIENT
     // ==================================================
 
-    const handleClientPosition = (
-      data,
-    ) => {
-      if (
-        data?.commandeId?.toString() !==
-        commandeId
-      ) {
-        return;
-      }
+    const handleClientPosition =
+      (data) => {
+        if (
+          data?.commandeId
+            ?.toString() !==
+          commandeId
+        ) {
+          return;
+        }
 
-      const latitude = Number(
-        data.latitude,
-      );
+        const latitude =
+          Number(data.latitude);
 
-      const longitude = Number(
-        data.longitude,
-      );
+        const longitude =
+          Number(data.longitude);
 
-      if (
-        !Number.isFinite(latitude) ||
-        !Number.isFinite(longitude)
-      ) {
-        return;
-      }
+        if (
+          !Number.isFinite(
+            latitude,
+          ) ||
+          !Number.isFinite(
+            longitude,
+          )
+        ) {
+          return;
+        }
 
-      setPositionClient({
-        latitude,
-        longitude,
-      });
-    };
+        setPositionClient({
+          latitude,
+          longitude,
+        });
+      };
 
     // ==================================================
     // POSITION LIVREUR
     // ==================================================
 
-    const handleLivreurPosition = (
-      data,
-    ) => {
-      if (
-        data?.commandeId?.toString() !==
-        commandeId
-      ) {
-        return;
-      }
+    const handleLivreurPosition =
+      (data) => {
+        if (
+          data?.commandeId
+            ?.toString() !==
+          commandeId
+        ) {
+          return;
+        }
 
-      const latitude = Number(
-        data.latitude,
-      );
+        const latitude =
+          Number(data.latitude);
 
-      const longitude = Number(
-        data.longitude,
-      );
+        const longitude =
+          Number(data.longitude);
 
-      if (
-        !Number.isFinite(latitude) ||
-        !Number.isFinite(longitude)
-      ) {
-        return;
-      }
+        if (
+          !Number.isFinite(
+            latitude,
+          ) ||
+          !Number.isFinite(
+            longitude,
+          )
+        ) {
+          return;
+        }
 
-      setPositionLivreur({
-        latitude,
-        longitude,
-      });
-    };
+        setPositionLivreur({
+          latitude,
+          longitude,
+        });
+      };
 
     socket.on(
       "client_position",
@@ -778,32 +878,39 @@ function LivreurAdmin() {
         commandeId,
       );
     };
-  }, [commandeActive?._id]);
+  }, [
+    commandeActive?._id,
+  ]);
 
   // ======================================================
   // PROFIL
   // ======================================================
 
-  const chargerProfil = async () => {
-    const response = await fetch(
-      `${API_URL}/api/livreurs/profil`,
-      {
-        method: "GET",
-        headers,
-      },
-    );
+  const chargerProfil =
+    async () => {
+      const response =
+        await fetch(
+          `${API_URL}/api/livreurs/profil`,
+          {
+            method: "GET",
+            headers,
+          },
+        );
 
-    const data = await response.json();
+      const data =
+        await response.json();
 
-    if (!response.ok) {
-      throw new Error(
-        data.message ||
-          "Impossible de charger le profil",
+      if (!response.ok) {
+        throw new Error(
+          data.message ||
+            "Impossible de charger le profil",
+        );
+      }
+
+      setLivreur(
+        data.livreur,
       );
-    }
-
-    setLivreur(data.livreur);
-  };
+    };
 
   // ======================================================
   // COMMANDES DISPONIBLES
@@ -811,13 +918,14 @@ function LivreurAdmin() {
 
   const chargerCommandesDisponibles =
     async () => {
-      const response = await fetch(
-        `${API_URL}/api/livreurs/commandes-disponibles`,
-        {
-          method: "GET",
-          headers,
-        },
-      );
+      const response =
+        await fetch(
+          `${API_URL}/api/livreurs/commandes-disponibles`,
+          {
+            method: "GET",
+            headers,
+          },
+        );
 
       const data =
         await response.json();
@@ -840,13 +948,14 @@ function LivreurAdmin() {
 
   const chargerMesCommandes =
     async () => {
-      const response = await fetch(
-        `${API_URL}/api/livreurs/commandes`,
-        {
-          method: "GET",
-          headers,
-        },
-      );
+      const response =
+        await fetch(
+          `${API_URL}/api/livreurs/commandes`,
+          {
+            method: "GET",
+            headers,
+          },
+        );
 
       const data =
         await response.json();
@@ -867,33 +976,35 @@ function LivreurAdmin() {
   // CHARGEMENT GLOBAL
   // ======================================================
 
-  const chargerTout = async (
-    avecLoading = false,
-  ) => {
-    try {
-      setErreur("");
+  const chargerTout =
+    async (
+      avecLoading = false,
+    ) => {
+      try {
+        setErreur("");
 
-      if (avecLoading) {
-        setLoading(true);
-      } else {
-        setRefreshing(true);
+        if (avecLoading) {
+          setLoading(true);
+        } else {
+          setRefreshing(true);
+        }
+
+        await Promise.all([
+          chargerProfil(),
+          chargerCommandesDisponibles(),
+          chargerMesCommandes(),
+        ]);
+      } catch (error) {
+        console.error(error);
+
+        setErreur(
+          error.message,
+        );
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
       }
-
-      await Promise.all([
-        chargerProfil(),
-        chargerCommandesDisponibles(),
-        chargerMesCommandes(),
-      ]);
-    } catch (error) {
-      console.error(error);
-
-      setErreur(error.message);
-    } finally {
-      setLoading(false);
-
-      setRefreshing(false);
-    }
-  };
+    };
 
   // ======================================================
   // INITIALISATION
@@ -912,120 +1023,128 @@ function LivreurAdmin() {
     }
 
     chargerTout(true);
-  }, [token, navigate]);
+  }, [
+    token,
+    navigate,
+  ]);
 
   // ======================================================
   // CHANGER STATUT
   // ======================================================
 
-  const changerStatut = async (
-    statut,
-  ) => {
-    try {
-      setErreur("");
-
-      setMessage("");
-
-      if (statut === "BUSY") {
-        return;
-      }
-
-      if (
-        statut === "OFFLINE" &&
-        livreur?.commandeActuelle
-      ) {
-        setErreur(
-          "Vous avez une livraison en cours. Terminez-la avant de passer hors ligne.",
-        );
-
-        return;
-      }
-
-      const response = await fetch(
-        `${API_URL}/api/livreurs/statut`,
-        {
-          method: "PUT",
-
-          headers,
-
-          body: JSON.stringify({
-            statut,
-          }),
-        },
-      );
-
-      const data =
-        await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.message ||
-            "Impossible de modifier le statut",
-        );
-      }
-
-      setLivreur((prev) => ({
-        ...prev,
-        statut: data.statut,
-      }));
-
-      setMessage(
-        "Votre disponibilité a été mise à jour.",
-      );
-
-      setTimeout(() => {
+  const changerStatut =
+    async (statut) => {
+      try {
+        setErreur("");
         setMessage("");
-      }, 3000);
-    } catch (error) {
-      setErreur(error.message);
-    }
-  };
+
+        if (statut === "BUSY") {
+          return;
+        }
+
+        if (
+          statut === "OFFLINE" &&
+          commandeActive
+        ) {
+          setErreur(
+            "Vous avez une livraison en cours. Terminez-la avant de passer hors ligne.",
+          );
+
+          return;
+        }
+
+        const response =
+          await fetch(
+            `${API_URL}/api/livreurs/statut`,
+            {
+              method: "PUT",
+              headers,
+              body: JSON.stringify({
+                statut,
+              }),
+            },
+          );
+
+        const data =
+          await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ||
+              "Impossible de modifier le statut",
+          );
+        }
+
+        setLivreur(
+          (prev) => ({
+            ...prev,
+            statut:
+              data.statut,
+          }),
+        );
+
+        setMessage(
+          "Votre disponibilité a été mise à jour.",
+        );
+
+        setTimeout(() => {
+          setMessage("");
+        }, 3000);
+      } catch (error) {
+        setErreur(
+          error.message,
+        );
+      }
+    };
 
   // ======================================================
   // ACCEPTER COMMANDE
   // ======================================================
 
-  const accepterCommande = async (
-    commandeId,
-  ) => {
-    try {
-      setErreur("");
+  const accepterCommande =
+    async (commandeId) => {
+      try {
+        setErreur("");
+        setMessage("");
 
-      setMessage("");
-
-      setCommandeEnCours(
-        commandeId,
-      );
-
-      const response = await fetch(
-        `${API_URL}/api/livreurs/commandes/${commandeId}/accepter`,
-        {
-          method: "PUT",
-          headers,
-        },
-      );
-
-      const data =
-        await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.message ||
-            "Impossible d'accepter la commande",
+        setCommandeEnCours(
+          commandeId,
         );
+
+        const response =
+          await fetch(
+            `${API_URL}/api/livreurs/commandes/${commandeId}/accepter`,
+            {
+              method: "PUT",
+              headers,
+            },
+          );
+
+        const data =
+          await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ||
+              "Impossible d'accepter la commande",
+          );
+        }
+
+        setMessage(
+          "Commande acceptée. Elle vous est maintenant attribuée.",
+        );
+
+        await chargerTout();
+      } catch (error) {
+        console.error(error);
+
+        setErreur(
+          error.message,
+        );
+      } finally {
+        setCommandeEnCours(null);
       }
-
-      setMessage(
-        "Commande acceptée. Elle vous est maintenant attribuée.",
-      );
-
-      await chargerTout();
-    } catch (error) {
-      setErreur(error.message);
-    } finally {
-      setCommandeEnCours(null);
-    }
-  };
+    };
 
   // ======================================================
   // ACCEPTED → PICKING_UP
@@ -1035,20 +1154,20 @@ function LivreurAdmin() {
     async (commandeId) => {
       try {
         setErreur("");
-
         setMessage("");
 
         setCommandeEnCours(
           commandeId,
         );
 
-        const response = await fetch(
-          `${API_URL}/api/livreurs/commandes/${commandeId}/commencer-recuperation`,
-          {
-            method: "PUT",
-            headers,
-          },
-        );
+        const response =
+          await fetch(
+            `${API_URL}/api/livreurs/commandes/${commandeId}/commencer-recuperation`,
+            {
+              method: "PUT",
+              headers,
+            },
+          );
 
         const data =
           await response.json();
@@ -1068,7 +1187,9 @@ function LivreurAdmin() {
       } catch (error) {
         console.error(error);
 
-        setErreur(error.message);
+        setErreur(
+          error.message,
+        );
       } finally {
         setCommandeEnCours(null);
       }
@@ -1082,20 +1203,20 @@ function LivreurAdmin() {
     async (commandeId) => {
       try {
         setErreur("");
-
         setMessage("");
 
         setCommandeEnCours(
           commandeId,
         );
 
-        const response = await fetch(
-          `${API_URL}/api/livreurs/commandes/${commandeId}/recuperer`,
-          {
-            method: "PUT",
-            headers,
-          },
-        );
+        const response =
+          await fetch(
+            `${API_URL}/api/livreurs/commandes/${commandeId}/recuperer`,
+            {
+              method: "PUT",
+              headers,
+            },
+          );
 
         const data =
           await response.json();
@@ -1115,7 +1236,9 @@ function LivreurAdmin() {
       } catch (error) {
         console.error(error);
 
-        setErreur(error.message);
+        setErreur(
+          error.message,
+        );
       } finally {
         setCommandeEnCours(null);
       }
@@ -1125,60 +1248,62 @@ function LivreurAdmin() {
   // IN_DELIVERY → DELIVERED
   // ======================================================
 
-  const livrerCommande = async (
-    commandeId,
-  ) => {
-    try {
-      setErreur("");
+  const livrerCommande =
+    async (commandeId) => {
+      try {
+        setErreur("");
+        setMessage("");
 
-      setMessage("");
-
-      setCommandeEnCours(
-        commandeId,
-      );
-
-      const response = await fetch(
-        `${API_URL}/api/livreurs/commandes/${commandeId}/livrer`,
-        {
-          method: "PUT",
-          headers,
-        },
-      );
-
-      const data =
-        await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.message ||
-            "Impossible de confirmer la livraison",
+        setCommandeEnCours(
+          commandeId,
         );
+
+        const response =
+          await fetch(
+            `${API_URL}/api/livreurs/commandes/${commandeId}/livrer`,
+            {
+              method: "PUT",
+              headers,
+            },
+          );
+
+        const data =
+          await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ||
+              "Impossible de confirmer la livraison",
+          );
+        }
+
+        setMessage(
+          "Livraison terminée avec succès.",
+        );
+
+        setPositionClient(null);
+        setItineraire(null);
+
+        await chargerTout();
+      } catch (error) {
+        console.error(error);
+
+        setErreur(
+          error.message,
+        );
+      } finally {
+        setCommandeEnCours(null);
       }
-
-      setMessage(
-        "Livraison terminée avec succès.",
-      );
-
-      setPositionClient(null);
-
-      setItineraire(null);
-
-      await chargerTout();
-    } catch (error) {
-      console.error(error);
-
-      setErreur(error.message);
-    } finally {
-      setCommandeEnCours(null);
-    }
-  };
+    };
 
   // ======================================================
   // FORMAT PRIX
   // ======================================================
 
   const formatPrix = (prix) =>
-    Number(prix || 0).toLocaleString(
+    Number(
+      prix || 0,
+    ).toLocaleString(
       "fr-FR",
     );
 
@@ -1186,65 +1311,76 @@ function LivreurAdmin() {
   // FORMAT DISTANCE
   // ======================================================
 
-  const formatDistance = (metres) => {
-    if (
-      metres == null ||
-      !Number.isFinite(Number(metres))
-    ) {
-      return "—";
-    }
+  const formatDistance =
+    (metres) => {
+      if (
+        metres == null ||
+        !Number.isFinite(
+          Number(metres),
+        )
+      ) {
+        return "—";
+      }
 
-    const valeur = Number(metres);
+      const valeur =
+        Number(metres);
 
-    if (valeur < 1000) {
-      return `${Math.round(valeur)} m`;
-    }
+      if (valeur < 1000) {
+        return `${Math.round(
+          valeur,
+        )} m`;
+      }
 
-    return `${(
-      valeur / 1000
-    ).toFixed(1)} km`;
-  };
+      return `${(
+        valeur / 1000
+      ).toFixed(1)} km`;
+    };
 
   // ======================================================
   // FORMAT DURÉE
   // ======================================================
 
-  const formatDuree = (secondes) => {
-    if (
-      secondes == null ||
-      !Number.isFinite(
-        Number(secondes),
-      )
-    ) {
-      return "—";
-    }
+  const formatDuree =
+    (secondes) => {
+      if (
+        secondes == null ||
+        !Number.isFinite(
+          Number(secondes),
+        )
+      ) {
+        return "—";
+      }
 
-    const minutes = Math.max(
-      1,
-      Math.round(
-        Number(secondes) / 60,
-      ),
-    );
+      const minutes =
+        Math.max(
+          1,
+          Math.round(
+            Number(secondes) /
+              60,
+          ),
+        );
 
-    if (minutes < 60) {
-      return `${minutes} min`;
-    }
+      if (minutes < 60) {
+        return `${minutes} min`;
+      }
 
-    const heures = Math.floor(
-      minutes / 60,
-    );
+      const heures =
+        Math.floor(
+          minutes / 60,
+        );
 
-    const reste = minutes % 60;
+      const reste =
+        minutes % 60;
 
-    if (reste === 0) {
-      return `${heures} h`;
-    }
+      if (reste === 0) {
+        return `${heures} h`;
+      }
 
-    return `${heures} h ${reste} min`;
-  };
+      return `${heures} h ${reste} min`;
+    };
 
   // ======================================================
-  // STATUT
+  // STATUTS
   // ======================================================
 
   const statutLabel = {
@@ -1297,31 +1433,36 @@ function LivreurAdmin() {
             <BrandDot />
           </Brand>
 
-           <Brand>
-            
-            <Deconnexion onClick={removetoken}>Déconnexion</Deconnexion>
-          </Brand>
           <HeaderRight>
             <StatusPill
-              $status={livreur?.statut}
+              $status={
+                livreur?.statut
+              }
             >
               <StatusDot
-                $status={livreur?.statut}
+                $status={
+                  livreur?.statut
+                }
               />
 
               {statutLabel[
                 livreur?.statut
-              ] || "Hors ligne"}
+              ] ||
+                "Hors ligne"}
             </StatusPill>
 
             <RefreshButton
               onClick={() =>
                 chargerTout()
               }
-              disabled={refreshing}
+              disabled={
+                refreshing
+              }
             >
               <RefreshIcon
-                $loading={refreshing}
+                $loading={
+                  refreshing
+                }
               >
                 ↻
               </RefreshIcon>
@@ -1332,6 +1473,14 @@ function LivreurAdmin() {
                   : "Actualiser"}
               </span>
             </RefreshButton>
+
+            <LogoutButton
+              onClick={
+                deconnexion
+              }
+            >
+              Déconnexion
+            </LogoutButton>
           </HeaderRight>
         </HeaderInner>
       </Header>
@@ -1343,17 +1492,25 @@ function LivreurAdmin() {
 
         {message && (
           <Alert $success>
-            <AlertIcon>✓</AlertIcon>
+            <AlertIcon>
+              ✓
+            </AlertIcon>
 
-            <span>{message}</span>
+            <span>
+              {message}
+            </span>
           </Alert>
         )}
 
         {erreur && (
           <Alert>
-            <AlertIcon>!</AlertIcon>
+            <AlertIcon>
+              !
+            </AlertIcon>
 
-            <span>{erreur}</span>
+            <span>
+              {erreur}
+            </span>
           </Alert>
         )}
 
@@ -1387,7 +1544,8 @@ function LivreurAdmin() {
           <HeroAvatar>
             {livreur?.username
               ?.charAt(0)
-              ?.toUpperCase() || "L"}
+              ?.toUpperCase() ||
+              "L"}
           </HeroAvatar>
         </Hero>
 
@@ -1402,7 +1560,9 @@ function LivreurAdmin() {
                 Disponibles
               </StatLabel>
 
-              <StatIcon>◉</StatIcon>
+              <StatIcon>
+                ◉
+              </StatIcon>
             </StatTop>
 
             <StatNumber>
@@ -1422,11 +1582,15 @@ function LivreurAdmin() {
                 Mes commandes
               </StatLabel>
 
-              <StatIcon>≡</StatIcon>
+              <StatIcon>
+                ≡
+              </StatIcon>
             </StatTop>
 
             <StatNumber>
-              {mesCommandes.length}
+              {
+                mesCommandes.length
+              }
             </StatNumber>
 
             <StatDescription>
@@ -1437,22 +1601,22 @@ function LivreurAdmin() {
           <StatCard>
             <StatTop>
               <StatLabel>
-                État actuel
+                En livraison
               </StatLabel>
 
-              <StatIcon>●</StatIcon>
+              <StatIcon>
+                ●
+              </StatIcon>
             </StatTop>
 
-            <StatStatus
-              $status={livreur?.statut}
-            >
-              {statutLabel[
-                livreur?.statut
-              ] || "Hors ligne"}
-            </StatStatus>
+            <StatNumber>
+              {commandeActive
+                ? "1"
+                : "0"}
+            </StatNumber>
 
             <StatDescription>
-              Votre disponibilité
+              Maximum une livraison à la fois
             </StatDescription>
           </StatCard>
         </StatsGrid>
@@ -1485,7 +1649,8 @@ function LivreurAdmin() {
               <ProfileAvatar>
                 {livreur?.username
                   ?.charAt(0)
-                  ?.toUpperCase() || "L"}
+                  ?.toUpperCase() ||
+                  "L"}
               </ProfileAvatar>
 
               <div>
@@ -1561,9 +1726,8 @@ function LivreurAdmin() {
               </SectionTitle>
 
               <SectionDescription>
-                Suivez les différentes étapes
-                de votre livraison depuis cet
-                espace.
+                Cette section affiche uniquement
+                la commande actuellement en route.
               </SectionDescription>
             </SectionHeader>
 
@@ -1585,15 +1749,18 @@ function LivreurAdmin() {
                 <DeliveryStatus
                   $status={
                     commandeActive
-                      .livraison?.statut
+                      .livraison
+                      ?.statut
                   }
                 >
                   {livraisonLabel[
                     commandeActive
-                      .livraison?.statut
+                      .livraison
+                      ?.statut
                   ] ||
                     commandeActive
-                      .livraison?.statut}
+                      .livraison
+                      ?.statut}
                 </DeliveryStatus>
               </DeliveryTop>
 
@@ -1607,11 +1774,13 @@ function LivreurAdmin() {
 
                   <DeliveryInfoValue>
                     {
-                      commandeActive.client
+                      commandeActive
+                        .client
                         ?.prenom
                     }{" "}
                     {
-                      commandeActive.client
+                      commandeActive
+                        .client
                         ?.nom
                     }
                   </DeliveryInfoValue>
@@ -1623,7 +1792,8 @@ function LivreurAdmin() {
                   </DeliveryInfoLabel>
 
                   <DeliveryInfoValue>
-                    {commandeActive.client
+                    {commandeActive
+                      .client
                       ?.numero ||
                       "Non renseigné"}
                   </DeliveryInfoValue>
@@ -1635,7 +1805,8 @@ function LivreurAdmin() {
                   </DeliveryInfoLabel>
 
                   <DeliveryInfoValue>
-                    {commandeActive.client
+                    {commandeActive
+                      .client
                       ?.ville ||
                       "Non renseignée"}
                   </DeliveryInfoValue>
@@ -1647,7 +1818,8 @@ function LivreurAdmin() {
                   </DeliveryInfoLabel>
 
                   <DeliveryInfoValue>
-                    {commandeActive.client
+                    {commandeActive
+                      .client
                       ?.adresse ||
                       "Non renseignée"}
                   </DeliveryInfoValue>
@@ -1661,29 +1833,39 @@ function LivreurAdmin() {
                   PRODUITS
                 </DeliveryInfoLabel>
 
-                {commandeActive.panier?.map(
-                  (item, index) => (
-                    <DeliveryProduct
-                      key={
-                        item._id ||
-                        index
-                      }
-                    >
-                      <span>
-                        {item.quantite} ×{" "}
-                        {item.nom}
-                      </span>
+                {commandeActive
+                  .panier
+                  ?.map(
+                    (
+                      item,
+                      index,
+                    ) => (
+                      <DeliveryProduct
+                        key={
+                          item._id ||
+                          index
+                        }
+                      >
+                        <span>
+                          {
+                            item.quantite
+                          }{" "}
+                          ×{" "}
+                          {
+                            item.nom
+                          }
+                        </span>
 
-                      <strong>
-                        {formatPrix(
-                          item.prix *
-                            item.quantite,
-                        )}{" "}
-                        FCFA
-                      </strong>
-                    </DeliveryProduct>
-                  ),
-                )}
+                        <strong>
+                          {formatPrix(
+                            item.prix *
+                              item.quantite,
+                          )}{" "}
+                          FCFA
+                        </strong>
+                      </DeliveryProduct>
+                    ),
+                  )}
               </DeliveryProducts>
 
               {/* TOTAL */}
@@ -1705,74 +1887,26 @@ function LivreurAdmin() {
               {/* ACTION */}
 
               <DeliveryAction>
-                {commandeActive.livraison
-                  ?.statut ===
-                  "ACCEPTED" && (
-                  <DeliveryButton
-                    onClick={() =>
-                      commencerRecuperation(
-                        commandeActive._id,
-                      )
-                    }
-                    disabled={
-                      commandeEnCours ===
-                      commandeActive._id
-                    }
-                  >
-                    {commandeEnCours ===
+                <DeliveryButton
+                  onClick={() =>
+                    livrerCommande(
+                      commandeActive._id,
+                    )
+                  }
+                  disabled={
+                    commandeEnCours ===
                     commandeActive._id
-                      ? "Préparation..."
-                      : "Commencer la récupération"}
+                  }
+                >
+                  {commandeEnCours ===
+                  commandeActive._id
+                    ? "Confirmation..."
+                    : "Confirmer la livraison"}
 
-                    <span>→</span>
-                  </DeliveryButton>
-                )}
-
-                {commandeActive.livraison
-                  ?.statut ===
-                  "PICKING_UP" && (
-                  <DeliveryButton
-                    onClick={() =>
-                      recupererCommande(
-                        commandeActive._id,
-                      )
-                    }
-                    disabled={
-                      commandeEnCours ===
-                      commandeActive._id
-                    }
-                  >
-                    {commandeEnCours ===
-                    commandeActive._id
-                      ? "Confirmation..."
-                      : "J'ai récupéré la commande"}
-
-                    <span>→</span>
-                  </DeliveryButton>
-                )}
-
-                {commandeActive.livraison
-                  ?.statut ===
-                  "IN_DELIVERY" && (
-                  <DeliveryButton
-                    onClick={() =>
-                      livrerCommande(
-                        commandeActive._id,
-                      )
-                    }
-                    disabled={
-                      commandeEnCours ===
-                      commandeActive._id
-                    }
-                  >
-                    {commandeEnCours ===
-                    commandeActive._id
-                      ? "Confirmation..."
-                      : "Confirmer la livraison"}
-
-                    <span>✓</span>
-                  </DeliveryButton>
-                )}
+                  <span>
+                    ✓
+                  </span>
+                </DeliveryButton>
               </DeliveryAction>
 
               {/* ========================================
@@ -1813,7 +1947,6 @@ function LivreurAdmin() {
                                 ?.latitude ??
                               5.3364,
                           ),
-
                           Number(
                             positionLivreur
                               ?.longitude ??
@@ -1825,8 +1958,10 @@ function LivreurAdmin() {
                         zoom={14}
                         scrollWheelZoom
                         style={{
-                          width: "100%",
-                          height: "100%",
+                          width:
+                            "100%",
+                          height:
+                            "100%",
                         }}
                       >
                         <TileLayer
@@ -1845,8 +1980,6 @@ function LivreurAdmin() {
                             itineraire
                           }
                         />
-
-                        {/* ROUTE */}
 
                         <ItineraireRoutier
                           positionLivreur={
@@ -1923,14 +2056,16 @@ function LivreurAdmin() {
 
                               <br />
 
-                              {commandeActive
-                                .client
-                                ?.prenom ||
-                                ""}{" "}
-                              {commandeActive
-                                .client
-                                ?.nom ||
-                                ""}
+                              {
+                                commandeActive
+                                  .client
+                                  ?.prenom
+                              }{" "}
+                              {
+                                commandeActive
+                                  .client
+                                  ?.nom
+                              }
 
                               <br />
 
@@ -2071,7 +2206,9 @@ function LivreurAdmin() {
 
                     {!positionClient && (
                       <GpsWarning>
-                        <span>📍</span>
+                        <span>
+                          📍
+                        </span>
 
                         <div>
                           <strong>
@@ -2146,7 +2283,9 @@ function LivreurAdmin() {
           {commandesDisponibles.length ===
           0 ? (
             <EmptyCard>
-              <EmptyIcon>✓</EmptyIcon>
+              <EmptyIcon>
+                ✓
+              </EmptyIcon>
 
               <EmptyTitle>
                 Tout est calme pour le
@@ -2172,7 +2311,9 @@ function LivreurAdmin() {
               {commandesDisponibles.map(
                 (commande) => (
                   <OrderCard
-                    key={commande._id}
+                    key={
+                      commande._id
+                    }
                   >
                     <OrderHeader>
                       <div>
@@ -2287,12 +2428,15 @@ function LivreurAdmin() {
 
                     <OrderFooter>
                       <ArticleCount>
-                        {commande.panier
+                        {commande
+                          .panier
                           ?.length ||
                           0}{" "}
                         article
-                        {commande.panier
-                          ?.length > 1
+                        {commande
+                          .panier
+                          ?.length >
+                        1
                           ? "s"
                           : ""}
                       </ArticleCount>
@@ -2304,11 +2448,8 @@ function LivreurAdmin() {
                           )
                         }
                         disabled={
-                          livreur?.statut ===
-                            "BUSY" ||
-                          !!livreur?.commandeActuelle ||
                           commandeEnCours ===
-                            commande._id
+                          commande._id
                         }
                       >
                         {commandeEnCours ===
@@ -2316,7 +2457,9 @@ function LivreurAdmin() {
                           ? "Acceptation..."
                           : "Accepter"}
 
-                        <span>→</span>
+                        <span>
+                          →
+                        </span>
                       </AcceptButton>
                     </OrderFooter>
                   </OrderCard>
@@ -2342,19 +2485,24 @@ function LivreurAdmin() {
               </SectionTitle>
 
               <SectionDescription>
-                Les commandes actuellement
-                associées à votre compte.
+                Toutes les commandes qui vous
+                sont actuellement attribuées.
               </SectionDescription>
             </div>
 
             <CountBadge>
-              {mesCommandes.length}
+              {
+                mesCommandes.length
+              }
             </CountBadge>
           </SectionHeaderRow>
 
-          {mesCommandes.length === 0 ? (
+          {mesCommandes.length ===
+          0 ? (
             <EmptyCard>
-              <EmptyIcon>—</EmptyIcon>
+              <EmptyIcon>
+                —
+              </EmptyIcon>
 
               <EmptyTitle>
                 Aucune commande.
@@ -2369,51 +2517,141 @@ function LivreurAdmin() {
           ) : (
             <MyOrders>
               {mesCommandes.map(
-                (commande) => (
-                  <MyOrderCard
-                    key={commande._id}
-                  >
-                    <MyOrderMain>
-                      <MyOrderNumber>
-                        #
-                        {commande._id.slice(
-                          -6,
-                        )}
-                      </MyOrderNumber>
+                (commande) => {
+                  const statut =
+                    commande
+                      .livraison
+                      ?.statut;
 
-                      <MyOrderLocation>
-                        {commande.client
-                          ?.ville ||
-                          "Ville inconnue"}
-                      </MyOrderLocation>
+                  const enTraitement =
+                    commandeEnCours ===
+                    commande._id;
 
-                      <MyOrderAddress>
-                        {commande.client
-                          ?.adresse ||
-                          "Adresse non renseignée"}
-                      </MyOrderAddress>
-                    </MyOrderMain>
-
-                    <MyOrderStatus
-                      $status={
-                        commande
-                          .livraison
-                          ?.statut
+                  return (
+                    <MyOrderCard
+                      key={
+                        commande._id
                       }
                     >
-                      {commande.livraison
-                        ?.statut ||
-                        "INCONNU"}
-                    </MyOrderStatus>
+                      <MyOrderMain>
+                        <MyOrderNumber>
+                          #
+                          {commande._id.slice(
+                            -6,
+                          )}
+                        </MyOrderNumber>
 
-                    <MyOrderPrice>
-                      {formatPrix(
-                        commande.totalProduits,
-                      )}{" "}
-                      FCFA
-                    </MyOrderPrice>
-                  </MyOrderCard>
-                ),
+                        <MyOrderLocation>
+                          {commande
+                            .client
+                            ?.ville ||
+                            "Ville inconnue"}
+                        </MyOrderLocation>
+
+                        <MyOrderAddress>
+                          {commande
+                            .client
+                            ?.adresse ||
+                            "Adresse non renseignée"}
+                        </MyOrderAddress>
+                      </MyOrderMain>
+
+                      <MyOrderStatus
+                        $status={
+                          statut
+                        }
+                      >
+                        {livraisonLabel[
+                          statut
+                        ] ||
+                          statut ||
+                          "INCONNU"}
+                      </MyOrderStatus>
+
+                      <MyOrderPrice>
+                        {formatPrix(
+                          commande.totalProduits,
+                        )}{" "}
+                        FCFA
+                      </MyOrderPrice>
+
+                      <MyOrderAction>
+                        {statut ===
+                          "ACCEPTED" && (
+                          <SmallActionButton
+                            onClick={() =>
+                              commencerRecuperation(
+                                commande._id,
+                              )
+                            }
+                            disabled={
+                              enTraitement
+                            }
+                          >
+                            {enTraitement
+                              ? "Préparation..."
+                              : "Commencer la récupération"}
+
+                            <span>
+                              →
+                            </span>
+                          </SmallActionButton>
+                        )}
+
+                        {statut ===
+                          "PICKING_UP" && (
+                          <SmallActionButton
+                            onClick={() =>
+                              recupererCommande(
+                                commande._id,
+                              )
+                            }
+                            disabled={
+                              enTraitement
+                            }
+                          >
+                            {enTraitement
+                              ? "Confirmation..."
+                              : "J'ai récupéré"}
+
+                            <span>
+                              →
+                            </span>
+                          </SmallActionButton>
+                        )}
+
+                        {statut ===
+                          "IN_DELIVERY" && (
+                          <SmallActionButton
+                            onClick={() =>
+                              livrerCommande(
+                                commande._id,
+                              )
+                            }
+                            disabled={
+                              enTraitement
+                            }
+                          >
+                            {enTraitement
+                              ? "Confirmation..."
+                              : "Confirmer la livraison"}
+
+                            <span>
+                              ✓
+                            </span>
+                          </SmallActionButton>
+                        )}
+
+                        {statut ===
+                          "DELIVERED" && (
+                          <DeliveredLabel>
+                            Terminée
+                          </DeliveredLabel>
+                        )}
+                      </MyOrderAction>
+                    </MyOrderCard>
+                  );
+                },
               )}
             </MyOrders>
           )}
@@ -2464,7 +2702,10 @@ const Header = styled.header`
 `;
 
 const HeaderInner = styled.div`
-  width: min(1180px, calc(100% - 40px));
+  width: min(
+    1180px,
+    calc(100% - 40px)
+  );
   min-height: 72px;
   margin: 0 auto;
   display: flex;
@@ -2473,7 +2714,10 @@ const HeaderInner = styled.div`
   gap: 20px;
 
   @media (max-width: 650px) {
-    width: min(100% - 24px, 1180px);
+    width: min(
+      calc(100% - 24px),
+      1180px
+    );
   }
 `;
 
@@ -2497,6 +2741,10 @@ const HeaderRight = styled.div`
   display: flex;
   align-items: center;
   gap: 10px;
+
+  @media (max-width: 650px) {
+    gap: 6px;
+  }
 `;
 
 const StatusPill = styled.div`
@@ -2588,13 +2836,40 @@ const RefreshIcon = styled.span`
   }
 `;
 
+const LogoutButton = styled.button`
+  min-height: 38px;
+  padding: 0 13px;
+  border: 0;
+  border-radius: 11px;
+  background: #111;
+  color: white;
+  font-size: 11px;
+  font-weight: 750;
+  cursor: pointer;
+
+  &:hover {
+    background: #2c2c2e;
+  }
+
+  @media (max-width: 500px) {
+    padding: 0 10px;
+    font-size: 10px;
+  }
+`;
+
 const Main = styled.main`
-  width: min(1180px, calc(100% - 40px));
+  width: min(
+    1180px,
+    calc(100% - 40px)
+  );
   margin: 0 auto;
   padding: 40px 0 60px;
 
   @media (max-width: 650px) {
-    width: min(100% - 24px, 1180px);
+    width: min(
+      calc(100% - 24px),
+      1180px
+    );
     padding-top: 25px;
   }
 `;
@@ -2604,12 +2879,18 @@ const Alert = styled.div`
   padding: 13px 15px;
   border-radius: 13px;
   background: ${({ $success }) =>
-    $success ? "#ecfdf3" : "#fff0f0"};
+    $success
+      ? "#ecfdf3"
+      : "#fff0f0"};
   border: 1px solid
     ${({ $success }) =>
-      $success ? "#c5f1d3" : "#ffd1d1"};
+      $success
+        ? "#c5f1d3"
+        : "#ffd1d1"};
   color: ${({ $success }) =>
-    $success ? "#087a35" : "#bb1e1e"};
+    $success
+      ? "#087a35"
+      : "#bb1e1e"};
   display: flex;
   align-items: center;
   gap: 10px;
@@ -2659,7 +2940,11 @@ const Eyebrow = styled.div`
 
 const HeroTitle = styled.h1`
   margin: 0;
-  font-size: clamp(36px, 6vw, 62px);
+  font-size: clamp(
+    36px,
+    6vw,
+    62px
+  );
   line-height: 0.98;
   letter-spacing: -3px;
 `;
@@ -2735,18 +3020,6 @@ const StatNumber = styled.div`
   font-size: 38px;
   font-weight: 800;
   letter-spacing: -1.5px;
-`;
-
-const StatStatus = styled.div`
-  margin-top: 29px;
-  font-size: 24px;
-  font-weight: 800;
-  color: ${({ $status }) =>
-    $status === "AVAILABLE"
-      ? "#159447"
-      : $status === "BUSY"
-        ? "#d97706"
-        : "#86868b"};
 `;
 
 const StatDescription = styled.div`
@@ -2865,9 +3138,13 @@ const StatusButton = styled.button`
   border: 0;
   border-radius: 10px;
   background: ${({ $active }) =>
-    $active ? "white" : "transparent"};
+    $active
+      ? "white"
+      : "transparent"};
   color: ${({ $active }) =>
-    $active ? "#111" : "#86868b"};
+    $active
+      ? "#111"
+      : "#86868b"};
   box-shadow: ${({ $active }) =>
     $active
       ? "0 2px 8px rgba(0,0,0,.06)"
@@ -2933,11 +3210,13 @@ const DeliveryStatus = styled.div`
   padding: 8px 11px;
   border-radius: 999px;
   background: ${({ $status }) =>
-    $status === "IN_DELIVERY"
+    $status ===
+    "IN_DELIVERY"
       ? "#ecfdf3"
       : "#29292c"};
   color: ${({ $status }) =>
-    $status === "IN_DELIVERY"
+    $status ===
+    "IN_DELIVERY"
       ? "#138a42"
       : "#d6d6da"};
   font-size: 10px;
@@ -3241,10 +3520,14 @@ const GpsStatus = styled.div`
   padding: 10px 13px;
   border: 1px solid
     ${({ $active }) =>
-      $active ? "#cfeedd" : "#e6e6e9"};
+      $active
+        ? "#cfeedd"
+        : "#e6e6e9"};
   border-radius: 13px;
   background: ${({ $active }) =>
-    $active ? "#f4fff8" : "#fafafa"};
+    $active
+      ? "#f4fff8"
+      : "#fafafa"};
   display: flex;
   align-items: center;
   gap: 10px;
@@ -3256,7 +3539,9 @@ const GpsIndicator = styled.div`
   flex-shrink: 0;
   border-radius: 50%;
   background: ${({ $active }) =>
-    $active ? "#16a34a" : "#b8b8bd"};
+    $active
+      ? "#16a34a"
+      : "#b8b8bd"};
   box-shadow: ${({ $active }) =>
     $active
       ? "0 0 0 5px rgba(22,163,74,.10)"
@@ -3502,15 +3787,35 @@ const MyOrderCard = styled.div`
   background: white;
   border: 1px solid #e7e7ea;
   border-radius: 16px;
+
   display: grid;
+
   grid-template-columns:
-    minmax(0, 1fr) auto auto;
+    minmax(0, 1fr)
+    auto
+    auto
+    auto;
+
   align-items: center;
   gap: 20px;
+
+  @media (max-width: 850px) {
+    grid-template-columns:
+      minmax(0, 1fr)
+      auto;
+
+    & > div:last-child {
+      grid-column: 1 / -1;
+    }
+  }
 
   @media (max-width: 650px) {
     grid-template-columns: 1fr;
     gap: 10px;
+
+    & > div:last-child {
+      grid-column: auto;
+    }
   }
 `;
 
@@ -3541,25 +3846,85 @@ const MyOrderAddress = styled.div`
 const MyOrderStatus = styled.div`
   padding: 7px 10px;
   border-radius: 999px;
+
   background: ${({ $status }) =>
     $status === "DELIVERED"
       ? "#ecfdf3"
       : $status === "IN_DELIVERY"
         ? "#eef6ff"
-        : "#f2f2f4"};
+        : $status ===
+            "PICKING_UP"
+          ? "#fff7ed"
+          : "#f2f2f4"};
+
   color: ${({ $status }) =>
     $status === "DELIVERED"
       ? "#138a42"
       : $status === "IN_DELIVERY"
         ? "#0071e3"
-        : "#6e6e73"};
+        : $status ===
+            "PICKING_UP"
+          ? "#b45309"
+          : "#6e6e73"};
+
   font-size: 9px;
   font-weight: 800;
+  white-space: nowrap;
 `;
 
 const MyOrderPrice = styled.div`
   white-space: nowrap;
   font-size: 12px;
+  font-weight: 800;
+`;
+
+const MyOrderAction = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  min-width: 190px;
+
+  @media (max-width: 650px) {
+    justify-content: stretch;
+    min-width: 0;
+  }
+`;
+
+const SmallActionButton =
+  styled.button`
+    min-height: 38px;
+    padding: 0 13px;
+    border: 0;
+    border-radius: 10px;
+    background: #111;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    font-size: 10px;
+    font-weight: 750;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      background: #2c2c2e;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    @media (max-width: 650px) {
+      width: 100%;
+    }
+  `;
+
+const DeliveredLabel = styled.div`
+  padding: 9px 11px;
+  border-radius: 999px;
+  background: #ecfdf3;
+  color: #138a42;
+  font-size: 9px;
   font-weight: 800;
 `;
 
@@ -3685,11 +4050,5 @@ const LoadingText = styled.div`
   color: #86868b;
   font-size: 11px;
 `;
-const Deconnexion = styled.button`
-border: none;
-background: red;
-font-weight: bold;
-border-radius: 4px;
-color: white;
-`
+
 export default LivreurAdmin;
