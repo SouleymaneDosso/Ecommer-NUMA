@@ -1,184 +1,495 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import {
-  FiActivity,
-  FiAlertTriangle,
-  FiCheckCircle,
-  FiClock,
-  FiEdit3,
-  FiMapPin,
-  FiPackage,
-  FiPhone,
-  FiRefreshCw,
-  FiSearch,
-  FiShield,
-  FiSlash,
-  FiUnlock,
-  FiUser,
-  FiUsers,
-  FiXCircle,
-} from "react-icons/fi";
+  FaSearch,
+  FaSyncAlt,
+  FaUserCheck,
+  FaUserSlash,
+  FaLock,
+  FaLockOpen,
+  FaBan,
+  FaCheckCircle,
+  FaMapMarkerAlt,
+  FaPhone,
+  FaEnvelope,
+  FaTruck,
+  FaSpinner,
+  FaTimes,
+  FaSave,
+  FaInfinity,
+} from "react-icons/fa";
 
-const API_URL = import.meta.env.VITE_API_URL;
+// =====================================================
+// CONFIG
+// =====================================================
 
-const AdminLivreurs = () => {
+const API_URL = import.meta.env.VITE_API_URL || "";
+
+const getToken = () => localStorage.getItem("adminToken");
+
+// =====================================================
+// API
+// =====================================================
+
+const apiRequest = async (url, options = {}) => {
+  const token = getToken();
+
+  if (!token) {
+    throw new Error("Session administrateur introuvable.");
+  }
+
+  const response = await fetch(`${API_URL}${url}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      ...(options.headers || {}),
+    },
+  });
+
+  let data = {};
+
+  try {
+    data = await response.json();
+  } catch {
+    data = {};
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || "Une erreur est survenue avec le serveur.",
+    );
+  }
+
+  return data;
+};
+
+// =====================================================
+// HELPERS
+// =====================================================
+
+const getStatutLabel = (statut) => {
+  switch (statut) {
+    case "AVAILABLE":
+      return "Disponible";
+
+    case "BUSY":
+      return "En livraison";
+
+    case "OFFLINE":
+      return "Hors ligne";
+
+    default:
+      return statut || "Inconnu";
+  }
+};
+
+const getStatutClass = (statut) => {
+  switch (statut) {
+    case "AVAILABLE":
+      return "available";
+
+    case "BUSY":
+      return "busy";
+
+    case "OFFLINE":
+      return "offline";
+
+    default:
+      return "unknown";
+  }
+};
+
+// =====================================================
+// COMPONENT
+// =====================================================
+
+export default function AdminLivreur() {
   const [livreurs, setLivreurs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [actionLoading, setActionLoading] = useState(null);
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("ALL");
 
-  const [selectedLivreur, setSelectedLivreur] = useState(null);
-  const [modalType, setModalType] = useState(null);
-  const [raison, setRaison] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  const token = localStorage.getItem("adminToken");
+  const [actionLoading, setActionLoading] = useState(null);
+
+  const [limitValues, setLimitValues] = useState({});
+
   // =====================================================
   // CHARGER LES LIVREURS
   // =====================================================
 
-  const chargerLivreurs = useCallback(
-    async (isRefresh = false) => {
-      if (!token) {
-        setLoading(false);
-        return;
+  const chargerLivreurs = async (showRefresh = false) => {
+    try {
+      if (showRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
       }
 
-      try {
-        if (isRefresh) {
-          setRefreshing(true);
+      setError("");
+
+      const data = await apiRequest("/api/livreurs/admin");
+
+      const liste = Array.isArray(data)
+        ? data
+        : Array.isArray(data.livreurs)
+          ? data.livreurs
+          : Array.isArray(data.data)
+            ? data.data
+            : [];
+
+      setLivreurs(liste);
+
+      const limits = {};
+
+      liste.forEach((livreur) => {
+        if (
+          livreur.limiteCoursesParJour !== undefined &&
+          livreur.limiteCoursesParJour !== null
+        ) {
+          limits[livreur._id] = livreur.limiteCoursesParJour;
+        } else if (
+          livreur.limiteCourses !== undefined &&
+          livreur.limiteCourses !== null
+        ) {
+          limits[livreur._id] = livreur.limiteCourses;
+        } else if (
+          livreur.limite !== undefined &&
+          livreur.limite !== null
+        ) {
+          limits[livreur._id] = livreur.limite;
         } else {
-          setLoading(true);
+          limits[livreur._id] = "";
         }
+      });
 
-        const response = await fetch(`${API_URL}/api/livreurs/admin`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.message || "Impossible de charger les livreurs");
-        }
-
-        setLivreurs(data.livreurs || []);
-      } catch (error) {
-        console.error("CHARGEMENT LIVREURS ERROR:", error);
-        alert(error.message || "Erreur lors du chargement des livreurs");
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
-      }
-    },
-    [token],
-  );
+      setLimitValues(limits);
+    } catch (err) {
+      console.error("ADMIN LIVREURS ERROR:", err);
+      setError(err.message || "Impossible de charger les livreurs.");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
     chargerLivreurs();
-  }, [chargerLivreurs]);
-
-  // =====================================================
-  // SOCKET.IO
-  // =====================================================
-
-  useEffect(() => {
-    let socket;
-
-    const initialiserSocket = async () => {
-      try {
-        const socketModule = await import("socket.io-client");
-
-        socket = socketModule.io(API_URL, {
-          transports: ["websocket"],
-        });
-
-        socket.on("livreur_admin_update", (update) => {
-          setLivreurs((current) =>
-            current.map((livreur) => {
-              if (livreur._id !== update.livreurId) {
-                return livreur;
-              }
-
-              return {
-                ...livreur,
-                actif: update.actif,
-                bloque: update.bloque,
-                limite: update.limite,
-                statut: update.statut,
-              };
-            }),
-          );
-        });
-      } catch (error) {
-        console.error("SOCKET ADMIN LIVREURS ERROR:", error);
-      }
-    };
-
-    initialiserSocket();
-
-    return () => {
-      if (socket) {
-        socket.disconnect();
-      }
-    };
   }, []);
 
   // =====================================================
-  // STATISTIQUES
+  // MESSAGE
   // =====================================================
 
-  const statistiques = useMemo(() => {
-    return {
-      total: livreurs.length,
+  const showSuccess = (message) => {
+    setSuccess(message);
+    setError("");
 
-      actifs: livreurs.filter((livreur) => livreur.actif && !livreur.bloque)
-        .length,
+    setTimeout(() => {
+      setSuccess("");
+    }, 3000);
+  };
 
-      bloques: livreurs.filter((livreur) => livreur.bloque).length,
+  // =====================================================
+  // BLOQUER
+  // =====================================================
 
-      limites: livreurs.filter((livreur) => livreur.limite).length,
+  const bloquerLivreur = async (id) => {
+    const livreur = livreurs.find((item) => item._id === id);
 
-      disponibles: livreurs.filter(
-        (livreur) =>
-          livreur.statut === "AVAILABLE" && livreur.actif && !livreur.bloque,
-      ).length,
+    if (!livreur) return;
 
-      occupes: livreurs.filter((livreur) => livreur.statut === "BUSY").length,
+    const confirmation = window.confirm(
+      `Bloquer le compte de ${livreur.username} ?\n\nLe livreur ne pourra plus utiliser son compte.`,
+    );
 
-      offline: livreurs.filter((livreur) => livreur.statut === "OFFLINE")
-        .length,
-    };
-  }, [livreurs]);
+    if (!confirmation) return;
+
+    try {
+      setActionLoading(`${id}-bloquer`);
+      setError("");
+
+      await apiRequest(`/api/livreurs/admin/${id}/bloquer`, {
+        method: "PUT",
+      });
+
+      setLivreurs((prev) =>
+        prev.map((item) =>
+          item._id === id
+            ? {
+                ...item,
+                actif: false,
+                bloque: true,
+              }
+            : item,
+        ),
+      );
+
+      showSuccess(`Le compte de ${livreur.username} a été bloqué.`);
+    } catch (err) {
+      setError(err.message || "Impossible de bloquer le livreur.");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // =====================================================
+  // DÉBLOQUER
+  // =====================================================
+
+  const debloquerLivreur = async (id) => {
+    const livreur = livreurs.find((item) => item._id === id);
+
+    if (!livreur) return;
+
+    try {
+      setActionLoading(`${id}-debloquer`);
+      setError("");
+
+      await apiRequest(`/api/livreurs/admin/${id}/debloquer`, {
+        method: "PUT",
+      });
+
+      setLivreurs((prev) =>
+        prev.map((item) =>
+          item._id === id
+            ? {
+                ...item,
+                bloque: false,
+              }
+            : item,
+        ),
+      );
+
+      showSuccess(`Le compte de ${livreur.username} a été débloqué.`);
+    } catch (err) {
+      setError(err.message || "Impossible de débloquer le livreur.");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // =====================================================
+  // ACTIVER
+  // =====================================================
+
+  const activerLivreur = async (id) => {
+    const livreur = livreurs.find((item) => item._id === id);
+
+    if (!livreur) return;
+
+    try {
+      setActionLoading(`${id}-actif`);
+      setError("");
+
+      await apiRequest(`/api/livreurs/admin/${id}/actif`, {
+        method: "PUT",
+        body: JSON.stringify({
+          actif: true,
+        }),
+      });
+
+      setLivreurs((prev) =>
+        prev.map((item) =>
+          item._id === id
+            ? {
+                ...item,
+                actif: true,
+              }
+            : item,
+        ),
+      );
+
+      showSuccess(`Le compte de ${livreur.username} est maintenant actif.`);
+    } catch (err) {
+      setError(err.message || "Impossible d'activer le livreur.");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // =====================================================
+  // DÉSACTIVER
+  // =====================================================
+
+  const desactiverLivreur = async (id) => {
+    const livreur = livreurs.find((item) => item._id === id);
+
+    if (!livreur) return;
+
+    const confirmation = window.confirm(
+      `Désactiver le compte de ${livreur.username} ?`,
+    );
+
+    if (!confirmation) return;
+
+    try {
+      setActionLoading(`${id}-inactif`);
+      setError("");
+
+      await apiRequest(`/api/livreurs/admin/${id}/actif`, {
+        method: "PUT",
+        body: JSON.stringify({
+          actif: false,
+        }),
+      });
+
+      setLivreurs((prev) =>
+        prev.map((item) =>
+          item._id === id
+            ? {
+                ...item,
+                actif: false,
+              }
+            : item,
+        ),
+      );
+
+      showSuccess(`Le compte de ${livreur.username} a été désactivé.`);
+    } catch (err) {
+      setError(err.message || "Impossible de désactiver le livreur.");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // =====================================================
+  // LIMITER
+  // =====================================================
+
+  const limiterLivreur = async (id) => {
+    const livreur = livreurs.find((item) => item._id === id);
+
+    if (!livreur) return;
+
+    const valeur = limitValues[id];
+
+    if (valeur === "" || valeur === undefined || valeur === null) {
+      setError("Indique une limite de courses.");
+      return;
+    }
+
+    const limite = Number(valeur);
+
+    if (!Number.isInteger(limite) || limite < 0) {
+      setError("La limite doit être un nombre entier supérieur ou égal à 0.");
+      return;
+    }
+
+    try {
+      setActionLoading(`${id}-limite`);
+      setError("");
+
+      await apiRequest(`/api/livreurs/admin/${id}/limiter`, {
+        method: "PUT",
+        body: JSON.stringify({
+          limite,
+        }),
+      });
+
+      setLivreurs((prev) =>
+        prev.map((item) =>
+          item._id === id
+            ? {
+                ...item,
+                limite,
+                limiteCourses: limite,
+                limiteCoursesParJour: limite,
+              }
+            : item,
+        ),
+      );
+
+      showSuccess(
+        `Limite de ${limite} course${limite > 1 ? "s" : ""} configurée pour ${livreur.username}.`,
+      );
+    } catch (err) {
+      setError(err.message || "Impossible de modifier la limite.");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // =====================================================
+  // RETIRER LIMITE
+  // =====================================================
+
+  const retirerLimite = async (id) => {
+    const livreur = livreurs.find((item) => item._id === id);
+
+    if (!livreur) return;
+
+    const confirmation = window.confirm(
+      `Retirer la limite de courses de ${livreur.username} ?`,
+    );
+
+    if (!confirmation) return;
+
+    try {
+      setActionLoading(`${id}-retirer-limite`);
+      setError("");
+
+      await apiRequest(`/api/livreurs/admin/${id}/retirer-limite`, {
+        method: "PUT",
+      });
+
+      setLivreurs((prev) =>
+        prev.map((item) =>
+          item._id === id
+            ? {
+                ...item,
+                limite: null,
+                limiteCourses: null,
+                limiteCoursesParJour: null,
+              }
+            : item,
+        ),
+      );
+
+      setLimitValues((prev) => ({
+        ...prev,
+        [id]: "",
+      }));
+
+      showSuccess(`La limite de ${livreur.username} a été retirée.`);
+    } catch (err) {
+      setError(err.message || "Impossible de retirer la limite.");
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   // =====================================================
   // FILTRAGE
   // =====================================================
 
   const livreursFiltres = useMemo(() => {
-    const texte = search.trim().toLowerCase();
+    const valeur = search.trim().toLowerCase();
 
     return livreurs.filter((livreur) => {
       const correspondRecherche =
-        !texte ||
-        livreur.username?.toLowerCase().includes(texte) ||
-        livreur.email?.toLowerCase().includes(texte) ||
-        livreur.telephone?.toLowerCase().includes(texte);
+        !valeur ||
+        livreur.username?.toLowerCase().includes(valeur) ||
+        livreur.email?.toLowerCase().includes(valeur) ||
+        livreur.telephone?.toLowerCase().includes(valeur);
 
       if (!correspondRecherche) {
         return false;
       }
 
       switch (filter) {
-        case "ACTIVE":
-          return livreur.actif && !livreur.bloque;
+        case "ACTIFS":
+          return livreur.actif === true;
 
-        case "AVAILABLE":
+        case "BLOQUES":
+          return livreur.bloque === true || livreur.actif === false;
+
+        case "DISPONIBLES":
           return livreur.statut === "AVAILABLE";
 
         case "BUSY":
@@ -187,12 +498,6 @@ const AdminLivreurs = () => {
         case "OFFLINE":
           return livreur.statut === "OFFLINE";
 
-        case "BLOCKED":
-          return livreur.bloque;
-
-        case "LIMITED":
-          return livreur.limite;
-
         default:
           return true;
       }
@@ -200,159 +505,37 @@ const AdminLivreurs = () => {
   }, [livreurs, search, filter]);
 
   // =====================================================
-  // APPEL API ADMIN
+  // STATS
   // =====================================================
 
-  const actionAdmin = async (livreur, endpoint, body = {}) => {
-    try {
-      setActionLoading(livreur._id);
+  const stats = useMemo(() => {
+    const total = livreurs.length;
 
-      const response = await fetch(
-        `${API_URL}/api/livreurs/admin/${livreur._id}/${endpoint}`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(body),
-        },
-      );
+    const actifs = livreurs.filter(
+      (livreur) => livreur.actif === true,
+    ).length;
 
-      const data = await response.json();
+    const bloques = livreurs.filter(
+      (livreur) =>
+        livreur.bloque === true || livreur.actif === false,
+    ).length;
 
-      if (!response.ok) {
-        throw new Error(data.message || "Action impossible");
-      }
+    const disponibles = livreurs.filter(
+      (livreur) => livreur.statut === "AVAILABLE",
+    ).length;
 
-      if (data.livreur) {
-        setLivreurs((current) =>
-          current.map((item) =>
-            item._id === livreur._id ? data.livreur : item,
-          ),
-        );
-      } else {
-        await chargerLivreurs(true);
-      }
+    const busy = livreurs.filter(
+      (livreur) => livreur.statut === "BUSY",
+    ).length;
 
-      fermerModal();
-    } catch (error) {
-      console.error("ACTION ADMIN LIVREUR ERROR:", error);
-      alert(error.message || "Une erreur est survenue");
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  // =====================================================
-  // MODALES
-  // =====================================================
-
-  const ouvrirModal = (livreur, type) => {
-    setSelectedLivreur(livreur);
-    setModalType(type);
-    setRaison(livreur.raisonRestriction || "");
-  };
-
-  const fermerModal = () => {
-    setSelectedLivreur(null);
-    setModalType(null);
-    setRaison("");
-  };
-
-  const confirmerAction = () => {
-    if (!selectedLivreur) {
-      return;
-    }
-
-    switch (modalType) {
-      case "BLOCK":
-        actionAdmin(selectedLivreur, "bloquer", { raison });
-        break;
-
-      case "UNBLOCK":
-        actionAdmin(selectedLivreur, "debloquer");
-        break;
-
-      case "LIMIT":
-        actionAdmin(selectedLivreur, "limiter", { raison });
-        break;
-
-      case "UNLIMIT":
-        actionAdmin(selectedLivreur, "retirer-limite");
-        break;
-
-      default:
-        break;
-    }
-  };
-
-  // =====================================================
-  // CHANGER STATUT
-  // =====================================================
-
-  const changerStatut = async (livreur, statut) => {
-    await actionAdmin(livreur, "statut", {
-      statut,
-    });
-  };
-
-  // =====================================================
-  // ACTIVER / DÉSACTIVER
-  // =====================================================
-
-  const changerActif = async (livreur) => {
-    await actionAdmin(livreur, "actif", {
-      actif: !livreur.actif,
-    });
-  };
-
-  // =====================================================
-  // FORMAT DATE
-  // =====================================================
-
-  const formaterDate = (date) => {
-    if (!date) {
-      return "Jamais";
-    }
-
-    try {
-      return new Date(date).toLocaleString("fr-FR", {
-        dateStyle: "short",
-        timeStyle: "short",
-      });
-    } catch {
-      return "Inconnue";
-    }
-  };
-
-  // =====================================================
-  // POSITION
-  // =====================================================
-
-  const positionDisponible = (livreur) => {
-    return (
-      livreur.localisation &&
-      typeof livreur.localisation.latitude === "number" &&
-      typeof livreur.localisation.longitude === "number"
-    );
-  };
-
-  // =====================================================
-  // TOKEN MANQUANT
-  // =====================================================
-
-  if (!token) {
-    return (
-      <Page>
-        <EmptyState>
-          <FiShield size={48} />
-          <h2>Accès administrateur requis</h2>
-          <p>Aucun token administrateur n'a été trouvé dans votre session.</p>
-        </EmptyState>
-      </Page>
-    );
-  }
+    return {
+      total,
+      actifs,
+      bloques,
+      disponibles,
+      busy,
+    };
+  }, [livreurs]);
 
   // =====================================================
   // RENDER
@@ -360,579 +543,535 @@ const AdminLivreurs = () => {
 
   return (
     <Page>
-      <Container>
-        {/* =================================================
-            HEADER
-        ================================================= */}
+      <Header>
+        <div>
+          <Title>Gestion des livreurs</Title>
 
-        <Header>
-          <HeaderLeft>
-            <Title>
-              <TitleIcon>
-                <FiUsers />
-              </TitleIcon>
+          <Subtitle>
+            Administration des comptes et des limites de courses
+          </Subtitle>
+        </div>
 
-              <div>
-                <h1>Gestion des livreurs</h1>
-                <p>Administration et contrôle des comptes livreurs</p>
-              </div>
-            </Title>
-          </HeaderLeft>
+        <RefreshButton
+          type="button"
+          onClick={() => chargerLivreurs(true)}
+          disabled={refreshing}
+        >
+          <FaSyncAlt className={refreshing ? "spin" : ""} />
+          Actualiser
+        </RefreshButton>
+      </Header>
 
-          <RefreshButton
-            onClick={() => chargerLivreurs(true)}
-            disabled={refreshing}
+      {error && (
+        <Alert type="error">
+          <FaTimes />
+          <span>{error}</span>
+
+          <CloseAlert
+            type="button"
+            onClick={() => setError("")}
           >
-            <FiRefreshCw className={refreshing ? "spin" : ""} />
-            {refreshing ? "Actualisation..." : "Actualiser"}
-          </RefreshButton>
-        </Header>
+            <FaTimes />
+          </CloseAlert>
+        </Alert>
+      )}
 
-        {/* =================================================
-            STATISTIQUES
-        ================================================= */}
+      {success && (
+        <Alert type="success">
+          <FaCheckCircle />
+          <span>{success}</span>
 
-        <StatsGrid>
-          <StatCard>
-            <StatIcon>
-              <FiUsers />
-            </StatIcon>
-
-            <div>
-              <StatLabel>Total livreurs</StatLabel>
-              <StatValue>{statistiques.total}</StatValue>
-            </div>
-          </StatCard>
-
-          <StatCard>
-            <StatIcon>
-              <FiCheckCircle />
-            </StatIcon>
-
-            <div>
-              <StatLabel>Actifs</StatLabel>
-              <StatValue>{statistiques.actifs}</StatValue>
-            </div>
-          </StatCard>
-
-          <StatCard>
-            <StatIcon>
-              <FiActivity />
-            </StatIcon>
-
-            <div>
-              <StatLabel>Disponibles</StatLabel>
-              <StatValue>{statistiques.disponibles}</StatValue>
-            </div>
-          </StatCard>
-
-          <StatCard>
-            <StatIcon>
-              <FiPackage />
-            </StatIcon>
-
-            <div>
-              <StatLabel>En livraison</StatLabel>
-              <StatValue>{statistiques.occupes}</StatValue>
-            </div>
-          </StatCard>
-
-          <StatCard>
-            <StatIcon>
-              <FiSlash />
-            </StatIcon>
-
-            <div>
-              <StatLabel>Bloqués</StatLabel>
-              <StatValue>{statistiques.bloques}</StatValue>
-            </div>
-          </StatCard>
-
-          <StatCard>
-            <StatIcon>
-              <FiAlertTriangle />
-            </StatIcon>
-
-            <div>
-              <StatLabel>Limites</StatLabel>
-              <StatValue>{statistiques.limites}</StatValue>
-            </div>
-          </StatCard>
-        </StatsGrid>
-
-        {/* =================================================
-            FILTRES
-        ================================================= */}
-
-        <Toolbar>
-          <SearchBox>
-            <FiSearch />
-
-            <input
-              type="text"
-              placeholder="Rechercher username, email, téléphone..."
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-            />
-
-            {search && (
-              <ClearSearch onClick={() => setSearch("")} type="button">
-                <FiXCircle />
-              </ClearSearch>
-            )}
-          </SearchBox>
-
-          <FilterSelect
-            value={filter}
-            onChange={(event) => setFilter(event.target.value)}
+          <CloseAlert
+            type="button"
+            onClick={() => setSuccess("")}
           >
-            <option value="ALL">Tous les livreurs</option>
-            <option value="ACTIVE">Actifs</option>
-            <option value="AVAILABLE">Disponibles</option>
-            <option value="BUSY">En livraison</option>
-            <option value="OFFLINE">Hors ligne</option>
-            <option value="BLOCKED">Bloqués</option>
-            <option value="LIMITED">Limitées</option>
-          </FilterSelect>
-        </Toolbar>
+            <FaTimes />
+          </CloseAlert>
+        </Alert>
+      )}
 
-        {/* =================================================
-            TABLE
-        ================================================= */}
+      <StatsGrid>
+        <StatCard>
+          <StatIcon>
+            <FaTruck />
+          </StatIcon>
 
-        <TableCard>
-          <TableHeader>
-            <div>
-              <strong>Livreurs</strong>
-              <span>
-                {livreursFiltres.length} résultat
-                {livreursFiltres.length > 1 ? "s" : ""}
-              </span>
-            </div>
-          </TableHeader>
+          <StatInfo>
+            <StatNumber>{stats.total}</StatNumber>
+            <StatLabel>Total livreurs</StatLabel>
+          </StatInfo>
+        </StatCard>
 
-          {loading ? (
-            <Loading>
-              <Spinner />
-              <p>Chargement des livreurs...</p>
-            </Loading>
-          ) : livreursFiltres.length === 0 ? (
-            <EmptyTable>
-              <FiUsers size={42} />
-              <h3>Aucun livreur trouvé</h3>
-              <p>Aucun compte ne correspond aux critères sélectionnés.</p>
-            </EmptyTable>
-          ) : (
-            <TableWrapper>
-              <Table>
-                <thead>
-                  <tr>
-                    <th>Livreur</th>
-                    <th>Contact</th>
-                    <th>Compte</th>
-                    <th>Statut</th>
-                    <th>Commande</th>
-                    <th>Localisation</th>
-                    <th>Dernière activité</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
+        <StatCard>
+          <StatIcon>
+            <FaUserCheck />
+          </StatIcon>
 
-                <tbody>
-                  {livreursFiltres.map((livreur) => (
-                    <LivreurRow
-                      key={livreur._id}
-                      livreur={livreur}
-                      actionLoading={actionLoading}
-                      formaterDate={formaterDate}
-                      positionDisponible={positionDisponible}
-                      changerStatut={changerStatut}
-                      changerActif={changerActif}
-                      ouvrirModal={ouvrirModal}
-                    />
-                  ))}
-                </tbody>
-              </Table>
-            </TableWrapper>
-          )}
-        </TableCard>
-      </Container>
+          <StatInfo>
+            <StatNumber>{stats.actifs}</StatNumber>
+            <StatLabel>Comptes actifs</StatLabel>
+          </StatInfo>
+        </StatCard>
 
-      {/* =================================================
-          MODALE
-      ================================================= */}
+        <StatCard>
+          <StatIcon>
+            <FaBan />
+          </StatIcon>
 
-      {selectedLivreur && modalType && (
-        <Overlay onClick={fermerModal}>
-          <Modal onClick={(event) => event.stopPropagation()}>
-            <ModalHeader>
-              <div>
-                <ModalIcon>
-                  {modalType === "BLOCK" && <FiSlash />}
-                  {modalType === "UNBLOCK" && <FiUnlock />}
-                  {modalType === "LIMIT" && <FiAlertTriangle />}
-                  {modalType === "UNLIMIT" && <FiCheckCircle />}
-                </ModalIcon>
+          <StatInfo>
+            <StatNumber>{stats.bloques}</StatNumber>
+            <StatLabel>Bloqués / inactifs</StatLabel>
+          </StatInfo>
+        </StatCard>
 
-                <div>
-                  <h2>
-                    {modalType === "BLOCK" && "Bloquer le livreur"}
-                    {modalType === "UNBLOCK" && "Débloquer le livreur"}
-                    {modalType === "LIMIT" && "Limiter le livreur"}
-                    {modalType === "UNLIMIT" && "Retirer la limitation"}
-                  </h2>
+        <StatCard>
+          <StatIcon>
+            <FaCheckCircle />
+          </StatIcon>
 
-                  <p>{selectedLivreur.username}</p>
-                </div>
-              </div>
+          <StatInfo>
+            <StatNumber>{stats.disponibles}</StatNumber>
+            <StatLabel>Disponibles</StatLabel>
+          </StatInfo>
+        </StatCard>
 
-              <CloseButton onClick={fermerModal}>
-                <FiXCircle />
-              </CloseButton>
-            </ModalHeader>
+        <StatCard>
+          <StatIcon>
+            <FaTruck />
+          </StatIcon>
 
-            <ModalBody>
-              {modalType === "BLOCK" && (
-                <>
-                  <Warning>
-                    <FiAlertTriangle />
+          <StatInfo>
+            <StatNumber>{stats.busy}</StatNumber>
+            <StatLabel>En livraison</StatLabel>
+          </StatInfo>
+        </StatCard>
+      </StatsGrid>
+
+      <Toolbar>
+        <SearchBox>
+          <FaSearch />
+
+          <input
+            type="text"
+            placeholder="Rechercher un livreur..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </SearchBox>
+
+        <FilterSelect
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+        >
+          <option value="ALL">Tous les livreurs</option>
+          <option value="ACTIFS">Comptes actifs</option>
+          <option value="BLOQUES">Bloqués / inactifs</option>
+          <option value="DISPONIBLES">Disponibles</option>
+          <option value="BUSY">En livraison</option>
+          <option value="OFFLINE">Hors ligne</option>
+        </FilterSelect>
+      </Toolbar>
+
+      {loading ? (
+        <LoadingContainer>
+          <FaSpinner className="spin" />
+          <span>Chargement des livreurs...</span>
+        </LoadingContainer>
+      ) : livreursFiltres.length === 0 ? (
+        <EmptyState>
+          <FaTruck />
+
+          <h3>Aucun livreur trouvé</h3>
+
+          <p>
+            Aucun livreur ne correspond aux critères sélectionnés.
+          </p>
+        </EmptyState>
+      ) : (
+        <LivreursGrid>
+          {livreursFiltres.map((livreur) => {
+            const isBlocked =
+              livreur.bloque === true ||
+              livreur.actif === false;
+
+            const limite =
+              livreur.limiteCoursesParJour ??
+              livreur.limiteCourses ??
+              livreur.limite ??
+              null;
+
+            const coursesAujourdHui =
+              livreur.coursesAujourdHui ??
+              livreur.nombreCoursesAujourdHui ??
+              livreur.coursesDuJour ??
+              0;
+
+            const hasLimit =
+              limite !== null &&
+              limite !== undefined;
+
+            return (
+              <LivreurCard key={livreur._id}>
+                <CardTop>
+                  <Identity>
+                    <Avatar>
+                      {(livreur.username || "L")
+                        .charAt(0)
+                        .toUpperCase()}
+                    </Avatar>
+
+                    <div>
+                      <Username>
+                        {livreur.username || "Livreur"}
+                      </Username>
+
+                      <Email>
+                        <FaEnvelope />
+                        {livreur.email || "Email non renseigné"}
+                      </Email>
+                    </div>
+                  </Identity>
+
+                  <AccountBadge
+                    className={isBlocked ? "blocked" : "active"}
+                  >
+                    {isBlocked ? (
+                      <>
+                        <FaBan />
+                        Bloqué / inactif
+                      </>
+                    ) : (
+                      <>
+                        <FaCheckCircle />
+                        Actif
+                      </>
+                    )}
+                  </AccountBadge>
+                </CardTop>
+
+                <Divider />
+
+                <InformationGrid>
+                  <InfoItem>
+                    <InfoIcon>
+                      <FaPhone />
+                    </InfoIcon>
+
+                    <div>
+                      <InfoLabel>Téléphone</InfoLabel>
+                      <InfoValue>
+                        {livreur.telephone || "Non renseigné"}
+                      </InfoValue>
+                    </div>
+                  </InfoItem>
+
+                  <InfoItem>
+                    <InfoIcon>
+                      <FaTruck />
+                    </InfoIcon>
+
+                    <div>
+                      <InfoLabel>Statut du livreur</InfoLabel>
+
+                      <StatusBadge
+                        className={getStatutClass(
+                          livreur.statut,
+                        )}
+                      >
+                        <span />
+                        {getStatutLabel(livreur.statut)}
+                      </StatusBadge>
+                    </div>
+                  </InfoItem>
+
+                  <InfoItem>
+                    <InfoIcon>
+                      <FaMapMarkerAlt />
+                    </InfoIcon>
+
+                    <div>
+                      <InfoLabel>Localisation</InfoLabel>
+
+                      <InfoValue>
+                        {livreur.localisation?.latitude != null &&
+                        livreur.localisation?.longitude != null
+                          ? `${Number(
+                              livreur.localisation.latitude,
+                            ).toFixed(5)}, ${Number(
+                              livreur.localisation.longitude,
+                            ).toFixed(5)}`
+                          : "Position inconnue"}
+                      </InfoValue>
+                    </div>
+                  </InfoItem>
+
+                  <InfoItem>
+                    <InfoIcon>
+                      <FaTruck />
+                    </InfoIcon>
+
+                    <div>
+                      <InfoLabel>Course actuelle</InfoLabel>
+
+                      <InfoValue>
+                        {livreur.commandeActuelle
+                          ? typeof livreur.commandeActuelle ===
+                            "object"
+                            ? livreur.commandeActuelle._id ||
+                              livreur.commandeActuelle.id ||
+                              "En cours"
+                            : livreur.commandeActuelle
+                          : "Aucune"}
+                      </InfoValue>
+                    </div>
+                  </InfoItem>
+                </InformationGrid>
+
+                <LimitSection>
+                  <LimitHeader>
+                    <div>
+                      <LimitTitle>
+                        Limite de courses
+                      </LimitTitle>
+
+                      <LimitDescription>
+                        {hasLimit
+                          ? "Nombre maximum de courses autorisées."
+                          : "Aucune limite configurée."}
+                      </LimitDescription>
+                    </div>
+
+                    {hasLimit ? (
+                      <LimitBadge>
+                        {limite} / jour
+                      </LimitBadge>
+                    ) : (
+                      <UnlimitedBadge>
+                        <FaInfinity />
+                        Illimitée
+                      </UnlimitedBadge>
+                    )}
+                  </LimitHeader>
+
+                  <CoursesProgress>
+                    <ProgressText>
+                      <span>Courses aujourd’hui</span>
+
+                      <strong>
+                        {coursesAujourdHui}
+                        {hasLimit ? ` / ${limite}` : ""}
+                      </strong>
+                    </ProgressText>
+
+                    {hasLimit && (
+                      <ProgressBar>
+                        <ProgressValue
+                          style={{
+                            width: `${Math.min(
+                              100,
+                              limite > 0
+                                ? (coursesAujourdHui / limite) *
+                                    100
+                                : 100,
+                            )}%`,
+                          }}
+                        />
+                      </ProgressBar>
+                    )}
+                  </CoursesProgress>
+
+                  <LimitControls>
+                    <LimitInputWrapper>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        placeholder="Nombre"
+                        value={limitValues[livreur._id] ?? ""}
+                        onChange={(e) =>
+                          setLimitValues((prev) => ({
+                            ...prev,
+                            [livreur._id]: e.target.value,
+                          }))
+                        }
+                      />
+
+                      <span>courses / jour</span>
+                    </LimitInputWrapper>
+
+                    <SmallButton
+                      type="button"
+                      onClick={() =>
+                        limiterLivreur(livreur._id)
+                      }
+                      disabled={
+                        actionLoading ===
+                        `${livreur._id}-limite`
+                      }
+                    >
+                      {actionLoading ===
+                      `${livreur._id}-limite` ? (
+                        <FaSpinner className="spin" />
+                      ) : (
+                        <FaSave />
+                      )}
+
+                      Limiter
+                    </SmallButton>
+
+                    {hasLimit && (
+                      <SmallDangerButton
+                        type="button"
+                        onClick={() =>
+                          retirerLimite(livreur._id)
+                        }
+                        disabled={
+                          actionLoading ===
+                          `${livreur._id}-retirer-limite`
+                        }
+                      >
+                        {actionLoading ===
+                        `${livreur._id}-retirer-limite` ? (
+                          <FaSpinner className="spin" />
+                        ) : (
+                          <FaInfinity />
+                        )}
+
+                        Retirer
+                      </SmallDangerButton>
+                    )}
+                  </LimitControls>
+                </LimitSection>
+
+                <ActionsSection>
+                  <ActionTitle>
+                    Gestion du compte
+                  </ActionTitle>
+
+                  <ActionsGrid>
+                    {livreur.bloque === true ? (
+                      <ActionButton
+                        type="button"
+                        className="success"
+                        onClick={() =>
+                          debloquerLivreur(livreur._id)
+                        }
+                        disabled={
+                          actionLoading ===
+                          `${livreur._id}-debloquer`
+                        }
+                      >
+                        {actionLoading ===
+                        `${livreur._id}-debloquer` ? (
+                          <FaSpinner className="spin" />
+                        ) : (
+                          <FaLockOpen />
+                        )}
+
+                        Débloquer
+                      </ActionButton>
+                    ) : (
+                      <ActionButton
+                        type="button"
+                        className="danger"
+                        onClick={() =>
+                          bloquerLivreur(livreur._id)
+                        }
+                        disabled={
+                          actionLoading ===
+                          `${livreur._id}-bloquer`
+                        }
+                      >
+                        {actionLoading ===
+                        `${livreur._id}-bloquer` ? (
+                          <FaSpinner className="spin" />
+                        ) : (
+                          <FaLock />
+                        )}
+
+                        Bloquer
+                      </ActionButton>
+                    )}
+
+                    {livreur.actif === true ? (
+                      <ActionButton
+                        type="button"
+                        className="warning"
+                        onClick={() =>
+                          desactiverLivreur(livreur._id)
+                        }
+                        disabled={
+                          actionLoading ===
+                          `${livreur._id}-inactif`
+                        }
+                      >
+                        {actionLoading ===
+                        `${livreur._id}-inactif` ? (
+                          <FaSpinner className="spin" />
+                        ) : (
+                          <FaUserSlash />
+                        )}
+
+                        Désactiver
+                      </ActionButton>
+                    ) : (
+                      <ActionButton
+                        type="button"
+                        className="success"
+                        onClick={() =>
+                          activerLivreur(livreur._id)
+                        }
+                        disabled={
+                          actionLoading ===
+                          `${livreur._id}-actif`
+                        }
+                      >
+                        {actionLoading ===
+                        `${livreur._id}-actif` ? (
+                          <FaSpinner className="spin" />
+                        ) : (
+                          <FaUserCheck />
+                        )}
+
+                        Activer
+                      </ActionButton>
+                    )}
+                  </ActionsGrid>
+                </ActionsSection>
+
+                <CardFooter>
+                  <FooterNote>
+                    <FaTruck />
 
                     <span>
-                      Le compte sera désactivé et son statut passera
-                      automatiquement à OFFLINE.
+                      Le statut opérationnel est géré par le
+                      livreur.
                     </span>
-                  </Warning>
-
-                  <Label>Raison du blocage</Label>
-
-                  <TextArea
-                    value={raison}
-                    onChange={(event) => setRaison(event.target.value)}
-                    placeholder="Ex : comportement non conforme..."
-                    rows={4}
-                  />
-                </>
-              )}
-
-              {modalType === "LIMIT" && (
-                <>
-                  <Warning>
-                    <FiAlertTriangle />
-
-                    <span>
-                      Le livreur pourra toujours se connecter, mais il ne pourra
-                      plus accepter de nouvelles commandes.
-                    </span>
-                  </Warning>
-
-                  <Label>Raison de la limitation</Label>
-
-                  <TextArea
-                    value={raison}
-                    onChange={(event) => setRaison(event.target.value)}
-                    placeholder="Ex : limitation temporaire..."
-                    rows={4}
-                  />
-                </>
-              )}
-
-              {modalType === "UNBLOCK" && (
-                <ConfirmText>
-                  Voulez-vous vraiment débloquer{" "}
-                  <strong>{selectedLivreur.username}</strong> ?
-                  <br />
-                  Son compte sera de nouveau actif.
-                </ConfirmText>
-              )}
-
-              {modalType === "UNLIMIT" && (
-                <ConfirmText>
-                  Voulez-vous retirer la limitation de{" "}
-                  <strong>{selectedLivreur.username}</strong> ?
-                  <br />
-                  Il pourra de nouveau accepter des commandes.
-                </ConfirmText>
-              )}
-            </ModalBody>
-
-            <ModalFooter>
-              <CancelButton onClick={fermerModal}>Annuler</CancelButton>
-
-              <ConfirmButton
-                $danger={modalType === "BLOCK" || modalType === "LIMIT"}
-                onClick={confirmerAction}
-                disabled={actionLoading === selectedLivreur._id}
-              >
-                {actionLoading === selectedLivreur._id
-                  ? "Traitement..."
-                  : modalType === "BLOCK"
-                    ? "Bloquer"
-                    : modalType === "UNBLOCK"
-                      ? "Débloquer"
-                      : modalType === "LIMIT"
-                        ? "Limiter"
-                        : "Retirer la limite"}
-              </ConfirmButton>
-            </ModalFooter>
-          </Modal>
-        </Overlay>
+                  </FooterNote>
+                </CardFooter>
+              </LivreurCard>
+            );
+          })}
+        </LivreursGrid>
       )}
     </Page>
   );
-};
-
-// =====================================================
-// LIGNE LIVREUR
-// =====================================================
-
-const LivreurRow = ({
-  livreur,
-  actionLoading,
-  formaterDate,
-  positionDisponible,
-  changerStatut,
-  changerActif,
-  ouvrirModal,
-}) => {
-  const isLoading = actionLoading === livreur._id;
-
-  return (
-    <tr>
-      {/* LIVREUR */}
-
-      <td>
-        <CourierIdentity>
-          <Avatar>
-            <FiUser />
-          </Avatar>
-
-          <div>
-            <CourierName>{livreur.username}</CourierName>
-
-            <CourierEmail>{livreur.email}</CourierEmail>
-
-            <Badges>
-              {livreur.bloque && (
-                <Badge $type="blocked">
-                  <FiSlash />
-                  Bloqué
-                </Badge>
-              )}
-
-              {livreur.limite && !livreur.bloque && (
-                <Badge $type="limited">
-                  <FiAlertTriangle />
-                  Limité
-                </Badge>
-              )}
-            </Badges>
-          </div>
-        </CourierIdentity>
-      </td>
-
-      {/* CONTACT */}
-
-      <td>
-        <Contact>
-          <FiPhone />
-          <span>{livreur.telephone || "Non renseigné"}</span>
-        </Contact>
-      </td>
-
-      {/* COMPTE */}
-
-      <td>
-        <AccountStatus $active={livreur.actif && !livreur.bloque}>
-          {livreur.actif && !livreur.bloque ? (
-            <>
-              <FiCheckCircle />
-              Actif
-            </>
-          ) : (
-            <>
-              <FiXCircle />
-              Désactivé
-            </>
-          )}
-        </AccountStatus>
-      </td>
-
-      {/* STATUT */}
-
-      <td>
-        <StatusWrapper>
-          <StatusDot $status={livreur.statut} />
-
-          <select
-            value={livreur.statut || "OFFLINE"}
-            disabled={isLoading || livreur.bloque || !livreur.actif}
-            onChange={(event) => changerStatut(livreur, event.target.value)}
-          >
-            <option value="OFFLINE">Hors ligne</option>
-            <option value="AVAILABLE">Disponible</option>
-            <option value="BUSY">Occupé</option>
-          </select>
-        </StatusWrapper>
-      </td>
-
-      {/* COMMANDE */}
-
-      <td>
-        {livreur.commandeActuelle ? (
-          <CurrentOrder>
-            <FiPackage />
-
-            <div>
-              <strong>#{String(livreur.commandeActuelle._id).slice(-6)}</strong>
-
-              <small>
-                {livreur.commandeActuelle.statusCommande || "En cours"}
-              </small>
-            </div>
-          </CurrentOrder>
-        ) : (
-          <NoOrder>
-            <FiClock />
-            Aucune
-          </NoOrder>
-        )}
-      </td>
-
-      {/* LOCALISATION */}
-
-      <td>
-        {positionDisponible(livreur) ? (
-          <Location>
-            <FiMapPin />
-
-            <div>
-              <strong>{livreur.localisation.latitude.toFixed(5)}</strong>
-
-              <strong>{livreur.localisation.longitude.toFixed(5)}</strong>
-            </div>
-          </Location>
-        ) : (
-          <NoLocation>
-            <FiMapPin />
-            Non disponible
-          </NoLocation>
-        )}
-      </td>
-
-      {/* DATE */}
-
-      <td>
-        <LastUpdate>
-          {formaterDate(livreur.localisation?.derniereMiseAJour)}
-        </LastUpdate>
-      </td>
-
-      {/* ACTIONS */}
-
-      <td>
-        <Actions>
-          {livreur.bloque ? (
-            <ActionButton
-              $type="success"
-              disabled={isLoading}
-              onClick={() => ouvrirModal(livreur, "UNBLOCK")}
-              title="Débloquer"
-            >
-              <FiUnlock />
-              Débloquer
-            </ActionButton>
-          ) : (
-            <ActionButton
-              $type="danger"
-              disabled={isLoading}
-              onClick={() => ouvrirModal(livreur, "BLOCK")}
-              title="Bloquer"
-            >
-              <FiSlash />
-              Bloquer
-            </ActionButton>
-          )}
-
-          {livreur.limite ? (
-            <ActionButton
-              $type="success"
-              disabled={isLoading || livreur.bloque}
-              onClick={() => ouvrirModal(livreur, "UNLIMIT")}
-              title="Retirer la limite"
-            >
-              <FiCheckCircle />
-              Retirer limite
-            </ActionButton>
-          ) : (
-            <ActionButton
-              $type="warning"
-              disabled={isLoading || livreur.bloque}
-              onClick={() => ouvrirModal(livreur, "LIMIT")}
-              title="Limiter"
-            >
-              <FiAlertTriangle />
-              Limiter
-            </ActionButton>
-          )}
-
-          <ActionButton
-            $type={livreur.actif ? "danger" : "success"}
-            disabled={isLoading || livreur.bloque}
-            onClick={() => changerActif(livreur)}
-          >
-            {livreur.actif ? (
-              <>
-                <FiXCircle />
-                Désactiver
-              </>
-            ) : (
-              <>
-                <FiCheckCircle />
-                Activer
-              </>
-            )}
-          </ActionButton>
-
-          <DetailsButton
-            onClick={() => {
-              alert(
-                [
-                  `Livreur : ${livreur.username}`,
-                  `Email : ${livreur.email}`,
-                  `Téléphone : ${livreur.telephone}`,
-                  `Statut : ${livreur.statut}`,
-                  `Actif : ${livreur.actif ? "Oui" : "Non"}`,
-                  `Bloqué : ${livreur.bloque ? "Oui" : "Non"}`,
-                  `Limité : ${livreur.limite ? "Oui" : "Non"}`,
-                  `Raison : ${livreur.raisonRestriction || "Aucune"}`,
-                ].join("\n"),
-              );
-            }}
-          >
-            <FiEdit3 />
-            Détails
-          </DetailsButton>
-        </Actions>
-      </td>
-    </tr>
-  );
-};
+}
 
 // =====================================================
 // STYLES
 // =====================================================
 
 const Page = styled.div`
-  min-height: 100vh;
-  background: #f5f7fb;
-  padding: 32px;
-  color: #172033;
-`;
-
-const Container = styled.div`
   width: 100%;
-  max-width: 1700px;
-  margin: 0 auto;
+  min-height: 100%;
+  padding: 28px;
+  background: #f6f8fb;
+  box-sizing: border-box;
+
+  @media (max-width: 768px) {
+    padding: 18px;
+  }
 `;
 
 const Header = styled.div`
@@ -940,69 +1079,46 @@ const Header = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  margin-bottom: 28px;
+  margin-bottom: 26px;
 
   @media (max-width: 700px) {
-    align-items: flex-start;
     flex-direction: column;
+    align-items: flex-start;
   }
 `;
 
-const HeaderLeft = styled.div`
-  display: flex;
-`;
-
-const Title = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 16px;
-
-  h1 {
-    margin: 0;
-    font-size: 28px;
-    font-weight: 800;
-  }
-
-  p {
-    margin: 5px 0 0;
-    color: #737c8f;
-    font-size: 14px;
-  }
+const Title = styled.h1`
+  margin: 0;
+  font-size: 30px;
+  font-weight: 800;
+  color: #172033;
 
   @media (max-width: 600px) {
-    h1 {
-      font-size: 22px;
-    }
+    font-size: 24px;
   }
 `;
 
-const TitleIcon = styled.div`
-  width: 52px;
-  height: 52px;
-  border-radius: 15px;
-  background: #111827;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
+const Subtitle = styled.p`
+  margin: 7px 0 0;
+  color: #718096;
+  font-size: 14px;
 `;
 
 const RefreshButton = styled.button`
   border: none;
-  background: white;
-  color: #172033;
-  border: 1px solid #e3e7ef;
-  border-radius: 12px;
-  padding: 11px 16px;
+  background: #172033;
+  color: white;
+  padding: 12px 17px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   gap: 9px;
-  cursor: pointer;
   font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s;
 
   &:hover {
-    background: #f8f9fc;
+    background: #26334d;
   }
 
   &:disabled {
@@ -1010,24 +1126,64 @@ const RefreshButton = styled.button`
     cursor: not-allowed;
   }
 
+  svg {
+    font-size: 14px;
+  }
+
   .spin {
     animation: spin 0.8s linear infinite;
   }
 
   @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+
     to {
       transform: rotate(360deg);
     }
   }
 `;
 
+const Alert = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  font-weight: 600;
+
+  ${(props) =>
+    props.type === "error"
+      ? `
+        background: #fff1f2;
+        color: #be123c;
+        border: 1px solid #fecdd3;
+      `
+      : `
+        background: #ecfdf5;
+        color: #047857;
+        border: 1px solid #a7f3d0;
+      `}
+`;
+
+const CloseAlert = styled.button`
+  margin-left: auto;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+`;
+
 const StatsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 16px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 15px;
   margin-bottom: 24px;
 
-  @media (max-width: 1250px) {
+  @media (max-width: 1100px) {
     grid-template-columns: repeat(3, 1fr);
   }
 
@@ -1042,42 +1198,51 @@ const StatsGrid = styled.div`
 
 const StatCard = styled.div`
   background: white;
-  border: 1px solid #e7eaf0;
-  border-radius: 16px;
-  padding: 18px;
+  border: 1px solid #e8ecf2;
+  border-radius: 15px;
+  padding: 17px;
   display: flex;
   align-items: center;
   gap: 14px;
-  box-shadow: 0 3px 15px rgba(20, 30, 50, 0.04);
+  box-shadow: 0 3px 14px rgba(16, 24, 40, 0.04);
 `;
 
 const StatIcon = styled.div`
-  width: 42px;
-  height: 42px;
-  flex-shrink: 0;
-  border-radius: 12px;
-  background: #f1f3f7;
+  width: 43px;
+  height: 43px;
+  border-radius: 11px;
+  background: #f1f5f9;
+  color: #334155;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 19px;
+  flex-shrink: 0;
+`;
+
+const StatInfo = styled.div`
+  min-width: 0;
+`;
+
+const StatNumber = styled.div`
+  font-size: 23px;
+  font-weight: 800;
+  color: #172033;
 `;
 
 const StatLabel = styled.div`
+  margin-top: 2px;
+  color: #718096;
   font-size: 12px;
-  color: #7c8597;
-  margin-bottom: 4px;
-`;
-
-const StatValue = styled.div`
-  font-size: 25px;
-  font-weight: 800;
 `;
 
 const Toolbar = styled.div`
+  background: white;
+  border: 1px solid #e8ecf2;
+  border-radius: 15px;
+  padding: 15px;
+  margin-bottom: 22px;
   display: flex;
-  gap: 14px;
-  margin-bottom: 18px;
+  gap: 13px;
 
   @media (max-width: 700px) {
     flex-direction: column;
@@ -1086,368 +1251,375 @@ const Toolbar = styled.div`
 
 const SearchBox = styled.div`
   flex: 1;
-  height: 48px;
-  background: white;
-  border: 1px solid #e1e5ec;
-  border-radius: 12px;
+  height: 44px;
+  border: 1px solid #dce2ea;
+  border-radius: 10px;
   display: flex;
   align-items: center;
-  padding: 0 14px;
   gap: 10px;
-
-  svg {
-    color: #8a93a4;
-    flex-shrink: 0;
-  }
+  padding: 0 13px;
+  color: #94a3b8;
+  box-sizing: border-box;
 
   input {
     border: none;
     outline: none;
     width: 100%;
-    font-size: 14px;
+    height: 100%;
     background: transparent;
+    color: #172033;
+    font-size: 14px;
   }
-`;
-
-const ClearSearch = styled.button`
-  border: none;
-  background: transparent;
-  color: #8a93a4;
-  cursor: pointer;
-  display: flex;
 `;
 
 const FilterSelect = styled.select`
+  height: 44px;
   min-width: 210px;
-  height: 48px;
-  background: white;
-  border: 1px solid #e1e5ec;
-  border-radius: 12px;
-  padding: 0 14px;
+  border: 1px solid #dce2ea;
+  border-radius: 10px;
+  padding: 0 12px;
   outline: none;
-  color: #172033;
-  font-weight: 600;
-`;
-
-const TableCard = styled.div`
   background: white;
-  border: 1px solid #e4e8ef;
-  border-radius: 18px;
+  color: #334155;
+  font-size: 14px;
+  cursor: pointer;
+
+  @media (max-width: 700px) {
+    width: 100%;
+  }
+`;
+
+const LivreursGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const LivreurCard = styled.div`
+  background: white;
+  border: 1px solid #e5e9f0;
+  border-radius: 17px;
   overflow: hidden;
-  box-shadow: 0 3px 20px rgba(20, 30, 50, 0.04);
+  box-shadow: 0 4px 18px rgba(16, 24, 40, 0.045);
 `;
 
-const TableHeader = styled.div`
-  padding: 20px 22px;
-  border-bottom: 1px solid #edf0f4;
-
-  div {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  strong {
-    font-size: 17px;
-  }
-
-  span {
-    color: #8992a3;
-    font-size: 13px;
-  }
+const CardTop = styled.div`
+  padding: 20px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 15px;
 `;
 
-const TableWrapper = styled.div`
-  width: 100%;
-  overflow-x: auto;
-`;
-
-const Table = styled.table`
-  width: 100%;
-  min-width: 1400px;
-  border-collapse: collapse;
-
-  th {
-    text-align: left;
-    padding: 13px 18px;
-    background: #fafbfc;
-    color: #7b8495;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    white-space: nowrap;
-  }
-
-  td {
-    padding: 17px 18px;
-    border-top: 1px solid #edf0f4;
-    vertical-align: middle;
-  }
-
-  tbody tr:hover {
-    background: #fcfcfd;
-  }
-`;
-
-const CourierIdentity = styled.div`
+const Identity = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-width: 220px;
+  gap: 13px;
+  min-width: 0;
 `;
 
 const Avatar = styled.div`
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  background: #eef1f6;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #172033;
+  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-weight: 800;
   font-size: 18px;
   flex-shrink: 0;
 `;
 
-const CourierName = styled.div`
-  font-weight: 750;
-  font-size: 14px;
+const Username = styled.div`
+  font-size: 17px;
+  font-weight: 800;
+  color: #172033;
+  margin-bottom: 5px;
 `;
 
-const CourierEmail = styled.div`
-  color: #8992a3;
+const Email = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #7b8798;
   font-size: 12px;
-  margin-top: 3px;
-`;
-
-const Badges = styled.div`
-  display: flex;
-  gap: 5px;
-  margin-top: 6px;
-`;
-
-const Badge = styled.span`
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 7px;
-  border-radius: 6px;
-  font-size: 10px;
-  font-weight: 700;
-
-  background: ${({ $type }) => ($type === "blocked" ? "#fff0f0" : "#fff8e6")};
-
-  color: ${({ $type }) => ($type === "blocked" ? "#d63939" : "#a66a00")};
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 
   svg {
-    font-size: 10px;
+    flex-shrink: 0;
   }
 `;
 
-const Contact = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  color: #515b6d;
-  font-size: 13px;
-
-  svg {
-    color: #8992a3;
-  }
-`;
-
-const AccountStatus = styled.div`
+const AccountBadge = styled.div`
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: ${({ $active }) => ($active ? "#16804b" : "#d13a3a")};
-  font-size: 12px;
-  font-weight: 700;
+  padding: 7px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+
+  &.active {
+    background: #ecfdf5;
+    color: #047857;
+  }
+
+  &.blocked {
+    background: #fff1f2;
+    color: #be123c;
+  }
 `;
 
-const StatusWrapper = styled.div`
+const Divider = styled.div`
+  height: 1px;
+  background: #edf0f4;
+`;
+
+const InformationGrid = styled.div`
+  padding: 18px 20px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 17px;
+
+  @media (max-width: 500px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const InfoItem = styled.div`
   display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+`;
+
+const InfoIcon = styled.div`
+  color: #64748b;
+  width: 18px;
+  margin-top: 2px;
+  flex-shrink: 0;
+`;
+
+const InfoLabel = styled.div`
+  color: #94a3b8;
+  font-size: 10px;
+  text-transform: uppercase;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  margin-bottom: 4px;
+`;
+
+const InfoValue = styled.div`
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+  word-break: break-word;
+`;
+
+const StatusBadge = styled.div`
+  display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
 
-  select {
-    border: none;
-    background: transparent;
-    outline: none;
-    font-weight: 650;
-    font-size: 12px;
-    cursor: pointer;
+  span {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    display: block;
+  }
 
-    &:disabled {
-      cursor: not-allowed;
-      opacity: 0.6;
+  &.available {
+    color: #059669;
+
+    span {
+      background: #10b981;
+    }
+  }
+
+  &.busy {
+    color: #d97706;
+
+    span {
+      background: #f59e0b;
+    }
+  }
+
+  &.offline {
+    color: #64748b;
+
+    span {
+      background: #94a3b8;
+    }
+  }
+
+  &.unknown {
+    color: #64748b;
+
+    span {
+      background: #94a3b8;
     }
   }
 `;
 
-const StatusDot = styled.span`
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-
-  background: ${({ $status }) => {
-    if ($status === "AVAILABLE") return "#20a464";
-    if ($status === "BUSY") return "#e89517";
-    return "#8992a3";
-  }};
+const LimitSection = styled.div`
+  margin: 0 20px 18px;
+  padding: 16px;
+  background: #f8fafc;
+  border: 1px solid #e8edf3;
+  border-radius: 13px;
 `;
 
-const CurrentOrder = styled.div`
+const LimitHeader = styled.div`
   display: flex;
-  align-items: center;
-  gap: 8px;
-
-  svg {
-    color: #687387;
-  }
-
-  strong {
-    display: block;
-    font-size: 12px;
-  }
-
-  small {
-    display: block;
-    color: #8992a3;
-    margin-top: 2px;
-    font-size: 10px;
-  }
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 15px;
 `;
 
-const NoOrder = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  color: #9aa2b1;
-  font-size: 12px;
+const LimitTitle = styled.div`
+  color: #172033;
+  font-size: 14px;
+  font-weight: 800;
 `;
 
-const Location = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 7px;
-
-  > svg {
-    color: #687387;
-  }
-
-  div {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  strong {
-    font-size: 10px;
-    font-weight: 600;
-  }
-`;
-
-const NoLocation = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #a1a8b5;
+const LimitDescription = styled.div`
+  margin-top: 4px;
+  color: #8a96a8;
   font-size: 11px;
 `;
 
-const LastUpdate = styled.span`
-  color: #7d8797;
+const LimitBadge = styled.div`
+  background: #e0e7ff;
+  color: #4338ca;
+  border-radius: 999px;
+  padding: 6px 9px;
   font-size: 11px;
+  font-weight: 800;
   white-space: nowrap;
 `;
 
-const Actions = styled.div`
+const UnlimitedBadge = styled.div`
+  background: #ecfdf5;
+  color: #047857;
+  border-radius: 999px;
+  padding: 6px 9px;
+  font-size: 11px;
+  font-weight: 800;
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  min-width: 210px;
+  gap: 5px;
+  white-space: nowrap;
 `;
 
-const ActionButton = styled.button`
-  border: 1px solid
-    ${({ $type }) =>
-      $type === "danger"
-        ? "#ffd1d1"
-        : $type === "warning"
-          ? "#ffe4aa"
-          : "#ccebdc"};
+const CoursesProgress = styled.div`
+  margin-bottom: 13px;
+`;
 
-  background: ${({ $type }) =>
-    $type === "danger"
-      ? "#fff7f7"
-      : $type === "warning"
-        ? "#fffaf0"
-        : "#f4fcf7"};
+const ProgressText = styled.div`
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: #64748b;
+  font-size: 11px;
+  margin-bottom: 7px;
 
-  color: ${({ $type }) =>
-    $type === "danger"
-      ? "#cf3737"
-      : $type === "warning"
-        ? "#a96d00"
-        : "#167b49"};
+  strong {
+    color: #172033;
+  }
+`;
 
-  border-radius: 8px;
-  padding: 7px 9px;
-  display: inline-flex;
+const ProgressBar = styled.div`
+  width: 100%;
+  height: 7px;
+  background: #e2e8f0;
+  border-radius: 999px;
+  overflow: hidden;
+`;
+
+const ProgressValue = styled.div`
+  height: 100%;
+  background: #334155;
+  border-radius: 999px;
+  transition: width 0.25s ease;
+`;
+
+const LimitControls = styled.div`
+  display: flex;
+  gap: 8px;
+
+  @media (max-width: 550px) {
+    flex-wrap: wrap;
+  }
+`;
+
+const LimitInputWrapper = styled.div`
+  flex: 1;
+  min-width: 150px;
+  height: 40px;
+  display: flex;
   align-items: center;
-  gap: 5px;
-  font-size: 10px;
-  font-weight: 700;
-  cursor: pointer;
+  background: white;
+  border: 1px solid #dce2ea;
+  border-radius: 9px;
+  overflow: hidden;
 
-  &:hover:not(:disabled) {
-    transform: translateY(-1px);
+  input {
+    width: 75px;
+    height: 100%;
+    border: none;
+    outline: none;
+    padding: 0 10px;
+    font-size: 13px;
+    color: #172033;
+  }
+
+  span {
+    color: #94a3b8;
+    font-size: 11px;
+    padding-right: 9px;
+    white-space: nowrap;
+  }
+`;
+
+const SmallButton = styled.button`
+  border: none;
+  background: #172033;
+  color: white;
+  border-radius: 9px;
+  padding: 0 12px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover {
+    background: #26334d;
   }
 
   &:disabled {
-    opacity: 0.45;
+    opacity: 0.55;
     cursor: not-allowed;
   }
-`;
 
-const DetailsButton = styled.button`
-  border: 1px solid #dfe4eb;
-  background: white;
-  color: #5c6678;
-  border-radius: 8px;
-  padding: 7px 9px;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 10px;
-  font-weight: 700;
-  cursor: pointer;
-`;
-
-const Loading = styled.div`
-  min-height: 350px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  gap: 12px;
-  color: #7e8797;
-
-  p {
-    margin: 0;
-    font-size: 13px;
+  .spin {
+    animation: spin 0.8s linear infinite;
   }
-`;
-
-const Spinner = styled.div`
-  width: 35px;
-  height: 35px;
-  border-radius: 50%;
-  border: 3px solid #e7eaf0;
-  border-top-color: #172033;
-  animation: spin 0.8s linear infinite;
 
   @keyframes spin {
     to {
@@ -1456,195 +1628,192 @@ const Spinner = styled.div`
   }
 `;
 
-const EmptyTable = styled.div`
-  min-height: 350px;
+const SmallDangerButton = styled.button`
+  border: 1px solid #fecdd3;
+  background: #fff1f2;
+  color: #be123c;
+  border-radius: 9px;
+  padding: 0 11px;
+  height: 40px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  color: #8992a3;
-
-  h3 {
-    color: #414b5d;
-    margin: 14px 0 5px;
-  }
-
-  p {
-    margin: 0;
-    font-size: 13px;
-  }
-`;
-
-const EmptyState = styled.div`
-  min-height: 70vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  color: #7c8595;
-
-  h2 {
-    color: #172033;
-    margin: 18px 0 6px;
-  }
-
-  p {
-    margin: 0;
-  }
-`;
-
-const Overlay = styled.div`
-  position: fixed;
-  inset: 0;
-  background: rgba(10, 16, 28, 0.55);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  z-index: 9999;
-`;
-
-const Modal = styled.div`
-  width: 100%;
-  max-width: 520px;
-  background: white;
-  border-radius: 20px;
-  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.2);
-  overflow: hidden;
-`;
-
-const ModalHeader = styled.div`
-  padding: 22px;
-  display: flex;
-  justify-content: space-between;
-  border-bottom: 1px solid #edf0f4;
-
-  > div:first-child {
-    display: flex;
-    align-items: center;
-    gap: 13px;
-  }
-
-  h2 {
-    margin: 0;
-    font-size: 18px;
-  }
-
-  p {
-    margin: 4px 0 0;
-    color: #8992a3;
-    font-size: 13px;
-  }
-`;
-
-const ModalIcon = styled.div`
-  width: 43px;
-  height: 43px;
-  border-radius: 12px;
-  background: #f1f3f7;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 19px;
-`;
-
-const CloseButton = styled.button`
-  border: none;
-  background: transparent;
-  color: #8b94a3;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 800;
   cursor: pointer;
-  font-size: 19px;
-  height: 32px;
-`;
+  white-space: nowrap;
 
-const ModalBody = styled.div`
-  padding: 22px;
-`;
-
-const Warning = styled.div`
-  display: flex;
-  gap: 10px;
-  padding: 13px;
-  border-radius: 10px;
-  background: #fff8e8;
-  color: #76550e;
-  font-size: 13px;
-  line-height: 1.45;
-  margin-bottom: 20px;
-
-  svg {
-    flex-shrink: 0;
-    margin-top: 2px;
+  &:hover {
+    background: #ffe4e6;
   }
-`;
-
-const Label = styled.label`
-  display: block;
-  font-size: 13px;
-  font-weight: 700;
-  margin-bottom: 8px;
-`;
-
-const TextArea = styled.textarea`
-  width: 100%;
-  box-sizing: border-box;
-  resize: vertical;
-  border: 1px solid #dfe4eb;
-  border-radius: 10px;
-  padding: 12px;
-  font-family: inherit;
-  font-size: 13px;
-  outline: none;
-
-  &:focus {
-    border-color: #8992a3;
-  }
-`;
-
-const ConfirmText = styled.p`
-  color: #596376;
-  font-size: 14px;
-  line-height: 1.6;
-  margin: 0;
-
-  strong {
-    color: #172033;
-  }
-`;
-
-const ModalFooter = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  padding: 17px 22px;
-  border-top: 1px solid #edf0f4;
-`;
-
-const CancelButton = styled.button`
-  border: 1px solid #dfe4eb;
-  background: white;
-  color: #5d6677;
-  border-radius: 10px;
-  padding: 10px 17px;
-  font-weight: 700;
-  cursor: pointer;
-`;
-
-const ConfirmButton = styled.button`
-  border: none;
-  background: ${({ $danger }) => ($danger ? "#c93636" : "#172033")};
-  color: white;
-  border-radius: 10px;
-  padding: 10px 18px;
-  font-weight: 700;
-  cursor: pointer;
 
   &:disabled {
     opacity: 0.55;
     cursor: not-allowed;
   }
+
+  .spin {
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
 `;
 
-export default AdminLivreurs;
+const ActionsSection = styled.div`
+  padding: 0 20px 18px;
+`;
+
+const ActionTitle = styled.div`
+  color: #172033;
+  font-size: 12px;
+  font-weight: 800;
+  margin-bottom: 9px;
+`;
+
+const ActionsGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+
+  @media (max-width: 500px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const ActionButton = styled.button`
+  height: 42px;
+  border-radius: 9px;
+  border: 1px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: 0.2s;
+
+  &.danger {
+    background: #fff1f2;
+    color: #be123c;
+    border-color: #fecdd3;
+
+    &:hover {
+      background: #ffe4e6;
+    }
+  }
+
+  &.warning {
+    background: #fffbeb;
+    color: #b45309;
+    border-color: #fde68a;
+
+    &:hover {
+      background: #fef3c7;
+    }
+  }
+
+  &.success {
+    background: #ecfdf5;
+    color: #047857;
+    border-color: #a7f3d0;
+
+    &:hover {
+      background: #d1fae5;
+    }
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  .spin {
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+`;
+
+const CardFooter = styled.div`
+  border-top: 1px solid #edf0f4;
+  padding: 12px 20px;
+`;
+
+const FooterNote = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #94a3b8;
+  font-size: 10px;
+
+  svg {
+    flex-shrink: 0;
+  }
+`;
+
+const LoadingContainer = styled.div`
+  min-height: 350px;
+  background: white;
+  border-radius: 17px;
+  border: 1px solid #e8ecf2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #64748b;
+  font-size: 14px;
+
+  svg {
+    font-size: 20px;
+  }
+
+  .spin {
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+`;
+
+const EmptyState = styled.div`
+  min-height: 350px;
+  background: white;
+  border-radius: 17px;
+  border: 1px solid #e8ecf2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 30px;
+
+  > svg {
+    font-size: 40px;
+    color: #cbd5e1;
+    margin-bottom: 15px;
+  }
+
+  h3 {
+    margin: 0;
+    color: #334155;
+    font-size: 18px;
+  }
+
+  p {
+    color: #94a3b8;
+    font-size: 13px;
+    margin: 8px 0 0;
+  }
+`;

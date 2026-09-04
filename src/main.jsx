@@ -331,7 +331,7 @@ createRoot(document.getElementById("root")).render(
                 </PublicLayout>
               }
             />
-            <Route path="/admin/livreurs" element={<AdminLivreurs />} />
+            
 
             <Route
               path="*"
@@ -351,6 +351,7 @@ createRoot(document.getElementById("root")).render(
               <Route path="orders" element={<AdminCommandes />} />
               <Route path="paiement" element={<AdminPaiements />} />
               <Route path="videos" element={<Video />} />
+              <Route path="livreurs" element={<AdminLivreurs />} />
             </Route>
           </Routes>
         </Panier>

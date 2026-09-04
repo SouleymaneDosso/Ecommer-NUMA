@@ -222,6 +222,13 @@ function AdminLayout() {
         >
           Vidéos
         </SidebarItem>
+
+         <SidebarItem
+          $active={location.pathname.includes("livreurs")}
+          onClick={() => navigate("/admin/livreurs")}
+        >
+          Livreurs
+        </SidebarItem>
       </Sidebar>
 
 
