@@ -170,8 +170,7 @@ const PreviewImage = styled.img`
   height: 110px;
   object-fit: cover;
   border-radius: 8px;
-  border: ${(props) =>
-    props.$main ? "3px solid #007bff" : "1px solid #ddd"};
+  border: ${(props) => (props.$main ? "3px solid #007bff" : "1px solid #ddd")};
   cursor: pointer;
 `;
 
@@ -279,10 +278,8 @@ const Badge = styled.span`
   font-size: 12px;
   font-weight: bold;
   margin-bottom: 10px;
-  background: ${(props) =>
-    props.$active ? "#d5f5e3" : "#fadbd8"};
-  color: ${(props) =>
-    props.$active ? "#1e8449" : "#c0392b"};
+  background: ${(props) => (props.$active ? "#d5f5e3" : "#fadbd8")};
+  color: ${(props) => (props.$active ? "#1e8449" : "#c0392b")};
 `;
 
 const Tags = styled.div`
@@ -367,8 +364,7 @@ function AdminPrecommandes() {
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [montantDepot, setMontantDepot] = useState("");
-  const [dateDisponibilite, setDateDisponibilite] =
-    useState("");
+  const [dateDisponibilite, setDateDisponibilite] = useState("");
 
   const [genre, setGenre] = useState("homme");
   const [categorie, setCategorie] = useState("haut");
@@ -388,6 +384,12 @@ function AdminPrecommandes() {
 
   const [precommande, setPrecommande] = useState(true);
 
+  const [tailles, setTailles] = useState([]);
+  const [couleurs, setCouleurs] = useState([]);
+  const [stockParVariation, setStockParVariation] = useState({});
+  const [nouvelleTaille, setNouvelleTaille] = useState("");
+  const [nouvelleCouleur, setNouvelleCouleur] = useState("");
+
   // ====================================================
   // IMAGES
   // ====================================================
@@ -404,26 +406,22 @@ function AdminPrecommandes() {
   const [existingVideo, setExistingVideo] = useState(null);
   const [newVideo, setNewVideo] = useState(null);
   const [videoTitle, setVideoTitle] = useState("");
-  const [videoDescription, setVideoDescription] =
-    useState("");
-  const [videoUploading, setVideoUploading] =
-    useState(false);
+  const [videoDescription, setVideoDescription] = useState("");
+  const [videoUploading, setVideoUploading] = useState(false);
 
   // ====================================================
   // PRODUITS
   // ====================================================
 
   const [products, setProducts] = useState([]);
-  const [editingProductId, setEditingProductId] =
-    useState(null);
+  const [editingProductId, setEditingProductId] = useState(null);
 
   // ====================================================
   // UI
   // ====================================================
 
   const [loading, setLoading] = useState(false);
-  const [productsLoading, setProductsLoading] =
-    useState(true);
+  const [productsLoading, setProductsLoading] = useState(true);
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -452,8 +450,7 @@ function AdminPrecommandes() {
 
       if (!res.ok) {
         throw new Error(
-          data.message ||
-            "Erreur lors de la récupération des produits",
+          data.message || "Erreur lors de la récupération des produits",
         );
       }
 
@@ -461,17 +458,12 @@ function AdminPrecommandes() {
        * Ton endpoint peut retourner directement un tableau
        * ou un objet contenant produits.
        */
-      const liste = Array.isArray(data)
-        ? data
-        : data.produits || [];
+      const liste = Array.isArray(data) ? data : data.produits || [];
 
       setProducts(liste);
     } catch (err) {
       console.error(err);
-      setError(
-        err.message ||
-          "Erreur lors de la récupération des produits",
-      );
+      setError(err.message || "Erreur lors de la récupération des produits");
     } finally {
       setProductsLoading(false);
     }
@@ -494,10 +486,7 @@ function AdminPrecommandes() {
       }),
     );
 
-    setNewImages((prev) => [
-      ...prev,
-      ...filesWithPreview,
-    ]);
+    setNewImages((prev) => [...prev, ...filesWithPreview]);
 
     if (
       mainImageIndex === null &&
@@ -509,13 +498,8 @@ function AdminPrecommandes() {
     e.target.value = "";
   };
 
-  const handleDeleteExistingImage = (
-    publicId,
-    index,
-  ) => {
-    const updated = existingImages.filter(
-      (img) => img.publicId !== publicId,
-    );
+  const handleDeleteExistingImage = (publicId, index) => {
+    const updated = existingImages.filter((img) => img.publicId !== publicId);
 
     setExistingImages(updated);
     setImagesToDelete((prev) => [...prev, publicId]);
@@ -532,8 +516,7 @@ function AdminPrecommandes() {
   };
 
   const handleDeleteNewImage = (index) => {
-    const globalIndex =
-      existingImages.length + index;
+    const globalIndex = existingImages.length + index;
 
     const image = newImages[index];
 
@@ -541,17 +524,12 @@ function AdminPrecommandes() {
       URL.revokeObjectURL(image.preview);
     }
 
-    const updated = newImages.filter(
-      (_, i) => i !== index,
-    );
+    const updated = newImages.filter((_, i) => i !== index);
 
     setNewImages(updated);
 
     if (mainImageIndex === globalIndex) {
-      if (
-        existingImages.length + updated.length >
-        0
-      ) {
+      if (existingImages.length + updated.length > 0) {
         setMainImageIndex(0);
       } else {
         setMainImageIndex(null);
@@ -594,6 +572,84 @@ function AdminPrecommandes() {
   // ====================================================
   // STOCK / COULEURS / TAILLES
   // ====================================================
+
+  const ajouterTaille = () => {
+    const taille = nouvelleTaille.trim();
+
+    if (!taille) return;
+
+    if (tailles.includes(taille)) {
+      setNouvelleTaille("");
+      return;
+    }
+
+    setTailles((prev) => [...prev, taille]);
+    setNouvelleTaille("");
+  };
+
+  const supprimerTaille = (taille) => {
+    setTailles((prev) => prev.filter((item) => item !== taille));
+
+    setStockParVariation((prev) => {
+      const nouveauStock = { ...prev };
+      delete nouveauStock[taille];
+      return nouveauStock;
+    });
+  };
+
+  const ajouterCouleur = () => {
+    const couleur = nouvelleCouleur.trim();
+
+    if (!couleur) return;
+
+    if (couleurs.includes(couleur)) {
+      setNouvelleCouleur("");
+      return;
+    }
+
+    setCouleurs((prev) => [...prev, couleur]);
+    setNouvelleCouleur("");
+  };
+
+  const supprimerCouleur = (couleur) => {
+    setCouleurs((prev) => prev.filter((item) => item !== couleur));
+
+    setStockParVariation((prev) => {
+      const nouveauStock = { ...prev };
+
+      Object.keys(nouveauStock).forEach((taille) => {
+        if (nouveauStock[taille]) {
+          delete nouveauStock[taille][couleur];
+        }
+      });
+
+      return nouveauStock;
+    });
+  };
+
+  const modifierQuantiteVariation = (taille, couleur, valeur) => {
+    const quantite = Math.max(0, Number(valeur) || 0);
+
+    setStockParVariation((prev) => ({
+      ...prev,
+      [taille]: {
+        ...(prev[taille] || {}),
+        [couleur]: quantite,
+      },
+    }));
+  };
+
+  const calculerStockTotal = () => {
+    let total = 0;
+
+    Object.values(stockParVariation).forEach((variations) => {
+      Object.values(variations || {}).forEach((quantite) => {
+        total += Number(quantite) || 0;
+      });
+    });
+
+    return total;
+  };
 
   const handleColorsChange = (value) => {
     const result = value
@@ -680,21 +736,16 @@ function AdminPrecommandes() {
     setPrice(product.price ?? "");
 
     setMontantDepot(
-      product.montantDepot !== null &&
-        product.montantDepot !== undefined
+      product.montantDepot !== null && product.montantDepot !== undefined
         ? product.montantDepot
         : "",
     );
 
     if (product.dateDisponibilite) {
-      const date = new Date(
-        product.dateDisponibilite,
-      );
+      const date = new Date(product.dateDisponibilite);
 
       if (!Number.isNaN(date.getTime())) {
-        setDateDisponibilite(
-          date.toISOString().split("T")[0],
-        );
+        setDateDisponibilite(date.toISOString().split("T")[0]);
       } else {
         setDateDisponibilite("");
       }
@@ -709,33 +760,25 @@ function AdminPrecommandes() {
     setColors(product.couleurs || []);
     setSizes(product.tailles || []);
 
-    setPrecommande(
-      product.precommande === true,
-    );
+    setPrecommande(product.precommande === true);
 
     setDetails({
       matiere: product.details?.matiere || "",
       poids: product.details?.poids || "",
       coupe: product.details?.coupe || "",
       saison: product.details?.saison || "",
-      entretien:
-        product.details?.entretien || "",
-      paysFabrication:
-        product.details?.paysFabrication || "",
+      entretien: product.details?.entretien || "",
+      paysFabrication: product.details?.paysFabrication || "",
     });
 
     setExistingImages(product.images || []);
     setNewImages([]);
     setImagesToDelete([]);
 
-    const mainIndex =
-      product.images?.findIndex(
-        (image) => image.isMain,
-      );
+    const mainIndex = product.images?.findIndex((image) => image.isMain);
 
     setMainImageIndex(
-      mainIndex !== undefined &&
-        mainIndex !== -1
+      mainIndex !== undefined && mainIndex !== -1
         ? mainIndex
         : product.images?.length
           ? 0
@@ -757,14 +800,11 @@ function AdminPrecommandes() {
           : product.videoId;
 
       try {
-        const res = await fetch(
-          `${API}/api/videos/videos`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+        const res = await fetch(`${API}/api/videos/videos`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
           },
-        );
+        });
 
         const data = await res.json();
 
@@ -781,16 +821,11 @@ function AdminPrecommandes() {
           if (video) {
             setExistingVideo(video);
             setVideoTitle(video.title || "");
-            setVideoDescription(
-              video.description || "",
-            );
+            setVideoDescription(video.description || "");
           }
         }
       } catch (err) {
-        console.error(
-          "Erreur récupération vidéo:",
-          err,
-        );
+        console.error("Erreur récupération vidéo:", err);
       }
     }
 
@@ -804,9 +839,7 @@ function AdminPrecommandes() {
   // UPLOAD VIDÉO
   // ====================================================
 
-  const uploadVideoForProduct = async (
-    productId,
-  ) => {
+  const uploadVideoForProduct = async (productId) => {
     if (!newVideo) {
       return true;
     }
@@ -820,45 +853,30 @@ function AdminPrecommandes() {
       formData.append("produitId", productId);
 
       if (videoTitle.trim()) {
-        formData.append(
-          "title",
-          videoTitle.trim(),
-        );
+        formData.append("title", videoTitle.trim());
       }
 
-      formData.append(
-        "description",
-        videoDescription.trim(),
-      );
+      formData.append("description", videoDescription.trim());
 
-      const res = await fetch(
-        `${API}/api/videos/upload-produit`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
+      const res = await fetch(`${API}/api/videos/upload-produit`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+        body: formData,
+      });
 
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(
-          data.message ||
-            "Erreur lors de l'upload de la vidéo",
-        );
+        throw new Error(data.message || "Erreur lors de l'upload de la vidéo");
       }
 
       return true;
     } catch (err) {
       console.error(err);
 
-      setError(
-        err.message ||
-          "Erreur lors de l'upload de la vidéo",
-      );
+      setError(err.message || "Erreur lors de l'upload de la vidéo");
 
       return false;
     } finally {
@@ -875,31 +893,23 @@ function AdminPrecommandes() {
       return;
     }
 
-    if (
-      !window.confirm(
-        "Supprimer la vidéo associée à ce modèle ?",
-      )
-    ) {
+    if (!window.confirm("Supprimer la vidéo associée à ce modèle ?")) {
       return;
     }
 
     try {
-      const res = await fetch(
-        `${API}/api/videos/videos/${existingVideo._id}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const res = await fetch(`${API}/api/videos/videos/${existingVideo._id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
 
       const data = await res.json();
 
       if (!res.ok) {
         throw new Error(
-          data.message ||
-            "Erreur lors de la suppression de la vidéo",
+          data.message || "Erreur lors de la suppression de la vidéo",
         );
       }
 
@@ -907,19 +917,13 @@ function AdminPrecommandes() {
       setVideoTitle("");
       setVideoDescription("");
 
-      setSuccess(
-        data.message ||
-          "Vidéo supprimée avec succès.",
-      );
+      setSuccess(data.message || "Vidéo supprimée avec succès.");
 
       await fetchProducts();
     } catch (err) {
       console.error(err);
 
-      setError(
-        err.message ||
-          "Erreur lors de la suppression de la vidéo",
-      );
+      setError(err.message || "Erreur lors de la suppression de la vidéo");
     }
   };
 
@@ -953,24 +957,13 @@ function AdminPrecommandes() {
       return;
     }
 
-    if (
-      existingImages.length + newImages.length ===
-      0
-    ) {
-      setError(
-        "Ajoute au moins une image au modèle.",
-      );
+    if (existingImages.length + newImages.length === 0) {
+      setError("Ajoute au moins une image au modèle.");
       return;
     }
 
-    if (
-      precommande &&
-      montantDepot !== "" &&
-      Number(montantDepot) < 0
-    ) {
-      setError(
-        "Le montant du dépôt ne peut pas être négatif.",
-      );
+    if (precommande && montantDepot !== "" && Number(montantDepot) < 0) {
+      setError("Le montant du dépôt ne peut pas être négatif.");
       return;
     }
 
@@ -1004,31 +997,16 @@ function AdminPrecommandes() {
       const formData = new FormData();
 
       formData.append("title", title.trim());
-      formData.append(
-        "description",
-        description.trim(),
-      );
+      formData.append("description", description.trim());
 
       formData.append("price", Number(price));
-      formData.append(
-        "stock",
-        "0",
-      );
+      formData.append("stock", "0");
 
-      formData.append(
-        "couleurs",
-        JSON.stringify(colors),
-      );
+      formData.append("couleurs", JSON.stringify(colors));
 
-      formData.append(
-        "tailles",
-        JSON.stringify(sizes),
-      );
+      formData.append("tailles", JSON.stringify(sizes));
 
-      formData.append(
-        "stockParVariation",
-        JSON.stringify(stockParVariation),
-      );
+      formData.append("stockParVariation", JSON.stringify(stockParVariation));
 
       formData.append("genre", genre);
       formData.append("categorie", categorie);
@@ -1037,49 +1015,25 @@ function AdminPrecommandes() {
         formData.append("badge", badge);
       }
 
-      formData.append(
-        "hero",
-        "false",
-      );
+      formData.append("hero", "false");
 
-      formData.append(
-        "precommande",
-        String(precommande),
-      );
+      formData.append("precommande", String(precommande));
 
       if (montantDepot !== "") {
-        formData.append(
-          "montantDepot",
-          Number(montantDepot),
-        );
+        formData.append("montantDepot", Number(montantDepot));
       } else {
-        formData.append(
-          "montantDepot",
-          "",
-        );
+        formData.append("montantDepot", "");
       }
 
       if (dateDisponibilite) {
-        formData.append(
-          "dateDisponibilite",
-          dateDisponibilite,
-        );
+        formData.append("dateDisponibilite", dateDisponibilite);
       } else {
-        formData.append(
-          "dateDisponibilite",
-          "",
-        );
+        formData.append("dateDisponibilite", "");
       }
 
-      formData.append(
-        "details",
-        JSON.stringify(details),
-      );
+      formData.append("details", JSON.stringify(details));
 
-      formData.append(
-        "imagesToDelete",
-        JSON.stringify(imagesToDelete),
-      );
+      formData.append("imagesToDelete", JSON.stringify(imagesToDelete));
 
       // ----------------------------------------------
       // IMAGES
@@ -1096,9 +1050,7 @@ function AdminPrecommandes() {
        */
       formData.append(
         "mainImageIndex",
-        mainImageIndex !== null
-          ? String(mainImageIndex)
-          : "0",
+        mainImageIndex !== null ? String(mainImageIndex) : "0",
       );
 
       // ----------------------------------------------
@@ -1108,35 +1060,28 @@ function AdminPrecommandes() {
       let res;
 
       if (editingProductId) {
-        res = await fetch(
-          `${API}/api/produits/${editingProductId}`,
-          {
-            method: "PUT",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-            body: formData,
+        res = await fetch(`${API}/api/produits/${editingProductId}`, {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
           },
-        );
+          body: formData,
+        });
       } else {
-        res = await fetch(
-          `${API}/api/produits`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-            body: formData,
+        res = await fetch(`${API}/api/produits`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
           },
-        );
+          body: formData,
+        });
       }
 
       const data = await res.json();
 
       if (!res.ok) {
         throw new Error(
-          data.message ||
-            "Erreur lors de l'enregistrement du modèle",
+          data.message || "Erreur lors de l'enregistrement du modèle",
         );
       }
 
@@ -1144,20 +1089,14 @@ function AdminPrecommandes() {
        * On récupère l'ID du produit créé/modifié.
        */
       const productId =
-        editingProductId ||
-        data.produit?._id ||
-        data.product?._id ||
-        data._id;
+        editingProductId || data.produit?._id || data.product?._id || data._id;
 
       // ----------------------------------------------
       // VIDÉO
       // ----------------------------------------------
 
       if (newVideo && productId) {
-        const videoOk =
-          await uploadVideoForProduct(
-            productId,
-          );
+        const videoOk = await uploadVideoForProduct(productId);
 
         if (!videoOk) {
           setLoading(false);
@@ -1181,15 +1120,9 @@ function AdminPrecommandes() {
 
       await fetchProducts();
     } catch (err) {
-      console.error(
-        "SAVE PRECOMMANDE MODEL ERROR:",
-        err,
-      );
+      console.error("SAVE PRECOMMANDE MODEL ERROR:", err);
 
-      setError(
-        err.message ||
-          "Erreur lors de l'enregistrement du modèle.",
-      );
+      setError(err.message || "Erreur lors de l'enregistrement du modèle.");
     } finally {
       setLoading(false);
     }
@@ -1200,11 +1133,7 @@ function AdminPrecommandes() {
   // ====================================================
 
   const handleDeleteProduct = async (id) => {
-    if (
-      !window.confirm(
-        "Supprimer définitivement ce modèle ?",
-      )
-    ) {
+    if (!window.confirm("Supprimer définitivement ce modèle ?")) {
       return;
     }
 
@@ -1212,42 +1141,26 @@ function AdminPrecommandes() {
       setError("");
       setSuccess("");
 
-      const res = await fetch(
-        `${API}/api/produits/${id}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const res = await fetch(`${API}/api/produits/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
 
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(
-          data.message ||
-            "Erreur lors de la suppression",
-        );
+        throw new Error(data.message || "Erreur lors de la suppression");
       }
 
-      setProducts((prev) =>
-        prev.filter(
-          (product) => product._id !== id,
-        ),
-      );
+      setProducts((prev) => prev.filter((product) => product._id !== id));
 
-      setSuccess(
-        data.message ||
-          "Modèle supprimé avec succès.",
-      );
+      setSuccess(data.message || "Modèle supprimé avec succès.");
     } catch (err) {
       console.error(err);
 
-      setError(
-        err.message ||
-          "Erreur lors de la suppression.",
-      );
+      setError(err.message || "Erreur lors de la suppression.");
     }
   };
 
@@ -1257,24 +1170,15 @@ function AdminPrecommandes() {
 
   return (
     <Container>
-      <Title>
-        Gestion des précommandes
-      </Title>
+      <Title>Gestion des précommandes</Title>
 
       <Subtitle>
-        Crée et gère les modèles que les clients
-        pourront précommander.
+        Crée et gère les modèles que les clients pourront précommander.
       </Subtitle>
 
-      {error && (
-        <ErrorMessage>{error}</ErrorMessage>
-      )}
+      {error && <ErrorMessage>{error}</ErrorMessage>}
 
-      {success && (
-        <SuccessMessage>
-          {success}
-        </SuccessMessage>
-      )}
+      {success && <SuccessMessage>{success}</SuccessMessage>}
 
       {/* ==================================================
           FORMULAIRE
@@ -1296,9 +1200,7 @@ function AdminPrecommandes() {
                 type="text"
                 placeholder="Ex : Ensemble premium"
                 value={title}
-                onChange={(e) =>
-                  setTitle(e.target.value)
-                }
+                onChange={(e) => setTitle(e.target.value)}
               />
             </Field>
 
@@ -1310,9 +1212,7 @@ function AdminPrecommandes() {
                 min="0"
                 placeholder="Ex : 25000"
                 value={price}
-                onChange={(e) =>
-                  setPrice(e.target.value)
-                }
+                onChange={(e) => setPrice(e.target.value)}
               />
             </Field>
           </Grid>
@@ -1323,47 +1223,34 @@ function AdminPrecommandes() {
             <Textarea
               placeholder="Description du modèle..."
               value={description}
-              onChange={(e) =>
-                setDescription(e.target.value)
-              }
+              onChange={(e) => setDescription(e.target.value)}
             />
           </Field>
 
           <Grid>
             <Field>
-              <Label>
-                Montant du dépôt
-              </Label>
+              <Label>Montant du dépôt</Label>
 
               <Input
                 type="number"
                 min="0"
                 placeholder="Ex : 10000"
                 value={montantDepot}
-                onChange={(e) =>
-                  setMontantDepot(e.target.value)
-                }
+                onChange={(e) => setMontantDepot(e.target.value)}
               />
 
               <small>
-                Si laissé vide, le backend utilisera
-                son calcul par défaut.
+                Si laissé vide, le backend utilisera son calcul par défaut.
               </small>
             </Field>
 
             <Field>
-              <Label>
-                Date de disponibilité
-              </Label>
+              <Label>Date de disponibilité</Label>
 
               <Input
                 type="date"
                 value={dateDisponibilite}
-                onChange={(e) =>
-                  setDateDisponibilite(
-                    e.target.value,
-                  )
-                }
+                onChange={(e) => setDateDisponibilite(e.target.value)}
               />
             </Field>
           </Grid>
@@ -1372,23 +1259,12 @@ function AdminPrecommandes() {
             <Field>
               <Label>Genre</Label>
 
-              <Select
-                value={genre}
-                onChange={(e) =>
-                  setGenre(e.target.value)
-                }
-              >
-                <option value="homme">
-                  Homme
-                </option>
+              <Select value={genre} onChange={(e) => setGenre(e.target.value)}>
+                <option value="homme">Homme</option>
 
-                <option value="femme">
-                  Femme
-                </option>
+                <option value="femme">Femme</option>
 
-                <option value="enfant">
-                  Enfant
-                </option>
+                <option value="enfant">Enfant</option>
               </Select>
             </Field>
 
@@ -1397,29 +1273,17 @@ function AdminPrecommandes() {
 
               <Select
                 value={categorie}
-                onChange={(e) =>
-                  setCategorie(e.target.value)
-                }
+                onChange={(e) => setCategorie(e.target.value)}
               >
-                <option value="haut">
-                  Haut
-                </option>
+                <option value="haut">Haut</option>
 
-                <option value="bas">
-                  Bas
-                </option>
+                <option value="bas">Bas</option>
 
-                <option value="robe">
-                  Robe
-                </option>
+                <option value="robe">Robe</option>
 
-                <option value="chaussure">
-                  Chaussure
-                </option>
+                <option value="chaussure">Chaussure</option>
 
-                <option value="tout">
-                  Tout
-                </option>
+                <option value="tout">Tout</option>
               </Select>
             </Field>
           </Grid>
@@ -1428,92 +1292,97 @@ function AdminPrecommandes() {
             <Field>
               <Label>Badge</Label>
 
-              <Select
-                value={badge}
-                onChange={(e) =>
-                  setBadge(e.target.value)
-                }
-              >
-                <option value="">
-                  Aucun
-                </option>
+              <Select value={badge} onChange={(e) => setBadge(e.target.value)}>
+                <option value="">Aucun</option>
 
-                <option value="new">
-                  New
-                </option>
+                <option value="new">New</option>
 
-                <option value="promo">
-                  Promo
-                </option>
+                <option value="promo">Promo</option>
               </Select>
             </Field>
 
             <Field>
-              <Label>
-                Précommande
-              </Label>
+              <Label>Précommande</Label>
 
               <CheckBoxRow>
                 <CheckBox
                   type="checkbox"
                   checked={precommande}
-                  onChange={(e) =>
-                    setPrecommande(
-                      e.target.checked,
-                    )
-                  }
+                  onChange={(e) => setPrecommande(e.target.checked)}
                 />
 
-                <span>
-                  Disponible en précommande
-                </span>
+                <span>Disponible en précommande</span>
               </CheckBoxRow>
             </Field>
           </Grid>
 
           <Grid>
             <Field>
-              <Label>
-                Couleurs
-              </Label>
+              <Label>Couleurs</Label>
 
               <Input
                 type="text"
                 placeholder="Noir, Blanc, Rouge"
                 value={colors.join(", ")}
-                onChange={(e) =>
-                  handleColorsChange(
-                    e.target.value,
-                  )
-                }
+                onChange={(e) => handleColorsChange(e.target.value)}
               />
             </Field>
 
             <Field>
-              <Label>
-                Tailles
-              </Label>
+              <Label>Tailles</Label>
 
               <Input
                 type="text"
                 placeholder="S, M, L, XL"
                 value={sizes.join(", ")}
-                onChange={(e) =>
-                  handleSizesChange(
-                    e.target.value,
-                  )
-                }
+                onChange={(e) => handleSizesChange(e.target.value)}
               />
             </Field>
+
+            <VariationSection>
+              <VariationTitle>Tailles disponibles</VariationTitle>
+
+              <VariationAddRow>
+                <VariationInput
+                  type="text"
+                  placeholder="Ex: S, M, L, XL"
+                  value={nouvelleTaille}
+                  onChange={(e) => setNouvelleTaille(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      ajouterTaille();
+                    }
+                  }}
+                />
+
+                <VariationAddButton type="button" onClick={ajouterTaille}>
+                  + Ajouter
+                </VariationAddButton>
+              </VariationAddRow>
+
+              <VariationList>
+                {tailles.map((taille) => (
+                  <VariationTag key={taille}>
+                    <span>{taille}</span>
+
+                    <button
+                      type="button"
+                      onClick={() => supprimerTaille(taille)}
+                    >
+                      ×
+                    </button>
+                  </VariationTag>
+                ))}
+              </VariationList>
+            </VariationSection>
           </Grid>
 
           {/* ============================================
               DÉTAILS
           ============================================ */}
 
-          <SectionTitle>
-            Détails du modèle
-          </SectionTitle>
+          <SectionTitle>Détails du modèle</SectionTitle>
 
           <Grid>
             <Field>
@@ -1592,20 +1461,15 @@ function AdminPrecommandes() {
             </Field>
 
             <Field>
-              <Label>
-                Pays de fabrication
-              </Label>
+              <Label>Pays de fabrication</Label>
 
               <Input
                 type="text"
-                value={
-                  details.paysFabrication
-                }
+                value={details.paysFabrication}
                 onChange={(e) =>
                   setDetails((prev) => ({
                     ...prev,
-                    paysFabrication:
-                      e.target.value,
+                    paysFabrication: e.target.value,
                   }))
                 }
               />
@@ -1616,14 +1480,10 @@ function AdminPrecommandes() {
               IMAGES
           ============================================ */}
 
-          <SectionTitle>
-            Photos du modèle
-          </SectionTitle>
+          <SectionTitle>Photos du modèle</SectionTitle>
 
           <Field>
-            <Label>
-              Ajouter des photos
-            </Label>
+            <Label>Ajouter des photos</Label>
 
             <Input
               type="file"
@@ -1635,146 +1495,88 @@ function AdminPrecommandes() {
 
           {existingImages.length > 0 && (
             <>
-              <Label>
-                Photos existantes
-              </Label>
+              <Label>Photos existantes</Label>
 
               <PreviewContainer>
-                {existingImages.map(
-                  (image, index) => (
-                    <ImageWrapper
-                      key={
-                        image.publicId ||
-                        `${image.url}-${index}`
+                {existingImages.map((image, index) => (
+                  <ImageWrapper key={image.publicId || `${image.url}-${index}`}>
+                    <PreviewImage
+                      src={image.url}
+                      alt={title}
+                      $main={index === mainImageIndex}
+                      onClick={() => setMainImageIndex(index)}
+                    />
+
+                    <DeleteImageButton
+                      type="button"
+                      onClick={() =>
+                        handleDeleteExistingImage(image.publicId, index)
                       }
                     >
-                      <PreviewImage
-                        src={image.url}
-                        alt={title}
-                        $main={
-                          index ===
-                          mainImageIndex
-                        }
-                        onClick={() =>
-                          setMainImageIndex(
-                            index,
-                          )
-                        }
-                      />
+                      ×
+                    </DeleteImageButton>
 
-                      <DeleteImageButton
-                        type="button"
-                        onClick={() =>
-                          handleDeleteExistingImage(
-                            image.publicId,
-                            index,
-                          )
-                        }
-                      >
-                        ×
-                      </DeleteImageButton>
-
-                      {index ===
-                        mainImageIndex && (
-                        <MainBadge>
-                          PRINCIPALE
-                        </MainBadge>
-                      )}
-                    </ImageWrapper>
-                  ),
-                )}
+                    {index === mainImageIndex && (
+                      <MainBadge>PRINCIPALE</MainBadge>
+                    )}
+                  </ImageWrapper>
+                ))}
               </PreviewContainer>
             </>
           )}
 
           {newImages.length > 0 && (
             <>
-              <Label>
-                Nouvelles photos
-              </Label>
+              <Label>Nouvelles photos</Label>
 
               <PreviewContainer>
-                {newImages.map(
-                  (image, index) => {
-                    const globalIndex =
-                      existingImages.length +
-                      index;
+                {newImages.map((image, index) => {
+                  const globalIndex = existingImages.length + index;
 
-                    return (
-                      <ImageWrapper
-                        key={`${image.name}-${index}`}
+                  return (
+                    <ImageWrapper key={`${image.name}-${index}`}>
+                      <PreviewImage
+                        src={image.preview}
+                        alt="Nouvelle"
+                        $main={globalIndex === mainImageIndex}
+                        onClick={() => setMainImageIndex(globalIndex)}
+                      />
+
+                      <DeleteImageButton
+                        type="button"
+                        onClick={() => handleDeleteNewImage(index)}
                       >
-                        <PreviewImage
-                          src={image.preview}
-                          alt="Nouvelle"
-                          $main={
-                            globalIndex ===
-                            mainImageIndex
-                          }
-                          onClick={() =>
-                            setMainImageIndex(
-                              globalIndex,
-                            )
-                          }
-                        />
+                        ×
+                      </DeleteImageButton>
 
-                        <DeleteImageButton
-                          type="button"
-                          onClick={() =>
-                            handleDeleteNewImage(
-                              index,
-                            )
-                          }
-                        >
-                          ×
-                        </DeleteImageButton>
-
-                        {globalIndex ===
-                          mainImageIndex && (
-                          <MainBadge>
-                            PRINCIPALE
-                          </MainBadge>
-                        )}
-                      </ImageWrapper>
-                    );
-                  },
-                )}
+                      {globalIndex === mainImageIndex && (
+                        <MainBadge>PRINCIPALE</MainBadge>
+                      )}
+                    </ImageWrapper>
+                  );
+                })}
               </PreviewContainer>
             </>
           )}
 
           <small>
-            Clique sur une photo pour la définir
-            comme photo principale.
+            Clique sur une photo pour la définir comme photo principale.
           </small>
 
           {/* ============================================
               VIDÉO
           ============================================ */}
 
-          <SectionTitle>
-            Vidéo du modèle
-          </SectionTitle>
+          <SectionTitle>Vidéo du modèle</SectionTitle>
 
           {existingVideo && (
             <div>
-              <Label>
-                Vidéo actuellement associée
-              </Label>
+              <Label>Vidéo actuellement associée</Label>
 
-              <VideoPreview
-                controls
-                src={existingVideo.url}
-              />
+              <VideoPreview controls src={existingVideo.url} />
 
               <ButtonRow>
-                <Button
-                  type="button"
-                  $danger
-                  onClick={
-                    deleteExistingVideo
-                  }
-                >
+                <Button type="button" $danger onClick={deleteExistingVideo}>
                   Supprimer la vidéo
                 </Button>
               </ButtonRow>
@@ -1788,19 +1590,12 @@ function AdminPrecommandes() {
                 : "Ajouter une vidéo"}
             </Label>
 
-            <Input
-              type="file"
-              accept="video/*"
-              onChange={handleVideoChange}
-            />
+            <Input type="file" accept="video/*" onChange={handleVideoChange} />
           </Field>
 
           {newVideo && (
             <div>
-              <VideoPreview
-                controls
-                src={newVideo.preview}
-              />
+              <VideoPreview controls src={newVideo.preview} />
 
               <Button
                 type="button"
@@ -1818,36 +1613,24 @@ function AdminPrecommandes() {
           {(newVideo || existingVideo) && (
             <Grid>
               <Field>
-                <Label>
-                  Titre de la vidéo
-                </Label>
+                <Label>Titre de la vidéo</Label>
 
                 <Input
                   type="text"
                   placeholder="Titre de la vidéo"
                   value={videoTitle}
-                  onChange={(e) =>
-                    setVideoTitle(
-                      e.target.value,
-                    )
-                  }
+                  onChange={(e) => setVideoTitle(e.target.value)}
                 />
               </Field>
 
               <Field>
-                <Label>
-                  Description de la vidéo
-                </Label>
+                <Label>Description de la vidéo</Label>
 
                 <Input
                   type="text"
                   placeholder="Description"
                   value={videoDescription}
-                  onChange={(e) =>
-                    setVideoDescription(
-                      e.target.value,
-                    )
-                  }
+                  onChange={(e) => setVideoDescription(e.target.value)}
                 />
               </Field>
             </Grid>
@@ -1858,12 +1641,7 @@ function AdminPrecommandes() {
           ============================================ */}
 
           <ButtonRow>
-            <Button
-              type="submit"
-              disabled={
-                loading || videoUploading
-              }
-            >
+            <Button type="submit" disabled={loading || videoUploading}>
               {loading || videoUploading
                 ? "Enregistrement..."
                 : editingProductId
@@ -1890,37 +1668,24 @@ function AdminPrecommandes() {
       ================================================== */}
 
       <Section>
-        <SectionTitle>
-          Modèles de précommande
-        </SectionTitle>
+        <SectionTitle>Modèles de précommande</SectionTitle>
 
         {productsLoading ? (
-          <Loading>
-            Chargement des modèles...
-          </Loading>
+          <Loading>Chargement des modèles...</Loading>
         ) : products.length === 0 ? (
-          <Loading>
-            Aucun produit enregistré.
-          </Loading>
+          <Loading>Aucun produit enregistré.</Loading>
         ) : (
           <ProductGrid>
             {products.map((product) => {
               const image =
-                product.images?.find(
-                  (item) => item.isMain,
-                )?.url ||
+                product.images?.find((item) => item.isMain)?.url ||
                 product.images?.[0]?.url ||
                 "";
 
               return (
-                <ProductCard
-                  key={product._id}
-                >
+                <ProductCard key={product._id}>
                   {image ? (
-                    <ProductCardImage
-                      src={image}
-                      alt={product.title}
-                    />
+                    <ProductCardImage src={image} alt={product.title} />
                   ) : (
                     <div
                       style={{
@@ -1937,83 +1702,52 @@ function AdminPrecommandes() {
                   )}
 
                   <ProductCardBody>
-                    <Badge
-                      $active={
-                        product.precommande
-                      }
-                    >
+                    <Badge $active={product.precommande}>
                       {product.precommande
                         ? "PRÉCOMMANDE ACTIVE"
                         : "PRÉCOMMANDE INACTIVE"}
                     </Badge>
 
-                    <ProductCardTitle>
-                      {product.title}
-                    </ProductCardTitle>
+                    <ProductCardTitle>{product.title}</ProductCardTitle>
 
                     <ProductDescription>
                       {product.description}
                     </ProductDescription>
 
-                    <Price>
-                      {formatPrice(
-                        product.price,
-                      )}
-                    </Price>
+                    <Price>{formatPrice(product.price)}</Price>
 
                     <Deposit>
                       Dépôt :{" "}
-                      {product.montantDepot !==
-                        null &&
-                      product.montantDepot !==
-                        undefined
-                        ? formatPrice(
-                            product.montantDepot,
-                          )
+                      {product.montantDepot !== null &&
+                      product.montantDepot !== undefined
+                        ? formatPrice(product.montantDepot)
                         : "Calcul automatique"}
                     </Deposit>
 
                     <Availability>
-                      Disponibilité :{" "}
-                      {formatDate(
-                        product.dateDisponibilite,
-                      )}
+                      Disponibilité : {formatDate(product.dateDisponibilite)}
                     </Availability>
 
-                    {product.couleurs?.length >
-                      0 && (
+                    {product.couleurs?.length > 0 && (
                       <Tags>
-                        {product.couleurs.map(
-                          (color) => (
-                            <Tag key={color}>
-                              {color}
-                            </Tag>
-                          ),
-                        )}
+                        {product.couleurs.map((color) => (
+                          <Tag key={color}>{color}</Tag>
+                        ))}
                       </Tags>
                     )}
 
-                    {product.tailles?.length >
-                      0 && (
+                    {product.tailles?.length > 0 && (
                       <Tags>
-                        {product.tailles.map(
-                          (size) => (
-                            <Tag key={size}>
-                              {size}
-                            </Tag>
-                          ),
-                        )}
+                        {product.tailles.map((size) => (
+                          <Tag key={size}>{size}</Tag>
+                        ))}
                       </Tags>
                     )}
 
                     <ButtonRow>
                       <Button
                         type="button"
-                        onClick={() =>
-                          handleEditProduct(
-                            product,
-                          )
-                        }
+                        onClick={() => handleEditProduct(product)}
                       >
                         Modifier
                       </Button>
@@ -2021,11 +1755,7 @@ function AdminPrecommandes() {
                       <Button
                         type="button"
                         $danger
-                        onClick={() =>
-                          handleDeleteProduct(
-                            product._id,
-                          )
-                        }
+                        onClick={() => handleDeleteProduct(product._id)}
                       >
                         Supprimer
                       </Button>
