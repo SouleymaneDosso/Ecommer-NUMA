@@ -56,7 +56,7 @@ import { Toaster } from "react-hot-toast";
 import SuiviCommande from "./pages/SuiviCommande";
 import AdminLivreurs from "./pages/AdminLivreurs";
 import "./i18n";
-
+import Precommande from "./pages/Precommande";
 
 const PublicLayout = ({ children }) => {
   const location = useLocation();
@@ -325,6 +325,14 @@ createRoot(document.getElementById("root")).render(
               }
             />
             <Route
+              path="/precommande"
+              element={
+                <PublicLayout>
+                  <Precommande />
+                </PublicLayout>
+              }
+            />
+            <Route
               path="/merci/:id"
               element={
                 <PublicLayout>
@@ -332,7 +340,6 @@ createRoot(document.getElementById("root")).render(
                 </PublicLayout>
               }
             />
-            
 
             <Route
               path="*"
