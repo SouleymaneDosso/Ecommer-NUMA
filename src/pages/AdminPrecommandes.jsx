@@ -1,798 +1,455 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 
-// ======================================================
-// STYLES
-// ======================================================
+const API_URL = import.meta.env.VITE_API_URL;
 
-const Container = styled.div`
-  padding: 40px;
-  max-width: 1400px;
-  margin: 0 auto;
-  min-height: 100vh;
-  background: #f9fafb;
-`;
-
-const Title = styled.h1`
-  font-size: 32px;
-  font-weight: bold;
-  margin-bottom: 10px;
-  color: #2c3e50;
-`;
-
-const Subtitle = styled.p`
-  margin-bottom: 30px;
-  color: #666;
-`;
-
-const Section = styled.section`
-  background: #fff;
-  padding: 25px;
-  border-radius: 12px;
-  margin-bottom: 30px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-`;
-
-const SectionTitle = styled.h2`
-  margin: 0 0 20px;
-  color: #2c3e50;
-  font-size: 22px;
-`;
-
-const Form = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-`;
-
-const Grid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 15px;
-
-  @media (max-width: 700px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const Field = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-`;
-
-const Label = styled.label`
-  font-weight: 600;
-  color: #34495e;
-  font-size: 14px;
-`;
-
-const Input = styled.input`
-  width: 100%;
-  box-sizing: border-box;
-  padding: 11px;
-  border-radius: 7px;
-  border: 1px solid #ccc;
-  font-size: 14px;
-
-  &:focus {
-    outline: none;
-    border-color: #007bff;
-  }
-`;
-
-const Textarea = styled.textarea`
-  width: 100%;
-  box-sizing: border-box;
-  min-height: 120px;
-  resize: vertical;
-  padding: 11px;
-  border-radius: 7px;
-  border: 1px solid #ccc;
-  font-family: inherit;
-  font-size: 14px;
-
-  &:focus {
-    outline: none;
-    border-color: #007bff;
-  }
-`;
-
-const Select = styled.select`
-  width: 100%;
-  box-sizing: border-box;
-  padding: 11px;
-  border-radius: 7px;
-  border: 1px solid #ccc;
-  background: #fff;
-  font-size: 14px;
-`;
-
-const ButtonRow = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 10px;
-`;
-
-const Button = styled.button`
-  padding: 11px 18px;
-  border: none;
-  border-radius: 7px;
-  color: #fff;
-  background: ${(props) => {
-    if (props.$danger) return "#e74c3c";
-    if (props.$secondary) return "#7f8c8d";
-    if (props.$warning) return "#f39c12";
-    return "#007bff";
-  }};
-  font-weight: bold;
-  cursor: pointer;
-
-  &:hover {
-    opacity: 0.9;
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-`;
-
-const CheckBoxRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px;
-  background: #f8f9fa;
-  border-radius: 8px;
-`;
-
-const CheckBox = styled.input`
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
-`;
-
-const PreviewContainer = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 10px;
-`;
-
-const ImageWrapper = styled.div`
-  position: relative;
-`;
-
-const PreviewImage = styled.img`
-  width: 110px;
-  height: 110px;
-  object-fit: cover;
-  border-radius: 8px;
-  border: ${(props) =>
-    props.$main ? "3px solid #007bff" : "1px solid #ddd"};
-  cursor: pointer;
-`;
-
-const DeleteImageButton = styled.button`
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  border: none;
-  background: #e74c3c;
-  color: white;
-  width: 25px;
-  height: 25px;
-  border-radius: 50%;
-  cursor: pointer;
-  font-weight: bold;
-`;
-
-const MainBadge = styled.div`
-  position: absolute;
-  bottom: 5px;
-  left: 5px;
-  background: #007bff;
-  color: white;
-  padding: 3px 6px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: bold;
-`;
-
-const VideoPreview = styled.video`
-  width: 300px;
-  max-width: 100%;
-  max-height: 250px;
-  border-radius: 10px;
-  background: #000;
-  margin-top: 10px;
-`;
-
-const ProductGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-
-  @media (max-width: 1100px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  @media (max-width: 700px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const ProductCard = styled.div`
-  border: 1px solid #e5e5e5;
-  border-radius: 12px;
-  overflow: hidden;
-  background: #fff;
-`;
-
-const ProductCardImage = styled.img`
-  width: 100%;
-  height: 260px;
-  object-fit: cover;
-  display: block;
-`;
-
-const ProductCardBody = styled.div`
-  padding: 15px;
-`;
-
-const ProductCardTitle = styled.h3`
-  margin: 0 0 8px;
-  color: #2c3e50;
-`;
-
-const ProductDescription = styled.p`
-  color: #666;
-  font-size: 14px;
-  line-height: 1.5;
-`;
-
-const Price = styled.div`
-  font-weight: bold;
-  font-size: 18px;
-  color: #2c3e50;
-  margin: 8px 0;
-`;
-
-const Deposit = styled.div`
-  color: #27ae60;
-  font-weight: 600;
-  margin-bottom: 8px;
-`;
-
-const Availability = styled.div`
-  color: #555;
-  font-size: 14px;
-  margin-bottom: 10px;
-`;
-
-const Badge = styled.span`
-  display: inline-block;
-  padding: 5px 9px;
-  border-radius: 15px;
-  font-size: 12px;
-  font-weight: bold;
-  margin-bottom: 10px;
-  background: ${(props) =>
-    props.$active ? "#d5f5e3" : "#fadbd8"};
-  color: ${(props) =>
-    props.$active ? "#1e8449" : "#c0392b"};
-`;
-
-const Tags = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 10px 0;
-`;
-
-const Tag = styled.span`
-  background: #f1f1f1;
-  padding: 5px 8px;
-  border-radius: 5px;
-  font-size: 12px;
-`;
-
-const ErrorMessage = styled.div`
-  background: #fdecea;
-  color: #c0392b;
-  padding: 12px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-`;
-
-const SuccessMessage = styled.div`
-  background: #eafaf1;
-  color: #1e8449;
-  padding: 12px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-`;
-
-const Loading = styled.div`
-  padding: 30px;
-  text-align: center;
-  color: #666;
-`;
-
-// ======================================================
-// HELPERS
-// ======================================================
-
-const formatPrice = (value) => {
-  const number = Number(value);
-
-  if (Number.isNaN(number)) {
-    return "0 FCFA";
-  }
-
-  return `${number.toLocaleString("fr-FR")} FCFA`;
-};
-
-const formatDate = (value) => {
-  if (!value) return "Non définie";
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "Date invalide";
-  }
-
-  return date.toLocaleDateString("fr-FR", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
-};
-
-// ======================================================
-// COMPOSANT
-// ======================================================
-
-function AdminPrecommandes() {
+const AdminPrecommandes = () => {
   const token = localStorage.getItem("adminToken");
-  const API = import.meta.env.VITE_API_URL;
 
-  // ====================================================
-  // FORMULAIRE
-  // ====================================================
-
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [price, setPrice] = useState("");
-  const [montantDepot, setMontantDepot] = useState("");
-  const [dateDisponibilite, setDateDisponibilite] =
-    useState("");
-
-  const [genre, setGenre] = useState("homme");
-  const [categorie, setCategorie] = useState("haut");
-  const [badge, setBadge] = useState("");
-
-  const [colors, setColors] = useState([]);
-  const [sizes, setSizes] = useState([]);
-
-  const [details, setDetails] = useState({
-    matiere: "",
-    poids: "",
-    coupe: "",
-    saison: "",
-    entretien: "",
-    paysFabrication: "",
-  });
-
-  const [precommande, setPrecommande] = useState(true);
-
-  // ====================================================
-  // IMAGES
-  // ====================================================
-
-  const [existingImages, setExistingImages] = useState([]);
-  const [newImages, setNewImages] = useState([]);
-  const [imagesToDelete, setImagesToDelete] = useState([]);
-  const [mainImageIndex, setMainImageIndex] = useState(null);
-
-  // ====================================================
-  // VIDÉO
-  // ====================================================
-
-  const [existingVideo, setExistingVideo] = useState(null);
-  const [newVideo, setNewVideo] = useState(null);
-  const [videoTitle, setVideoTitle] = useState("");
-  const [videoDescription, setVideoDescription] =
-    useState("");
-  const [videoUploading, setVideoUploading] =
-    useState(false);
-
-  // ====================================================
-  // PRODUITS
-  // ====================================================
-
-  const [products, setProducts] = useState([]);
-  const [editingProductId, setEditingProductId] =
-    useState(null);
-
-  // ====================================================
-  // UI
-  // ====================================================
+  const [produits, setProduits] = useState([]);
+  const [videos, setVideos] = useState([]);
 
   const [loading, setLoading] = useState(false);
-  const [productsLoading, setProductsLoading] =
-    useState(true);
+  const [loadingVideos, setLoadingVideos] = useState(false);
 
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [editingId, setEditingId] = useState(null);
 
-  // ====================================================
-  // RÉCUPÉRER LES PRODUITS
-  // ====================================================
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    price: "",
+    montantDepot: "",
+    dateDisponibilite: "",
+    genre: "homme",
+    categorie: "haut",
+    badge: "",
+    precommande: true,
+    hero: false,
+    details: "",
+  });
 
-  const fetchProducts = async () => {
-    if (!token) {
-      setError("Accès non autorisé.");
-      setProductsLoading(false);
-      return;
-    }
+  const [tailles, setTailles] = useState([]);
+  const [couleurs, setCouleurs] = useState([]);
 
+  const [nouvelleTaille, setNouvelleTaille] = useState("");
+  const [nouvelleCouleur, setNouvelleCouleur] = useState("");
+
+  const [stockParVariation, setStockParVariation] = useState({});
+
+  const [imagesExistantes, setImagesExistantes] = useState([]);
+  const [nouvellesImages, setNouvellesImages] = useState([]);
+  const [mainImageIndex, setMainImageIndex] = useState(0);
+
+  const [videoFile, setVideoFile] = useState(null);
+  const [videoActuelle, setVideoActuelle] = useState(null);
+
+  /* =========================
+     CHARGER LES PRODUITS
+  ========================= */
+
+  const chargerProduits = async () => {
     try {
-      setProductsLoading(true);
+      setLoading(true);
 
-      const res = await fetch(`${API}/api/produits`, {
+      const response = await fetch(`${API_URL}/api/produits`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      const data = await res.json();
+      const data = await response.json();
 
-      if (!res.ok) {
-        throw new Error(
-          data.message ||
-            "Erreur lors de la récupération des produits",
-        );
+      if (!response.ok) {
+        throw new Error(data.message || "Erreur lors du chargement");
       }
 
-      /*
-       * Ton endpoint peut retourner directement un tableau
-       * ou un objet contenant produits.
-       */
-      const liste = Array.isArray(data)
-        ? data
-        : data.produits || [];
+      const liste =
+        data.produits ||
+        data.products ||
+        data ||
+        [];
 
-      setProducts(liste);
-    } catch (err) {
-      console.error(err);
-      setError(
-        err.message ||
-          "Erreur lors de la récupération des produits",
-      );
+      setProduits(Array.isArray(liste) ? liste : []);
+    } catch (error) {
+      console.error(error);
+      alert(error.message);
     } finally {
-      setProductsLoading(false);
+      setLoading(false);
+    }
+  };
+
+  /* =========================
+     CHARGER LES VIDEOS
+  ========================= */
+
+  const chargerVideos = async () => {
+    try {
+      setLoadingVideos(true);
+
+      const response = await fetch(`${API_URL}/api/videos/videos`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Erreur lors du chargement des vidéos");
+      }
+
+      setVideos(data.videos || []);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingVideos(false);
     }
   };
 
   useEffect(() => {
-    fetchProducts();
+    chargerProduits();
+    chargerVideos();
   }, []);
 
-  // ====================================================
-  // GESTION IMAGES
-  // ====================================================
+  /* =========================
+     FORM
+  ========================= */
 
-  const handleImagesChange = (e) => {
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+
+    setForm((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  /* =========================
+     TAILLES
+  ========================= */
+
+  const ajouterTaille = () => {
+    const taille = nouvelleTaille.trim();
+
+    if (!taille) return;
+
+    const existe = tailles.some(
+      (item) => item.toLowerCase() === taille.toLowerCase()
+    );
+
+    if (existe) {
+      setNouvelleTaille("");
+      return;
+    }
+
+    setTailles((prev) => [...prev, taille]);
+
+    setStockParVariation((prev) => ({
+      ...prev,
+      [taille]: {
+        ...(prev[taille] || {}),
+      },
+    }));
+
+    setNouvelleTaille("");
+  };
+
+  const supprimerTaille = (taille) => {
+    setTailles((prev) => prev.filter((item) => item !== taille));
+
+    setStockParVariation((prev) => {
+      const nouveau = { ...prev };
+      delete nouveau[taille];
+      return nouveau;
+    });
+  };
+
+  /* =========================
+     COULEURS
+  ========================= */
+
+  const ajouterCouleur = () => {
+    const couleur = nouvelleCouleur.trim();
+
+    if (!couleur) return;
+
+    const existe = couleurs.some(
+      (item) => item.toLowerCase() === couleur.toLowerCase()
+    );
+
+    if (existe) {
+      setNouvelleCouleur("");
+      return;
+    }
+
+    setCouleurs((prev) => [...prev, couleur]);
+
+    setStockParVariation((prev) => {
+      const nouveau = { ...prev };
+
+      tailles.forEach((taille) => {
+        nouveau[taille] = {
+          ...(nouveau[taille] || {}),
+          [couleur]: nouveau[taille]?.[couleur] ?? 0,
+        };
+      });
+
+      return nouveau;
+    });
+
+    setNouvelleCouleur("");
+  };
+
+  const supprimerCouleur = (couleur) => {
+    setCouleurs((prev) => prev.filter((item) => item !== couleur));
+
+    setStockParVariation((prev) => {
+      const nouveau = { ...prev };
+
+      Object.keys(nouveau).forEach((taille) => {
+        if (nouveau[taille]) {
+          const variations = { ...nouveau[taille] };
+          delete variations[couleur];
+
+          nouveau[taille] = variations;
+        }
+      });
+
+      return nouveau;
+    });
+  };
+
+  /* =========================
+     QUANTITE VARIATION
+  ========================= */
+
+  const modifierQuantiteVariation = (
+    taille,
+    couleur,
+    valeur
+  ) => {
+    const quantite = Math.max(0, Number(valeur) || 0);
+
+    setStockParVariation((prev) => ({
+      ...prev,
+      [taille]: {
+        ...(prev[taille] || {}),
+        [couleur]: quantite,
+      },
+    }));
+  };
+
+  const modifierQuantiteTaille = (taille, valeur) => {
+    const quantite = Math.max(0, Number(valeur) || 0);
+
+    setStockParVariation((prev) => ({
+      ...prev,
+      [taille]: {
+        ...(prev[taille] || {}),
+        general: quantite,
+      },
+    }));
+  };
+
+  /* =========================
+     STOCK TOTAL
+  ========================= */
+
+  const calculerStockTotal = () => {
+    let total = 0;
+
+    Object.values(stockParVariation).forEach((variations) => {
+      Object.values(variations || {}).forEach((quantite) => {
+        total += Number(quantite) || 0;
+      });
+    });
+
+    return total;
+  };
+
+  /* =========================
+     IMAGES
+  ========================= */
+
+  const handleImages = (e) => {
     const files = Array.from(e.target.files || []);
 
-    const filesWithPreview = files.map((file) =>
-      Object.assign(file, {
-        preview: URL.createObjectURL(file),
-      }),
-    );
-
-    setNewImages((prev) => [
-      ...prev,
-      ...filesWithPreview,
-    ]);
-
-    if (
-      mainImageIndex === null &&
-      existingImages.length + filesWithPreview.length > 0
-    ) {
-      setMainImageIndex(0);
-    }
-
-    e.target.value = "";
+    setNouvellesImages((prev) => [...prev, ...files]);
   };
 
-  const handleDeleteExistingImage = (
-    publicId,
-    index,
-  ) => {
-    const updated = existingImages.filter(
-      (img) => img.publicId !== publicId,
+  const supprimerNouvelleImage = (index) => {
+    setNouvellesImages((prev) =>
+      prev.filter((_, i) => i !== index)
+    );
+  };
+
+  const supprimerImageExistante = (index) => {
+    setImagesExistantes((prev) =>
+      prev.filter((_, i) => i !== index)
     );
 
-    setExistingImages(updated);
-    setImagesToDelete((prev) => [...prev, publicId]);
-
-    if (mainImageIndex === index) {
-      if (updated.length + newImages.length > 0) {
-        setMainImageIndex(0);
-      } else {
-        setMainImageIndex(null);
-      }
-    } else if (mainImageIndex > index) {
-      setMainImageIndex(mainImageIndex - 1);
+    if (mainImageIndex >= index) {
+      setMainImageIndex((prev) => Math.max(0, prev - 1));
     }
   };
 
-  const handleDeleteNewImage = (index) => {
-    const globalIndex =
-      existingImages.length + index;
+  /* =========================
+     VIDEO
+  ========================= */
 
-    const image = newImages[index];
+  const trouverVideoProduit = (produit) => {
+    if (!produit) return null;
 
-    if (image?.preview) {
-      URL.revokeObjectURL(image.preview);
+    if (produit.videoId) {
+      const videoId =
+        typeof produit.videoId === "object"
+          ? produit.videoId._id
+          : produit.videoId;
+
+      const videoParId = videos.find(
+        (video) => video._id === videoId
+      );
+
+      if (videoParId) return videoParId;
     }
 
-    const updated = newImages.filter(
-      (_, i) => i !== index,
-    );
+    const videoParProduit = videos.find((video) => {
+      const produitId =
+        typeof video.produitId === "object"
+          ? video.produitId?._id
+          : video.produitId;
 
-    setNewImages(updated);
+      return produitId === produit._id;
+    });
 
-    if (mainImageIndex === globalIndex) {
-      if (
-        existingImages.length + updated.length >
-        0
-      ) {
-        setMainImageIndex(0);
-      } else {
-        setMainImageIndex(null);
-      }
-    } else if (mainImageIndex > globalIndex) {
-      setMainImageIndex(mainImageIndex - 1);
-    }
+    return videoParProduit || null;
   };
-
-  // ====================================================
-  // GESTION VIDÉO
-  // ====================================================
 
   const handleVideoChange = (e) => {
     const file = e.target.files?.[0];
 
-    if (!file) return;
-
-    if (newVideo?.preview) {
-      URL.revokeObjectURL(newVideo.preview);
+    if (file) {
+      setVideoFile(file);
     }
-
-    const video = Object.assign(file, {
-      preview: URL.createObjectURL(file),
-    });
-
-    setNewVideo(video);
-
-    e.target.value = "";
   };
 
-  const removeNewVideo = () => {
-    if (newVideo?.preview) {
-      URL.revokeObjectURL(newVideo.preview);
-    }
-
-    setNewVideo(null);
-  };
-
-  // ====================================================
-  // STOCK / COULEURS / TAILLES
-  // ====================================================
-
-  const handleColorsChange = (value) => {
-    const result = value
-      .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean);
-
-    setColors(result);
-  };
-
-  const handleSizesChange = (value) => {
-    const result = value
-      .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean);
-
-    setSizes(result);
-  };
-
-  // ====================================================
-  // RESET
-  // ====================================================
+  /* =========================
+     RESET FORM
+  ========================= */
 
   const resetForm = () => {
-    newImages.forEach((img) => {
-      if (img.preview) {
-        URL.revokeObjectURL(img.preview);
-      }
+    setEditingId(null);
+
+    setForm({
+      title: "",
+      description: "",
+      price: "",
+      montantDepot: "",
+      dateDisponibilite: "",
+      genre: "homme",
+      categorie: "haut",
+      badge: "",
+      precommande: true,
+      hero: false,
+      details: "",
     });
 
-    if (newVideo?.preview) {
-      URL.revokeObjectURL(newVideo.preview);
-    }
+    setTailles([]);
+    setCouleurs([]);
 
-    setTitle("");
-    setDescription("");
-    setPrice("");
-    setMontantDepot("");
-    setDateDisponibilite("");
+    setNouvelleTaille("");
+    setNouvelleCouleur("");
 
-    setGenre("homme");
-    setCategorie("haut");
-    setBadge("");
+    setStockParVariation({});
 
-    setColors([]);
-    setSizes([]);
+    setImagesExistantes([]);
+    setNouvellesImages([]);
+    setMainImageIndex(0);
 
-    setDetails({
-      matiere: "",
-      poids: "",
-      coupe: "",
-      saison: "",
-      entretien: "",
-      paysFabrication: "",
-    });
-
-    setPrecommande(true);
-
-    setExistingImages([]);
-    setNewImages([]);
-    setImagesToDelete([]);
-    setMainImageIndex(null);
-
-    setExistingVideo(null);
-    setNewVideo(null);
-    setVideoTitle("");
-    setVideoDescription("");
-
-    setEditingProductId(null);
+    setVideoFile(null);
+    setVideoActuelle(null);
   };
 
-  // ====================================================
-  // ÉDITER UN MODÈLE
-  // ====================================================
+  /* =========================
+     EDITER
+  ========================= */
 
-  const handleEditProduct = async (product) => {
-    setError("");
-    setSuccess("");
+  const modifierProduit = (produit) => {
+    setEditingId(produit._id);
 
-    setEditingProductId(product._id);
-
-    setTitle(product.title || "");
-    setDescription(product.description || "");
-    setPrice(product.price ?? "");
-
-    setMontantDepot(
-      product.montantDepot !== null &&
-        product.montantDepot !== undefined
-        ? product.montantDepot
+    setForm({
+      title: produit.title || "",
+      description: produit.description || "",
+      price: produit.price ?? "",
+      montantDepot: produit.montantDepot ?? "",
+      dateDisponibilite: produit.dateDisponibilite
+        ? new Date(produit.dateDisponibilite)
+            .toISOString()
+            .split("T")[0]
         : "",
-    );
-
-    if (product.dateDisponibilite) {
-      const date = new Date(
-        product.dateDisponibilite,
-      );
-
-      if (!Number.isNaN(date.getTime())) {
-        setDateDisponibilite(
-          date.toISOString().split("T")[0],
-        );
-      } else {
-        setDateDisponibilite("");
-      }
-    } else {
-      setDateDisponibilite("");
-    }
-
-    setGenre(product.genre || "homme");
-    setCategorie(product.categorie || "haut");
-    setBadge(product.badge || "");
-
-    setColors(product.couleurs || []);
-    setSizes(product.tailles || []);
-
-    setPrecommande(
-      product.precommande === true,
-    );
-
-    setDetails({
-      matiere: product.details?.matiere || "",
-      poids: product.details?.poids || "",
-      coupe: product.details?.coupe || "",
-      saison: product.details?.saison || "",
-      entretien:
-        product.details?.entretien || "",
-      paysFabrication:
-        product.details?.paysFabrication || "",
+      genre: produit.genre || "homme",
+      categorie: produit.categorie || "haut",
+      badge: produit.badge || "",
+      precommande: produit.precommande ?? false,
+      hero: produit.hero ?? false,
+      details: produit.details
+        ? Object.entries(produit.details)
+            .map(([key, value]) => `${key}: ${value}`)
+            .join("\n")
+        : "",
     });
 
-    setExistingImages(product.images || []);
-    setNewImages([]);
-    setImagesToDelete([]);
+    setTailles(produit.tailles || []);
+    setCouleurs(produit.couleurs || []);
 
-    const mainIndex =
-      product.images?.findIndex(
-        (image) => image.isMain,
-      );
+    /* Conversion Map -> objet */
+    let variations = produit.stockParVariation || {};
 
-    setMainImageIndex(
-      mainIndex !== undefined &&
-        mainIndex !== -1
-        ? mainIndex
-        : product.images?.length
-          ? 0
-          : null,
+    if (
+      variations &&
+      typeof variations.toJSON === "function"
+    ) {
+      variations = variations.toJSON();
+    }
+
+    if (variations instanceof Map) {
+      variations = Object.fromEntries(variations);
+    }
+
+    const variationsNormalisees = {};
+
+    Object.entries(variations || {}).forEach(
+      ([taille, valeurs]) => {
+        if (valeurs instanceof Map) {
+          variationsNormalisees[taille] =
+            Object.fromEntries(valeurs);
+        } else {
+          variationsNormalisees[taille] = {
+            ...(valeurs || {}),
+          };
+        }
+      }
     );
 
-    setExistingVideo(null);
-    setNewVideo(null);
+    setStockParVariation(variationsNormalisees);
 
-    /*
-     * On récupère la vidéo associée au produit.
-     * product.videoId peut être un ObjectId ou un objet
-     * selon la réponse backend.
-     */
-    if (product.videoId) {
-      const videoId =
-        typeof product.videoId === "object"
-          ? product.videoId._id
-          : product.videoId;
+    setImagesExistantes(produit.images || []);
+    setNouvellesImages([]);
 
-      try {
-        const res = await fetch(
-          `${API}/api/videos/videos`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
+    const imagePrincipaleIndex = (
+      produit.images || []
+    ).findIndex((image) => image.isMain);
 
-        const data = await res.json();
+    setMainImageIndex(
+      imagePrincipaleIndex >= 0
+        ? imagePrincipaleIndex
+        : 0
+    );
 
-        if (res.ok) {
-          const videos = data.videos || [];
+    const video = trouverVideoProduit(produit);
 
-          const video = videos.find(
-            (item) =>
-              item._id === videoId ||
-              item.produitId?._id === product._id ||
-              item.produitId === product._id,
-          );
-
-          if (video) {
-            setExistingVideo(video);
-            setVideoTitle(video.title || "");
-            setVideoDescription(
-              video.description || "",
-            );
-          }
-        }
-      } catch (err) {
-        console.error(
-          "Erreur récupération vidéo:",
-          err,
-        );
-      }
-    }
+    setVideoActuelle(video);
+    setVideoFile(null);
 
     window.scrollTo({
       top: 0,
@@ -800,536 +457,466 @@ function AdminPrecommandes() {
     });
   };
 
-  // ====================================================
-  // UPLOAD VIDÉO
-  // ====================================================
+  /* =========================
+     DETAILS
+  ========================= */
 
-  const uploadVideoForProduct = async (
-    productId,
-  ) => {
-    if (!newVideo) {
-      return true;
+  const convertirDetails = () => {
+    const details = {};
+
+    if (!form.details.trim()) {
+      return details;
     }
 
-    try {
-      setVideoUploading(true);
+    form.details
+      .split("\n")
+      .map((ligne) => ligne.trim())
+      .filter(Boolean)
+      .forEach((ligne) => {
+        const index = ligne.indexOf(":");
 
-      const formData = new FormData();
+        if (index !== -1) {
+          const key = ligne
+            .slice(0, index)
+            .trim();
 
-      formData.append("video", newVideo);
-      formData.append("produitId", productId);
+          const value = ligne
+            .slice(index + 1)
+            .trim();
 
-      if (videoTitle.trim()) {
-        formData.append(
-          "title",
-          videoTitle.trim(),
-        );
-      }
+          if (key) {
+            details[key] = value;
+          }
+        }
+      });
 
+    return details;
+  };
+
+  /* =========================
+     CONSTRUIRE FORMDATA
+  ========================= */
+
+  const construireFormData = () => {
+    const formData = new FormData();
+
+    formData.append("title", form.title.trim());
+    formData.append(
+      "description",
+      form.description.trim()
+    );
+
+    formData.append(
+      "price",
+      String(Number(form.price) || 0)
+    );
+
+    formData.append(
+      "montantDepot",
+      form.montantDepot === ""
+        ? ""
+        : String(Number(form.montantDepot) || 0)
+    );
+
+    if (form.dateDisponibilite) {
       formData.append(
-        "description",
-        videoDescription.trim(),
+        "dateDisponibilite",
+        form.dateDisponibilite
       );
-
-      const res = await fetch(
-        `${API}/api/videos/upload-produit`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-        },
-      );
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(
-          data.message ||
-            "Erreur lors de l'upload de la vidéo",
-        );
-      }
-
-      return true;
-    } catch (err) {
-      console.error(err);
-
-      setError(
-        err.message ||
-          "Erreur lors de l'upload de la vidéo",
-      );
-
-      return false;
-    } finally {
-      setVideoUploading(false);
     }
+
+    formData.append("genre", form.genre);
+    formData.append("categorie", form.categorie);
+
+    if (form.badge) {
+      formData.append("badge", form.badge);
+    }
+
+    formData.append(
+      "precommande",
+      String(form.precommande)
+    );
+
+    formData.append(
+      "hero",
+      String(form.hero)
+    );
+
+    formData.append(
+      "tailles",
+      JSON.stringify(tailles)
+    );
+
+    formData.append(
+      "couleurs",
+      JSON.stringify(couleurs)
+    );
+
+    formData.append(
+      "stockParVariation",
+      JSON.stringify(stockParVariation)
+    );
+
+    formData.append(
+      "stock",
+      String(calculerStockTotal())
+    );
+
+    formData.append(
+      "details",
+      JSON.stringify(convertirDetails())
+    );
+
+    nouvellesImages.forEach((file) => {
+      formData.append("images", file);
+    });
+
+    formData.append(
+      "imagesExistantes",
+      JSON.stringify(imagesExistantes)
+    );
+
+    formData.append(
+      "mainImageIndex",
+      String(mainImageIndex)
+    );
+
+    return formData;
   };
 
-  // ====================================================
-  // SUPPRIMER VIDÉO EXISTANTE
-  // ====================================================
+  /* =========================
+     ENREGISTRER
+  ========================= */
 
-  const deleteExistingVideo = async () => {
-    if (!existingVideo?._id) {
-      return;
-    }
-
-    if (
-      !window.confirm(
-        "Supprimer la vidéo associée à ce modèle ?",
-      )
-    ) {
-      return;
-    }
-
-    try {
-      const res = await fetch(
-        `${API}/api/videos/videos/${existingVideo._id}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(
-          data.message ||
-            "Erreur lors de la suppression de la vidéo",
-        );
-      }
-
-      setExistingVideo(null);
-      setVideoTitle("");
-      setVideoDescription("");
-
-      setSuccess(
-        data.message ||
-          "Vidéo supprimée avec succès.",
-      );
-
-      await fetchProducts();
-    } catch (err) {
-      console.error(err);
-
-      setError(
-        err.message ||
-          "Erreur lors de la suppression de la vidéo",
-      );
-    }
-  };
-
-  // ====================================================
-  // SUBMIT
-  // ====================================================
-
-  const handleSubmit = async (e) => {
+  const enregistrerProduit = async (e) => {
     e.preventDefault();
 
-    setError("");
-    setSuccess("");
-
-    if (!token) {
-      setError("Token admin manquant.");
+    if (!form.title.trim()) {
+      alert("Le titre est requis.");
       return;
     }
 
-    if (!title.trim()) {
-      setError("Le titre est obligatoire.");
+    if (!form.description.trim()) {
+      alert("La description est requise.");
       return;
     }
 
-    if (!description.trim()) {
-      setError("La description est obligatoire.");
+    if (!form.price || Number(form.price) <= 0) {
+      alert("Le prix doit être supérieur à 0.");
       return;
     }
 
-    if (!price || Number(price) < 0) {
-      setError("Le prix est obligatoire.");
-      return;
-    }
-
-    if (
-      existingImages.length + newImages.length ===
-      0
-    ) {
-      setError(
-        "Ajoute au moins une image au modèle.",
-      );
+    if (tailles.length === 0) {
+      alert("Ajoute au moins une taille.");
       return;
     }
 
     if (
-      precommande &&
-      montantDepot !== "" &&
-      Number(montantDepot) < 0
+      couleurs.length > 0 &&
+      tailles.length > 0
     ) {
-      setError(
-        "Le montant du dépôt ne peut pas être négatif.",
-      );
-      return;
-    }
+      const stockTotal = calculerStockTotal();
 
-    if (
-      mainImageIndex === null &&
-      existingImages.length + newImages.length > 0
-    ) {
-      setMainImageIndex(0);
+      if (stockTotal <= 0) {
+        alert(
+          "Ajoute au moins une quantité dans les variations."
+        );
+        return;
+      }
     }
 
     try {
       setLoading(true);
 
-      // ----------------------------------------------
-      // STOCK PAR VARIATION
-      // ----------------------------------------------
-      const stockParVariation = {};
+      const formData = construireFormData();
 
-      colors.forEach((color) => {
-        stockParVariation[color] = {};
+      const url = editingId
+        ? `${API_URL}/api/produits/${editingId}`
+        : `${API_URL}/api/produits`;
 
-        sizes.forEach((size) => {
-          stockParVariation[color][size] = 0;
-        });
+      const method = editingId ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
       });
 
-      // ----------------------------------------------
-      // FORM DATA
-      // ----------------------------------------------
+      const data = await response.json();
 
-      const formData = new FormData();
-
-      formData.append("title", title.trim());
-      formData.append(
-        "description",
-        description.trim(),
-      );
-
-      formData.append("price", Number(price));
-      formData.append(
-        "stock",
-        "0",
-      );
-
-      formData.append(
-        "couleurs",
-        JSON.stringify(colors),
-      );
-
-      formData.append(
-        "tailles",
-        JSON.stringify(sizes),
-      );
-
-      formData.append(
-        "stockParVariation",
-        JSON.stringify(stockParVariation),
-      );
-
-      formData.append("genre", genre);
-      formData.append("categorie", categorie);
-
-      if (badge) {
-        formData.append("badge", badge);
-      }
-
-      formData.append(
-        "hero",
-        "false",
-      );
-
-      formData.append(
-        "precommande",
-        String(precommande),
-      );
-
-      if (montantDepot !== "") {
-        formData.append(
-          "montantDepot",
-          Number(montantDepot),
-        );
-      } else {
-        formData.append(
-          "montantDepot",
-          "",
+      if (!response.ok) {
+        throw new Error(
+          data.message ||
+            "Erreur lors de l'enregistrement"
         );
       }
 
-      if (dateDisponibilite) {
-        formData.append(
-          "dateDisponibilite",
-          dateDisponibilite,
+      const produitEnregistre =
+        data.produit ||
+        data.product ||
+        data;
+
+      const produitId =
+        produitEnregistre?._id ||
+        editingId;
+
+      /* =========================
+         VIDEO
+      ========================= */
+
+      if (videoFile && produitId) {
+        const videoFormData = new FormData();
+
+        videoFormData.append(
+          "video",
+          videoFile
         );
-      } else {
-        formData.append(
-          "dateDisponibilite",
-          "",
+
+        videoFormData.append(
+          "produitId",
+          produitId
         );
-      }
 
-      formData.append(
-        "details",
-        JSON.stringify(details),
-      );
-
-      formData.append(
-        "imagesToDelete",
-        JSON.stringify(imagesToDelete),
-      );
-
-      // ----------------------------------------------
-      // IMAGES
-      // ----------------------------------------------
-
-      newImages.forEach((file) => {
-        formData.append("images", file);
-      });
-
-      /*
-       * Important :
-       * mainImageIndex correspond à la liste finale
-       * existantes + nouvelles.
-       */
-      formData.append(
-        "mainImageIndex",
-        mainImageIndex !== null
-          ? String(mainImageIndex)
-          : "0",
-      );
-
-      // ----------------------------------------------
-      // PRODUIT
-      // ----------------------------------------------
-
-      let res;
-
-      if (editingProductId) {
-        res = await fetch(
-          `${API}/api/produits/${editingProductId}`,
-          {
-            method: "PUT",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-            body: formData,
-          },
+        videoFormData.append(
+          "title",
+          form.title.trim()
         );
-      } else {
-        res = await fetch(
-          `${API}/api/produits`,
+
+        videoFormData.append(
+          "description",
+          form.description.trim()
+        );
+
+        const videoResponse = await fetch(
+          `${API_URL}/api/videos/upload-produit`,
           {
             method: "POST",
             headers: {
               Authorization: `Bearer ${token}`,
             },
-            body: formData,
-          },
+            body: videoFormData,
+          }
         );
-      }
 
-      const data = await res.json();
+        const videoData =
+          await videoResponse.json();
 
-      if (!res.ok) {
-        throw new Error(
-          data.message ||
-            "Erreur lors de l'enregistrement du modèle",
-        );
-      }
-
-      /*
-       * On récupère l'ID du produit créé/modifié.
-       */
-      const productId =
-        editingProductId ||
-        data.produit?._id ||
-        data.product?._id ||
-        data._id;
-
-      // ----------------------------------------------
-      // VIDÉO
-      // ----------------------------------------------
-
-      if (newVideo && productId) {
-        const videoOk =
-          await uploadVideoForProduct(
-            productId,
+        if (!videoResponse.ok) {
+          throw new Error(
+            videoData.message ||
+              "Le produit a été enregistré mais la vidéo n'a pas pu être envoyée."
           );
-
-        if (!videoOk) {
-          setLoading(false);
-
-          alert(
-            "Le modèle a été enregistré, mais la vidéo n'a pas pu être associée.",
-          );
-
-          await fetchProducts();
-          return;
         }
       }
 
-      setSuccess(
-        editingProductId
+      alert(
+        editingId
           ? "Modèle de précommande modifié avec succès."
-          : "Modèle de précommande créé avec succès.",
+          : "Modèle de précommande créé avec succès."
       );
 
       resetForm();
 
-      await fetchProducts();
-    } catch (err) {
-      console.error(
-        "SAVE PRECOMMANDE MODEL ERROR:",
-        err,
-      );
-
-      setError(
-        err.message ||
-          "Erreur lors de l'enregistrement du modèle.",
-      );
+      await chargerProduits();
+      await chargerVideos();
+    } catch (error) {
+      console.error(error);
+      alert(error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // ====================================================
-  // SUPPRIMER PRODUIT
-  // ====================================================
+  /* =========================
+     SUPPRIMER VIDEO
+  ========================= */
 
-  const handleDeleteProduct = async (id) => {
-    if (
-      !window.confirm(
-        "Supprimer définitivement ce modèle ?",
-      )
-    ) {
-      return;
-    }
+  const supprimerVideo = async (video) => {
+    if (!video?._id) return;
+
+    const confirmer = window.confirm(
+      "Voulez-vous vraiment supprimer cette vidéo ?"
+    );
+
+    if (!confirmer) return;
 
     try {
-      setError("");
-      setSuccess("");
-
-      const res = await fetch(
-        `${API}/api/produits/${id}`,
+      const response = await fetch(
+        `${API_URL}/api/videos/videos/${video._id}`,
         {
           method: "DELETE",
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        },
+        }
       );
 
-      const data = await res.json();
+      const data = await response.json();
 
-      if (!res.ok) {
+      if (!response.ok) {
         throw new Error(
           data.message ||
-            "Erreur lors de la suppression",
+            "Erreur lors de la suppression"
         );
       }
 
-      setProducts((prev) =>
-        prev.filter(
-          (product) => product._id !== id,
-        ),
-      );
+      setVideoActuelle(null);
 
-      setSuccess(
-        data.message ||
-          "Modèle supprimé avec succès.",
-      );
-    } catch (err) {
-      console.error(err);
+      if (editingId) {
+        setProduits((prev) =>
+          prev.map((produit) =>
+            produit._id === editingId
+              ? {
+                  ...produit,
+                  videoId: null,
+                }
+              : produit
+          )
+        );
+      }
 
-      setError(
-        err.message ||
-          "Erreur lors de la suppression.",
-      );
+      await chargerVideos();
+
+      alert("Vidéo supprimée.");
+    } catch (error) {
+      console.error(error);
+      alert(error.message);
     }
   };
 
-  // ====================================================
-  // RENDER
-  // ====================================================
+  /* =========================
+     SUPPRIMER PRODUIT
+  ========================= */
+
+  const supprimerProduit = async (id) => {
+    const confirmer = window.confirm(
+      "Voulez-vous vraiment supprimer ce modèle ?"
+    );
+
+    if (!confirmer) return;
+
+    try {
+      setLoading(true);
+
+      const response = await fetch(
+        `${API_URL}/api/produits/${id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message ||
+            "Erreur lors de la suppression"
+        );
+      }
+
+      if (editingId === id) {
+        resetForm();
+      }
+
+      await chargerProduits();
+
+      alert("Modèle supprimé avec succès.");
+    } catch (error) {
+      console.error(error);
+      alert(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* =========================
+     TOTAL PAR TAILLE
+  ========================= */
+
+  const totalParTaille = (taille) => {
+    return couleurs.length > 0
+      ? couleurs.reduce(
+          (total, couleur) =>
+            total +
+            (Number(
+              stockParVariation?.[taille]?.[
+                couleur
+              ]
+            ) || 0),
+          0
+        )
+      : Number(
+          stockParVariation?.[taille]?.general
+        ) || 0;
+  };
 
   return (
     <Container>
       <Title>
-        Gestion des précommandes
+        Gestion des modèles de précommande
       </Title>
 
       <Subtitle>
-        Crée et gère les modèles que les clients
-        pourront précommander.
+        Crée les modèles disponibles à la
+        précommande et configure leurs tailles,
+        couleurs et quantités.
       </Subtitle>
 
-      {error && (
-        <ErrorMessage>{error}</ErrorMessage>
-      )}
-
-      {success && (
-        <SuccessMessage>
-          {success}
-        </SuccessMessage>
-      )}
-
-      {/* ==================================================
+      {/* =========================
           FORMULAIRE
-      ================================================== */}
+      ========================= */}
 
-      <Section>
-        <SectionTitle>
-          {editingProductId
+      <FormCard>
+        <FormTitle>
+          {editingId
             ? "Modifier le modèle"
             : "Ajouter un modèle de précommande"}
-        </SectionTitle>
+        </FormTitle>
 
-        <Form onSubmit={handleSubmit}>
-          <Grid>
-            <Field>
-              <Label>Titre *</Label>
+        <Form onSubmit={enregistrerProduit}>
+          <Field>
+            <Label>Titre du modèle</Label>
 
-              <Input
-                type="text"
-                placeholder="Ex : Ensemble premium"
-                value={title}
-                onChange={(e) =>
-                  setTitle(e.target.value)
-                }
-              />
-            </Field>
-
-            <Field>
-              <Label>Prix *</Label>
-
-              <Input
-                type="number"
-                min="0"
-                placeholder="Ex : 25000"
-                value={price}
-                onChange={(e) =>
-                  setPrice(e.target.value)
-                }
-              />
-            </Field>
-          </Grid>
+            <Input
+              type="text"
+              name="title"
+              value={form.title}
+              onChange={handleChange}
+              placeholder="Ex: Ensemble premium"
+            />
+          </Field>
 
           <Field>
-            <Label>Description *</Label>
+            <Label>Description</Label>
 
             <Textarea
+              name="description"
+              value={form.description}
+              onChange={handleChange}
               placeholder="Description du modèle..."
-              value={description}
-              onChange={(e) =>
-                setDescription(e.target.value)
-              }
+              rows="5"
             />
           </Field>
 
           <Grid>
+            <Field>
+              <Label>Prix</Label>
+
+              <Input
+                type="number"
+                min="0"
+                name="price"
+                value={form.price}
+                onChange={handleChange}
+                placeholder="Ex: 25000"
+              />
+            </Field>
+
             <Field>
               <Label>
                 Montant du dépôt
@@ -1338,19 +925,20 @@ function AdminPrecommandes() {
               <Input
                 type="number"
                 min="0"
-                placeholder="Ex : 10000"
-                value={montantDepot}
-                onChange={(e) =>
-                  setMontantDepot(e.target.value)
-                }
+                name="montantDepot"
+                value={form.montantDepot}
+                onChange={handleChange}
+                placeholder="Ex: 10000"
               />
 
-              <small>
-                Si laissé vide, le backend utilisera
-                son calcul par défaut.
-              </small>
+              <HelpText>
+                Si vide, le backend peut utiliser
+                son montant par défaut.
+              </HelpText>
             </Field>
+          </Grid>
 
+          <Grid>
             <Field>
               <Label>
                 Date de disponibilité
@@ -1358,25 +946,19 @@ function AdminPrecommandes() {
 
               <Input
                 type="date"
-                value={dateDisponibilite}
-                onChange={(e) =>
-                  setDateDisponibilite(
-                    e.target.value,
-                  )
-                }
+                name="dateDisponibilite"
+                value={form.dateDisponibilite}
+                onChange={handleChange}
               />
             </Field>
-          </Grid>
 
-          <Grid>
             <Field>
               <Label>Genre</Label>
 
               <Select
-                value={genre}
-                onChange={(e) =>
-                  setGenre(e.target.value)
-                }
+                name="genre"
+                value={form.genre}
+                onChange={handleChange}
               >
                 <option value="homme">
                   Homme
@@ -1391,15 +973,16 @@ function AdminPrecommandes() {
                 </option>
               </Select>
             </Field>
+          </Grid>
 
+          <Grid>
             <Field>
               <Label>Catégorie</Label>
 
               <Select
-                value={categorie}
-                onChange={(e) =>
-                  setCategorie(e.target.value)
-                }
+                name="categorie"
+                value={form.categorie}
+                onChange={handleChange}
               >
                 <option value="haut">
                   Haut
@@ -1422,24 +1005,21 @@ function AdminPrecommandes() {
                 </option>
               </Select>
             </Field>
-          </Grid>
 
-          <Grid>
             <Field>
               <Label>Badge</Label>
 
               <Select
-                value={badge}
-                onChange={(e) =>
-                  setBadge(e.target.value)
-                }
+                name="badge"
+                value={form.badge}
+                onChange={handleChange}
               >
                 <option value="">
-                  Aucun
+                  Aucun badge
                 </option>
 
                 <option value="new">
-                  New
+                  Nouveau
                 </option>
 
                 <option value="promo">
@@ -1447,598 +1027,1463 @@ function AdminPrecommandes() {
                 </option>
               </Select>
             </Field>
+          </Grid>
 
-            <Field>
-              <Label>
-                Précommande
-              </Label>
+          {/* =========================
+              TAILLES
+          ========================= */}
 
-              <CheckBoxRow>
-                <CheckBox
-                  type="checkbox"
-                  checked={precommande}
-                  onChange={(e) =>
-                    setPrecommande(
-                      e.target.checked,
-                    )
+          <VariationSection>
+            <VariationTitle>
+              1. Tailles disponibles
+            </VariationTitle>
+
+            <VariationAddRow>
+              <VariationInput
+                type="text"
+                placeholder="Ex: S, M, L, XL"
+                value={nouvelleTaille}
+                onChange={(e) =>
+                  setNouvelleTaille(
+                    e.target.value
+                  )
+                }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    ajouterTaille();
                   }
-                />
+                }}
+              />
 
-                <span>
-                  Disponible en précommande
-                </span>
-              </CheckBoxRow>
-            </Field>
-          </Grid>
+              <VariationAddButton
+                type="button"
+                onClick={ajouterTaille}
+              >
+                + Ajouter
+              </VariationAddButton>
+            </VariationAddRow>
 
-          <Grid>
-            <Field>
-              <Label>
-                Couleurs
-              </Label>
+            <VariationList>
+              {tailles.map((taille) => (
+                <VariationTag key={taille}>
+                  <span>{taille}</span>
 
-              <Input
+                  <button
+                    type="button"
+                    onClick={() =>
+                      supprimerTaille(
+                        taille
+                      )
+                    }
+                  >
+                    ×
+                  </button>
+                </VariationTag>
+              ))}
+            </VariationList>
+
+            {tailles.length === 0 && (
+              <EmptyVariation>
+                Aucune taille ajoutée.
+              </EmptyVariation>
+            )}
+          </VariationSection>
+
+          {/* =========================
+              COULEURS
+          ========================= */}
+
+          <VariationSection>
+            <VariationTitle>
+              2. Couleurs disponibles
+            </VariationTitle>
+
+            <VariationAddRow>
+              <VariationInput
                 type="text"
-                placeholder="Noir, Blanc, Rouge"
-                value={colors.join(", ")}
+                placeholder="Ex: Noir, Blanc, Rouge"
+                value={nouvelleCouleur}
                 onChange={(e) =>
-                  handleColorsChange(
-                    e.target.value,
+                  setNouvelleCouleur(
+                    e.target.value
                   )
                 }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    ajouterCouleur();
+                  }
+                }}
               />
-            </Field>
 
-            <Field>
-              <Label>
-                Tailles
-              </Label>
+              <VariationAddButton
+                type="button"
+                onClick={ajouterCouleur}
+              >
+                + Ajouter
+              </VariationAddButton>
+            </VariationAddRow>
 
-              <Input
-                type="text"
-                placeholder="S, M, L, XL"
-                value={sizes.join(", ")}
-                onChange={(e) =>
-                  handleSizesChange(
-                    e.target.value,
-                  )
-                }
-              />
-            </Field>
-          </Grid>
+            <VariationList>
+              {couleurs.map((couleur) => (
+                <VariationTag key={couleur}>
+                  <span>{couleur}</span>
 
-          {/* ============================================
-              DÉTAILS
-          ============================================ */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      supprimerCouleur(
+                        couleur
+                      )
+                    }
+                  >
+                    ×
+                  </button>
+                </VariationTag>
+              ))}
+            </VariationList>
 
-          <SectionTitle>
-            Détails du modèle
-          </SectionTitle>
+            {couleurs.length === 0 && (
+              <EmptyVariation>
+                Aucune couleur ajoutée. Si le
+                modèle n'a pas de couleur,
+                les quantités seront gérées
+                uniquement par taille.
+              </EmptyVariation>
+            )}
+          </VariationSection>
 
-          <Grid>
-            <Field>
-              <Label>Matière</Label>
+          {/* =========================
+              TABLEAU TAILLE x COULEUR
+          ========================= */}
 
-              <Input
-                type="text"
-                value={details.matiere}
-                onChange={(e) =>
-                  setDetails((prev) => ({
-                    ...prev,
-                    matiere: e.target.value,
-                  }))
-                }
-              />
-            </Field>
+          {tailles.length > 0 &&
+            couleurs.length > 0 && (
+              <VariationSection>
+                <VariationHeader>
+                  <div>
+                    <VariationTitle>
+                      3. Quantités par variation
+                    </VariationTitle>
 
-            <Field>
-              <Label>Poids</Label>
+                    <VariationDescription>
+                      Indique combien d'articles
+                      sont disponibles pour
+                      chaque combinaison taille
+                      + couleur.
+                    </VariationDescription>
+                  </div>
 
-              <Input
-                type="text"
-                value={details.poids}
-                onChange={(e) =>
-                  setDetails((prev) => ({
-                    ...prev,
-                    poids: e.target.value,
-                  }))
-                }
-              />
-            </Field>
+                  <StockTotal>
+                    Stock total
+                    <strong>
+                      {calculerStockTotal()}
+                    </strong>
+                  </StockTotal>
+                </VariationHeader>
 
-            <Field>
-              <Label>Coupe</Label>
+                <VariationTableWrapper>
+                  <VariationTable>
+                    <thead>
+                      <tr>
+                        <th>Taille</th>
 
-              <Input
-                type="text"
-                value={details.coupe}
-                onChange={(e) =>
-                  setDetails((prev) => ({
-                    ...prev,
-                    coupe: e.target.value,
-                  }))
-                }
-              />
-            </Field>
+                        {couleurs.map(
+                          (couleur) => (
+                            <th key={couleur}>
+                              {couleur}
+                            </th>
+                          )
+                        )}
 
-            <Field>
-              <Label>Saison</Label>
+                        <th>Total</th>
+                      </tr>
+                    </thead>
 
-              <Input
-                type="text"
-                value={details.saison}
-                onChange={(e) =>
-                  setDetails((prev) => ({
-                    ...prev,
-                    saison: e.target.value,
-                  }))
-                }
-              />
-            </Field>
+                    <tbody>
+                      {tailles.map(
+                        (taille) => (
+                          <tr key={taille}>
+                            <td>
+                              <SizeCell>
+                                {taille}
+                              </SizeCell>
+                            </td>
 
-            <Field>
-              <Label>Entretien</Label>
+                            {couleurs.map(
+                              (couleur) => (
+                                <td
+                                  key={
+                                    couleur
+                                  }
+                                >
+                                  <QuantityInput
+                                    type="number"
+                                    min="0"
+                                    value={
+                                      stockParVariation?.[
+                                        taille
+                                      ]?.[
+                                        couleur
+                                      ] ?? 0
+                                    }
+                                    onChange={(
+                                      e
+                                    ) =>
+                                      modifierQuantiteVariation(
+                                        taille,
+                                        couleur,
+                                        e
+                                          .target
+                                          .value
+                                      )
+                                    }
+                                  />
+                                </td>
+                              )
+                            )}
 
-              <Input
-                type="text"
-                value={details.entretien}
-                onChange={(e) =>
-                  setDetails((prev) => ({
-                    ...prev,
-                    entretien: e.target.value,
-                  }))
-                }
-              />
-            </Field>
+                            <td>
+                              <TotalCell>
+                                {totalParTaille(
+                                  taille
+                                )}
+                              </TotalCell>
+                            </td>
+                          </tr>
+                        )
+                      )}
+                    </tbody>
+                  </VariationTable>
+                </VariationTableWrapper>
+              </VariationSection>
+            )}
 
-            <Field>
-              <Label>
-                Pays de fabrication
-              </Label>
+          {/* =========================
+              QUANTITE PAR TAILLE
+          ========================= */}
 
-              <Input
-                type="text"
-                value={
-                  details.paysFabrication
-                }
-                onChange={(e) =>
-                  setDetails((prev) => ({
-                    ...prev,
-                    paysFabrication:
-                      e.target.value,
-                  }))
-                }
-              />
-            </Field>
-          </Grid>
+          {tailles.length > 0 &&
+            couleurs.length === 0 && (
+              <VariationSection>
+                <VariationHeader>
+                  <div>
+                    <VariationTitle>
+                      3. Quantités par taille
+                    </VariationTitle>
 
-          {/* ============================================
-              IMAGES
-          ============================================ */}
+                    <VariationDescription>
+                      Ce modèle n'a pas de
+                      couleur. Indique simplement
+                      la quantité disponible pour
+                      chaque taille.
+                    </VariationDescription>
+                  </div>
 
-          <SectionTitle>
-            Photos du modèle
-          </SectionTitle>
+                  <StockTotal>
+                    Stock total
+                    <strong>
+                      {calculerStockTotal()}
+                    </strong>
+                  </StockTotal>
+                </VariationHeader>
 
-          <Field>
-            <Label>
-              Ajouter des photos
-            </Label>
-
-            <Input
-              type="file"
-              multiple
-              accept="image/*"
-              onChange={handleImagesChange}
-            />
-          </Field>
-
-          {existingImages.length > 0 && (
-            <>
-              <Label>
-                Photos existantes
-              </Label>
-
-              <PreviewContainer>
-                {existingImages.map(
-                  (image, index) => (
-                    <ImageWrapper
-                      key={
-                        image.publicId ||
-                        `${image.url}-${index}`
-                      }
+                <SimpleStockList>
+                  {tailles.map((taille) => (
+                    <SimpleStockRow
+                      key={taille}
                     >
-                      <PreviewImage
-                        src={image.url}
-                        alt={title}
-                        $main={
-                          index ===
-                          mainImageIndex
+                      <SizeCell>
+                        Taille {taille}
+                      </SizeCell>
+
+                      <QuantityInput
+                        type="number"
+                        min="0"
+                        value={
+                          stockParVariation?.[
+                            taille
+                          ]?.general ?? 0
                         }
-                        onClick={() =>
-                          setMainImageIndex(
-                            index,
+                        onChange={(e) =>
+                          modifierQuantiteTaille(
+                            taille,
+                            e.target.value
                           )
                         }
                       />
+                    </SimpleStockRow>
+                  ))}
+                </SimpleStockList>
+              </VariationSection>
+            )}
 
-                      <DeleteImageButton
-                        type="button"
-                        onClick={() =>
-                          handleDeleteExistingImage(
-                            image.publicId,
-                            index,
-                          )
+          {/* =========================
+              IMAGES
+          ========================= */}
+
+          <VariationSection>
+            <VariationTitle>
+              Photos du modèle
+            </VariationTitle>
+
+            <Field>
+              <Label>
+                Ajouter plusieurs photos
+              </Label>
+
+              <FileInput
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleImages}
+              />
+            </Field>
+
+            {imagesExistantes.length > 0 && (
+              <>
+                <SmallTitle>
+                  Photos actuelles
+                </SmallTitle>
+
+                <ImageGrid>
+                  {imagesExistantes.map(
+                    (image, index) => (
+                      <ImageItem
+                        key={
+                          image.publicId ||
+                          image.url ||
+                          index
                         }
                       >
-                        ×
-                      </DeleteImageButton>
-
-                      {index ===
-                        mainImageIndex && (
-                        <MainBadge>
-                          PRINCIPALE
-                        </MainBadge>
-                      )}
-                    </ImageWrapper>
-                  ),
-                )}
-              </PreviewContainer>
-            </>
-          )}
-
-          {newImages.length > 0 && (
-            <>
-              <Label>
-                Nouvelles photos
-              </Label>
-
-              <PreviewContainer>
-                {newImages.map(
-                  (image, index) => {
-                    const globalIndex =
-                      existingImages.length +
-                      index;
-
-                    return (
-                      <ImageWrapper
-                        key={`${image.name}-${index}`}
-                      >
                         <PreviewImage
-                          src={image.preview}
-                          alt="Nouvelle"
-                          $main={
-                            globalIndex ===
-                            mainImageIndex
-                          }
-                          onClick={() =>
-                            setMainImageIndex(
-                              globalIndex,
-                            )
-                          }
+                          src={image.url}
+                          alt={`Image ${
+                            index + 1
+                          }`}
                         />
 
-                        <DeleteImageButton
-                          type="button"
-                          onClick={() =>
-                            handleDeleteNewImage(
-                              index,
-                            )
-                          }
-                        >
-                          ×
-                        </DeleteImageButton>
+                        <ImageActions>
+                          <MainButton
+                            type="button"
+                            $active={
+                              mainImageIndex ===
+                              index
+                            }
+                            onClick={() =>
+                              setMainImageIndex(
+                                index
+                              )
+                            }
+                          >
+                            {mainImageIndex ===
+                            index
+                              ? "★ Principale"
+                              : "☆ Principale"}
+                          </MainButton>
 
-                        {globalIndex ===
-                          mainImageIndex && (
-                          <MainBadge>
-                            PRINCIPALE
-                          </MainBadge>
-                        )}
-                      </ImageWrapper>
-                    );
-                  },
-                )}
-              </PreviewContainer>
-            </>
-          )}
+                          <DeleteSmallButton
+                            type="button"
+                            onClick={() =>
+                              supprimerImageExistante(
+                                index
+                              )
+                            }
+                          >
+                            Supprimer
+                          </DeleteSmallButton>
+                        </ImageActions>
+                      </ImageItem>
+                    )
+                  )}
+                </ImageGrid>
+              </>
+            )}
 
-          <small>
-            Clique sur une photo pour la définir
-            comme photo principale.
-          </small>
+            {nouvellesImages.length > 0 && (
+              <>
+                <SmallTitle>
+                  Nouvelles photos
+                </SmallTitle>
 
-          {/* ============================================
-              VIDÉO
-          ============================================ */}
+                <ImageGrid>
+                  {nouvellesImages.map(
+                    (file, index) => (
+                      <ImageItem
+                        key={`${file.name}-${index}`}
+                      >
+                        <NewImagePreview
+                          src={URL.createObjectURL(
+                            file
+                          )}
+                          alt={file.name}
+                        />
 
-          <SectionTitle>
-            Vidéo du modèle
-          </SectionTitle>
+                        <ImageActions>
+                          <MainButton
+                            type="button"
+                            $active={
+                              mainImageIndex ===
+                              imagesExistantes.length +
+                                index
+                            }
+                            onClick={() =>
+                              setMainImageIndex(
+                                imagesExistantes.length +
+                                  index
+                              )
+                            }
+                          >
+                            {mainImageIndex ===
+                            imagesExistantes.length +
+                              index
+                              ? "★ Principale"
+                              : "☆ Principale"}
+                          </MainButton>
 
-          {existingVideo && (
-            <div>
+                          <DeleteSmallButton
+                            type="button"
+                            onClick={() =>
+                              supprimerNouvelleImage(
+                                index
+                              )
+                            }
+                          >
+                            Supprimer
+                          </DeleteSmallButton>
+                        </ImageActions>
+                      </ImageItem>
+                    )
+                  )}
+                </ImageGrid>
+              </>
+            )}
+          </VariationSection>
+
+          {/* =========================
+              VIDEO
+          ========================= */}
+
+          <VariationSection>
+            <VariationTitle>
+              Vidéo du modèle
+            </VariationTitle>
+
+            {videoActuelle && (
+              <CurrentVideoBox>
+                <video
+                  src={videoActuelle.url}
+                  controls
+                  width="100%"
+                />
+
+                <VideoInfo>
+                  <span>
+                    Vidéo actuelle
+                  </span>
+
+                  <DeleteVideoButton
+                    type="button"
+                    onClick={() =>
+                      supprimerVideo(
+                        videoActuelle
+                      )
+                    }
+                  >
+                    Supprimer la vidéo
+                  </DeleteVideoButton>
+                </VideoInfo>
+              </CurrentVideoBox>
+            )}
+
+            <Field>
               <Label>
-                Vidéo actuellement associée
+                {videoActuelle
+                  ? "Remplacer la vidéo"
+                  : "Ajouter une vidéo"}
               </Label>
 
-              <VideoPreview
-                controls
-                src={existingVideo.url}
+              <FileInput
+                type="file"
+                accept="video/*"
+                onChange={handleVideoChange}
               />
 
-              <ButtonRow>
-                <Button
-                  type="button"
-                  $danger
-                  onClick={
-                    deleteExistingVideo
-                  }
-                >
-                  Supprimer la vidéo
-                </Button>
-              </ButtonRow>
-            </div>
-          )}
+              {videoFile && (
+                <SelectedFile>
+                  Vidéo sélectionnée :{" "}
+                  <strong>
+                    {videoFile.name}
+                  </strong>
+                </SelectedFile>
+              )}
+            </Field>
+          </VariationSection>
+
+          {/* =========================
+              DETAILS
+          ========================= */}
 
           <Field>
             <Label>
-              {existingVideo
-                ? "Remplacer par une nouvelle vidéo"
-                : "Ajouter une vidéo"}
+              Détails supplémentaires
             </Label>
 
-            <Input
-              type="file"
-              accept="video/*"
-              onChange={handleVideoChange}
+            <Textarea
+              name="details"
+              value={form.details}
+              onChange={handleChange}
+              placeholder={`matiere: Coton
+coupe: Regular
+origine: Côte d'Ivoire`}
+              rows="5"
             />
+
+            <HelpText>
+              Une ligne par détail au format :
+              clé: valeur
+            </HelpText>
           </Field>
 
-          {newVideo && (
-            <div>
-              <VideoPreview
-                controls
-                src={newVideo.preview}
+          {/* =========================
+              OPTIONS
+          ========================= */}
+
+          <OptionsBox>
+            <CheckboxLabel>
+              <input
+                type="checkbox"
+                name="precommande"
+                checked={form.precommande}
+                onChange={handleChange}
               />
 
-              <Button
-                type="button"
-                $danger
-                onClick={removeNewVideo}
-                style={{
-                  marginTop: "10px",
-                }}
-              >
-                Retirer cette vidéo
-              </Button>
-            </div>
-          )}
+              <span>
+                Activer la précommande
+              </span>
+            </CheckboxLabel>
 
-          {(newVideo || existingVideo) && (
-            <Grid>
-              <Field>
-                <Label>
-                  Titre de la vidéo
-                </Label>
+            <CheckboxLabel>
+              <input
+                type="checkbox"
+                name="hero"
+                checked={form.hero}
+                onChange={handleChange}
+              />
 
-                <Input
-                  type="text"
-                  placeholder="Titre de la vidéo"
-                  value={videoTitle}
-                  onChange={(e) =>
-                    setVideoTitle(
-                      e.target.value,
-                    )
-                  }
-                />
-              </Field>
+              <span>
+                Afficher comme modèle Hero
+              </span>
+            </CheckboxLabel>
+          </OptionsBox>
 
-              <Field>
-                <Label>
-                  Description de la vidéo
-                </Label>
-
-                <Input
-                  type="text"
-                  placeholder="Description"
-                  value={videoDescription}
-                  onChange={(e) =>
-                    setVideoDescription(
-                      e.target.value,
-                    )
-                  }
-                />
-              </Field>
-            </Grid>
-          )}
-
-          {/* ============================================
+          {/* =========================
               BOUTONS
-          ============================================ */}
+          ========================= */}
 
-          <ButtonRow>
-            <Button
+          <ButtonsRow>
+            <SubmitButton
               type="submit"
-              disabled={
-                loading || videoUploading
-              }
+              disabled={loading}
             >
-              {loading || videoUploading
+              {loading
                 ? "Enregistrement..."
-                : editingProductId
-                  ? "Modifier le modèle"
-                  : "Créer le modèle"}
-            </Button>
+                : editingId
+                ? "Modifier le modèle"
+                : "Créer le modèle"}
+            </SubmitButton>
 
-            {editingProductId && (
-              <Button
+            {editingId && (
+              <CancelButton
                 type="button"
-                $secondary
                 onClick={resetForm}
-                disabled={loading}
               >
                 Annuler
-              </Button>
+              </CancelButton>
             )}
-          </ButtonRow>
+          </ButtonsRow>
         </Form>
-      </Section>
+      </FormCard>
 
-      {/* ==================================================
-          LISTE DES MODÈLES
-      ================================================== */}
+      {/* =========================
+          LISTE DES PRODUITS
+      ========================= */}
 
-      <Section>
-        <SectionTitle>
-          Modèles de précommande
-        </SectionTitle>
+      <ListHeader>
+        <div>
+          <ListTitle>
+            Modèles disponibles
+          </ListTitle>
 
-        {productsLoading ? (
-          <Loading>
-            Chargement des modèles...
-          </Loading>
-        ) : products.length === 0 ? (
-          <Loading>
-            Aucun produit enregistré.
-          </Loading>
-        ) : (
-          <ProductGrid>
-            {products.map((product) => {
-              const image =
-                product.images?.find(
-                  (item) => item.isMain,
-                )?.url ||
-                product.images?.[0]?.url ||
-                "";
+          <ListDescription>
+            {produits.length} modèle
+            {produits.length > 1 ? "s" : ""}
+          </ListDescription>
+        </div>
+      </ListHeader>
 
-              return (
-                <ProductCard
-                  key={product._id}
-                >
-                  {image ? (
-                    <ProductCardImage
-                      src={image}
-                      alt={product.title}
-                    />
-                  ) : (
-                    <div
-                      style={{
-                        height: "260px",
-                        background: "#eee",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        color: "#999",
-                      }}
-                    >
-                      Aucune image
-                    </div>
-                  )}
+      {loading && produits.length === 0 ? (
+        <Loading>
+          Chargement des modèles...
+        </Loading>
+      ) : produits.length === 0 ? (
+        <Empty>
+          Aucun modèle pour le moment.
+        </Empty>
+      ) : (
+        <ProductGrid>
+          {produits.map((produit) => {
+            const imagePrincipale =
+              produit.images?.find(
+                (image) => image.isMain
+              ) ||
+              produit.images?.[0];
 
-                  <ProductCardBody>
-                    <Badge
+            const video = trouverVideoProduit(
+              produit
+            );
+
+            let variations =
+              produit.stockParVariation ||
+              {};
+
+            if (variations instanceof Map) {
+              variations =
+                Object.fromEntries(
+                  variations
+                );
+            }
+
+            const stockTotal = Object.values(
+              variations || {}
+            ).reduce(
+              (total, valeurs) => {
+                if (
+                  valeurs instanceof Map
+                ) {
+                  valeurs =
+                    Object.fromEntries(
+                      valeurs
+                    );
+                }
+
+                return (
+                  total +
+                  Object.values(
+                    valeurs || {}
+                  ).reduce(
+                    (somme, quantite) =>
+                      somme +
+                      (Number(
+                        quantite
+                      ) || 0),
+                    0
+                  )
+                );
+              },
+              0
+            );
+
+            return (
+              <ProductCard
+                key={produit._id}
+              >
+                {imagePrincipale?.url ? (
+                  <CardImage
+                    src={imagePrincipale.url}
+                    alt={produit.title}
+                  />
+                ) : (
+                  <NoImage>
+                    Aucune image
+                  </NoImage>
+                )}
+
+                <CardContent>
+                  <StatusRow>
+                    <StatusBadge
                       $active={
-                        product.precommande
+                        produit.precommande
                       }
                     >
-                      {product.precommande
-                        ? "PRÉCOMMANDE ACTIVE"
-                        : "PRÉCOMMANDE INACTIVE"}
-                    </Badge>
+                      {produit.precommande
+                        ? "Précommande active"
+                        : "Précommande inactive"}
+                    </StatusBadge>
 
-                    <ProductCardTitle>
-                      {product.title}
-                    </ProductCardTitle>
+                    {video && (
+                      <VideoBadge>
+                        🎥 Vidéo
+                      </VideoBadge>
+                    )}
+                  </StatusRow>
 
-                    <ProductDescription>
-                      {product.description}
-                    </ProductDescription>
+                  <CardTitle>
+                    {produit.title}
+                  </CardTitle>
 
-                    <Price>
-                      {formatPrice(
-                        product.price,
-                      )}
-                    </Price>
+                  <CardDescription>
+                    {produit.description}
+                  </CardDescription>
 
-                    <Deposit>
-                      Dépôt :{" "}
-                      {product.montantDepot !==
-                        null &&
-                      product.montantDepot !==
-                        undefined
-                        ? formatPrice(
-                            product.montantDepot,
-                          )
-                        : "Calcul automatique"}
-                    </Deposit>
+                  <Price>
+                    {Number(
+                      produit.price || 0
+                    ).toLocaleString(
+                      "fr-FR"
+                    )}{" "}
+                    FCFA
+                  </Price>
 
-                    <Availability>
-                      Disponibilité :{" "}
-                      {formatDate(
-                        product.dateDisponibilite,
-                      )}
-                    </Availability>
+                  <InfoList>
+                    <InfoItem>
+                      <strong>
+                        Dépôt :
+                      </strong>{" "}
+                      {produit.montantDepot
+                        ? `${Number(
+                            produit.montantDepot
+                          ).toLocaleString(
+                            "fr-FR"
+                          )} FCFA`
+                        : "Par défaut"}
+                    </InfoItem>
 
-                    {product.couleurs?.length >
-                      0 && (
-                      <Tags>
-                        {product.couleurs.map(
-                          (color) => (
-                            <Tag key={color}>
-                              {color}
-                            </Tag>
-                          ),
+                    <InfoItem>
+                      <strong>
+                        Stock :
+                      </strong>{" "}
+                      {stockTotal}
+                    </InfoItem>
+
+                    {produit.dateDisponibilite && (
+                      <InfoItem>
+                        <strong>
+                          Disponible :
+                        </strong>{" "}
+                        {new Date(
+                          produit.dateDisponibilite
+                        ).toLocaleDateString(
+                          "fr-FR"
                         )}
-                      </Tags>
+                      </InfoItem>
                     )}
 
-                    {product.tailles?.length >
-                      0 && (
-                      <Tags>
-                        {product.tailles.map(
-                          (size) => (
-                            <Tag key={size}>
-                              {size}
-                            </Tag>
-                          ),
-                        )}
-                      </Tags>
-                    )}
-
-                    <ButtonRow>
-                      <Button
-                        type="button"
-                        onClick={() =>
-                          handleEditProduct(
-                            product,
+                    <InfoItem>
+                      <strong>
+                        Tailles :
+                      </strong>{" "}
+                      {produit.tailles?.length
+                        ? produit.tailles.join(
+                            ", "
                           )
-                        }
-                      >
-                        Modifier
-                      </Button>
+                        : "Aucune"}
+                    </InfoItem>
 
-                      <Button
-                        type="button"
-                        $danger
-                        onClick={() =>
-                          handleDeleteProduct(
-                            product._id,
+                    <InfoItem>
+                      <strong>
+                        Couleurs :
+                      </strong>{" "}
+                      {produit.couleurs?.length
+                        ? produit.couleurs.join(
+                            ", "
                           )
-                        }
-                      >
-                        Supprimer
-                      </Button>
-                    </ButtonRow>
-                  </ProductCardBody>
-                </ProductCard>
-              );
-            })}
-          </ProductGrid>
-        )}
-      </Section>
+                        : "Aucune"}
+                    </InfoItem>
+                  </InfoList>
+
+                  <CardActions>
+                    <EditButton
+                      type="button"
+                      onClick={() =>
+                        modifierProduit(
+                          produit
+                        )
+                      }
+                    >
+                      Modifier
+                    </EditButton>
+
+                    <DeleteButton
+                      type="button"
+                      onClick={() =>
+                        supprimerProduit(
+                          produit._id
+                        )
+                      }
+                    >
+                      Supprimer
+                    </DeleteButton>
+                  </CardActions>
+                </CardContent>
+              </ProductCard>
+            );
+          })}
+        </ProductGrid>
+      )}
     </Container>
   );
-}
+};
+
+/* =====================================================
+   STYLES
+===================================================== */
+
+const Container = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px;
+  background: #f9fafb;
+  min-height: 100vh;
+
+  @media (max-width: 700px) {
+    padding: 20px;
+  }
+`;
+
+const Title = styled.h1`
+  margin: 0;
+  color: #2c3e50;
+  font-size: 32px;
+`;
+
+const Subtitle = styled.p`
+  margin: 10px 0 30px;
+  color: #6b7280;
+  font-size: 15px;
+`;
+
+const FormCard = styled.div`
+  background: white;
+  padding: 30px;
+  border-radius: 14px;
+  box-shadow: 0 3px 15px rgba(0, 0, 0, 0.06);
+  margin-bottom: 40px;
+
+  @media (max-width: 700px) {
+    padding: 20px;
+  }
+`;
+
+const FormTitle = styled.h2`
+  margin: 0 0 25px;
+  color: #2c3e50;
+  font-size: 23px;
+`;
+
+const Form = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+`;
+
+const Field = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+`;
+
+const Label = styled.label`
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+`;
+
+const Input = styled.input`
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 13px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+
+  &:focus {
+    border-color: #3498db;
+  }
+`;
+
+const Textarea = styled.textarea`
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 13px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  resize: vertical;
+  outline: none;
+  font-family: inherit;
+
+  &:focus {
+    border-color: #3498db;
+  }
+`;
+
+const Select = styled.select`
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 13px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+  outline: none;
+
+  &:focus {
+    border-color: #3498db;
+  }
+`;
+
+const Grid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+
+  @media (max-width: 700px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const HelpText = styled.small`
+  color: #6b7280;
+  font-size: 12px;
+`;
+
+const VariationSection = styled.div`
+  padding: 20px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+`;
+
+const VariationTitle = styled.h3`
+  margin: 0 0 8px;
+  color: #2c3e50;
+  font-size: 18px;
+`;
+
+const VariationDescription = styled.p`
+  margin: 0;
+  color: #6b7280;
+  font-size: 13px;
+`;
+
+const VariationAddRow = styled.div`
+  display: flex;
+  gap: 10px;
+  margin: 15px 0;
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+  }
+`;
+
+const VariationInput = styled.input`
+  flex: 1;
+  padding: 11px 13px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+
+  &:focus {
+    border-color: #3498db;
+  }
+`;
+
+const VariationAddButton = styled.button`
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  background: #3498db;
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+
+  &:hover {
+    background: #2980b9;
+  }
+`;
+
+const VariationList = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+`;
+
+const VariationTag = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 11px;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 20px;
+  font-size: 14px;
+
+  button {
+    border: none;
+    background: transparent;
+    color: #e74c3c;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+  }
+`;
+
+const EmptyVariation = styled.div`
+  color: #9ca3af;
+  font-size: 13px;
+`;
+
+const VariationHeader = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 18px;
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+  }
+`;
+
+const StockTotal = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 100px;
+  padding: 10px 15px;
+  background: white;
+  border: 1px solid #dbeafe;
+  border-radius: 10px;
+  color: #6b7280;
+  font-size: 12px;
+
+  strong {
+    margin-top: 3px;
+    color: #2563eb;
+    font-size: 20px;
+  }
+`;
+
+const VariationTableWrapper = styled.div`
+  width: 100%;
+  overflow-x: auto;
+`;
+
+const VariationTable = styled.table`
+  width: 100%;
+  min-width: 550px;
+  border-collapse: collapse;
+  background: white;
+
+  th,
+  td {
+    padding: 12px;
+    border: 1px solid #e5e7eb;
+    text-align: center;
+  }
+
+  th {
+    background: #f1f5f9;
+    color: #374151;
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  td:first-child {
+    text-align: left;
+  }
+`;
+
+const QuantityInput = styled.input`
+  width: 75px;
+  padding: 8px;
+  box-sizing: border-box;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 14px;
+
+  &:focus {
+    outline: none;
+    border-color: #3498db;
+  }
+`;
+
+const SizeCell = styled.strong`
+  color: #2c3e50;
+`;
+
+const TotalCell = styled.strong`
+  color: #2563eb;
+`;
+
+const SimpleStockList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
+const SimpleStockRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 15px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+`;
+
+const FileInput = styled.input`
+  padding: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: white;
+`;
+
+const ImageGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(180px, 1fr)
+  );
+  gap: 15px;
+  margin-top: 15px;
+`;
+
+const ImageItem = styled.div`
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+`;
+
+const PreviewImage = styled.img`
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+`;
+
+const NewImagePreview = styled.img`
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+`;
+
+const ImageActions = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 10px;
+`;
+
+const MainButton = styled.button`
+  border: none;
+  border-radius: 6px;
+  padding: 8px;
+  cursor: pointer;
+  background: ${(props) =>
+    props.$active ? "#f1c40f" : "#eef2f7"};
+  color: ${(props) =>
+    props.$active ? "#5d4a00" : "#374151"};
+  font-size: 12px;
+  font-weight: 600;
+`;
+
+const DeleteSmallButton = styled.button`
+  border: none;
+  border-radius: 6px;
+  padding: 8px;
+  cursor: pointer;
+  background: #fee2e2;
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 600;
+`;
+
+const SmallTitle = styled.h4`
+  margin: 20px 0 5px;
+  color: #374151;
+`;
+
+const CurrentVideoBox = styled.div`
+  max-width: 500px;
+  margin-bottom: 20px;
+
+  video {
+    display: block;
+    width: 100%;
+    max-height: 350px;
+    border-radius: 10px;
+    background: #111;
+  }
+`;
+
+const VideoInfo = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 8px;
+  font-size: 13px;
+`;
+
+const DeleteVideoButton = styled.button`
+  border: none;
+  background: #fee2e2;
+  color: #dc2626;
+  padding: 7px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+`;
+
+const SelectedFile = styled.div`
+  padding: 10px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-radius: 7px;
+  font-size: 13px;
+`;
+
+const OptionsBox = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 25px;
+  padding: 15px;
+  background: #f8fafc;
+  border-radius: 10px;
+`;
+
+const CheckboxLabel = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+  color: #374151;
+  font-size: 14px;
+
+  input {
+    width: 17px;
+    height: 17px;
+  }
+`;
+
+const ButtonsRow = styled.div`
+  display: flex;
+  gap: 12px;
+  margin-top: 5px;
+
+  @media (max-width: 500px) {
+    flex-direction: column;
+  }
+`;
+
+const SubmitButton = styled.button`
+  padding: 13px 22px;
+  border: none;
+  border-radius: 8px;
+  background: #3498db;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    background: #2980b9;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const CancelButton = styled.button`
+  padding: 13px 22px;
+  border: none;
+  border-radius: 8px;
+  background: #e5e7eb;
+  color: #374151;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    background: #d1d5db;
+  }
+`;
+
+const ListHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+`;
+
+const ListTitle = styled.h2`
+  margin: 0;
+  color: #2c3e50;
+  font-size: 24px;
+`;
+
+const ListDescription = styled.p`
+  margin: 5px 0 0;
+  color: #6b7280;
+  font-size: 14px;
+`;
+
+const ProductGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(280px, 1fr)
+  );
+  gap: 20px;
+`;
+
+const ProductCard = styled.div`
+  overflow: hidden;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+`;
+
+const CardImage = styled.img`
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+`;
+
+const NoImage = styled.div`
+  width: 100%;
+  height: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e5e7eb;
+  color: #6b7280;
+`;
+
+const CardContent = styled.div`
+  padding: 18px;
+`;
+
+const StatusRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 10px;
+`;
+
+const StatusBadge = styled.span`
+  display: inline-block;
+  padding: 5px 8px;
+  border-radius: 15px;
+  font-size: 11px;
+  font-weight: 700;
+  background: ${(props) =>
+    props.$active ? "#dcfce7" : "#f3f4f6"};
+  color: ${(props) =>
+    props.$active ? "#15803d" : "#6b7280"};
+`;
+
+const VideoBadge = styled.span`
+  display: inline-block;
+  padding: 5px 8px;
+  border-radius: 15px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #ede9fe;
+  color: #6d28d9;
+`;
+
+const CardTitle = styled.h3`
+  margin: 0 0 8px;
+  color: #2c3e50;
+  font-size: 19px;
+`;
+
+const CardDescription = styled.p`
+  color: #6b7280;
+  font-size: 13px;
+  line-height: 1.5;
+  min-height: 40px;
+`;
+
+const Price = styled.div`
+  margin: 12px 0;
+  color: #2563eb;
+  font-size: 19px;
+  font-weight: 700;
+`;
+
+const InfoList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+`;
+
+const InfoItem = styled.div`
+  color: #6b7280;
+  font-size: 13px;
+
+  strong {
+    color: #374151;
+  }
+`;
+
+const CardActions = styled.div`
+  display: flex;
+  gap: 8px;
+  margin-top: 18px;
+`;
+
+const EditButton = styled.button`
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 7px;
+  background: #3498db;
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+
+  &:hover {
+    background: #2980b9;
+  }
+`;
+
+const DeleteButton = styled.button`
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 7px;
+  background: #fee2e2;
+  color: #dc2626;
+  cursor: pointer;
+  font-weight: 600;
+
+  &:hover {
+    background: #fecaca;
+  }
+`;
+
+const Loading = styled.div`
+  padding: 40px;
+  text-align: center;
+  color: #6b7280;
+`;
+
+const Empty = styled.div`
+  padding: 50px;
+  text-align: center;
+  background: white;
+  border-radius: 12px;
+  color: #6b7280;
+`;
 
 export default AdminPrecommandes;
