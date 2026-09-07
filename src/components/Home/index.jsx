@@ -1308,24 +1308,36 @@ export default function HomePremium() {
 
   // fetch video
 
-  const fetchVideo = async () => {
-    try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/videos/videos`,
-        {
-          method: "GET",
-        },
-      );
-      const data = await res.json();
-      setVideo(data.videos);
-    } catch (error) {
-      console.error("Erreur vidéo :", error);
-    }
-  };
+ const fetchVideo = async () => {
+  try {
+    const res = await fetch(
+      `${import.meta.env.VITE_API_URL}/api/videos/videos`,
+      {
+        method: "GET",
+      }
+    );
 
-  useEffect(() => {
-    fetchVideo();
-  }, []);
+    if (!res.ok) {
+      throw new Error("Impossible de récupérer les vidéos");
+    }
+
+    const data = await res.json();
+
+    // Compatible avec :
+    // { videos: [...] }
+    // ou directement [...]
+    const videos = Array.isArray(data)
+      ? data
+      : Array.isArray(data?.videos)
+      ? data.videos
+      : [];
+
+    setVideo(videos);
+  } catch (error) {
+    console.error("Erreur vidéo :", error);
+    setVideo([]);
+  }
+};
 
   /* =======================================================
      FETCH PRODUCTS
@@ -1543,7 +1555,7 @@ export default function HomePremium() {
       </Hero>
 
       <VideoSection>
-        {video.length > 0 && (
+        {Array.isArray(video) && video.length > 0 && (
           <VideoPlayer
             ref={videoRef}
             src={video[0].url}

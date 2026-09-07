@@ -57,6 +57,7 @@ import SuiviCommande from "./pages/SuiviCommande";
 import AdminLivreurs from "./pages/AdminLivreurs";
 import "./i18n";
 
+
 const PublicLayout = ({ children }) => {
   const location = useLocation();
   const heroPage = location.pathname === "/";
