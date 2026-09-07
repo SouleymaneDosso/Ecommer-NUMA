@@ -229,6 +229,13 @@ function AdminLayout() {
         >
           Livreurs
         </SidebarItem>
+
+        <SidebarItem
+          $active={location.pathname.includes("precommandes")}
+          onClick={() => navigate("/admin/precommandes")}
+        >
+          Précommandes
+        </SidebarItem>
       </Sidebar>
 
 

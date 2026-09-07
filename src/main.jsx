@@ -47,6 +47,7 @@ import AdminLayout from "./pages/AdminLayout";
 import AdminProducts from "./pages/AdminProducts";
 import AdminCommandes from "./pages/AdminCommande";
 import AdminPaiements from "./pages/AdminPaiements";
+import AdminPrecommandes from "./pages/AdminPrecommandes";
 import PaiementTroisFois from "./pages/paiement-3x";
 import Video from "./pages/Adminvideo";
 import InscriptionLivreur from "./connexionlivreur";
@@ -360,6 +361,7 @@ createRoot(document.getElementById("root")).render(
               <Route path="paiement" element={<AdminPaiements />} />
               <Route path="videos" element={<Video />} />
               <Route path="livreurs" element={<AdminLivreurs />} />
+              <Route path="precommandes" element={<AdminPrecommandes />} />
             </Route>
           </Routes>
         </Panier>
