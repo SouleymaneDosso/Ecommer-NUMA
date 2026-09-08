@@ -1,169 +1,80 @@
 import React, { useEffect, useMemo, useState } from "react";
-import styled, { keyframes } from "styled-components";
+import styled from "styled-components";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 const Precommande = () => {
-  const token = localStorage.getItem("token");
-
   const [modeles, setModeles] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [loadingCommande, setLoadingCommande] = useState(false);
 
-  const [modeleSelectionne, setModeleSelectionne] =
-    useState(null);
+  const [modeleSelectionne, setModeleSelectionne] = useState(null);
 
-  const [imageIndex, setImageIndex] = useState(0);
-  const [mediaVideo, setMediaVideo] = useState(false);
-
-  const [tailleSelectionnee, setTailleSelectionnee] =
-    useState("");
-
-  const [couleurSelectionnee, setCouleurSelectionnee] =
-    useState("");
-
+  const [tailleSelectionnee, setTailleSelectionnee] = useState("");
+  const [couleurSelectionnee, setCouleurSelectionnee] = useState("");
   const [quantite, setQuantite] = useState(1);
 
-  const [service, setService] = useState("orange");
+  const [service, setService] = useState("");
   const [numeroDepot, setNumeroDepot] = useState("");
-  const [referenceDepot, setReferenceDepot] =
-    useState("");
+  const [referenceDepot, setReferenceDepot] = useState("");
 
-  const [submitting, setSubmitting] = useState(false);
+  const [mediaIndex, setMediaIndex] = useState(0);
 
-  /* =========================
-     CHARGEMENT DES MODÈLES
-  ========================= */
+  const [message, setMessage] = useState("");
+  const [erreur, setErreur] = useState("");
 
-  useEffect(() => {
-    chargerModeles();
-  }, []);
+  /* =========================================================
+     RÉCUPÉRATION DES MODÈLES
+  ========================================================= */
 
   const chargerModeles = async () => {
     try {
       setLoading(true);
-      setError("");
+      setErreur("");
 
-      const response = await fetch(
-        `${API_URL}/api/precommandes/modeles`
-      );
+      const response = await fetch(`${API_URL}/api/precommandes/modeles`);
 
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(
-          data.message ||
-            "Impossible de charger les modèles."
+          data.message || "Impossible de récupérer les modèles."
         );
       }
 
-      setModeles(data.modeles || []);
-    } catch (err) {
-      console.error(err);
-      setError(err.message);
+      setModeles(data.modeles || data.produits || []);
+    } catch (error) {
+      console.error(error);
+      setErreur(
+        error.message || "Une erreur est survenue lors du chargement."
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  /* =========================
-     IMAGES DU MODÈLE
-  ========================= */
+  useEffect(() => {
+    chargerModeles();
+  }, []);
 
-  const medias = useMemo(() => {
-    if (!modeleSelectionne) return [];
+  /* =========================================================
+     OUVRIR UN MODÈLE
+  ========================================================= */
 
-    const images = (modeleSelectionne.images || []).map(
-      (image) => ({
-        type: "image",
-        url:
-          typeof image === "string"
-            ? image
-            : image.url,
-      })
-    );
-
-    if (modeleSelectionne.video) {
-      return [
-        ...images,
-        {
-          type: "video",
-          url:
-            typeof modeleSelectionne.video === "string"
-              ? modeleSelectionne.video
-              : modeleSelectionne.video?.url,
-        },
-      ];
-    }
-
-    return images;
-  }, [modeleSelectionne]);
-
-  const mediaActuel = medias[imageIndex];
-
-  /* =========================
-     STOCK VARIATION
-  ========================= */
-
-  const getStockVariation = () => {
-    if (!modeleSelectionne) return 0;
-
-    const stock = modeleSelectionne.stockParVariation;
-
-    if (!stock) return 0;
-
-    let stockNormalise = stock;
-
-    if (stock instanceof Map) {
-      stockNormalise = Object.fromEntries(stock);
-    }
-
-    if (!tailleSelectionnee) return 0;
-
-    let variations =
-      stockNormalise?.[tailleSelectionnee];
-
-    if (!variations) return 0;
-
-    if (variations instanceof Map) {
-      variations =
-        Object.fromEntries(variations);
-    }
-
-    if (couleurSelectionnee) {
-      return (
-        Number(
-          variations?.[couleurSelectionnee]
-        ) || 0
-      );
-    }
-
-    return (
-      Number(variations?.general) || 0
-    );
-  };
-
-  const stockDisponible = getStockVariation();
-
-  /* =========================
-     SÉLECTION MODÈLE
-  ========================= */
-
-  const selectionnerModele = (modele) => {
+  const ouvrirModele = (modele) => {
     setModeleSelectionne(modele);
+    setMediaIndex(0);
 
-    setImageIndex(0);
-    setMediaVideo(false);
-
-    setTailleSelectionnee(
-      modele.tailles?.[0] || ""
-    );
-
-    setCouleurSelectionnee(
-      modele.couleurs?.[0] || ""
-    );
-
+    setTailleSelectionnee(modele.tailles?.[0] || "");
+    setCouleurSelectionnee(modele.couleurs?.[0] || "");
     setQuantite(1);
+
+    setService("");
+    setNumeroDepot("");
+    setReferenceDepot("");
+
+    setMessage("");
+    setErreur("");
 
     window.scrollTo({
       top: 0,
@@ -171,411 +82,557 @@ const Precommande = () => {
     });
   };
 
-  /* =========================
-     CHANGEMENT TAILLE
-  ========================= */
+  /* =========================================================
+     FERMER LE MODÈLE
+  ========================================================= */
+
+  const fermerModele = () => {
+    setModeleSelectionne(null);
+    setMessage("");
+    setErreur("");
+  };
+
+  /* =========================================================
+     MÉDIAS
+  ========================================================= */
+
+  const medias = useMemo(() => {
+    if (!modeleSelectionne) return [];
+
+    const liste = [];
+
+    if (Array.isArray(modeleSelectionne.images)) {
+      modeleSelectionne.images.forEach((image) => {
+        if (typeof image === "string" && image) {
+          liste.push({
+            type: "image",
+            url: image,
+          });
+        }
+
+        if (typeof image === "object" && image?.url) {
+          liste.push({
+            type: "image",
+            url: image.url,
+          });
+        }
+      });
+    }
+
+    let videoUrl = modeleSelectionne.video;
+
+    if (typeof videoUrl === "object" && videoUrl !== null) {
+      videoUrl =
+        videoUrl.url ||
+        videoUrl.secure_url ||
+        videoUrl.video ||
+        "";
+    }
+
+    if (videoUrl) {
+      liste.push({
+        type: "video",
+        url: videoUrl,
+      });
+    }
+
+    return liste;
+  }, [modeleSelectionne]);
+
+  /* =========================================================
+     STOCK PAR VARIATION
+  ========================================================= */
+
+  const getStockVariation = () => {
+    if (!modeleSelectionne) return 0;
+
+    const stockParVariation = modeleSelectionne.stockParVariation;
+
+    if (!stockParVariation) {
+      return 0;
+    }
+
+    /*
+      Structure attendue :
+
+      stockParVariation: {
+        "S": {
+          "Noir": 10,
+          "Blanc": 5
+        },
+        "M": {
+          "Noir": 8,
+          "Blanc": 3
+        }
+      }
+    */
+
+    if (tailleSelectionnee && couleurSelectionnee) {
+      const variationTaille =
+        stockParVariation[tailleSelectionnee];
+
+      if (!variationTaille) {
+        return 0;
+      }
+
+      const stock = variationTaille[couleurSelectionnee];
+
+      return Number(stock || 0);
+    }
+
+    /*
+      Cas où il n'y a pas de couleur.
+    */
+
+    if (tailleSelectionnee && !couleurSelectionnee) {
+      const variationTaille =
+        stockParVariation[tailleSelectionnee];
+
+      if (typeof variationTaille === "number") {
+        return variationTaille;
+      }
+
+      if (variationTaille?.general !== undefined) {
+        return Number(variationTaille.general || 0);
+      }
+
+      return 0;
+    }
+
+    return 0;
+  };
+
+  const stockDisponible = getStockVariation();
+
+  /* =========================================================
+     PRIX
+  ========================================================= */
+
+  const prix = Number(modeleSelectionne?.price || 0);
+
+  const montantDepotUnitaire = Number(
+    modeleSelectionne?.montantDepot || Math.ceil(prix * 0.3)
+  );
+
+  const montantDepotTotal = montantDepotUnitaire * quantite;
+
+  /* =========================================================
+     CHANGEMENT DE TAILLE
+  ========================================================= */
 
   const changerTaille = (taille) => {
     setTailleSelectionnee(taille);
     setQuantite(1);
+    setErreur("");
   };
 
-  /* =========================
-     CHANGEMENT COULEUR
-  ========================= */
+  /* =========================================================
+     CHANGEMENT DE COULEUR
+  ========================================================= */
 
   const changerCouleur = (couleur) => {
     setCouleurSelectionnee(couleur);
     setQuantite(1);
+    setErreur("");
   };
 
-  /* =========================
-     MEDIA
-  ========================= */
-
-  const afficherMediaSuivant = () => {
-    if (medias.length === 0) return;
-
-    setImageIndex((prev) =>
-      prev === medias.length - 1
-        ? 0
-        : prev + 1
-    );
-  };
-
-  const afficherMediaPrecedent = () => {
-    if (medias.length === 0) return;
-
-    setImageIndex((prev) =>
-      prev === 0
-        ? medias.length - 1
-        : prev - 1
-    );
-  };
-
-  const choisirMedia = (index) => {
-    setImageIndex(index);
-  };
-
-  /* =========================
+  /* =========================================================
      QUANTITÉ
-  ========================= */
-
-  const augmenterQuantite = () => {
-    const max =
-      stockDisponible > 0
-        ? stockDisponible
-        : 99;
-
-    setQuantite((prev) =>
-      Math.min(prev + 1, max)
-    );
-  };
+  ========================================================= */
 
   const diminuerQuantite = () => {
-    setQuantite((prev) =>
-      Math.max(1, prev - 1)
+    setQuantite((ancienne) => Math.max(1, ancienne - 1));
+  };
+
+  const augmenterQuantite = () => {
+    if (stockDisponible <= 0) {
+      return;
+    }
+
+    setQuantite((ancienne) =>
+      Math.min(stockDisponible, ancienne + 1)
     );
   };
 
-  /* =========================
-     PRIX
-  ========================= */
-
-  const prixUnitaire = Number(
-    modeleSelectionne?.prix ||
-      modeleSelectionne?.price ||
-      0
-  );
-
-  const montantDepotUnitaire = Number(
-    modeleSelectionne?.montantDepot || 0
-  );
-
-  const montantDepotTotal =
-    montantDepotUnitaire * quantite;
-
-  /* =========================
-     ENVOI PRÉCOMMANDE
-  ========================= */
+  /* =========================================================
+     PASSER LA PRÉCOMMANDE
+  ========================================================= */
 
   const envoyerPrecommande = async (e) => {
     e.preventDefault();
 
-    if (!token) {
-      alert(
-        "Vous devez être connecté pour passer une précommande."
-      );
+    setMessage("");
+    setErreur("");
+
+    if (!modeleSelectionne) {
+      setErreur("Veuillez sélectionner un modèle.");
       return;
     }
 
-    if (!modeleSelectionne?._id) {
-      alert("Veuillez sélectionner un modèle.");
-      return;
-    }
-
-    if (!tailleSelectionnee) {
-      alert("Veuillez choisir une taille.");
+    if (!tailleSelectionnee && modeleSelectionne.tailles?.length > 0) {
+      setErreur("Veuillez sélectionner une taille.");
       return;
     }
 
     if (
-      modeleSelectionne.couleurs?.length > 0 &&
-      !couleurSelectionnee
+      !couleurSelectionnee &&
+      modeleSelectionne.couleurs?.length > 0
     ) {
-      alert("Veuillez choisir une couleur.");
+      setErreur("Veuillez sélectionner une couleur.");
+      return;
+    }
+
+    if (stockDisponible <= 0) {
+      setErreur(
+        "Cette variation n'est actuellement plus disponible."
+      );
+      return;
+    }
+
+    if (quantite < 1) {
+      setErreur("La quantité doit être au moins égale à 1.");
+      return;
+    }
+
+    if (quantite > stockDisponible) {
+      setErreur(
+        `Il ne reste que ${stockDisponible} article(s) pour cette variation.`
+      );
+      return;
+    }
+
+    if (!service) {
+      setErreur("Veuillez choisir un moyen de paiement.");
       return;
     }
 
     if (!numeroDepot.trim()) {
-      alert(
-        "Veuillez renseigner le numéro utilisé pour le dépôt."
-      );
+      setErreur("Veuillez renseigner le numéro utilisé pour le dépôt.");
       return;
     }
 
     if (!referenceDepot.trim()) {
-      alert(
-        "Veuillez renseigner la référence du dépôt."
-      );
-      return;
-    }
-
-    if (stockDisponible > 0 && quantite > stockDisponible) {
-      alert(
-        `La quantité disponible pour cette variation est de ${stockDisponible}.`
-      );
+      setErreur("Veuillez renseigner la référence du dépôt.");
       return;
     }
 
     try {
-      setSubmitting(true);
+      setLoadingCommande(true);
 
-      const response = await fetch(
-        `${API_URL}/api/precommandes`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            produitId: modeleSelectionne._id,
-            service,
-            numeroDepot:
-              numeroDepot.trim(),
-            referenceDepot:
-              referenceDepot.trim(),
-            taille: tailleSelectionnee,
-            couleur:
-              couleurSelectionnee || null,
-            quantite,
-          }),
-        }
-      );
+      const token =
+        localStorage.getItem("token") ||
+        localStorage.getItem("clientToken");
+
+      const response = await fetch(`${API_URL}/api/precommandes`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token
+            ? {
+                Authorization: `Bearer ${token}`,
+              }
+            : {}),
+        },
+        body: JSON.stringify({
+          produitId: modeleSelectionne._id,
+          service,
+          numeroDepot: numeroDepot.trim(),
+          referenceDepot: referenceDepot.trim(),
+
+          /*
+            Informations de variation
+          */
+          taille: tailleSelectionnee,
+          couleur: couleurSelectionnee || null,
+          quantite,
+
+          /*
+            Ces valeurs permettent aussi au backend
+            de vérifier le montant attendu.
+          */
+          montantDepot: montantDepotTotal,
+        }),
+      });
 
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(
-          data.message ||
-            "Impossible d'enregistrer la précommande."
+          data.message || "Impossible d'enregistrer la précommande."
         );
       }
 
-      alert(
-        "Votre précommande a été envoyée avec succès."
+      setMessage(
+        "Votre précommande a été envoyée avec succès. Elle sera vérifiée par notre équipe."
       );
 
+      setService("");
       setNumeroDepot("");
       setReferenceDepot("");
       setQuantite(1);
 
-      setModeleSelectionne(null);
-
       await chargerModeles();
-    } catch (err) {
-      console.error(err);
-      alert(err.message);
+    } catch (error) {
+      console.error(error);
+
+      setErreur(
+        error.message ||
+          "Une erreur est survenue lors de l'envoi de la précommande."
+      );
     } finally {
-      setSubmitting(false);
+      setLoadingCommande(false);
     }
   };
 
-  /* =========================
+  /* =========================================================
      LOADING
-  ========================= */
+  ========================================================= */
 
   if (loading) {
     return (
-      <Page>
-        <LoadingContainer>
-          <Spinner />
-          <LoadingText>
-            Chargement des précommandes...
-          </LoadingText>
-        </LoadingContainer>
-      </Page>
+      <LoadingContainer>
+        <Spinner />
+        <LoadingText>Chargement des précommandes...</LoadingText>
+      </LoadingContainer>
     );
   }
 
-  /* =========================
-     ERREUR
-  ========================= */
+  /* =========================================================
+     ERREUR GLOBALE
+  ========================================================= */
 
-  if (error) {
+  if (erreur && !modeleSelectionne && modeles.length === 0) {
     return (
-      <Page>
-        <ErrorContainer>
-          <ErrorIcon>!</ErrorIcon>
+      <PageContainer>
+        <ErrorBox>{erreur}</ErrorBox>
 
-          <h2>Impossible de charger les modèles</h2>
-
-          <p>{error}</p>
-
-          <RetryButton
-            type="button"
-            onClick={chargerModeles}
-          >
-            Réessayer
-          </RetryButton>
-        </ErrorContainer>
-      </Page>
+        <RetryButton onClick={chargerModeles}>
+          Réessayer
+        </RetryButton>
+      </PageContainer>
     );
   }
+
+  /* =========================================================
+     PAGE
+  ========================================================= */
 
   return (
-    <Page>
+    <PageContainer>
       <Header>
-        <Eyebrow>
-          COLLECTION NUMA
-        </Eyebrow>
+        <SmallTitle>COLLECTION NUMA</SmallTitle>
 
-        <Title>
-          Précommandez votre modèle
-        </Title>
+        <MainTitle>Précommandes</MainTitle>
 
-        <Description>
-          Découvrez nos modèles disponibles en
-          précommande et choisissez votre taille,
-          votre couleur et votre quantité.
-        </Description>
+        <Subtitle>
+          Découvrez nos modèles disponibles en précommande et
+          choisissez votre taille, votre couleur et votre quantité.
+        </Subtitle>
       </Header>
 
-      {/* =========================
-          MODELE SELECTIONNE
-      ========================= */}
+      {message && (
+        <SuccessBox>
+          <SuccessIcon>✓</SuccessIcon>
+          <div>{message}</div>
+        </SuccessBox>
+      )}
+
+      {erreur && !modeleSelectionne && (
+        <ErrorBox>{erreur}</ErrorBox>
+      )}
+
+      {!modeleSelectionne && (
+        <ModelesGrid>
+          {modeles.length === 0 ? (
+            <EmptyBox>
+              <EmptyIcon>◌</EmptyIcon>
+              <h3>Aucune précommande disponible</h3>
+              <p>
+                Aucun modèle n'est actuellement disponible en
+                précommande.
+              </p>
+            </EmptyBox>
+          ) : (
+            modeles.map((modele) => {
+              const image =
+                modele.images?.find((img) => img.isMain)?.url ||
+                modele.images?.[0]?.url ||
+                (typeof modele.image === "string"
+                  ? modele.image
+                  : "");
+
+              return (
+                <ModelCard key={modele._id}>
+                  <CardImageContainer>
+                    {image ? (
+                      <CardImage
+                        src={image}
+                        alt={modele.title}
+                      />
+                    ) : (
+                      <NoImage>
+                        Aucune image
+                      </NoImage>
+                    )}
+
+                    <PrecommandeBadge>
+                      PRÉCOMMANDE
+                    </PrecommandeBadge>
+                  </CardImageContainer>
+
+                  <CardContent>
+                    <CardTitle>{modele.title}</CardTitle>
+
+                    <CardDescription>
+                      {modele.description}
+                    </CardDescription>
+
+                    <CardInfo>
+                      <Price>
+                        {Number(modele.price || 0).toLocaleString(
+                          "fr-FR"
+                        )}{" "}
+                        FCFA
+                      </Price>
+
+                      {modele.montantDepot && (
+                        <Deposit>
+                          Dépôt :{" "}
+                          {Number(
+                            modele.montantDepot
+                          ).toLocaleString("fr-FR")}{" "}
+                          FCFA
+                        </Deposit>
+                      )}
+                    </CardInfo>
+
+                    {modele.dateDisponibilite && (
+                      <Availability>
+                        Disponible à partir du{" "}
+                        {new Date(
+                          modele.dateDisponibilite
+                        ).toLocaleDateString("fr-FR")}
+                      </Availability>
+                    )}
+
+                    <VariationSummary>
+                      {modele.tailles?.length > 0 && (
+                        <VariationLine>
+                          <VariationLabel>
+                            Tailles
+                          </VariationLabel>
+
+                          <VariationValues>
+                            {modele.tailles.join(" • ")}
+                          </VariationValues>
+                        </VariationLine>
+                      )}
+
+                      {modele.couleurs?.length > 0 && (
+                        <VariationLine>
+                          <VariationLabel>
+                            Couleurs
+                          </VariationLabel>
+
+                          <VariationValues>
+                            {modele.couleurs.join(" • ")}
+                          </VariationValues>
+                        </VariationLine>
+                      )}
+                    </VariationSummary>
+
+                    <ActionButton
+                      onClick={() => ouvrirModele(modele)}
+                    >
+                      Voir le modèle
+                    </ActionButton>
+                  </CardContent>
+                </ModelCard>
+              );
+            })
+          )}
+        </ModelesGrid>
+      )}
 
       {modeleSelectionne && (
-        <DetailSection>
-          <BackButton
-            type="button"
-            onClick={() =>
-              setModeleSelectionne(null)
-            }
-          >
+        <DetailContainer>
+          <BackButton onClick={fermerModele}>
             ← Retour aux modèles
           </BackButton>
 
           <DetailGrid>
-            {/* =====================
-                MEDIA
-            ===================== */}
+            {/* =================================================
+                MÉDIA
+            ================================================= */}
 
-            <MediaColumn>
+            <MediaSection>
               <MediaContainer>
-                {mediaActuel?.type ===
-                  "video" ? (
-                  <Video
-                    key={mediaActuel.url}
-                    src={mediaActuel.url}
-                    controls
-                    autoPlay
-                    muted
-                    playsInline
-                  />
-                ) : mediaActuel?.url ? (
-                  <ProductImage
-                    src={mediaActuel.url}
-                    alt={
-                      modeleSelectionne.title
-                    }
-                  />
+                {medias.length > 0 ? (
+                  medias[mediaIndex]?.type === "video" ? (
+                    <Video
+                      key={medias[mediaIndex].url}
+                      src={medias[mediaIndex].url}
+                      controls
+                      autoPlay
+                      muted
+                      playsInline
+                    />
+                  ) : (
+                    <MainImage
+                      src={medias[mediaIndex]?.url}
+                      alt={modeleSelectionne.title}
+                    />
+                  )
                 ) : (
-                  <NoMedia>
-                    Aucune image
-                  </NoMedia>
+                  <NoImage>
+                    Aucune image disponible
+                  </NoImage>
                 )}
 
                 {medias.length > 1 && (
-                  <>
-                    <MediaArrow
-                      type="button"
-                      $left
-                      onClick={
-                        afficherMediaPrecedent
-                      }
-                    >
-                      ‹
-                    </MediaArrow>
-
-                    <MediaArrow
-                      type="button"
-                      onClick={
-                        afficherMediaSuivant
-                      }
-                    >
-                      ›
-                    </MediaArrow>
-                  </>
-                )}
-
-                {mediaActuel?.type ===
-                  "video" && (
-                  <VideoIndicator>
-                    ▶ Vidéo
-                  </VideoIndicator>
+                  <DotsContainer>
+                    {medias.map((media, index) => (
+                      <Dot
+                        key={`${media.url}-${index}`}
+                        $active={mediaIndex === index}
+                        $video={media.type === "video"}
+                        onClick={() => setMediaIndex(index)}
+                        aria-label={
+                          media.type === "video"
+                            ? "Afficher la vidéo"
+                            : `Afficher l'image ${index + 1}`
+                        }
+                      >
+                        {media.type === "video" ? "▶" : ""}
+                      </Dot>
+                    ))}
+                  </DotsContainer>
                 )}
               </MediaContainer>
 
-              {/* DOTS */}
-
               {medias.length > 1 && (
-                <Dots>
-                  {medias.map(
-                    (media, index) => (
-                      <Dot
-                        key={`${media.url}-${index}`}
-                        type="button"
-                        $active={
-                          imageIndex === index
-                        }
-                        $video={
-                          media.type === "video"
-                        }
-                        onClick={() =>
-                          choisirMedia(
-                            index
-                          )
-                        }
-                        aria-label={`Média ${
-                          index + 1
-                        }`}
-                      >
-                        {media.type ===
-                        "video"
-                          ? "▶"
-                          : ""}
-                      </Dot>
-                    )
-                  )}
-                </Dots>
+                <MediaDescription>
+                  <MediaCurrent>
+                    {medias[mediaIndex]?.type === "video"
+                      ? "Vidéo du modèle"
+                      : `Photo ${mediaIndex + 1}`}
+                  </MediaCurrent>
+
+                  <MediaHint>
+                    Touchez les points pour changer de média
+                  </MediaHint>
+                </MediaDescription>
               )}
+            </MediaSection>
 
-              {/* MINIATURES */}
+            {/* =================================================
+                INFORMATIONS + FORMULAIRE
+            ================================================= */}
 
-              {medias.length > 1 && (
-                <Thumbnails>
-                  {medias.map(
-                    (media, index) => (
-                      <Thumbnail
-                        key={`${media.url}-thumb-${index}`}
-                        type="button"
-                        $active={
-                          imageIndex === index
-                        }
-                        onClick={() =>
-                          choisirMedia(
-                            index
-                          )
-                        }
-                      >
-                        {media.type ===
-                        "video" ? (
-                          <ThumbnailVideo>
-                            ▶
-                          </ThumbnailVideo>
-                        ) : (
-                          <ThumbnailImage
-                            src={media.url}
-                            alt=""
-                          />
-                        )}
-                      </Thumbnail>
-                    )
-                  )}
-                </Thumbnails>
-              )}
-            </MediaColumn>
-
-            {/* =====================
-                INFORMATIONS
-            ===================== */}
-
-            <InfoColumn>
-              <Status>
+            <InformationSection>
+              <PrecommandeLabel>
                 PRÉCOMMANDE
-              </Status>
+              </PrecommandeLabel>
 
               <DetailTitle>
                 {modeleSelectionne.title}
@@ -586,108 +643,82 @@ const Precommande = () => {
               </DetailDescription>
 
               <PriceBlock>
-                <Price>
-                  {prixUnitaire.toLocaleString(
+                <CurrentPrice>
+                  {prix.toLocaleString("fr-FR")} FCFA
+                </CurrentPrice>
+
+                <DepositText>
+                  Dépôt par article :{" "}
+                  {montantDepotUnitaire.toLocaleString(
                     "fr-FR"
                   )}{" "}
                   FCFA
-                </Price>
-
-                <PriceLabel>
-                  Prix du modèle
-                </PriceLabel>
+                </DepositText>
               </PriceBlock>
 
-              {modeleSelectionne
-                .dateDisponibilite && (
-                <Availability>
-                  <AvailabilityIcon>
-                    ✓
-                  </AvailabilityIcon>
+              {modeleSelectionne.dateDisponibilite && (
+                <DateBox>
+                  <DateLabel>
+                    DISPONIBILITÉ
+                  </DateLabel>
 
-                  <div>
-                    <strong>
-                      Disponible à partir du
-                    </strong>
-
-                    <span>
-                      {new Date(
-                        modeleSelectionne.dateDisponibilite
-                      ).toLocaleDateString(
-                        "fr-FR",
-                        {
-                          day: "numeric",
-                          month: "long",
-                          year: "numeric",
-                        }
-                      )}
-                    </span>
-                  </div>
-                </Availability>
+                  <DateValue>
+                    {new Date(
+                      modeleSelectionne.dateDisponibilite
+                    ).toLocaleDateString("fr-FR", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </DateValue>
+                </DateBox>
               )}
 
-              <Divider />
+              {/* =================================================
+                  TAILLES
+              ================================================= */}
 
-              {/* TAILLES */}
+              {modeleSelectionne.tailles?.length > 0 && (
+                <FieldGroup>
+                  <FieldLabel>
+                    Taille
+                  </FieldLabel>
 
-              {modeleSelectionne.tailles
-                ?.length > 0 && (
-                <OptionGroup>
-                  <OptionHeader>
-                    <OptionLabel>
-                      Taille
-                    </OptionLabel>
-
-                    <SelectedValue>
-                      {tailleSelectionnee ||
-                        "Choisir"}
-                    </SelectedValue>
-                  </OptionHeader>
-
-                  <OptionButtons>
+                  <ChoiceGrid>
                     {modeleSelectionne.tailles.map(
                       (taille) => (
-                        <OptionButton
+                        <ChoiceButton
                           type="button"
                           key={taille}
                           $active={
-                            tailleSelectionnee ===
-                            taille
+                            tailleSelectionnee === taille
                           }
                           onClick={() =>
-                            changerTaille(
-                              taille
-                            )
+                            changerTaille(taille)
                           }
                         >
                           {taille}
-                        </OptionButton>
+                        </ChoiceButton>
                       )
                     )}
-                  </OptionButtons>
-                </OptionGroup>
+                  </ChoiceGrid>
+                </FieldGroup>
               )}
 
-              {/* COULEURS */}
+              {/* =================================================
+                  COULEURS
+              ================================================= */}
 
-              {modeleSelectionne.couleurs
-                ?.length > 0 && (
-                <OptionGroup>
-                  <OptionHeader>
-                    <OptionLabel>
-                      Couleur
-                    </OptionLabel>
+              {modeleSelectionne.couleurs?.length > 0 && (
+                <FieldGroup>
+                  <FieldLabel>
+                    Couleur
+                  </FieldLabel>
 
-                    <SelectedValue>
-                      {couleurSelectionnee ||
-                        "Choisir"}
-                    </SelectedValue>
-                  </OptionHeader>
-
-                  <ColorButtons>
+                  <ChoiceGrid>
                     {modeleSelectionne.couleurs.map(
                       (couleur) => (
-                        <ColorButton
+                        <ChoiceButton
                           type="button"
                           key={couleur}
                           $active={
@@ -695,54 +726,71 @@ const Precommande = () => {
                             couleur
                           }
                           onClick={() =>
-                            changerCouleur(
-                              couleur
-                            )
+                            changerCouleur(couleur)
                           }
                         >
+                          <ColorCircle />
+
                           {couleur}
-                        </ColorButton>
+                        </ChoiceButton>
                       )
                     )}
-                  </ColorButtons>
-                </OptionGroup>
+                  </ChoiceGrid>
+                </FieldGroup>
               )}
 
-              {/* STOCK */}
+              {/* =================================================
+                  STOCK DE LA VARIATION
+              ================================================= */}
 
-              <StockInfo>
-                {stockDisponible > 0 ? (
-                  <>
-                    <StockDot />
-                    {stockDisponible} disponible
-                    {stockDisponible > 1
-                      ? "s"
-                      : ""}{" "}
-                    pour cette variation
-                  </>
+              <StockCard
+                $available={stockDisponible > 0}
+              >
+                <StockTop>
+                  <StockLabel>
+                    STOCK DISPONIBLE
+                  </StockLabel>
+
+                  <StockNumber
+                    $available={stockDisponible > 0}
+                  >
+                    {stockDisponible}
+                  </StockNumber>
+                </StockTop>
+
+                {tailleSelectionnee ||
+                couleurSelectionnee ? (
+                  <StockVariation>
+                    Variation sélectionnée :
+                    <strong>
+                      {" "}
+                      {tailleSelectionnee || "—"}
+                      {couleurSelectionnee
+                        ? ` • ${couleurSelectionnee}`
+                        : ""}
+                    </strong>
+                  </StockVariation>
                 ) : (
-                  <>
-                    <StockDot $empty />
-                    Variation non disponible
-                  </>
+                  <StockVariation>
+                    Sélectionnez une variation pour voir
+                    le stock.
+                  </StockVariation>
                 )}
-              </StockInfo>
+              </StockCard>
 
-              {/* QUANTITE */}
+              {/* =================================================
+                  QUANTITÉ
+              ================================================= */}
 
-              <OptionGroup>
-                <OptionHeader>
-                  <OptionLabel>
-                    Quantité
-                  </OptionLabel>
-                </OptionHeader>
+              <FieldGroup>
+                <FieldLabel>
+                  Quantité
+                </FieldLabel>
 
-                <QuantityBox>
+                <QuantityContainer>
                   <QuantityButton
                     type="button"
-                    onClick={
-                      diminuerQuantite
-                    }
+                    onClick={diminuerQuantite}
                     disabled={quantite <= 1}
                   >
                     −
@@ -754,27 +802,49 @@ const Precommande = () => {
 
                   <QuantityButton
                     type="button"
-                    onClick={
-                      augmenterQuantite
-                    }
+                    onClick={augmenterQuantite}
                     disabled={
-                      stockDisponible > 0 &&
-                      quantite >=
-                        stockDisponible
+                      stockDisponible <= 0 ||
+                      quantite >= stockDisponible
                     }
                   >
                     +
                   </QuantityButton>
-                </QuantityBox>
-              </OptionGroup>
+                </QuantityContainer>
+              </FieldGroup>
 
-              {/* DEPOT */}
+              {/* =================================================
+                  RÉCAPITULATIF
+              ================================================= */}
 
-              <DepositBox>
-                <DepositTop>
-                  <span>
-                    Dépôt à verser
-                  </span>
+              <SummaryBox>
+                <SummaryRow>
+                  <span>Prix unitaire</span>
+
+                  <strong>
+                    {prix.toLocaleString("fr-FR")} FCFA
+                  </strong>
+                </SummaryRow>
+
+                <SummaryRow>
+                  <span>Quantité</span>
+
+                  <strong>{quantite}</strong>
+                </SummaryRow>
+
+                <SummaryRow>
+                  <span>Dépôt unitaire</span>
+
+                  <strong>
+                    {montantDepotUnitaire.toLocaleString(
+                      "fr-FR"
+                    )}{" "}
+                    FCFA
+                  </strong>
+                </SummaryRow>
+
+                <SummaryTotal>
+                  <span>Total du dépôt</span>
 
                   <strong>
                     {montantDepotTotal.toLocaleString(
@@ -782,468 +852,357 @@ const Precommande = () => {
                     )}{" "}
                     FCFA
                   </strong>
-                </DepositTop>
+                </SummaryTotal>
+              </SummaryBox>
 
-                <DepositDescription>
-                  Le dépôt sera vérifié par notre
-                  équipe avant validation de votre
-                  précommande.
-                </DepositDescription>
-              </DepositBox>
+              {/* =================================================
+                  FORMULAIRE PAIEMENT
+              ================================================= */}
 
-              {/* FORMULAIRE */}
-
-              <PrecommandeForm
-                onSubmit={
-                  envoyerPrecommande
-                }
-              >
+              <Form onSubmit={envoyerPrecommande}>
                 <FormTitle>
                   Informations du dépôt
                 </FormTitle>
 
-                <Field>
-                  <Label>
-                    Service de paiement
-                  </Label>
+                <FieldGroup>
+                  <FieldLabel>
+                    Moyen de paiement
+                  </FieldLabel>
 
-                  <ServiceButtons>
-                    <ServiceButton
+                  <PaymentGrid>
+                    <PaymentButton
                       type="button"
-                      $active={
-                        service === "orange"
-                      }
+                      $active={service === "orange"}
                       onClick={() =>
                         setService("orange")
                       }
                     >
-                      <ServiceIcon>
-                        🟠
-                      </ServiceIcon>
+                      <PaymentLogo>
+                        OM
+                      </PaymentLogo>
 
-                      Orange Money
-                    </ServiceButton>
+                      <div>
+                        <PaymentName>
+                          Orange Money
+                        </PaymentName>
 
-                    <ServiceButton
+                        <PaymentSmall>
+                          Paiement mobile
+                        </PaymentSmall>
+                      </div>
+                    </PaymentButton>
+
+                    <PaymentButton
                       type="button"
-                      $active={
-                        service === "wave"
-                      }
-                      onClick={() =>
-                        setService("wave")
-                      }
+                      $active={service === "wave"}
+                      onClick={() => setService("wave")}
                     >
-                      <ServiceIcon>
-                        🔵
-                      </ServiceIcon>
+                      <PaymentLogo>
+                        W
+                      </PaymentLogo>
 
-                      Wave
-                    </ServiceButton>
-                  </ServiceButtons>
-                </Field>
+                      <div>
+                        <PaymentName>
+                          Wave
+                        </PaymentName>
 
-                <Field>
-                  <Label>
+                        <PaymentSmall>
+                          Paiement mobile
+                        </PaymentSmall>
+                      </div>
+                    </PaymentButton>
+                  </PaymentGrid>
+                </FieldGroup>
+
+                <FieldGroup>
+                  <FieldLabel htmlFor="numeroDepot">
                     Numéro utilisé pour le dépôt
-                  </Label>
+                  </FieldLabel>
 
                   <Input
+                    id="numeroDepot"
                     type="tel"
+                    placeholder="Ex : 07 XX XX XX XX"
                     value={numeroDepot}
                     onChange={(e) =>
-                      setNumeroDepot(
-                        e.target.value
-                      )
+                      setNumeroDepot(e.target.value)
                     }
-                    placeholder="Ex: 07 XX XX XX XX"
                   />
-                </Field>
+                </FieldGroup>
 
-                <Field>
-                  <Label>
+                <FieldGroup>
+                  <FieldLabel htmlFor="referenceDepot">
                     Référence du dépôt
-                  </Label>
+                  </FieldLabel>
 
                   <Input
+                    id="referenceDepot"
                     type="text"
+                    placeholder="Entrez la référence de votre dépôt"
                     value={referenceDepot}
                     onChange={(e) =>
-                      setReferenceDepot(
-                        e.target.value
-                      )
+                      setReferenceDepot(e.target.value)
                     }
-                    placeholder="Ex: REF123456"
                   />
-                </Field>
+                </FieldGroup>
 
-                <Summary>
-                  <SummaryRow>
-                    <span>
-                      Modèle
-                    </span>
+                {erreur && (
+                  <FormError>
+                    {erreur}
+                  </FormError>
+                )}
 
-                    <strong>
-                      {
-                        modeleSelectionne.title
-                      }
-                    </strong>
-                  </SummaryRow>
-
-                  <SummaryRow>
-                    <span>
-                      Quantité
-                    </span>
-
-                    <strong>
-                      {quantite}
-                    </strong>
-                  </SummaryRow>
-
-                  <SummaryRow>
-                    <span>
-                      Dépôt
-                    </span>
-
-                    <strong>
-                      {montantDepotTotal.toLocaleString(
-                        "fr-FR"
-                      )}{" "}
-                      FCFA
-                    </strong>
-                  </SummaryRow>
-                </Summary>
+                {message && (
+                  <FormSuccess>
+                    {message}
+                  </FormSuccess>
+                )}
 
                 <SubmitButton
                   type="submit"
                   disabled={
-                    submitting ||
-                    !tailleSelectionnee ||
-                    (modeleSelectionne
-                      .couleurs?.length >
-                      0 &&
-                      !couleurSelectionnee) ||
+                    loadingCommande ||
                     stockDisponible <= 0
                   }
                 >
-                  {submitting
-                    ? "Envoi en cours..."
-                    : "Confirmer la précommande"}
+                  {loadingCommande ? (
+                    <>
+                      <ButtonSpinner />
+                      Envoi en cours...
+                    </>
+                  ) : (
+                    "Confirmer la précommande"
+                  )}
                 </SubmitButton>
-              </PrecommandeForm>
-            </InfoColumn>
+
+                <SecurityText>
+                  Votre précommande sera vérifiée par notre
+                  équipe avant validation définitive.
+                </SecurityText>
+              </Form>
+            </InformationSection>
           </DetailGrid>
-        </DetailSection>
+        </DetailContainer>
       )}
-
-      {/* =========================
-          LISTE MODELES
-      ========================= */}
-
-      {!modeleSelectionne && (
-        <ModelsSection>
-          <SectionHeader>
-            <div>
-              <SectionEyebrow>
-                NOS MODÈLES
-              </SectionEyebrow>
-
-              <SectionTitle>
-                Choisissez votre modèle
-              </SectionTitle>
-            </div>
-
-            <ModelCount>
-              {modeles.length} modèle
-              {modeles.length > 1
-                ? "s"
-                : ""}
-            </ModelCount>
-          </SectionHeader>
-
-          {modeles.length === 0 ? (
-            <EmptyModels>
-              <EmptyIcon>♡</EmptyIcon>
-
-              <h3>
-                Aucune précommande disponible
-              </h3>
-
-              <p>
-                De nouveaux modèles seront
-                bientôt disponibles.
-              </p>
-            </EmptyModels>
-          ) : (
-            <ModelGrid>
-              {modeles.map((modele) => {
-                const image =
-                  modele.images?.find(
-                    (item) =>
-                      item.isMain
-                  ) ||
-                  modele.images?.[0];
-
-                return (
-                  <ModelCard
-                    key={modele._id}
-                    type="button"
-                    onClick={() =>
-                      selectionnerModele(
-                        modele
-                      )
-                    }
-                  >
-                    <CardMedia>
-                      {image?.url ? (
-                        <CardImage
-                          src={image.url}
-                          alt={modele.title}
-                        />
-                      ) : (
-                        <NoMedia>
-                          Aucune image
-                        </NoMedia>
-                      )}
-
-                      {modele.video && (
-                        <VideoPill>
-                          ▶ Vidéo
-                        </VideoPill>
-                      )}
-
-                      <CardOverlay>
-                        Voir le modèle →
-                      </CardOverlay>
-                    </CardMedia>
-
-                    <CardBody>
-                      <CardStatus>
-                        PRÉCOMMANDE
-                      </CardStatus>
-
-                      <CardTitle>
-                        {modele.title}
-                      </CardTitle>
-
-                      <CardDescription>
-                        {modele.description}
-                      </CardDescription>
-
-                      <CardBottom>
-                        <CardPrice>
-                          {Number(
-                            modele.prix ||
-                              modele.price ||
-                              0
-                          ).toLocaleString(
-                            "fr-FR"
-                          )}{" "}
-                          FCFA
-                        </CardPrice>
-
-                        <Arrow>
-                          →
-                        </Arrow>
-                      </CardBottom>
-                    </CardBody>
-                  </ModelCard>
-                );
-              })}
-            </ModelGrid>
-          )}
-        </ModelsSection>
-      )}
-    </Page>
+    </PageContainer>
   );
 };
 
-/* =====================================================
-   ANIMATIONS
-===================================================== */
+/* ============================================================
+   STYLES
+============================================================ */
 
-const spin = keyframes`
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-`;
-
-const fadeIn = keyframes`
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-`;
-
-/* =====================================================
-   PAGE
-===================================================== */
-
-const Page = styled.div`
+const PageContainer = styled.div`
   min-height: 100vh;
-  background: #fafafa;
-  padding: 45px 40px 70px;
-  color: #1f2937;
-
-  @media (max-width: 700px) {
-    padding: 25px 16px 50px;
-  }
+  background: #f8f8f8;
+  padding: 45px 25px 80px;
 `;
 
-const Header = styled.header`
-  max-width: 1100px;
+const Header = styled.div`
+  max-width: 1200px;
   margin: 0 auto 45px;
   text-align: center;
 `;
 
-const Eyebrow = styled.div`
-  margin-bottom: 10px;
-  color: #9a6b3a;
+const SmallTitle = styled.div`
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 3px;
+  color: #777;
+  margin-bottom: 10px;
 `;
 
-const Title = styled.h1`
+const MainTitle = styled.h1`
   margin: 0;
-  color: #202020;
-  font-size: 38px;
+  font-size: 42px;
+  color: #1e1e1e;
   font-weight: 700;
-  letter-spacing: -1px;
 
-  @media (max-width: 700px) {
-    font-size: 29px;
+  @media (max-width: 600px) {
+    font-size: 32px;
   }
 `;
 
-const Description = styled.p`
+const Subtitle = styled.p`
   max-width: 650px;
   margin: 15px auto 0;
   color: #777;
-  font-size: 15px;
   line-height: 1.7;
 `;
 
-/* =====================================================
-   LOADING
-===================================================== */
+const ModelesGrid = styled.div`
+  max-width: 1200px;
+  margin: auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 25px;
 
-const LoadingContainer = styled.div`
-  min-height: 70vh;
+  @media (max-width: 950px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 620px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const ModelCard = styled.article`
+  background: white;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid #ececec;
+  transition: 0.25s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
+  }
+`;
+
+const CardImageContainer = styled.div`
+  position: relative;
+  height: 360px;
+  background: #eeeeee;
+  overflow: hidden;
+`;
+
+const CardImage = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+`;
+
+const NoImage = styled.div`
+  width: 100%;
+  height: 100%;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
+  color: #999;
+  background: #eeeeee;
 `;
 
-const Spinner = styled.div`
-  width: 45px;
-  height: 45px;
-  border: 4px solid #e5e7eb;
-  border-top-color: #9a6b3a;
-  border-radius: 50%;
-  animation: ${spin} 0.8s linear infinite;
+const PrecommandeBadge = styled.div`
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  background: #111;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 30px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
 `;
 
-const LoadingText = styled.p`
-  margin-top: 15px;
+const CardContent = styled.div`
+  padding: 22px;
+`;
+
+const CardTitle = styled.h2`
+  margin: 0 0 10px;
+  color: #222;
+  font-size: 21px;
+`;
+
+const CardDescription = styled.p`
+  color: #777;
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 68px;
+`;
+
+const CardInfo = styled.div`
+  margin-top: 18px;
+`;
+
+const Price = styled.div`
+  font-size: 20px;
+  font-weight: 700;
+  color: #111;
+`;
+
+const Deposit = styled.div`
+  margin-top: 5px;
+  color: #777;
+  font-size: 13px;
+`;
+
+const Availability = styled.div`
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: #f6f6f6;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #555;
+`;
+
+const VariationSummary = styled.div`
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const VariationLine = styled.div`
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+`;
+
+const VariationLabel = styled.span`
+  font-weight: 700;
+  color: #333;
+`;
+
+const VariationValues = styled.span`
   color: #777;
 `;
 
-/* =====================================================
-   ERROR
-===================================================== */
-
-const ErrorContainer = styled.div`
-  max-width: 500px;
-  margin: 100px auto;
-  padding: 40px;
-  background: white;
-  border-radius: 15px;
-  text-align: center;
-  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.06);
-
-  h2 {
-    margin: 15px 0 8px;
-  }
-
-  p {
-    color: #777;
-  }
-`;
-
-const ErrorIcon = styled.div`
-  width: 45px;
-  height: 45px;
-  margin: auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: #fee2e2;
-  color: #dc2626;
-  font-size: 25px;
-  font-weight: 700;
-`;
-
-const RetryButton = styled.button`
-  margin-top: 15px;
-  padding: 11px 20px;
+const ActionButton = styled.button`
+  width: 100%;
   border: none;
-  border-radius: 8px;
-  background: #9a6b3a;
+  background: #111;
   color: white;
+  padding: 14px;
+  border-radius: 10px;
+  margin-top: 20px;
+  font-weight: 700;
   cursor: pointer;
+  transition: 0.2s;
+
+  &:hover {
+    background: #333;
+  }
 `;
 
-/* =====================================================
-   MODELE DETAIL
-===================================================== */
-
-const DetailSection = styled.section`
-  max-width: 1200px;
-  margin: 0 auto;
-  animation: ${fadeIn} 0.4s ease;
+const DetailContainer = styled.div`
+  max-width: 1250px;
+  margin: auto;
 `;
 
 const BackButton = styled.button`
-  margin-bottom: 20px;
-  padding: 0;
   border: none;
   background: transparent;
-  color: #555;
-  font-size: 14px;
+  color: #333;
+  font-weight: 600;
   cursor: pointer;
-
-  &:hover {
-    color: #9a6b3a;
-  }
+  margin-bottom: 25px;
+  padding: 8px 0;
 `;
 
 const DetailGrid = styled.div`
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(
-      380px,
-      0.9fr
-    );
-  gap: 50px;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 45px;
   align-items: start;
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
-    gap: 30px;
   }
 `;
 
-const MediaColumn = styled.div`
+const MediaSection = styled.div`
   position: sticky;
   top: 20px;
 
@@ -1256,491 +1215,435 @@ const MediaContainer = styled.div`
   position: relative;
   width: 100%;
   aspect-ratio: 4 / 5;
-  overflow: hidden;
-  border-radius: 16px;
   background: #eeeeee;
+  border-radius: 22px;
+  overflow: hidden;
 `;
 
-const ProductImage = styled.img`
+const MainImage = styled.img`
   width: 100%;
   height: 100%;
-  display: block;
   object-fit: cover;
 `;
 
 const Video = styled.video`
   width: 100%;
   height: 100%;
-  display: block;
   object-fit: cover;
-  background: #111;
+  display: block;
 `;
 
-const NoMedia = styled.div`
-  width: 100%;
-  height: 100%;
+const DotsContainer = styled.div`
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #999;
-  background: #eeeeee;
-`;
-
-const MediaArrow = styled.button`
-  position: absolute;
-  top: 50%;
-  ${(props) =>
-    props.$left ? "left: 15px;" : "right: 15px;"}
-  transform: translateY(-50%);
-  width: 42px;
-  height: 42px;
-  border: none;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.9);
-  color: #222;
-  font-size: 30px;
-  line-height: 1;
-  cursor: pointer;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
-
-  &:hover {
-    background: white;
-  }
-`;
-
-const VideoIndicator = styled.div`
-  position: absolute;
-  left: 15px;
-  bottom: 15px;
-  padding: 7px 11px;
-  border-radius: 20px;
-  background: rgba(0, 0, 0, 0.7);
-  color: white;
-  font-size: 12px;
-  font-weight: 600;
-`;
-
-const Dots = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 7px;
-  margin-top: 14px;
+  gap: 9px;
+  padding: 9px 13px;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(8px);
+  border-radius: 30px;
 `;
 
 const Dot = styled.button`
-  width: ${(props) =>
-    props.$video ? "27px" : "8px"};
-  height: 8px;
-  padding: 0;
+  width: ${(props) => (props.$video ? "30px" : "9px")};
+  height: ${(props) => (props.$video ? "30px" : "9px")};
+  border-radius: 50%;
   border: none;
-  border-radius: 10px;
+
   background: ${(props) =>
     props.$active
-      ? "#9a6b3a"
-      : "#d1d5db"};
-  color: white;
-  font-size: 7px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-`;
+      ? "#ffffff"
+      : props.$video
+      ? "rgba(255,255,255,0.7)"
+      : "rgba(255,255,255,0.5)"};
 
-const Thumbnails = styled.div`
-  display: flex;
-  gap: 10px;
-  margin-top: 15px;
-  overflow-x: auto;
-  padding-bottom: 4px;
-`;
-
-const Thumbnail = styled.button`
-  position: relative;
-  flex: 0 0 70px;
-  width: 70px;
-  height: 85px;
-  padding: 0;
-  overflow: hidden;
-  border: 2px solid
-    ${(props) =>
-      props.$active
-        ? "#9a6b3a"
-        : "transparent"};
-  border-radius: 8px;
-  background: #eee;
-  cursor: pointer;
-`;
-
-const ThumbnailImage = styled.img`
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-`;
-
-const ThumbnailVideo = styled.div`
-  width: 100%;
-  height: 100%;
+  color: #111;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #222;
+
+  font-size: ${(props) =>
+    props.$video ? "10px" : "0"};
+
+  padding: 0;
+  cursor: pointer;
+  transition: 0.2s ease;
+
+  &:hover {
+    transform: scale(1.15);
+  }
+`;
+
+const MediaDescription = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 13px 5px;
+`;
+
+const MediaCurrent = styled.span`
+  font-weight: 700;
+  color: #333;
+  font-size: 13px;
+`;
+
+const MediaHint = styled.span`
+  color: #999;
+  font-size: 11px;
+`;
+
+const InformationSection = styled.div`
+  background: white;
+  border-radius: 22px;
+  padding: 30px;
+  border: 1px solid #ececec;
+
+  @media (max-width: 600px) {
+    padding: 22px;
+  }
+`;
+
+const PrecommandeLabel = styled.div`
+  display: inline-flex;
+  background: #111;
   color: white;
-  font-size: 22px;
-`;
-
-/* =====================================================
-   INFO
-===================================================== */
-
-const InfoColumn = styled.div`
-  padding: 5px 0;
-`;
-
-const Status = styled.div`
-  display: inline-block;
-  margin-bottom: 12px;
-  padding: 6px 10px;
   border-radius: 20px;
-  background: #f3e8dc;
-  color: #9a6b3a;
+  padding: 7px 12px;
   font-size: 10px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 1px;
 `;
 
 const DetailTitle = styled.h2`
-  margin: 0;
-  color: #202020;
+  margin: 15px 0 10px;
   font-size: 32px;
-  line-height: 1.15;
-
-  @media (max-width: 700px) {
-    font-size: 27px;
-  }
+  color: #1d1d1d;
 `;
 
 const DetailDescription = styled.p`
-  margin: 14px 0 20px;
   color: #777;
   line-height: 1.7;
-  font-size: 14px;
+  margin-bottom: 20px;
 `;
 
 const PriceBlock = styled.div`
-  margin: 20px 0;
+  padding: 18px 0;
+  border-top: 1px solid #eee;
+  border-bottom: 1px solid #eee;
 `;
 
-const Price = styled.div`
-  color: #202020;
-  font-size: 26px;
-  font-weight: 700;
+const CurrentPrice = styled.div`
+  font-size: 27px;
+  font-weight: 800;
+  color: #111;
 `;
 
-const PriceLabel = styled.div`
-  margin-top: 3px;
-  color: #999;
-  font-size: 12px;
-`;
-
-const Availability = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  padding: 13px;
-  border-radius: 10px;
-  background: #f7f7f7;
-  color: #555;
-
-  strong,
-  span {
-    display: block;
-  }
-
-  strong {
-    font-size: 12px;
-  }
-
-  span {
-    margin-top: 3px;
-    color: #777;
-    font-size: 13px;
-  }
-`;
-
-const AvailabilityIcon = styled.div`
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: #e5f4e9;
-  color: #27833f;
-  font-weight: 700;
-`;
-
-const Divider = styled.hr`
-  margin: 25px 0;
-  border: none;
-  border-top: 1px solid #eeeeee;
-`;
-
-const OptionGroup = styled.div`
-  margin-bottom: 22px;
-`;
-
-const OptionHeader = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-`;
-
-const OptionLabel = styled.div`
-  color: #222;
-  font-size: 14px;
-  font-weight: 700;
-`;
-
-const SelectedValue = styled.div`
-  color: #9a6b3a;
-  font-size: 13px;
-  font-weight: 600;
-`;
-
-const OptionButtons = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-`;
-
-const OptionButton = styled.button`
-  min-width: 48px;
-  padding: 10px 14px;
-  border: 1px solid
-    ${(props) =>
-      props.$active
-        ? "#9a6b3a"
-        : "#ddd"};
-  border-radius: 7px;
-  background: ${(props) =>
-    props.$active
-      ? "#9a6b3a"
-      : "white"};
-  color: ${(props) =>
-    props.$active ? "white" : "#444"};
-  cursor: pointer;
-  font-weight: 600;
-`;
-
-const ColorButtons = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-`;
-
-const ColorButton = styled.button`
-  padding: 10px 14px;
-  border: 1px solid
-    ${(props) =>
-      props.$active
-        ? "#9a6b3a"
-        : "#ddd"};
-  border-radius: 7px;
-  background: ${(props) =>
-    props.$active
-      ? "#9a6b3a"
-      : "white"};
-  color: ${(props) =>
-    props.$active ? "white" : "#444"};
-  cursor: pointer;
-  font-size: 13px;
-`;
-
-const StockInfo = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin: -5px 0 20px;
+const DepositText = styled.div`
+  margin-top: 7px;
   color: #777;
-  font-size: 12px;
+  font-size: 13px;
 `;
 
-const StockDot = styled.span`
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: ${(props) =>
-    props.$empty ? "#dc2626" : "#22c55e"};
+const DateBox = styled.div`
+  margin-top: 18px;
+  background: #f7f7f7;
+  padding: 15px;
+  border-radius: 12px;
 `;
 
-const QuantityBox = styled.div`
-  width: max-content;
-  display: flex;
-  align-items: center;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  overflow: hidden;
-`;
-
-const QuantityButton = styled.button`
-  width: 42px;
-  height: 40px;
-  border: none;
-  background: white;
-  color: #333;
-  font-size: 20px;
-  cursor: pointer;
-
-  &:hover:not(:disabled) {
-    background: #f5f5f5;
-  }
-
-  &:disabled {
-    color: #ccc;
-    cursor: not-allowed;
-  }
-`;
-
-const QuantityValue = styled.div`
-  width: 45px;
-  text-align: center;
-  font-weight: 600;
-`;
-
-const DepositBox = styled.div`
-  margin: 25px 0;
-  padding: 16px;
-  border: 1px solid #eadbca;
-  border-radius: 10px;
-  background: #fcf8f4;
-`;
-
-const DepositTop = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 15px;
-
-  span {
-    color: #666;
-    font-size: 13px;
-  }
-
-  strong {
-    color: #9a6b3a;
-    font-size: 18px;
-  }
-`;
-
-const DepositDescription = styled.p`
-  margin: 8px 0 0;
+const DateLabel = styled.div`
+  font-size: 10px;
+  font-weight: 800;
   color: #888;
-  font-size: 11px;
-  line-height: 1.5;
+  letter-spacing: 1px;
 `;
 
-const PrecommandeForm = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: 17px;
+const DateValue = styled.div`
+  margin-top: 5px;
+  font-weight: 700;
+  color: #333;
 `;
 
-const FormTitle = styled.h3`
-  margin: 0;
-  font-size: 17px;
+const FieldGroup = styled.div`
+  margin-top: 23px;
+`;
+
+const FieldLabel = styled.label`
+  display: block;
+  margin-bottom: 10px;
   color: #222;
-`;
-
-const Field = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-`;
-
-const Label = styled.label`
-  color: #444;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
 `;
 
-const Input = styled.input`
-  width: 100%;
-  box-sizing: border-box;
-  padding: 12px 13px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  outline: none;
-  font-size: 14px;
+const ChoiceGrid = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+`;
 
-  &:focus {
-    border-color: #9a6b3a;
+const ChoiceButton = styled.button`
+  border: 1px solid
+    ${(props) =>
+      props.$active ? "#111" : "#dddddd"};
+
+  background: ${(props) =>
+    props.$active ? "#111" : "#fff"};
+
+  color: ${(props) =>
+    props.$active ? "#fff" : "#333"};
+
+  padding: 11px 15px;
+  border-radius: 9px;
+  cursor: pointer;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: 0.2s;
+
+  &:hover {
+    border-color: #111;
   }
 `;
 
-const ServiceButtons = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
+const ColorCircle = styled.span`
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: currentColor;
+  border: 1px solid rgba(0, 0, 0, 0.15);
 `;
 
-const ServiceButton = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  padding: 12px;
+const StockCard = styled.div`
+  margin-top: 22px;
+  padding: 17px;
+  border-radius: 13px;
+
+  background: ${(props) =>
+    props.$available
+      ? "#f3f8f3"
+      : "#fff2f2"};
+
   border: 1px solid
     ${(props) =>
-      props.$active
-        ? "#9a6b3a"
-        : "#ddd"};
-  border-radius: 8px;
-  background: ${(props) =>
-    props.$active
-      ? "#fcf8f4"
-      : "white"};
-  color: #444;
-  cursor: pointer;
-  font-weight: 600;
+      props.$available
+        ? "#dceadc"
+        : "#f1d2d2"};
 `;
 
-const ServiceIcon = styled.span`
-  font-size: 14px;
-`;
-
-const Summary = styled.div`
-  padding: 15px;
-  background: #f7f7f7;
-  border-radius: 9px;
-`;
-
-const SummaryRow = styled.div`
+const StockTop = styled.div`
   display: flex;
   justify-content: space-between;
-  gap: 15px;
-  padding: 5px 0;
+  align-items: center;
+`;
+
+const StockLabel = styled.span`
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #777;
+`;
+
+const StockNumber = styled.span`
+  font-size: 22px;
+  font-weight: 800;
+
+  color: ${(props) =>
+    props.$available ? "#26733a" : "#b33a3a"};
+`;
+
+const StockVariation = styled.div`
+  margin-top: 7px;
   color: #777;
   font-size: 12px;
 
   strong {
     color: #333;
-    text-align: right;
   }
+`;
+
+const QuantityContainer = styled.div`
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  overflow: hidden;
+`;
+
+const QuantityButton = styled.button`
+  width: 42px;
+  height: 42px;
+  border: none;
+  background: #f5f5f5;
+  font-size: 20px;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.35;
+  }
+`;
+
+const QuantityValue = styled.div`
+  width: 55px;
+  text-align: center;
+  font-weight: 700;
+`;
+
+const SummaryBox = styled.div`
+  margin-top: 25px;
+  padding: 18px;
+  background: #f7f7f7;
+  border-radius: 13px;
+`;
+
+const SummaryRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  padding: 7px 0;
+  font-size: 13px;
+  color: #666;
+
+  strong {
+    color: #222;
+  }
+`;
+
+const SummaryTotal = styled.div`
+  margin-top: 10px;
+  padding-top: 14px;
+  border-top: 1px solid #ddd;
+
+  display: flex;
+  justify-content: space-between;
+
+  font-size: 15px;
+  font-weight: 800;
+  color: #111;
+`;
+
+const Form = styled.form`
+  margin-top: 30px;
+  padding-top: 25px;
+  border-top: 1px solid #eee;
+`;
+
+const FormTitle = styled.h3`
+  margin: 0 0 5px;
+  font-size: 18px;
+  color: #222;
+`;
+
+const PaymentGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+
+  @media (max-width: 500px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const PaymentButton = styled.button`
+  border: 1px solid
+    ${(props) =>
+      props.$active ? "#111" : "#ddd"};
+
+  background: ${(props) =>
+    props.$active ? "#f4f4f4" : "#fff"};
+
+  border-radius: 12px;
+  padding: 13px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  text-align: left;
+`;
+
+const PaymentLogo = styled.div`
+  width: 35px;
+  height: 35px;
+  border-radius: 9px;
+  background: #111;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+`;
+
+const PaymentName = styled.div`
+  font-size: 13px;
+  font-weight: 700;
+  color: #222;
+`;
+
+const PaymentSmall = styled.div`
+  margin-top: 2px;
+  color: #999;
+  font-size: 10px;
+`;
+
+const Input = styled.input`
+  width: 100%;
+  box-sizing: border-box;
+  height: 48px;
+  padding: 0 14px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  outline: none;
+  font-size: 14px;
+  background: white;
+
+  &:focus {
+    border-color: #111;
+  }
+`;
+
+const FormError = styled.div`
+  margin-top: 18px;
+  background: #fff1f1;
+  border: 1px solid #f0d0d0;
+  color: #b33131;
+  padding: 13px;
+  border-radius: 10px;
+  font-size: 13px;
+`;
+
+const FormSuccess = styled.div`
+  margin-top: 18px;
+  background: #eff9f0;
+  border: 1px solid #d5ead7;
+  color: #287038;
+  padding: 13px;
+  border-radius: 10px;
+  font-size: 13px;
 `;
 
 const SubmitButton = styled.button`
   width: 100%;
-  padding: 15px;
+  margin-top: 20px;
+  height: 53px;
   border: none;
-  border-radius: 9px;
-  background: #202020;
+  border-radius: 11px;
+  background: #111;
   color: white;
-  font-size: 14px;
-  font-weight: 700;
+  font-weight: 800;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 
-  &:hover:not(:disabled) {
-    background: #9a6b3a;
+  &:hover {
+    background: #292929;
   }
 
   &:disabled {
@@ -1749,184 +1652,127 @@ const SubmitButton = styled.button`
   }
 `;
 
-/* =====================================================
-   LISTE MODELES
-===================================================== */
-
-const ModelsSection = styled.section`
-  max-width: 1200px;
-  margin: 0 auto;
-`;
-
-const SectionHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: end;
-  gap: 20px;
-  margin-bottom: 22px;
-`;
-
-const SectionEyebrow = styled.div`
-  margin-bottom: 6px;
-  color: #9a6b3a;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 2px;
-`;
-
-const SectionTitle = styled.h2`
-  margin: 0;
-  color: #222;
-  font-size: 25px;
-`;
-
-const ModelCount = styled.span`
+const SecurityText = styled.p`
+  text-align: center;
   color: #999;
-  font-size: 13px;
+  font-size: 11px;
+  line-height: 1.5;
+  margin: 13px 0 0;
 `;
 
-const ModelGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(
-    auto-fill,
-    minmax(260px, 1fr)
-  );
-  gap: 22px;
+const LoadingContainer = styled.div`
+  min-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #f8f8f8;
 `;
 
-const ModelCard = styled.button`
-  padding: 0;
-  overflow: hidden;
-  border: none;
-  border-radius: 14px;
-  background: white;
-  text-align: left;
-  cursor: pointer;
-  box-shadow: 0 4px 20px
-    rgba(0, 0, 0, 0.06);
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+const Spinner = styled.div`
+  width: 42px;
+  height: 42px;
+  border: 4px solid #ddd;
+  border-top-color: #111;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 10px 30px
-      rgba(0, 0, 0, 0.1);
-
-    .card-overlay {
-      opacity: 1;
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
     }
   }
 `;
 
-const CardMedia = styled.div`
-  position: relative;
-  height: 330px;
-  overflow: hidden;
-  background: #eee;
-
-  @media (max-width: 600px) {
-    height: 300px;
-  }
+const LoadingText = styled.p`
+  color: #777;
+  margin-top: 15px;
+  font-size: 14px;
 `;
 
-const CardImage = styled.img`
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.4s ease;
-
-  ${ModelCard}:hover & {
-    transform: scale(1.03);
-  }
-`;
-
-const VideoPill = styled.div`
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  padding: 6px 9px;
-  border-radius: 20px;
-  background: rgba(0, 0, 0, 0.7);
-  color: white;
-  font-size: 10px;
-  font-weight: 700;
-`;
-
-const CardOverlay = styled.div`
-  position: absolute;
-  left: 15px;
-  right: 15px;
-  bottom: 15px;
-  padding: 11px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.95);
-  color: #222;
+const ErrorBox = styled.div`
+  max-width: 800px;
+  margin: 0 auto 20px;
+  padding: 15px;
+  border-radius: 10px;
+  background: #fff1f1;
+  border: 1px solid #f0d0d0;
+  color: #b33131;
   text-align: center;
-  font-size: 12px;
-  font-weight: 700;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-
-  @media (max-width: 700px) {
-    opacity: 1;
-  }
 `;
 
-const CardBody = styled.div`
-  padding: 17px;
+const SuccessBox = styled.div`
+  max-width: 800px;
+  margin: 0 auto 25px;
+  padding: 16px;
+  border-radius: 12px;
+  background: #eff9f0;
+  border: 1px solid #d5ead7;
+  color: #287038;
+  display: flex;
+  gap: 10px;
+  align-items: center;
 `;
 
-const CardStatus = styled.div`
-  margin-bottom: 8px;
-  color: #9a6b3a;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 1px;
-`;
-
-const CardTitle = styled.h3`
-  margin: 0 0 7px;
-  color: #222;
-  font-size: 18px;
-`;
-
-const CardDescription = styled.p`
-  height: 42px;
-  margin: 0 0 15px;
-  overflow: hidden;
-  color: #888;
-  font-size: 12px;
-  line-height: 1.6;
-`;
-
-const CardBottom = styled.div`
+const SuccessIcon = styled.div`
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: #287038;
+  color: white;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  font-weight: 800;
 `;
 
-const CardPrice = styled.div`
-  color: #222;
-  font-size: 16px;
-  font-weight: 700;
+const RetryButton = styled.button`
+  display: block;
+  margin: auto;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  background: #111;
+  color: white;
+  cursor: pointer;
 `;
 
-const Arrow = styled.div`
-  color: #9a6b3a;
-  font-size: 20px;
-`;
-
-const EmptyModels = styled.div`
-  padding: 70px 20px;
-  border-radius: 15px;
+const EmptyBox = styled.div`
+  grid-column: 1 / -1;
   background: white;
+  border-radius: 18px;
+  padding: 60px 25px;
   text-align: center;
+  border: 1px solid #eee;
+
+  h3 {
+    color: #222;
+    margin: 15px 0 8px;
+  }
+
+  p {
+    color: #888;
+  }
 `;
 
 const EmptyIcon = styled.div`
-  color: #c8a98b;
-  font-size: 35px;
+  font-size: 45px;
+  color: #aaa;
+`;
+
+const ButtonSpinner = styled.span`
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: buttonSpin 0.7s linear infinite;
+
+  @keyframes buttonSpin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
 `;
 
 export default Precommande;

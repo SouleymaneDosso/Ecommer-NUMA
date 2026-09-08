@@ -58,6 +58,7 @@ import SuiviCommande from "./pages/SuiviCommande";
 import AdminLivreurs from "./pages/AdminLivreurs";
 import "./i18n";
 import Precommande from "./pages/Precommande";
+import ReceptionPrecommande from "./pages/ReceptionPrecommande";
 
 const PublicLayout = ({ children }) => {
   const location = useLocation();
@@ -362,6 +363,7 @@ createRoot(document.getElementById("root")).render(
               <Route path="videos" element={<Video />} />
               <Route path="livreurs" element={<AdminLivreurs />} />
               <Route path="precommandes" element={<AdminPrecommandes />} />
+              <Route path="reception-precommandes" element={<ReceptionPrecommande />} />
             </Route>
           </Routes>
         </Panier>
