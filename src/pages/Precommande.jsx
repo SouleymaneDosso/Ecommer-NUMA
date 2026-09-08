@@ -1499,7 +1499,7 @@ const Input = styled.input`
   border: 1px solid #ddd;
   border-radius: 10px;
   outline: none;
-  font-size: 14px;
+  font-size: 16px;
   background: white;
 
   &:focus {
