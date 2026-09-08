@@ -1261,6 +1261,7 @@ export default function HomePremium() {
   const [bestSlide, setBestSlide] = useState(0);
   const [bestProgress, setBestProgress] = useState(0);
   const [video, setVideo] = useState([]);
+  const [videoIndex, setVideoIndex] = useState(0);
   const { theme } = useContext(ThemeContext);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
@@ -1299,6 +1300,14 @@ export default function HomePremium() {
     }
   };
 
+  const videoSuivante = () => {
+  if (video.length <= 1) return;
+
+  setVideoIndex((current) => {
+    return (current + 1) % video.length;
+  });
+};
+
   const couperSon = () => {
     if (videoRef.current) {
       videoRef.current.muted = !videoRef.current.muted;
@@ -1308,34 +1317,28 @@ export default function HomePremium() {
 
   // fetch video
 
- const fetchVideo = async () => {
+const fetchVideo = async () => {
   try {
     const res = await fetch(
-      `${import.meta.env.VITE_API_URL}/api/videos/videos`,
-      {
-        method: "GET",
-      }
+      `${import.meta.env.VITE_API_URL}/api/videos/produits`
     );
 
     if (!res.ok) {
-      throw new Error("Impossible de récupérer les vidéos");
+      throw new Error("Impossible de récupérer les vidéos produits");
     }
 
     const data = await res.json();
 
-    // Compatible avec :
-    // { videos: [...] }
-    // ou directement [...]
-    const videos = Array.isArray(data)
-      ? data
-      : Array.isArray(data?.videos)
-      ? data.videos
+    const videos = Array.isArray(data?.videos)
+      ? data.videos.filter((item) => item?.url && item?.produitId)
       : [];
 
     setVideo(videos);
+    setVideoIndex(0);
   } catch (error) {
-    console.error("Erreur vidéo :", error);
+    console.error("Erreur vidéos produits :", error);
     setVideo([]);
+    setVideoIndex(0);
   }
 };
 
@@ -1362,6 +1365,7 @@ export default function HomePremium() {
     };
 
     fetchProducts();
+    fetchVideo();
   }, []);
 
   /* =======================================================
@@ -1555,32 +1559,33 @@ export default function HomePremium() {
       </Hero>
 
       <VideoSection>
-        {Array.isArray(video) && video.length > 0 && (
-          <VideoPlayer
-            ref={videoRef}
-            src={video[0].url}
-            autoPlay
-            loop
-            playsInline
-            preload="auto"
-            controls={false}
-            disablePictureInPicture
-            controlsList="nodownload noplaybackrate noremoteplayback"
-            onPlay={() => setIsPlaying(true)}
-            onPause={() => setIsPlaying(false)}
-          />
-        )}
+  {Array.isArray(video) && video.length > 0 ? (
+    <VideoPlayer
+      ref={videoRef}
+      key={video[videoIndex]._id}
+      src={video[videoIndex].url}
+      autoPlay
+      playsInline
+      preload="auto"
+      controls={false}
+      disablePictureInPicture
+      controlsList="nodownload noplaybackrate noremoteplayback"
+      onEnded={videoSuivante}
+      onPlay={() => setIsPlaying(true)}
+      onPause={() => setIsPlaying(false)}
+    />
+  ) : null}
 
-        <VideoControls>
-          <VideoButton onClick={toggleVideo}>
-            {isPlaying ? <Pause size={20} /> : <Play size={20} />}
-          </VideoButton>
+  <VideoControls>
+    <VideoButton onClick={toggleVideo}>
+      {isPlaying ? <Pause size={20} /> : <Play size={20} />}
+    </VideoButton>
 
-          <VideoButton onClick={couperSon}>
-            {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
-          </VideoButton>
-        </VideoControls>
-      </VideoSection>
+    <VideoButton onClick={couperSon}>
+      {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+    </VideoButton>
+  </VideoControls>
+</VideoSection>
       
       {/* ===================================================
           UNIVERS

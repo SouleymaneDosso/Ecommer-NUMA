@@ -22,6 +22,44 @@ const Precommande = () => {
 
   const [message, setMessage] = useState("");
   const [erreur, setErreur] = useState("");
+  const [informationsDepot, setInformationsDepot] = useState(null);
+  const [loadingDepot, setLoadingDepot] = useState(true);
+
+  const chargerInformationsDepot = async () => {
+    try {
+      setLoadingDepot(true);
+
+      const token =
+        localStorage.getItem("token") ||
+        localStorage.getItem("clientToken") ||
+        localStorage.getItem("userToken");
+
+      const response = await fetch(`${API_URL}/api/precommandes/depot`, {
+        headers: {
+          ...(token
+            ? {
+                Authorization: `Bearer ${token}`,
+              }
+            : {}),
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Impossible de récupérer les informations de dépôt.",
+        );
+      }
+
+      setInformationsDepot(data);
+    } catch (error) {
+      console.error("INFOS DEPOT :", error);
+      setErreur(error.message || "Impossible de récupérer le numéro de dépôt.");
+    } finally {
+      setLoadingDepot(false);
+    }
+  };
 
   /* =========================================================
      RÉCUPÉRATION DES MODÈLES
@@ -37,17 +75,13 @@ const Precommande = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.message || "Impossible de récupérer les modèles."
-        );
+        throw new Error(data.message || "Impossible de récupérer les modèles.");
       }
 
       setModeles(data.modeles || data.produits || []);
     } catch (error) {
       console.error(error);
-      setErreur(
-        error.message || "Une erreur est survenue lors du chargement."
-      );
+      setErreur(error.message || "Une erreur est survenue lors du chargement.");
     } finally {
       setLoading(false);
     }
@@ -55,6 +89,7 @@ const Precommande = () => {
 
   useEffect(() => {
     chargerModeles();
+    chargerInformationsDepot();
   }, []);
 
   /* =========================================================
@@ -122,11 +157,7 @@ const Precommande = () => {
     let videoUrl = modeleSelectionne.video;
 
     if (typeof videoUrl === "object" && videoUrl !== null) {
-      videoUrl =
-        videoUrl.url ||
-        videoUrl.secure_url ||
-        videoUrl.video ||
-        "";
+      videoUrl = videoUrl.url || videoUrl.secure_url || videoUrl.video || "";
     }
 
     if (videoUrl) {
@@ -152,24 +183,8 @@ const Precommande = () => {
       return 0;
     }
 
-    /*
-      Structure attendue :
-
-      stockParVariation: {
-        "S": {
-          "Noir": 10,
-          "Blanc": 5
-        },
-        "M": {
-          "Noir": 8,
-          "Blanc": 3
-        }
-      }
-    */
-
     if (tailleSelectionnee && couleurSelectionnee) {
-      const variationTaille =
-        stockParVariation[tailleSelectionnee];
+      const variationTaille = stockParVariation[tailleSelectionnee];
 
       if (!variationTaille) {
         return 0;
@@ -185,8 +200,7 @@ const Precommande = () => {
     */
 
     if (tailleSelectionnee && !couleurSelectionnee) {
-      const variationTaille =
-        stockParVariation[tailleSelectionnee];
+      const variationTaille = stockParVariation[tailleSelectionnee];
 
       if (typeof variationTaille === "number") {
         return variationTaille;
@@ -211,7 +225,7 @@ const Precommande = () => {
   const prix = Number(modeleSelectionne?.price || 0);
 
   const montantDepotUnitaire = Number(
-    modeleSelectionne?.montantDepot || Math.ceil(prix * 0.3)
+    modeleSelectionne?.montantDepot || Math.ceil(prix * 0.3),
   );
 
   const montantDepotTotal = montantDepotUnitaire * quantite;
@@ -249,9 +263,7 @@ const Precommande = () => {
       return;
     }
 
-    setQuantite((ancienne) =>
-      Math.min(stockDisponible, ancienne + 1)
-    );
+    setQuantite((ancienne) => Math.min(stockDisponible, ancienne + 1));
   };
 
   /* =========================================================
@@ -274,18 +286,13 @@ const Precommande = () => {
       return;
     }
 
-    if (
-      !couleurSelectionnee &&
-      modeleSelectionne.couleurs?.length > 0
-    ) {
+    if (!couleurSelectionnee && modeleSelectionne.couleurs?.length > 0) {
       setErreur("Veuillez sélectionner une couleur.");
       return;
     }
 
     if (stockDisponible <= 0) {
-      setErreur(
-        "Cette variation n'est actuellement plus disponible."
-      );
+      setErreur("Cette variation n'est actuellement plus disponible.");
       return;
     }
 
@@ -296,7 +303,7 @@ const Precommande = () => {
 
     if (quantite > stockDisponible) {
       setErreur(
-        `Il ne reste que ${stockDisponible} article(s) pour cette variation.`
+        `Il ne reste que ${stockDisponible} article(s) pour cette variation.`,
       );
       return;
     }
@@ -320,8 +327,7 @@ const Precommande = () => {
       setLoadingCommande(true);
 
       const token =
-        localStorage.getItem("token") ||
-        localStorage.getItem("clientToken");
+        localStorage.getItem("token") || localStorage.getItem("clientToken");
 
       const response = await fetch(`${API_URL}/api/precommandes`, {
         method: "POST",
@@ -358,12 +364,12 @@ const Precommande = () => {
 
       if (!response.ok) {
         throw new Error(
-          data.message || "Impossible d'enregistrer la précommande."
+          data.message || "Impossible d'enregistrer la précommande.",
         );
       }
 
       setMessage(
-        "Votre précommande a été envoyée avec succès. Elle sera vérifiée par notre équipe."
+        "Votre précommande a été envoyée avec succès. Elle sera vérifiée par notre équipe.",
       );
 
       setService("");
@@ -377,7 +383,7 @@ const Precommande = () => {
 
       setErreur(
         error.message ||
-          "Une erreur est survenue lors de l'envoi de la précommande."
+          "Une erreur est survenue lors de l'envoi de la précommande.",
       );
     } finally {
       setLoadingCommande(false);
@@ -406,9 +412,7 @@ const Precommande = () => {
       <PageContainer>
         <ErrorBox>{erreur}</ErrorBox>
 
-        <RetryButton onClick={chargerModeles}>
-          Réessayer
-        </RetryButton>
+        <RetryButton onClick={chargerModeles}>Réessayer</RetryButton>
       </PageContainer>
     );
   }
@@ -425,8 +429,8 @@ const Precommande = () => {
         <MainTitle>Précommandes</MainTitle>
 
         <Subtitle>
-          Découvrez nos modèles disponibles en précommande et
-          choisissez votre taille, votre couleur et votre quantité.
+          Découvrez nos modèles disponibles en précommande et choisissez votre
+          taille, votre couleur et votre quantité.
         </Subtitle>
       </Header>
 
@@ -437,9 +441,7 @@ const Precommande = () => {
         </SuccessBox>
       )}
 
-      {erreur && !modeleSelectionne && (
-        <ErrorBox>{erreur}</ErrorBox>
-      )}
+      {erreur && !modeleSelectionne && <ErrorBox>{erreur}</ErrorBox>}
 
       {!modeleSelectionne && (
         <ModelesGrid>
@@ -447,60 +449,41 @@ const Precommande = () => {
             <EmptyBox>
               <EmptyIcon>◌</EmptyIcon>
               <h3>Aucune précommande disponible</h3>
-              <p>
-                Aucun modèle n'est actuellement disponible en
-                précommande.
-              </p>
+              <p>Aucun modèle n'est actuellement disponible en précommande.</p>
             </EmptyBox>
           ) : (
             modeles.map((modele) => {
               const image =
                 modele.images?.find((img) => img.isMain)?.url ||
                 modele.images?.[0]?.url ||
-                (typeof modele.image === "string"
-                  ? modele.image
-                  : "");
+                (typeof modele.image === "string" ? modele.image : "");
 
               return (
                 <ModelCard key={modele._id}>
                   <CardImageContainer>
                     {image ? (
-                      <CardImage
-                        src={image}
-                        alt={modele.title}
-                      />
+                      <CardImage src={image} alt={modele.title} />
                     ) : (
-                      <NoImage>
-                        Aucune image
-                      </NoImage>
+                      <NoImage>Aucune image</NoImage>
                     )}
 
-                    <PrecommandeBadge>
-                      PRÉCOMMANDE
-                    </PrecommandeBadge>
+                    <PrecommandeBadge>PRÉCOMMANDE</PrecommandeBadge>
                   </CardImageContainer>
 
                   <CardContent>
                     <CardTitle>{modele.title}</CardTitle>
 
-                    <CardDescription>
-                      {modele.description}
-                    </CardDescription>
+                    <CardDescription>{modele.description}</CardDescription>
 
                     <CardInfo>
                       <Price>
-                        {Number(modele.price || 0).toLocaleString(
-                          "fr-FR"
-                        )}{" "}
-                        FCFA
+                        {Number(modele.price || 0).toLocaleString("fr-FR")} FCFA
                       </Price>
 
                       {modele.montantDepot && (
                         <Deposit>
                           Dépôt :{" "}
-                          {Number(
-                            modele.montantDepot
-                          ).toLocaleString("fr-FR")}{" "}
+                          {Number(modele.montantDepot).toLocaleString("fr-FR")}{" "}
                           FCFA
                         </Deposit>
                       )}
@@ -509,18 +492,16 @@ const Precommande = () => {
                     {modele.dateDisponibilite && (
                       <Availability>
                         Disponible à partir du{" "}
-                        {new Date(
-                          modele.dateDisponibilite
-                        ).toLocaleDateString("fr-FR")}
+                        {new Date(modele.dateDisponibilite).toLocaleDateString(
+                          "fr-FR",
+                        )}
                       </Availability>
                     )}
 
                     <VariationSummary>
                       {modele.tailles?.length > 0 && (
                         <VariationLine>
-                          <VariationLabel>
-                            Tailles
-                          </VariationLabel>
+                          <VariationLabel>Tailles</VariationLabel>
 
                           <VariationValues>
                             {modele.tailles.join(" • ")}
@@ -530,9 +511,7 @@ const Precommande = () => {
 
                       {modele.couleurs?.length > 0 && (
                         <VariationLine>
-                          <VariationLabel>
-                            Couleurs
-                          </VariationLabel>
+                          <VariationLabel>Couleurs</VariationLabel>
 
                           <VariationValues>
                             {modele.couleurs.join(" • ")}
@@ -541,9 +520,7 @@ const Precommande = () => {
                       )}
                     </VariationSummary>
 
-                    <ActionButton
-                      onClick={() => ouvrirModele(modele)}
-                    >
+                    <ActionButton onClick={() => ouvrirModele(modele)}>
                       Voir le modèle
                     </ActionButton>
                   </CardContent>
@@ -556,9 +533,7 @@ const Precommande = () => {
 
       {modeleSelectionne && (
         <DetailContainer>
-          <BackButton onClick={fermerModele}>
-            ← Retour aux modèles
-          </BackButton>
+          <BackButton onClick={fermerModele}>← Retour aux modèles</BackButton>
 
           <DetailGrid>
             {/* =================================================
@@ -584,9 +559,7 @@ const Precommande = () => {
                     />
                   )
                 ) : (
-                  <NoImage>
-                    Aucune image disponible
-                  </NoImage>
+                  <NoImage>Aucune image disponible</NoImage>
                 )}
 
                 {medias.length > 1 && (
@@ -630,41 +603,30 @@ const Precommande = () => {
             ================================================= */}
 
             <InformationSection>
-              <PrecommandeLabel>
-                PRÉCOMMANDE
-              </PrecommandeLabel>
+              <PrecommandeLabel>PRÉCOMMANDE</PrecommandeLabel>
 
-              <DetailTitle>
-                {modeleSelectionne.title}
-              </DetailTitle>
+              <DetailTitle>{modeleSelectionne.title}</DetailTitle>
 
               <DetailDescription>
                 {modeleSelectionne.description}
               </DetailDescription>
 
               <PriceBlock>
-                <CurrentPrice>
-                  {prix.toLocaleString("fr-FR")} FCFA
-                </CurrentPrice>
+                <CurrentPrice>{prix.toLocaleString("fr-FR")} FCFA</CurrentPrice>
 
                 <DepositText>
                   Dépôt par article :{" "}
-                  {montantDepotUnitaire.toLocaleString(
-                    "fr-FR"
-                  )}{" "}
-                  FCFA
+                  {montantDepotUnitaire.toLocaleString("fr-FR")} FCFA
                 </DepositText>
               </PriceBlock>
 
               {modeleSelectionne.dateDisponibilite && (
                 <DateBox>
-                  <DateLabel>
-                    DISPONIBILITÉ
-                  </DateLabel>
+                  <DateLabel>DISPONIBILITÉ</DateLabel>
 
                   <DateValue>
                     {new Date(
-                      modeleSelectionne.dateDisponibilite
+                      modeleSelectionne.dateDisponibilite,
                     ).toLocaleDateString("fr-FR", {
                       day: "numeric",
                       month: "long",
@@ -680,27 +642,19 @@ const Precommande = () => {
 
               {modeleSelectionne.tailles?.length > 0 && (
                 <FieldGroup>
-                  <FieldLabel>
-                    Taille
-                  </FieldLabel>
+                  <FieldLabel>Taille</FieldLabel>
 
                   <ChoiceGrid>
-                    {modeleSelectionne.tailles.map(
-                      (taille) => (
-                        <ChoiceButton
-                          type="button"
-                          key={taille}
-                          $active={
-                            tailleSelectionnee === taille
-                          }
-                          onClick={() =>
-                            changerTaille(taille)
-                          }
-                        >
-                          {taille}
-                        </ChoiceButton>
-                      )
-                    )}
+                    {modeleSelectionne.tailles.map((taille) => (
+                      <ChoiceButton
+                        type="button"
+                        key={taille}
+                        $active={tailleSelectionnee === taille}
+                        onClick={() => changerTaille(taille)}
+                      >
+                        {taille}
+                      </ChoiceButton>
+                    ))}
                   </ChoiceGrid>
                 </FieldGroup>
               )}
@@ -711,30 +665,21 @@ const Precommande = () => {
 
               {modeleSelectionne.couleurs?.length > 0 && (
                 <FieldGroup>
-                  <FieldLabel>
-                    Couleur
-                  </FieldLabel>
+                  <FieldLabel>Couleur</FieldLabel>
 
                   <ChoiceGrid>
-                    {modeleSelectionne.couleurs.map(
-                      (couleur) => (
-                        <ChoiceButton
-                          type="button"
-                          key={couleur}
-                          $active={
-                            couleurSelectionnee ===
-                            couleur
-                          }
-                          onClick={() =>
-                            changerCouleur(couleur)
-                          }
-                        >
-                          <ColorCircle />
+                    {modeleSelectionne.couleurs.map((couleur) => (
+                      <ChoiceButton
+                        type="button"
+                        key={couleur}
+                        $active={couleurSelectionnee === couleur}
+                        onClick={() => changerCouleur(couleur)}
+                      >
+                        <ColorCircle />
 
-                          {couleur}
-                        </ChoiceButton>
-                      )
-                    )}
+                        {couleur}
+                      </ChoiceButton>
+                    ))}
                   </ChoiceGrid>
                 </FieldGroup>
               )}
@@ -743,37 +688,27 @@ const Precommande = () => {
                   STOCK DE LA VARIATION
               ================================================= */}
 
-              <StockCard
-                $available={stockDisponible > 0}
-              >
+              <StockCard $available={stockDisponible > 0}>
                 <StockTop>
-                  <StockLabel>
-                    STOCK DISPONIBLE
-                  </StockLabel>
+                  <StockLabel>STOCK DISPONIBLE</StockLabel>
 
-                  <StockNumber
-                    $available={stockDisponible > 0}
-                  >
+                  <StockNumber $available={stockDisponible > 0}>
                     {stockDisponible}
                   </StockNumber>
                 </StockTop>
 
-                {tailleSelectionnee ||
-                couleurSelectionnee ? (
+                {tailleSelectionnee || couleurSelectionnee ? (
                   <StockVariation>
                     Variation sélectionnée :
                     <strong>
                       {" "}
                       {tailleSelectionnee || "—"}
-                      {couleurSelectionnee
-                        ? ` • ${couleurSelectionnee}`
-                        : ""}
+                      {couleurSelectionnee ? ` • ${couleurSelectionnee}` : ""}
                     </strong>
                   </StockVariation>
                 ) : (
                   <StockVariation>
-                    Sélectionnez une variation pour voir
-                    le stock.
+                    Sélectionnez une variation pour voir le stock.
                   </StockVariation>
                 )}
               </StockCard>
@@ -783,9 +718,7 @@ const Precommande = () => {
               ================================================= */}
 
               <FieldGroup>
-                <FieldLabel>
-                  Quantité
-                </FieldLabel>
+                <FieldLabel>Quantité</FieldLabel>
 
                 <QuantityContainer>
                   <QuantityButton
@@ -796,16 +729,13 @@ const Precommande = () => {
                     −
                   </QuantityButton>
 
-                  <QuantityValue>
-                    {quantite}
-                  </QuantityValue>
+                  <QuantityValue>{quantite}</QuantityValue>
 
                   <QuantityButton
                     type="button"
                     onClick={augmenterQuantite}
                     disabled={
-                      stockDisponible <= 0 ||
-                      quantite >= stockDisponible
+                      stockDisponible <= 0 || quantite >= stockDisponible
                     }
                   >
                     +
@@ -821,9 +751,7 @@ const Precommande = () => {
                 <SummaryRow>
                   <span>Prix unitaire</span>
 
-                  <strong>
-                    {prix.toLocaleString("fr-FR")} FCFA
-                  </strong>
+                  <strong>{prix.toLocaleString("fr-FR")} FCFA</strong>
                 </SummaryRow>
 
                 <SummaryRow>
@@ -836,10 +764,7 @@ const Precommande = () => {
                   <span>Dépôt unitaire</span>
 
                   <strong>
-                    {montantDepotUnitaire.toLocaleString(
-                      "fr-FR"
-                    )}{" "}
-                    FCFA
+                    {montantDepotUnitaire.toLocaleString("fr-FR")} FCFA
                   </strong>
                 </SummaryRow>
 
@@ -847,10 +772,7 @@ const Precommande = () => {
                   <span>Total du dépôt</span>
 
                   <strong>
-                    {montantDepotTotal.toLocaleString(
-                      "fr-FR"
-                    )}{" "}
-                    FCFA
+                    {montantDepotTotal.toLocaleString("fr-FR")} FCFA
                   </strong>
                 </SummaryTotal>
               </SummaryBox>
@@ -860,35 +782,50 @@ const Precommande = () => {
               ================================================= */}
 
               <Form onSubmit={envoyerPrecommande}>
-                <FormTitle>
-                  Informations du dépôt
-                </FormTitle>
+                <FormTitle>Informations du dépôt</FormTitle>
+                <DepotInfoBox>
+                  <DepotInfoTitle>Effectuez votre dépôt</DepotInfoTitle>
+
+                  <DepotInfoText>
+                    Envoyez le montant du dépôt sur le numéro suivant :
+                  </DepotInfoText>
+
+                  {loadingDepot ? (
+                    <DepotLoading>
+                      Chargement du numéro de dépôt...
+                    </DepotLoading>
+                  ) : informationsDepot?.numeroDepot ? (
+                    <DepotNumber>{informationsDepot.numeroDepot}</DepotNumber>
+                  ) : (
+                    <DepotError>
+                      Le numéro de dépôt est momentanément indisponible.
+                    </DepotError>
+                  )}
+
+                  <DepotWarning>
+                    Après avoir effectué le dépôt, renseignez ci-dessous le
+                    numéro utilisé pour effectuer le paiement ainsi que la
+                    référence de la transaction.
+                  </DepotWarning>
+                </DepotInfoBox>
+
+                <FormTitle>Informations du dépôt</FormTitle>
 
                 <FieldGroup>
-                  <FieldLabel>
-                    Moyen de paiement
-                  </FieldLabel>
+                  <FieldLabel>Moyen de paiement</FieldLabel>
 
                   <PaymentGrid>
                     <PaymentButton
                       type="button"
                       $active={service === "orange"}
-                      onClick={() =>
-                        setService("orange")
-                      }
+                      onClick={() => setService("orange")}
                     >
-                      <PaymentLogo>
-                        OM
-                      </PaymentLogo>
+                      <PaymentLogo>OM</PaymentLogo>
 
                       <div>
-                        <PaymentName>
-                          Orange Money
-                        </PaymentName>
+                        <PaymentName>Orange Money</PaymentName>
 
-                        <PaymentSmall>
-                          Paiement mobile
-                        </PaymentSmall>
+                        <PaymentSmall>Paiement mobile</PaymentSmall>
                       </div>
                     </PaymentButton>
 
@@ -897,18 +834,12 @@ const Precommande = () => {
                       $active={service === "wave"}
                       onClick={() => setService("wave")}
                     >
-                      <PaymentLogo>
-                        W
-                      </PaymentLogo>
+                      <PaymentLogo>W</PaymentLogo>
 
                       <div>
-                        <PaymentName>
-                          Wave
-                        </PaymentName>
+                        <PaymentName>Wave</PaymentName>
 
-                        <PaymentSmall>
-                          Paiement mobile
-                        </PaymentSmall>
+                        <PaymentSmall>Paiement mobile</PaymentSmall>
                       </div>
                     </PaymentButton>
                   </PaymentGrid>
@@ -924,9 +855,7 @@ const Precommande = () => {
                     type="tel"
                     placeholder="Ex : 07 XX XX XX XX"
                     value={numeroDepot}
-                    onChange={(e) =>
-                      setNumeroDepot(e.target.value)
-                    }
+                    onChange={(e) => setNumeroDepot(e.target.value)}
                   />
                 </FieldGroup>
 
@@ -940,30 +869,17 @@ const Precommande = () => {
                     type="text"
                     placeholder="Entrez la référence de votre dépôt"
                     value={referenceDepot}
-                    onChange={(e) =>
-                      setReferenceDepot(e.target.value)
-                    }
+                    onChange={(e) => setReferenceDepot(e.target.value)}
                   />
                 </FieldGroup>
 
-                {erreur && (
-                  <FormError>
-                    {erreur}
-                  </FormError>
-                )}
+                {erreur && <FormError>{erreur}</FormError>}
 
-                {message && (
-                  <FormSuccess>
-                    {message}
-                  </FormSuccess>
-                )}
+                {message && <FormSuccess>{message}</FormSuccess>}
 
                 <SubmitButton
                   type="submit"
-                  disabled={
-                    loadingCommande ||
-                    stockDisponible <= 0
-                  }
+                  disabled={loadingCommande || stockDisponible <= 0}
                 >
                   {loadingCommande ? (
                     <>
@@ -976,8 +892,8 @@ const Precommande = () => {
                 </SubmitButton>
 
                 <SecurityText>
-                  Votre précommande sera vérifiée par notre
-                  équipe avant validation définitive.
+                  Votre précommande sera vérifiée par notre équipe avant
+                  validation définitive.
                 </SecurityText>
               </Form>
             </InformationSection>
@@ -1258,16 +1174,15 @@ const Dot = styled.button`
     props.$active
       ? "#ffffff"
       : props.$video
-      ? "rgba(255,255,255,0.7)"
-      : "rgba(255,255,255,0.5)"};
+        ? "rgba(255,255,255,0.7)"
+        : "rgba(255,255,255,0.5)"};
 
   color: #111;
   display: flex;
   align-items: center;
   justify-content: center;
 
-  font-size: ${(props) =>
-    props.$video ? "10px" : "0"};
+  font-size: ${(props) => (props.$video ? "10px" : "0")};
 
   padding: 0;
   cursor: pointer;
@@ -1387,15 +1302,11 @@ const ChoiceGrid = styled.div`
 `;
 
 const ChoiceButton = styled.button`
-  border: 1px solid
-    ${(props) =>
-      props.$active ? "#111" : "#dddddd"};
+  border: 1px solid ${(props) => (props.$active ? "#111" : "#dddddd")};
 
-  background: ${(props) =>
-    props.$active ? "#111" : "#fff"};
+  background: ${(props) => (props.$active ? "#111" : "#fff")};
 
-  color: ${(props) =>
-    props.$active ? "#fff" : "#333"};
+  color: ${(props) => (props.$active ? "#fff" : "#333")};
 
   padding: 11px 15px;
   border-radius: 9px;
@@ -1424,16 +1335,9 @@ const StockCard = styled.div`
   padding: 17px;
   border-radius: 13px;
 
-  background: ${(props) =>
-    props.$available
-      ? "#f3f8f3"
-      : "#fff2f2"};
+  background: ${(props) => (props.$available ? "#f3f8f3" : "#fff2f2")};
 
-  border: 1px solid
-    ${(props) =>
-      props.$available
-        ? "#dceadc"
-        : "#f1d2d2"};
+  border: 1px solid ${(props) => (props.$available ? "#dceadc" : "#f1d2d2")};
 `;
 
 const StockTop = styled.div`
@@ -1453,8 +1357,7 @@ const StockNumber = styled.span`
   font-size: 22px;
   font-weight: 800;
 
-  color: ${(props) =>
-    props.$available ? "#26733a" : "#b33a3a"};
+  color: ${(props) => (props.$available ? "#26733a" : "#b33a3a")};
 `;
 
 const StockVariation = styled.div`
@@ -1550,12 +1453,9 @@ const PaymentGrid = styled.div`
 `;
 
 const PaymentButton = styled.button`
-  border: 1px solid
-    ${(props) =>
-      props.$active ? "#111" : "#ddd"};
+  border: 1px solid ${(props) => (props.$active ? "#111" : "#ddd")};
 
-  background: ${(props) =>
-    props.$active ? "#f4f4f4" : "#fff"};
+  background: ${(props) => (props.$active ? "#f4f4f4" : "#fff")};
 
   border-radius: 12px;
   padding: 13px;
@@ -1773,6 +1673,63 @@ const ButtonSpinner = styled.span`
       transform: rotate(360deg);
     }
   }
+`;
+const DepotInfoBox = styled.div`
+  margin-bottom: 24px;
+  padding: 20px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #f8fafc;
+`;
+
+const DepotInfoTitle = styled.h3`
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1f2937;
+`;
+
+const DepotInfoText = styled.p`
+  margin: 0 0 14px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #6b7280;
+`;
+
+const DepotNumber = styled.div`
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: white;
+  border: 1px solid #dbe3ea;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-align: center;
+  color: #111827;
+`;
+
+const DepotLoading = styled.div`
+  padding: 14px;
+  border-radius: 10px;
+  background: white;
+  color: #6b7280;
+  text-align: center;
+  font-size: 14px;
+`;
+
+const DepotError = styled.div`
+  padding: 14px;
+  border-radius: 10px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 14px;
+`;
+
+const DepotWarning = styled.p`
+  margin: 14px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #6b7280;
 `;
 
 export default Precommande;
