@@ -216,13 +216,6 @@ function AdminLayout() {
           Paiements <Badge>{nbPaiementsPending}</Badge>
         </SidebarItem>
 
-        <SidebarItem
-          $active={location.pathname.includes("videos")}
-          onClick={() => navigate("/admin/videos")}
-        >
-          Vidéos
-        </SidebarItem>
-
          <SidebarItem
           $active={location.pathname.includes("livreurs")}
           onClick={() => navigate("/admin/livreurs")}
