@@ -18,8 +18,7 @@ const ReceptionPrecommande = () => {
   const [pages, setPages] = useState(1);
   const [total, setTotal] = useState(0);
 
-  const [precommandeSelectionnee, setPrecommandeSelectionnee] =
-    useState(null);
+  const [precommandeSelectionnee, setPrecommandeSelectionnee] = useState(null);
 
   const [adminComment, setAdminComment] = useState("");
 
@@ -34,6 +33,37 @@ const ReceptionPrecommande = () => {
   /* =========================================================
      CHARGER LES PRÉCOMMANDES
   ========================================================= */
+  const getPaiementDepot = (precommande) => {
+    return (
+      precommande?.paiements?.find((paiement) => paiement.type === "DEPOT") ||
+      precommande?.paiements?.[0] ||
+      null
+    );
+  };
+
+  const getServicePaiement = (precommande) => {
+    const paiement = getPaiementDepot(precommande);
+
+    return paiement?.service || "";
+  };
+
+  const getNumeroPaiement = (precommande) => {
+    const paiement = getPaiementDepot(precommande);
+
+    return paiement?.numeroClient || "";
+  };
+
+  const getReferencePaiement = (precommande) => {
+    const paiement = getPaiementDepot(precommande);
+
+    return paiement?.reference || "";
+  };
+
+  const getMontantPaiement = (precommande) => {
+    const paiement = getPaiementDepot(precommande);
+
+    return paiement?.montantEnvoye ?? precommande?.montantDepot ?? 0;
+  };
 
   const chargerPrecommandes = async (pageActuelle = page) => {
     try {
@@ -54,15 +84,14 @@ const ReceptionPrecommande = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(
-          data.message ||
-            "Impossible de récupérer les précommandes."
+          data.message || "Impossible de récupérer les précommandes.",
         );
       }
 
@@ -73,10 +102,7 @@ const ReceptionPrecommande = () => {
     } catch (error) {
       console.error(error);
 
-      setErreur(
-        error.message ||
-          "Erreur lors du chargement des précommandes."
-      );
+      setErreur(error.message || "Erreur lors du chargement des précommandes.");
     } finally {
       setLoading(false);
     }
@@ -151,15 +177,14 @@ const ReceptionPrecommande = () => {
           body: JSON.stringify({
             adminComment,
           }),
-        }
+        },
       );
 
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(
-          data.message ||
-            "Impossible d'accepter la précommande."
+          data.message || "Impossible d'accepter la précommande.",
         );
       }
 
@@ -167,16 +192,11 @@ const ReceptionPrecommande = () => {
 
       await chargerPrecommandes(page);
 
-      setPrecommandeSelectionnee(
-        data.precommande || precommandeSelectionnee
-      );
+      setPrecommandeSelectionnee(data.precommande || precommandeSelectionnee);
     } catch (error) {
       console.error(error);
 
-      setErreur(
-        error.message ||
-          "Erreur lors de l'acceptation."
-      );
+      setErreur(error.message || "Erreur lors de l'acceptation.");
     } finally {
       setActionLoading(false);
     }
@@ -190,7 +210,7 @@ const ReceptionPrecommande = () => {
     if (!precommandeSelectionnee) return;
 
     const confirmation = window.confirm(
-      "Voulez-vous vraiment refuser cette précommande ?"
+      "Voulez-vous vraiment refuser cette précommande ?",
     );
 
     if (!confirmation) return;
@@ -217,15 +237,14 @@ const ReceptionPrecommande = () => {
           body: JSON.stringify({
             adminComment,
           }),
-        }
+        },
       );
 
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(
-          data.message ||
-            "Impossible de refuser la précommande."
+          data.message || "Impossible de refuser la précommande.",
         );
       }
 
@@ -233,16 +252,11 @@ const ReceptionPrecommande = () => {
 
       await chargerPrecommandes(page);
 
-      setPrecommandeSelectionnee(
-        data.precommande || precommandeSelectionnee
-      );
+      setPrecommandeSelectionnee(data.precommande || precommandeSelectionnee);
     } catch (error) {
       console.error(error);
 
-      setErreur(
-        error.message ||
-          "Erreur lors du refus."
-      );
+      setErreur(error.message || "Erreur lors du refus.");
     } finally {
       setActionLoading(false);
     }
@@ -257,9 +271,7 @@ const ReceptionPrecommande = () => {
       return precommande.modele.image;
     }
 
-    if (
-      precommande?.produitId?.image
-    ) {
+    if (precommande?.produitId?.image) {
       return precommande.produitId.image;
     }
 
@@ -268,9 +280,7 @@ const ReceptionPrecommande = () => {
       precommande.produitId.images.length > 0
     ) {
       return (
-        precommande.produitId.images.find(
-          (image) => image.isMain
-        )?.url ||
+        precommande.produitId.images.find((image) => image.isMain)?.url ||
         precommande.produitId.images[0]?.url ||
         ""
       );
@@ -285,9 +295,7 @@ const ReceptionPrecommande = () => {
 
   const getNomProduit = (precommande) => {
     return (
-      precommande?.modele?.title ||
-      precommande?.produitId?.title ||
-      "Modèle"
+      precommande?.modele?.title || precommande?.produitId?.title || "Modèle"
     );
   };
 
@@ -368,17 +376,15 @@ const ReceptionPrecommande = () => {
   ========================================================= */
 
   const pendingCount = precommandes.filter(
-    (item) => item.statut === "PENDING"
+    (item) => item.statut === "PENDING",
   ).length;
 
   const acceptedCount = precommandes.filter(
-    (item) =>
-      item.statut === "ACCEPTED" ||
-      item.statut === "READY_TO_FINALIZE"
+    (item) => item.statut === "ACCEPTED" || item.statut === "READY_TO_FINALIZE",
   ).length;
 
   const rejectedCount = precommandes.filter(
-    (item) => item.statut === "REJECTED"
+    (item) => item.statut === "REJECTED",
   ).length;
 
   /* =========================================================
@@ -389,9 +395,7 @@ const ReceptionPrecommande = () => {
     return (
       <LoadingContainer>
         <Spinner />
-        <LoadingText>
-          Chargement des précommandes...
-        </LoadingText>
+        <LoadingText>Chargement des précommandes...</LoadingText>
       </LoadingContainer>
     );
   }
@@ -404,17 +408,13 @@ const ReceptionPrecommande = () => {
 
       <Header>
         <div>
-          <SmallLabel>
-            ESPACE ADMINISTRATEUR
-          </SmallLabel>
+          <SmallLabel>ESPACE ADMINISTRATEUR</SmallLabel>
 
-          <Title>
-            Précommandes reçues
-          </Title>
+          <Title>Précommandes reçues</Title>
 
           <Subtitle>
-            Consultez, vérifiez et validez les précommandes
-            envoyées par vos clients.
+            Consultez, vérifiez et validez les précommandes envoyées par vos
+            clients.
           </Subtitle>
         </div>
 
@@ -422,9 +422,7 @@ const ReceptionPrecommande = () => {
           onClick={() => chargerPrecommandes(page)}
           disabled={loading}
         >
-          {loading
-            ? "Actualisation..."
-            : "Actualiser"}
+          {loading ? "Actualisation..." : "Actualiser"}
         </RefreshButton>
       </Header>
 
@@ -432,17 +430,9 @@ const ReceptionPrecommande = () => {
           MESSAGE
       ===================================================== */}
 
-      {message && (
-        <SuccessMessage>
-          ✓ {message}
-        </SuccessMessage>
-      )}
+      {message && <SuccessMessage>✓ {message}</SuccessMessage>}
 
-      {erreur && (
-        <ErrorMessage>
-          {erreur}
-        </ErrorMessage>
-      )}
+      {erreur && <ErrorMessage>{erreur}</ErrorMessage>}
 
       {/* =====================================================
           STATISTIQUES
@@ -450,43 +440,27 @@ const ReceptionPrecommande = () => {
 
       <StatsGrid>
         <StatCard>
-          <StatNumber>
-            {total}
-          </StatNumber>
+          <StatNumber>{total}</StatNumber>
 
-          <StatLabel>
-            Total
-          </StatLabel>
+          <StatLabel>Total</StatLabel>
         </StatCard>
 
         <StatCard $pending>
-          <StatNumber>
-            {pendingCount}
-          </StatNumber>
+          <StatNumber>{pendingCount}</StatNumber>
 
-          <StatLabel>
-            En attente
-          </StatLabel>
+          <StatLabel>En attente</StatLabel>
         </StatCard>
 
         <StatCard $accepted>
-          <StatNumber>
-            {acceptedCount}
-          </StatNumber>
+          <StatNumber>{acceptedCount}</StatNumber>
 
-          <StatLabel>
-            Acceptées
-          </StatLabel>
+          <StatLabel>Acceptées</StatLabel>
         </StatCard>
 
         <StatCard $rejected>
-          <StatNumber>
-            {rejectedCount}
-          </StatNumber>
+          <StatNumber>{rejectedCount}</StatNumber>
 
-          <StatLabel>
-            Refusées
-          </StatLabel>
+          <StatLabel>Refusées</StatLabel>
         </StatCard>
       </StatsGrid>
 
@@ -495,9 +469,7 @@ const ReceptionPrecommande = () => {
       ===================================================== */}
 
       <FilterBar>
-        <FilterTitle>
-          Filtrer
-        </FilterTitle>
+        <FilterTitle>Filtrer</FilterTitle>
 
         <FilterButton
           $active={statutFiltre === "ALL"}
@@ -521,52 +493,36 @@ const ReceptionPrecommande = () => {
         </FilterButton>
 
         <FilterButton
-          $active={
-            statutFiltre === "READY_TO_FINALIZE"
-          }
-          onClick={() =>
-            setStatutFiltre("READY_TO_FINALIZE")
-          }
+          $active={statutFiltre === "READY_TO_FINALIZE"}
+          onClick={() => setStatutFiltre("READY_TO_FINALIZE")}
         >
           Prêtes à finaliser
         </FilterButton>
 
         <FilterButton
-          $active={
-            statutFiltre === "FINALIZATION_PENDING"
-          }
-          onClick={() =>
-            setStatutFiltre(
-              "FINALIZATION_PENDING"
-            )
-          }
+          $active={statutFiltre === "FINALIZATION_PENDING"}
+          onClick={() => setStatutFiltre("FINALIZATION_PENDING")}
         >
           Solde
         </FilterButton>
 
         <FilterButton
           $active={statutFiltre === "FINALIZED"}
-          onClick={() =>
-            setStatutFiltre("FINALIZED")
-          }
+          onClick={() => setStatutFiltre("FINALIZED")}
         >
           Finalisées
         </FilterButton>
 
         <FilterButton
           $active={statutFiltre === "REJECTED"}
-          onClick={() =>
-            setStatutFiltre("REJECTED")
-          }
+          onClick={() => setStatutFiltre("REJECTED")}
         >
           Refusées
         </FilterButton>
 
         <FilterButton
           $active={statutFiltre === "CANCELLED"}
-          onClick={() =>
-            setStatutFiltre("CANCELLED")
-          }
+          onClick={() => setStatutFiltre("CANCELLED")}
         >
           Annulées
         </FilterButton>
@@ -589,163 +545,130 @@ const ReceptionPrecommande = () => {
 
         {precommandesFiltrees.length === 0 ? (
           <EmptyState>
-            <EmptyIcon>
-              ◌
-            </EmptyIcon>
+            <EmptyIcon>◌</EmptyIcon>
 
-            <EmptyTitle>
-              Aucune précommande
-            </EmptyTitle>
+            <EmptyTitle>Aucune précommande</EmptyTitle>
 
             <EmptyText>
-              Aucune demande ne correspond au filtre
-              sélectionné.
+              Aucune demande ne correspond au filtre sélectionné.
             </EmptyText>
           </EmptyState>
         ) : (
-          precommandesFiltrees.map(
-            (precommande) => (
-              <PrecommandeRow
-                key={precommande._id}
-                onClick={() =>
-                  ouvrirDetail(precommande)
-                }
-              >
-                {/* CLIENT */}
+          precommandesFiltrees.map((precommande) => (
+            <PrecommandeRow
+              key={precommande._id}
+              onClick={() => ouvrirDetail(precommande)}
+            >
+              {/* CLIENT */}
 
-                <ClientCell>
-                  <Avatar>
-                    {(
-                      precommande.clientId
-                        ?.username ||
-                      "C"
-                    )
-                      .charAt(0)
-                      .toUpperCase()}
-                  </Avatar>
+              <ClientCell>
+                <Avatar>
+                  {(precommande.clientId?.username || "C")
+                    .charAt(0)
+                    .toUpperCase()}
+                </Avatar>
 
-                  <ClientInfo>
-                    <ClientName>
-                      {precommande.clientId
-                        ?.username ||
-                        "Client"}
-                    </ClientName>
+                <ClientInfo>
+                  <ClientName>
+                    {precommande.clientId?.username || "Client"}
+                  </ClientName>
 
-                    <ClientEmail>
-                      {precommande.clientId
-                        ?.email ||
-                        "—"}
-                    </ClientEmail>
-                  </ClientInfo>
-                </ClientCell>
+                  <ClientEmail>
+                    {precommande.clientId?.email || "—"}
+                  </ClientEmail>
+                </ClientInfo>
+              </ClientCell>
 
-                {/* MODÈLE */}
+              {/* MODÈLE */}
 
-                <ProductCell>
-                  <ProductImage>
-                    {getImage(precommande) ? (
-                      <img
-                        src={getImage(precommande)}
-                        alt={getNomProduit(
-                          precommande
-                        )}
-                      />
-                    ) : (
-                      <NoProductImage>
-                        —
-                      </NoProductImage>
-                    )}
-                  </ProductImage>
-
-                  <ProductName>
-                    {getNomProduit(precommande)}
-                  </ProductName>
-                </ProductCell>
-
-                {/* VARIATION */}
-
-                <VariationCell>
-                  {precommande.taille && (
-                    <VariationTag>
-                      Taille :{" "}
-                      {precommande.taille}
-                    </VariationTag>
+              <ProductCell>
+                <ProductImage>
+                  {getImage(precommande) ? (
+                    <img
+                      src={getImage(precommande)}
+                      alt={getNomProduit(precommande)}
+                    />
+                  ) : (
+                    <NoProductImage>—</NoProductImage>
                   )}
+                </ProductImage>
 
-                  {precommande.couleur && (
-                    <VariationTag>
-                      Couleur :{" "}
-                      {precommande.couleur}
-                    </VariationTag>
-                  )}
+                <ProductName>{getNomProduit(precommande)}</ProductName>
+              </ProductCell>
 
-                  <QuantityText>
-                    × {precommande.quantite || 1}
-                  </QuantityText>
-                </VariationCell>
+              {/* VARIATION */}
+
+              <VariationCell>
+                {precommande.taille && (
+                  <VariationTag>Taille : {precommande.taille}</VariationTag>
+                )}
+
+                {precommande.couleur && (
+                  <VariationTag>Couleur : {precommande.couleur}</VariationTag>
+                )}
+
+                <QuantityText>× {precommande.quantite || 1}</QuantityText>
+              </VariationCell>
+
+              {/* DÉPÔT */}
+
+              <DepositCell>
+                <DepositAmount>
+                  {formatPrix(precommande.montantDepot)} FCFA
+                </DepositAmount>
 
                 {/* DÉPÔT */}
 
                 <DepositCell>
                   <DepositAmount>
-                    {formatPrix(
-                      precommande.montantDepot
-                    )}{" "}
-                    FCFA
+                    {formatPrix(getMontantPaiement(precommande))} FCFA
                   </DepositAmount>
 
                   <PaymentMethod>
-                    {precommande.service ===
-                    "orange"
+                    {getServicePaiement(precommande) === "orange"
                       ? "Orange Money"
-                      : precommande.service ===
-                        "wave"
-                      ? "Wave"
-                      : precommande.service ||
-                        "—"}
+                      : getServicePaiement(precommande) === "wave"
+                        ? "Wave"
+                        : getServicePaiement(precommande) || "—"}
                   </PaymentMethod>
+
+                  <DepositSmallInfo>
+                    N° : {getNumeroPaiement(precommande) || "—"}
+                  </DepositSmallInfo>
+
+                  <DepositSmallInfo>
+                    Réf. : {getReferencePaiement(precommande) || "—"}
+                  </DepositSmallInfo>
                 </DepositCell>
+              </DepositCell>
 
-                {/* STATUT */}
+              {/* STATUT */}
 
-                <StatusCell>
-                  <StatusBadge
-                    $status={
-                      precommande.statut
-                    }
-                  >
-                    {getStatutLabel(
-                      precommande.statut
-                    )}
-                  </StatusBadge>
-                </StatusCell>
+              <StatusCell>
+                <StatusBadge $status={precommande.statut}>
+                  {getStatutLabel(precommande.statut)}
+                </StatusBadge>
+              </StatusCell>
 
-                {/* DATE */}
+              {/* DATE */}
 
-                <DateCell>
-                  {formatDate(
-                    precommande.createdAt
-                  )}
-                </DateCell>
+              <DateCell>{formatDate(precommande.createdAt)}</DateCell>
 
-                {/* ACTION */}
+              {/* ACTION */}
 
-                <ViewCell>
-                  <ViewButton
-                    onClick={(e) => {
-                      e.stopPropagation();
+              <ViewCell>
+                <ViewButton
+                  onClick={(e) => {
+                    e.stopPropagation();
 
-                      ouvrirDetail(
-                        precommande
-                      );
-                    }}
-                  >
-                    Voir
-                  </ViewButton>
-                </ViewCell>
-              </PrecommandeRow>
-            )
-          )
+                    ouvrirDetail(precommande);
+                  }}
+                >
+                  Voir
+                </ViewButton>
+              </ViewCell>
+            </PrecommandeRow>
+          ))
         )}
       </ContentCard>
 
@@ -757,11 +680,7 @@ const ReceptionPrecommande = () => {
         <Pagination>
           <PageButton
             disabled={page <= 1 || loading}
-            onClick={() =>
-              chargerPrecommandes(
-                page - 1
-              )
-            }
+            onClick={() => chargerPrecommandes(page - 1)}
           >
             Précédent
           </PageButton>
@@ -771,14 +690,8 @@ const ReceptionPrecommande = () => {
           </PageInfo>
 
           <PageButton
-            disabled={
-              page >= pages || loading
-            }
-            onClick={() =>
-              chargerPrecommandes(
-                page + 1
-              )
-            }
+            disabled={page >= pages || loading}
+            onClick={() => chargerPrecommandes(page + 1)}
           >
             Suivant
           </PageButton>
@@ -790,33 +703,20 @@ const ReceptionPrecommande = () => {
       ===================================================== */}
 
       {precommandeSelectionnee && (
-        <ModalOverlay
-          onClick={fermerDetail}
-        >
-          <Modal
-            onClick={(e) =>
-              e.stopPropagation()
-            }
-          >
+        <ModalOverlay onClick={fermerDetail}>
+          <Modal onClick={(e) => e.stopPropagation()}>
             {/* =================================================
                 MODAL HEADER
             ================================================= */}
 
             <ModalHeader>
               <div>
-                <ModalLabel>
-                  PRÉCOMMANDE
-                </ModalLabel>
+                <ModalLabel>PRÉCOMMANDE</ModalLabel>
 
-                <ModalTitle>
-                  Détails de la demande
-                </ModalTitle>
+                <ModalTitle>Détails de la demande</ModalTitle>
               </div>
 
-              <CloseButton
-                onClick={fermerDetail}
-                disabled={actionLoading}
-              >
+              <CloseButton onClick={fermerDetail} disabled={actionLoading}>
                 ×
               </CloseButton>
             </ModalHeader>
@@ -828,48 +728,27 @@ const ReceptionPrecommande = () => {
 
               <ProductHero>
                 <LargeProductImage>
-                  {getImage(
-                    precommandeSelectionnee
-                  ) ? (
+                  {getImage(precommandeSelectionnee) ? (
                     <img
-                      src={getImage(
-                        precommandeSelectionnee
-                      )}
-                      alt={getNomProduit(
-                        precommandeSelectionnee
-                      )}
+                      src={getImage(precommandeSelectionnee)}
+                      alt={getNomProduit(precommandeSelectionnee)}
                     />
                   ) : (
-                    <NoProductImage>
-                      —
-                    </NoProductImage>
+                    <NoProductImage>—</NoProductImage>
                   )}
                 </LargeProductImage>
 
                 <ProductHeroInfo>
                   <ProductHeroTitle>
-                    {getNomProduit(
-                      precommandeSelectionnee
-                    )}
+                    {getNomProduit(precommandeSelectionnee)}
                   </ProductHeroTitle>
 
                   <ProductPrice>
-                    {formatPrix(
-                      getPrixProduit(
-                        precommandeSelectionnee
-                      )
-                    )}{" "}
-                    FCFA
+                    {formatPrix(getPrixProduit(precommandeSelectionnee))} FCFA
                   </ProductPrice>
 
-                  <StatusBadge
-                    $status={
-                      precommandeSelectionnee.statut
-                    }
-                  >
-                    {getStatutLabel(
-                      precommandeSelectionnee.statut
-                    )}
+                  <StatusBadge $status={precommandeSelectionnee.statut}>
+                    {getStatutLabel(precommandeSelectionnee.statut)}
                   </StatusBadge>
                 </ProductHeroInfo>
               </ProductHero>
@@ -879,58 +758,40 @@ const ReceptionPrecommande = () => {
               ================================================= */}
 
               <Section>
-                <SectionTitle>
-                  Informations client
-                </SectionTitle>
+                <SectionTitle>Informations client</SectionTitle>
 
                 <InfoGrid>
                   <InfoItem>
-                    <InfoLabel>
-                      Nom / pseudo
-                    </InfoLabel>
+                    <InfoLabel>Nom / pseudo</InfoLabel>
 
                     <InfoValue>
-                      {precommandeSelectionnee
-                        .clientId?.username ||
+                      {precommandeSelectionnee.clientId?.username || "—"}
+                    </InfoValue>
+                  </InfoItem>
+
+                  <InfoItem>
+                    <InfoLabel>Email</InfoLabel>
+
+                    <InfoValue>
+                      {precommandeSelectionnee.clientId?.email || "—"}
+                    </InfoValue>
+                  </InfoItem>
+
+                  <InfoItem>
+                    <InfoLabel>Téléphone</InfoLabel>
+
+                    <InfoValue>
+                      {precommandeSelectionnee.clientId?.telephone ||
+                        precommandeSelectionnee.clientId?.phone ||
                         "—"}
                     </InfoValue>
                   </InfoItem>
 
                   <InfoItem>
-                    <InfoLabel>
-                      Email
-                    </InfoLabel>
+                    <InfoLabel>Date de demande</InfoLabel>
 
                     <InfoValue>
-                      {precommandeSelectionnee
-                        .clientId?.email ||
-                        "—"}
-                    </InfoValue>
-                  </InfoItem>
-
-                  <InfoItem>
-                    <InfoLabel>
-                      Téléphone
-                    </InfoLabel>
-
-                    <InfoValue>
-                      {precommandeSelectionnee
-                        .clientId?.telephone ||
-                        precommandeSelectionnee
-                          .clientId?.phone ||
-                        "—"}
-                    </InfoValue>
-                  </InfoItem>
-
-                  <InfoItem>
-                    <InfoLabel>
-                      Date de demande
-                    </InfoLabel>
-
-                    <InfoValue>
-                      {formatDate(
-                        precommandeSelectionnee.createdAt
-                      )}
+                      {formatDate(precommandeSelectionnee.createdAt)}
                     </InfoValue>
                   </InfoItem>
                 </InfoGrid>
@@ -941,75 +802,48 @@ const ReceptionPrecommande = () => {
               ================================================= */}
 
               <Section>
-                <SectionTitle>
-                  Choix du client
-                </SectionTitle>
+                <SectionTitle>Choix du client</SectionTitle>
 
                 <InfoGrid>
                   <InfoItem>
-                    <InfoLabel>
-                      Taille
-                    </InfoLabel>
+                    <InfoLabel>Taille</InfoLabel>
 
                     <InfoValue>
-                      {precommandeSelectionnee.taille ||
-                        "—"}
+                      {precommandeSelectionnee.taille || "—"}
                     </InfoValue>
                   </InfoItem>
 
                   <InfoItem>
-                    <InfoLabel>
-                      Couleur
-                    </InfoLabel>
+                    <InfoLabel>Couleur</InfoLabel>
 
                     <InfoValue>
-                      {precommandeSelectionnee.couleur ||
-                        "—"}
+                      {precommandeSelectionnee.couleur || "—"}
                     </InfoValue>
                   </InfoItem>
 
                   <InfoItem>
-                    <InfoLabel>
-                      Quantité
-                    </InfoLabel>
+                    <InfoLabel>Quantité</InfoLabel>
 
                     <InfoValue>
-                      {precommandeSelectionnee.quantite ||
-                        1}
+                      {precommandeSelectionnee.quantite || 1}
                     </InfoValue>
                   </InfoItem>
 
                   <InfoItem>
-                    <InfoLabel>
-                      Prix unitaire
-                    </InfoLabel>
+                    <InfoLabel>Prix unitaire</InfoLabel>
+
+                    <InfoValue>
+                      {formatPrix(getPrixProduit(precommandeSelectionnee))} FCFA
+                    </InfoValue>
+                  </InfoItem>
+
+                  <InfoItem>
+                    <InfoLabel>Montant total</InfoLabel>
 
                     <InfoValue>
                       {formatPrix(
-                        getPrixProduit(
-                          precommandeSelectionnee
-                        )
-                      )}{" "}
-                      FCFA
-                    </InfoValue>
-                  </InfoItem>
-
-                  <InfoItem>
-                    <InfoLabel>
-                      Montant total
-                    </InfoLabel>
-
-                    <InfoValue>
-                      {formatPrix(
-                        Number(
-                          getPrixProduit(
-                            precommandeSelectionnee
-                          )
-                        ) *
-                          Number(
-                            precommandeSelectionnee.quantite ||
-                              1
-                          )
+                        Number(getPrixProduit(precommandeSelectionnee)) *
+                          Number(precommandeSelectionnee.quantite || 1),
                       )}{" "}
                       FCFA
                     </InfoValue>
@@ -1022,61 +856,43 @@ const ReceptionPrecommande = () => {
               ================================================= */}
 
               <Section>
-                <SectionTitle>
-                  Informations du dépôt
-                </SectionTitle>
+                <SectionTitle>Informations du dépôt</SectionTitle>
 
                 <PaymentBox>
                   <InfoGrid>
                     <InfoItem>
-                      <InfoLabel>
-                        Service
-                      </InfoLabel>
+                      <InfoLabel>Service</InfoLabel>
 
                       <InfoValue>
-                        {precommandeSelectionnee.service ===
-                        "orange"
+                        {precommandeSelectionnee.service === "orange"
                           ? "Orange Money"
-                          : precommandeSelectionnee.service ===
-                            "wave"
-                          ? "Wave"
-                          : precommandeSelectionnee.service ||
-                            "—"}
+                          : precommandeSelectionnee.service === "wave"
+                            ? "Wave"
+                            : precommandeSelectionnee.service || "—"}
                       </InfoValue>
                     </InfoItem>
 
                     <InfoItem>
-                      <InfoLabel>
-                        Numéro du dépôt
-                      </InfoLabel>
+                      <InfoLabel>Numéro du dépôt</InfoLabel>
 
                       <InfoValue>
-                        {precommandeSelectionnee.numeroDepot ||
-                          "—"}
+                        {precommandeSelectionnee.numeroDepot || "—"}
                       </InfoValue>
                     </InfoItem>
 
                     <InfoItem>
-                      <InfoLabel>
-                        Référence du dépôt
-                      </InfoLabel>
+                      <InfoLabel>Référence du dépôt</InfoLabel>
 
                       <ReferenceValue>
-                        {precommandeSelectionnee.referenceDepot ||
-                          "—"}
+                        {precommandeSelectionnee.referenceDepot || "—"}
                       </ReferenceValue>
                     </InfoItem>
 
                     <InfoItem>
-                      <InfoLabel>
-                        Montant du dépôt
-                      </InfoLabel>
+                      <InfoLabel>Montant du dépôt</InfoLabel>
 
                       <DepositBig>
-                        {formatPrix(
-                          precommandeSelectionnee.montantDepot
-                        )}{" "}
-                        FCFA
+                        {formatPrix(precommandeSelectionnee.montantDepot)} FCFA
                       </DepositBig>
                     </InfoItem>
                   </InfoGrid>
@@ -1087,20 +903,14 @@ const ReceptionPrecommande = () => {
                   INFORMATIONS DE SOLDE
               ================================================= */}
 
-              {(precommandeSelectionnee.statut ===
-                "FINALIZATION_PENDING" ||
-                precommandeSelectionnee.statut ===
-                  "FINALIZED") && (
+              {(precommandeSelectionnee.statut === "FINALIZATION_PENDING" ||
+                precommandeSelectionnee.statut === "FINALIZED") && (
                 <Section>
-                  <SectionTitle>
-                    Informations du solde
-                  </SectionTitle>
+                  <SectionTitle>Informations du solde</SectionTitle>
 
                   <InfoGrid>
                     <InfoItem>
-                      <InfoLabel>
-                        Référence du solde
-                      </InfoLabel>
+                      <InfoLabel>Référence du solde</InfoLabel>
 
                       <ReferenceValue>
                         {precommandeSelectionnee.referenceSolde ||
@@ -1110,34 +920,27 @@ const ReceptionPrecommande = () => {
                     </InfoItem>
 
                     <InfoItem>
-                      <InfoLabel>
-                        Montant envoyé
-                      </InfoLabel>
+                      <InfoLabel>Montant envoyé</InfoLabel>
 
                       <DepositBig>
                         {formatPrix(
                           precommandeSelectionnee.montantSolde ||
                             precommandeSelectionnee.montantEnvoye ||
-                            0
+                            0,
                         )}{" "}
                         FCFA
                       </DepositBig>
                     </InfoItem>
 
                     <InfoItem>
-                      <InfoLabel>
-                        Service
-                      </InfoLabel>
+                      <InfoLabel>Service</InfoLabel>
 
                       <InfoValue>
-                        {precommandeSelectionnee.serviceSolde ===
-                        "orange"
+                        {precommandeSelectionnee.serviceSolde === "orange"
                           ? "Orange Money"
-                          : precommandeSelectionnee.serviceSolde ===
-                            "wave"
-                          ? "Wave"
-                          : precommandeSelectionnee.service ||
-                            "—"}
+                          : precommandeSelectionnee.serviceSolde === "wave"
+                            ? "Wave"
+                            : precommandeSelectionnee.service || "—"}
                       </InfoValue>
                     </InfoItem>
                   </InfoGrid>
@@ -1149,22 +952,13 @@ const ReceptionPrecommande = () => {
               ================================================= */}
 
               <Section>
-                <SectionTitle>
-                  Commentaire administrateur
-                </SectionTitle>
+                <SectionTitle>Commentaire administrateur</SectionTitle>
 
                 <CommentTextarea
                   value={adminComment}
-                  onChange={(e) =>
-                    setAdminComment(
-                      e.target.value
-                    )
-                  }
+                  onChange={(e) => setAdminComment(e.target.value)}
                   placeholder="Ajouter une remarque concernant cette précommande..."
-                  disabled={
-                    precommandeSelectionnee.statut !==
-                    "PENDING"
-                  }
+                  disabled={precommandeSelectionnee.statut !== "PENDING"}
                 />
 
                 {precommandeSelectionnee.adminComment && (
@@ -1174,9 +968,7 @@ const ReceptionPrecommande = () => {
                     </ExistingCommentLabel>
 
                     <ExistingCommentText>
-                      {
-                        precommandeSelectionnee.adminComment
-                      }
+                      {precommandeSelectionnee.adminComment}
                     </ExistingCommentText>
                   </ExistingComment>
                 )}
@@ -1187,22 +979,16 @@ const ReceptionPrecommande = () => {
               ================================================= */}
 
               <Section>
-                <SectionTitle>
-                  Historique
-                </SectionTitle>
+                <SectionTitle>Historique</SectionTitle>
 
                 <HistoryList>
                   <HistoryItem>
                     <HistoryDot />
                     <HistoryContent>
-                      <HistoryLabel>
-                        Créée
-                      </HistoryLabel>
+                      <HistoryLabel>Créée</HistoryLabel>
 
                       <HistoryDate>
-                        {formatDate(
-                          precommandeSelectionnee.createdAt
-                        )}
+                        {formatDate(precommandeSelectionnee.createdAt)}
                       </HistoryDate>
                     </HistoryContent>
                   </HistoryItem>
@@ -1211,14 +997,10 @@ const ReceptionPrecommande = () => {
                     <HistoryItem>
                       <HistoryDot />
                       <HistoryContent>
-                        <HistoryLabel>
-                          Dernière mise à jour
-                        </HistoryLabel>
+                        <HistoryLabel>Dernière mise à jour</HistoryLabel>
 
                         <HistoryDate>
-                          {formatDate(
-                            precommandeSelectionnee.updatedAt
-                          )}
+                          {formatDate(precommandeSelectionnee.updatedAt)}
                         </HistoryDate>
                       </HistoryContent>
                     </HistoryItem>
@@ -1230,48 +1012,28 @@ const ReceptionPrecommande = () => {
                   MESSAGES
               ================================================= */}
 
-              {message && (
-                <SuccessMessage>
-                  ✓ {message}
-                </SuccessMessage>
-              )}
+              {message && <SuccessMessage>✓ {message}</SuccessMessage>}
 
-              {erreur && (
-                <ErrorMessage>
-                  {erreur}
-                </ErrorMessage>
-              )}
+              {erreur && <ErrorMessage>{erreur}</ErrorMessage>}
             </ModalBody>
 
             {/* =================================================
                 ACTIONS
             ================================================= */}
 
-            {precommandeSelectionnee.statut ===
-              "PENDING" && (
+            {precommandeSelectionnee.statut === "PENDING" && (
               <ModalFooter>
-                <RejectButton
-                  onClick={refuser}
-                  disabled={actionLoading}
-                >
-                  {actionLoading
-                    ? "Traitement..."
-                    : "Refuser"}
+                <RejectButton onClick={refuser} disabled={actionLoading}>
+                  {actionLoading ? "Traitement..." : "Refuser"}
                 </RejectButton>
 
-                <AcceptButton
-                  onClick={accepter}
-                  disabled={actionLoading}
-                >
-                  {actionLoading
-                    ? "Traitement..."
-                    : "Accepter la précommande"}
+                <AcceptButton onClick={accepter} disabled={actionLoading}>
+                  {actionLoading ? "Traitement..." : "Accepter la précommande"}
                 </AcceptButton>
               </ModalFooter>
             )}
 
-            {precommandeSelectionnee.statut !==
-              "PENDING" && (
+            {precommandeSelectionnee.statut !== "PENDING" && (
               <ModalFooter>
                 <CloseFooterButton
                   onClick={fermerDetail}
@@ -1442,11 +1204,9 @@ const FilterTitle = styled.span`
 const FilterButton = styled.button`
   border: none;
 
-  background: ${(props) =>
-    props.$active ? "#111" : "#f3f3f3"};
+  background: ${(props) => (props.$active ? "#111" : "#f3f3f3")};
 
-  color: ${(props) =>
-    props.$active ? "#fff" : "#555"};
+  color: ${(props) => (props.$active ? "#fff" : "#555")};
 
   padding: 9px 14px;
   border-radius: 8px;
@@ -1456,8 +1216,7 @@ const FilterButton = styled.button`
   font-weight: 700;
 
   &:hover {
-    background: ${(props) =>
-      props.$active ? "#111" : "#e7e7e7"};
+    background: ${(props) => (props.$active ? "#111" : "#e7e7e7")};
   }
 `;
 
@@ -1919,8 +1678,7 @@ const Modal = styled.div`
 
   border-radius: 18px;
 
-  box-shadow:
-    0 25px 80px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25);
 
   @media (max-width: 600px) {
     max-height: 96vh;
