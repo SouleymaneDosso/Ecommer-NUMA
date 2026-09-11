@@ -614,32 +614,24 @@ const ReceptionPrecommande = () => {
 
               <DepositCell>
                 <DepositAmount>
-                  {formatPrix(precommande.montantDepot)} FCFA
+                  {formatPrix(getMontantPaiement(precommande))} FCFA
                 </DepositAmount>
 
-                {/* DÉPÔT */}
+                <PaymentMethod>
+                  {getServicePaiement(precommande) === "orange"
+                    ? "Orange Money"
+                    : getServicePaiement(precommande) === "wave"
+                      ? "Wave"
+                      : getServicePaiement(precommande) || "—"}
+                </PaymentMethod>
 
-                <DepositCell>
-                  <DepositAmount>
-                    {formatPrix(getMontantPaiement(precommande))} FCFA
-                  </DepositAmount>
+                <DepositSmallInfo>
+                  N° : {getNumeroPaiement(precommande) || "—"}
+                </DepositSmallInfo>
 
-                  <PaymentMethod>
-                    {getServicePaiement(precommande) === "orange"
-                      ? "Orange Money"
-                      : getServicePaiement(precommande) === "wave"
-                        ? "Wave"
-                        : getServicePaiement(precommande) || "—"}
-                  </PaymentMethod>
-
-                  <DepositSmallInfo>
-                    N° : {getNumeroPaiement(precommande) || "—"}
-                  </DepositSmallInfo>
-
-                  <DepositSmallInfo>
-                    Réf. : {getReferencePaiement(precommande) || "—"}
-                  </DepositSmallInfo>
-                </DepositCell>
+                <DepositSmallInfo>
+                  Réf. : {getReferencePaiement(precommande) || "—"}
+                </DepositSmallInfo>
               </DepositCell>
 
               {/* STATUT */}
@@ -861,22 +853,25 @@ const ReceptionPrecommande = () => {
                 <PaymentBox>
                   <InfoGrid>
                     <InfoItem>
-                      <InfoLabel>Service</InfoLabel>
+                      <InfoLabel>Service choisi</InfoLabel>
 
                       <InfoValue>
-                        {precommandeSelectionnee.service === "orange"
+                        {getServicePaiement(precommandeSelectionnee) ===
+                        "orange"
                           ? "Orange Money"
-                          : precommandeSelectionnee.service === "wave"
+                          : getServicePaiement(precommandeSelectionnee) ===
+                              "wave"
                             ? "Wave"
-                            : precommandeSelectionnee.service || "—"}
+                            : getServicePaiement(precommandeSelectionnee) ||
+                              "—"}
                       </InfoValue>
                     </InfoItem>
 
                     <InfoItem>
-                      <InfoLabel>Numéro du dépôt</InfoLabel>
+                      <InfoLabel>Numéro utilisé pour le dépôt</InfoLabel>
 
                       <InfoValue>
-                        {precommandeSelectionnee.numeroDepot || "—"}
+                        {getNumeroPaiement(precommandeSelectionnee) || "—"}
                       </InfoValue>
                     </InfoItem>
 
@@ -884,16 +879,47 @@ const ReceptionPrecommande = () => {
                       <InfoLabel>Référence du dépôt</InfoLabel>
 
                       <ReferenceValue>
-                        {precommandeSelectionnee.referenceDepot || "—"}
+                        {getReferencePaiement(precommandeSelectionnee) || "—"}
                       </ReferenceValue>
                     </InfoItem>
 
                     <InfoItem>
-                      <InfoLabel>Montant du dépôt</InfoLabel>
+                      <InfoLabel>Montant envoyé</InfoLabel>
 
                       <DepositBig>
-                        {formatPrix(precommandeSelectionnee.montantDepot)} FCFA
+                        {formatPrix(
+                          getMontantPaiement(precommandeSelectionnee),
+                        )}{" "}
+                        FCFA
                       </DepositBig>
+                    </InfoItem>
+
+                    <InfoItem>
+                      <InfoLabel>Montant attendu</InfoLabel>
+
+                      <InfoValue>
+                        {formatPrix(
+                          getPaiementDepot(precommandeSelectionnee)
+                            ?.montantAttendu ??
+                            precommandeSelectionnee.montantDepot ??
+                            0,
+                        )}{" "}
+                        FCFA
+                      </InfoValue>
+                    </InfoItem>
+
+                    <InfoItem>
+                      <InfoLabel>Statut du dépôt</InfoLabel>
+
+                      <InfoValue>
+                        {getPaiementDepot(precommandeSelectionnee)?.status ===
+                        "CONFIRMED"
+                          ? "Confirmé"
+                          : getPaiementDepot(precommandeSelectionnee)
+                                ?.status === "REJECTED"
+                            ? "Rejeté"
+                            : "En attente"}
+                      </InfoValue>
                     </InfoItem>
                   </InfoGrid>
                 </PaymentBox>
@@ -2112,6 +2138,13 @@ const CloseFooterButton = styled.button`
     opacity: 0.5;
     cursor: not-allowed;
   }
+`;
+
+const DepositSmallInfo = styled.div`
+  margin-top: 3px;
+  color: #777;
+  font-size: 10px;
+  line-height: 1.4;
 `;
 
 export default ReceptionPrecommande;
