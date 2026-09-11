@@ -3166,7 +3166,7 @@ const Input = styled.input`
 
   outline: none;
 
-  font-size: 14px;
+  font-size: 16px;
 
   background: white;
 
@@ -3787,7 +3787,7 @@ const VideoRange = styled.input`
   flex: 1;
 
   width: 100%;
-
+font-size: 16px;
   height: 4px;
 
   appearance: none;
