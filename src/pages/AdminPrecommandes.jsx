@@ -34,6 +34,24 @@ const AdminPrecommandes = () => {
   const [nouvelleTaille, setNouvelleTaille] = useState("");
   const [nouvelleCouleur, setNouvelleCouleur] = useState("");
 
+  /*
+   * STRUCTURE UTILISEE PAR LE BACKEND :
+   *
+   * {
+   *   Noir: {
+   *     S: 10,
+   *     M: 15
+   *   },
+   *   Blanc: {
+   *     S: 5,
+   *     M: 8
+   *   }
+   * }
+   *
+   * Le backend fait :
+   * stockParVariation.get(couleur)
+   * puis colorMap.get(taille)
+   */
   const [stockParVariation, setStockParVariation] = useState({});
 
   const [imagesExistantes, setImagesExistantes] = useState([]);
@@ -43,9 +61,9 @@ const AdminPrecommandes = () => {
   const [videoFile, setVideoFile] = useState(null);
   const [videoActuelle, setVideoActuelle] = useState(null);
 
-  /* =========================
+  /* =====================================================
      CHARGER LES PRODUITS
-  ========================= */
+  ===================================================== */
 
   const chargerProduits = async () => {
     try {
@@ -60,7 +78,9 @@ const AdminPrecommandes = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Erreur lors du chargement");
+        throw new Error(
+          data.message || "Erreur lors du chargement des produits"
+        );
       }
 
       const liste =
@@ -78,24 +98,30 @@ const AdminPrecommandes = () => {
     }
   };
 
-  /* =========================
+  /* =====================================================
      CHARGER LES VIDEOS
-  ========================= */
+  ===================================================== */
 
   const chargerVideos = async () => {
     try {
       setLoadingVideos(true);
 
-      const response = await fetch(`${API_URL}/api/videos/videos`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await fetch(
+        `${API_URL}/api/videos/videos`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Erreur lors du chargement des vidéos");
+        throw new Error(
+          data.message ||
+            "Erreur lors du chargement des vidéos"
+        );
       }
 
       setVideos(data.videos || []);
@@ -111,30 +137,85 @@ const AdminPrecommandes = () => {
     chargerVideos();
   }, []);
 
-  /* =========================
+  /* =====================================================
      FORM
-  ========================= */
+  ===================================================== */
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const {
+      name,
+      value,
+      type,
+      checked,
+    } = e.target;
 
     setForm((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]:
+        type === "checkbox"
+          ? checked
+          : value,
     }));
   };
 
-  /* =========================
+  /* =====================================================
+     NORMALISER STOCK MAP / OBJET
+  ===================================================== */
+
+  const convertirStockEnObjet = (variations) => {
+    if (!variations) {
+      return {};
+    }
+
+    if (
+      typeof variations.toJSON === "function"
+    ) {
+      variations = variations.toJSON();
+    }
+
+    if (variations instanceof Map) {
+      variations =
+        Object.fromEntries(variations);
+    }
+
+    const resultat = {};
+
+    Object.entries(variations || {}).forEach(
+      ([couleur, taillesStock]) => {
+        if (
+          taillesStock instanceof Map
+        ) {
+          resultat[couleur] =
+            Object.fromEntries(
+              taillesStock
+            );
+        } else {
+          resultat[couleur] = {
+            ...(taillesStock || {}),
+          };
+        }
+      }
+    );
+
+    return resultat;
+  };
+
+  /* =====================================================
      TAILLES
-  ========================= */
+  ===================================================== */
 
   const ajouterTaille = () => {
-    const taille = nouvelleTaille.trim();
+    const taille =
+      nouvelleTaille.trim();
 
-    if (!taille) return;
+    if (!taille) {
+      return;
+    }
 
     const existe = tailles.some(
-      (item) => item.toLowerCase() === taille.toLowerCase()
+      (item) =>
+        item.toLowerCase() ===
+        taille.toLowerCase()
     );
 
     if (existe) {
@@ -142,39 +223,104 @@ const AdminPrecommandes = () => {
       return;
     }
 
-    setTailles((prev) => [...prev, taille]);
-
-    setStockParVariation((prev) => ({
+    setTailles((prev) => [
       ...prev,
-      [taille]: {
-        ...(prev[taille] || {}),
-      },
-    }));
+      taille,
+    ]);
+
+    /*
+     * Structure :
+     *
+     * couleur -> taille -> quantité
+     */
+    setStockParVariation((prev) => {
+      const nouveau = {
+        ...prev,
+      };
+
+      couleurs.forEach(
+        (couleur) => {
+          nouveau[couleur] = {
+            ...(nouveau[couleur] || {}),
+            [taille]:
+              nouveau[couleur]?.[
+                taille
+              ] ?? 0,
+          };
+        }
+      );
+
+      /*
+       * Pour les produits sans couleur,
+       * on utilise "general".
+       */
+      if (couleurs.length === 0) {
+        nouveau.general = {
+          ...(nouveau.general || {}),
+          [taille]:
+            nouveau.general?.[
+              taille
+            ] ?? 0,
+        };
+      }
+
+      return nouveau;
+    });
 
     setNouvelleTaille("");
   };
 
-  const supprimerTaille = (taille) => {
-    setTailles((prev) => prev.filter((item) => item !== taille));
+  const supprimerTaille = (
+    taille
+  ) => {
+    setTailles((prev) =>
+      prev.filter(
+        (item) => item !== taille
+      )
+    );
 
     setStockParVariation((prev) => {
-      const nouveau = { ...prev };
-      delete nouveau[taille];
+      const nouveau = {
+        ...prev,
+      };
+
+      Object.keys(nouveau).forEach(
+        (couleur) => {
+          if (nouveau[couleur]) {
+            const variations = {
+              ...nouveau[couleur],
+            };
+
+            delete variations[
+              taille
+            ];
+
+            nouveau[couleur] =
+              variations;
+          }
+        }
+      );
+
       return nouveau;
     });
   };
 
-  /* =========================
+  /* =====================================================
      COULEURS
-  ========================= */
+  ===================================================== */
 
   const ajouterCouleur = () => {
-    const couleur = nouvelleCouleur.trim();
+    const couleur =
+      nouvelleCouleur.trim();
 
-    if (!couleur) return;
+    if (!couleur) {
+      return;
+    }
 
     const existe = couleurs.some(
-      (item) => item.toLowerCase() === couleur.toLowerCase()
+      (item) =>
+        item.toLowerCase() ===
+        couleur.toLowerCase()
     );
 
     if (existe) {
@@ -182,17 +328,36 @@ const AdminPrecommandes = () => {
       return;
     }
 
-    setCouleurs((prev) => [...prev, couleur]);
+    setCouleurs((prev) => [
+      ...prev,
+      couleur,
+    ]);
 
     setStockParVariation((prev) => {
-      const nouveau = { ...prev };
+      const nouveau = {
+        ...prev,
+      };
 
-      tailles.forEach((taille) => {
-        nouveau[taille] = {
-          ...(nouveau[taille] || {}),
-          [couleur]: nouveau[taille]?.[couleur] ?? 0,
-        };
-      });
+      nouveau[couleur] =
+        tailles.reduce(
+          (acc, taille) => {
+            acc[taille] =
+              prev[couleur]?.[
+                taille
+              ] ?? 0;
+
+            return acc;
+          },
+          {}
+        );
+
+      /*
+       * Si on passe d'un produit
+       * sans couleur à un produit
+       * avec couleur, on supprime
+       * la structure general.
+       */
+      delete nouveau.general;
 
       return nouveau;
     });
@@ -200,142 +365,266 @@ const AdminPrecommandes = () => {
     setNouvelleCouleur("");
   };
 
-  const supprimerCouleur = (couleur) => {
-    setCouleurs((prev) => prev.filter((item) => item !== couleur));
+  const supprimerCouleur = (
+    couleur
+  ) => {
+    setCouleurs((prev) =>
+      prev.filter(
+        (item) => item !== couleur
+      )
+    );
 
     setStockParVariation((prev) => {
-      const nouveau = { ...prev };
+      const nouveau = {
+        ...prev,
+      };
 
-      Object.keys(nouveau).forEach((taille) => {
-        if (nouveau[taille]) {
-          const variations = { ...nouveau[taille] };
-          delete variations[couleur];
-
-          nouveau[taille] = variations;
-        }
-      });
+      delete nouveau[couleur];
 
       return nouveau;
     });
   };
 
-  /* =========================
-     QUANTITE VARIATION
-  ========================= */
+  /* =====================================================
+     QUANTITE PAR VARIATION
+  ===================================================== */
 
   const modifierQuantiteVariation = (
-    taille,
     couleur,
+    taille,
     valeur
   ) => {
-    const quantite = Math.max(0, Number(valeur) || 0);
+    const quantite = Math.max(
+      0,
+      Number(valeur) || 0
+    );
 
     setStockParVariation((prev) => ({
       ...prev,
-      [taille]: {
-        ...(prev[taille] || {}),
-        [couleur]: quantite,
+
+      [couleur]: {
+        ...(prev[couleur] || {}),
+        [taille]: quantite,
       },
     }));
   };
 
-  const modifierQuantiteTaille = (taille, valeur) => {
-    const quantite = Math.max(0, Number(valeur) || 0);
+  /* =====================================================
+     QUANTITE PAR TAILLE SANS COULEUR
+  ===================================================== */
+
+  const modifierQuantiteTaille = (
+    taille,
+    valeur
+  ) => {
+    const quantite = Math.max(
+      0,
+      Number(valeur) || 0
+    );
 
     setStockParVariation((prev) => ({
       ...prev,
-      [taille]: {
-        ...(prev[taille] || {}),
-        general: quantite,
+
+      general: {
+        ...(prev.general || {}),
+        [taille]: quantite,
       },
     }));
   };
 
-  /* =========================
+  /* =====================================================
      STOCK TOTAL
-  ========================= */
+  ===================================================== */
 
   const calculerStockTotal = () => {
-    let total = 0;
+    if (couleurs.length === 0) {
+      return Object.values(
+        stockParVariation?.general ||
+          {}
+      ).reduce(
+        (total, quantite) =>
+          total +
+          (Number(quantite) || 0),
+        0
+      );
+    }
 
-    Object.values(stockParVariation).forEach((variations) => {
-      Object.values(variations || {}).forEach((quantite) => {
-        total += Number(quantite) || 0;
-      });
-    });
-
-    return total;
+    return couleurs.reduce(
+      (total, couleur) => {
+        return (
+          total +
+          Object.values(
+            stockParVariation?.[
+              couleur
+            ] || {}
+          ).reduce(
+            (somme, quantite) =>
+              somme +
+              (Number(quantite) ||
+                0),
+            0
+          )
+        );
+      },
+      0
+    );
   };
 
-  /* =========================
+  /* =====================================================
+     TOTAL PAR TAILLE
+  ===================================================== */
+
+  const totalParTaille = (
+    taille
+  ) => {
+    if (couleurs.length === 0) {
+      return Number(
+        stockParVariation?.general?.[
+          taille
+        ] || 0
+      );
+    }
+
+    return couleurs.reduce(
+      (total, couleur) =>
+        total +
+        (Number(
+          stockParVariation?.[
+            couleur
+          ]?.[taille]
+        ) || 0),
+      0
+    );
+  };
+
+  /* =====================================================
      IMAGES
-  ========================= */
+  ===================================================== */
 
   const handleImages = (e) => {
-    const files = Array.from(e.target.files || []);
+    const files = Array.from(
+      e.target.files || []
+    );
 
-    setNouvellesImages((prev) => [...prev, ...files]);
+    setNouvellesImages((prev) => [
+      ...prev,
+      ...files,
+    ]);
+
+    e.target.value = "";
   };
 
-  const supprimerNouvelleImage = (index) => {
+  const supprimerNouvelleImage = (
+    index
+  ) => {
     setNouvellesImages((prev) =>
-      prev.filter((_, i) => i !== index)
-    );
-  };
-
-  const supprimerImageExistante = (index) => {
-    setImagesExistantes((prev) =>
-      prev.filter((_, i) => i !== index)
+      prev.filter(
+        (_, i) => i !== index
+      )
     );
 
-    if (mainImageIndex >= index) {
-      setMainImageIndex((prev) => Math.max(0, prev - 1));
+    const indexSupprime =
+      imagesExistantes.length +
+      index;
+
+    if (
+      mainImageIndex ===
+      indexSupprime
+    ) {
+      setMainImageIndex(0);
+    } else if (
+      mainImageIndex >
+      indexSupprime
+    ) {
+      setMainImageIndex(
+        (prev) => prev - 1
+      );
     }
   };
 
-  /* =========================
-     VIDEO
-  ========================= */
+  const supprimerImageExistante = (
+    index
+  ) => {
+    setImagesExistantes((prev) =>
+      prev.filter(
+        (_, i) => i !== index
+      )
+    );
 
-  const trouverVideoProduit = (produit) => {
-    if (!produit) return null;
+    if (
+      mainImageIndex === index
+    ) {
+      setMainImageIndex(0);
+    } else if (
+      mainImageIndex > index
+    ) {
+      setMainImageIndex(
+        (prev) => prev - 1
+      );
+    }
+  };
+
+  /* =====================================================
+     VIDEO
+  ===================================================== */
+
+  const trouverVideoProduit = (
+    produit
+  ) => {
+    if (!produit) {
+      return null;
+    }
 
     if (produit.videoId) {
       const videoId =
-        typeof produit.videoId === "object"
+        typeof produit.videoId ===
+        "object"
           ? produit.videoId._id
           : produit.videoId;
 
-      const videoParId = videos.find(
-        (video) => video._id === videoId
-      );
+      const videoParId =
+        videos.find(
+          (video) =>
+            video._id === videoId
+        );
 
-      if (videoParId) return videoParId;
+      if (videoParId) {
+        return videoParId;
+      }
     }
 
-    const videoParProduit = videos.find((video) => {
-      const produitId =
-        typeof video.produitId === "object"
-          ? video.produitId?._id
-          : video.produitId;
+    const videoParProduit =
+      videos.find((video) => {
+        const produitId =
+          typeof video.produitId ===
+          "object"
+            ? video.produitId?._id
+            : video.produitId;
 
-      return produitId === produit._id;
-    });
+        return (
+          produitId === produit._id
+        );
+      });
 
-    return videoParProduit || null;
+    return (
+      videoParProduit || null
+    );
   };
 
-  const handleVideoChange = (e) => {
-    const file = e.target.files?.[0];
+  const handleVideoChange = (
+    e
+  ) => {
+    const file =
+      e.target.files?.[0];
 
     if (file) {
       setVideoFile(file);
     }
   };
 
-  /* =========================
+  /* =====================================================
      RESET FORM
-  ========================= */
+  ===================================================== */
 
   const resetForm = () => {
     setEditingId(null);
@@ -370,75 +659,109 @@ const AdminPrecommandes = () => {
     setVideoActuelle(null);
   };
 
-  /* =========================
-     EDITER
-  ========================= */
+  /* =====================================================
+     EDITER PRODUIT
+  ===================================================== */
 
-  const modifierProduit = (produit) => {
+  const modifierProduit = (
+    produit
+  ) => {
     setEditingId(produit._id);
 
     setForm({
-      title: produit.title || "",
-      description: produit.description || "",
-      price: produit.price ?? "",
-      montantDepot: produit.montantDepot ?? "",
-      dateDisponibilite: produit.dateDisponibilite
-        ? new Date(produit.dateDisponibilite)
-            .toISOString()
-            .split("T")[0]
-        : "",
-      genre: produit.genre || "homme",
-      categorie: produit.categorie || "haut",
-      badge: produit.badge || "",
-      precommande: produit.precommande ?? false,
-      hero: produit.hero ?? false,
+      title:
+        produit.title || "",
+
+      description:
+        produit.description || "",
+
+      price:
+        produit.price ?? "",
+
+      montantDepot:
+        produit.montantDepot ?? "",
+
+      dateDisponibilite:
+        produit.dateDisponibilite
+          ? new Date(
+              produit.dateDisponibilite
+            )
+              .toISOString()
+              .split("T")[0]
+          : "",
+
+      genre:
+        produit.genre ||
+        "homme",
+
+      categorie:
+        produit.categorie ||
+        "haut",
+
+      badge:
+        produit.badge || "",
+
+      precommande:
+        produit.precommande ??
+        false,
+
+      hero:
+        produit.hero ?? false,
+
       details: produit.details
-        ? Object.entries(produit.details)
-            .map(([key, value]) => `${key}: ${value}`)
+        ? Object.entries(
+            produit.details
+          )
+            .map(
+              ([key, value]) =>
+                `${key}: ${value}`
+            )
             .join("\n")
         : "",
     });
 
-    setTailles(produit.tailles || []);
-    setCouleurs(produit.couleurs || []);
-
-    /* Conversion Map -> objet */
-    let variations = produit.stockParVariation || {};
-
-    if (
-      variations &&
-      typeof variations.toJSON === "function"
-    ) {
-      variations = variations.toJSON();
-    }
-
-    if (variations instanceof Map) {
-      variations = Object.fromEntries(variations);
-    }
-
-    const variationsNormalisees = {};
-
-    Object.entries(variations || {}).forEach(
-      ([taille, valeurs]) => {
-        if (valeurs instanceof Map) {
-          variationsNormalisees[taille] =
-            Object.fromEntries(valeurs);
-        } else {
-          variationsNormalisees[taille] = {
-            ...(valeurs || {}),
-          };
-        }
-      }
+    setTailles(
+      Array.isArray(
+        produit.tailles
+      )
+        ? produit.tailles
+        : []
     );
 
-    setStockParVariation(variationsNormalisees);
+    setCouleurs(
+      Array.isArray(
+        produit.couleurs
+      )
+        ? produit.couleurs
+        : []
+    );
 
-    setImagesExistantes(produit.images || []);
+    const variationsNormalisees =
+      convertirStockEnObjet(
+        produit.stockParVariation
+      );
+
+    setStockParVariation(
+      variationsNormalisees
+    );
+
+    setImagesExistantes(
+      Array.isArray(
+        produit.images
+      )
+        ? produit.images
+        : []
+    );
+
     setNouvellesImages([]);
 
-    const imagePrincipaleIndex = (
-      produit.images || []
-    ).findIndex((image) => image.isMain);
+    const imagePrincipaleIndex =
+      (
+        produit.images || []
+      ).findIndex(
+        (image) =>
+          image.isMain
+      );
 
     setMainImageIndex(
       imagePrincipaleIndex >= 0
@@ -446,7 +769,10 @@ const AdminPrecommandes = () => {
         : 0
     );
 
-    const video = trouverVideoProduit(produit);
+    const video =
+      trouverVideoProduit(
+        produit
+      );
 
     setVideoActuelle(video);
     setVideoFile(null);
@@ -457,9 +783,9 @@ const AdminPrecommandes = () => {
     });
   };
 
-  /* =========================
+  /* =====================================================
      DETAILS
-  ========================= */
+  ===================================================== */
 
   const convertirDetails = () => {
     const details = {};
@@ -470,10 +796,13 @@ const AdminPrecommandes = () => {
 
     form.details
       .split("\n")
-      .map((ligne) => ligne.trim())
+      .map((ligne) =>
+        ligne.trim()
+      )
       .filter(Boolean)
       .forEach((ligne) => {
-        const index = ligne.indexOf(":");
+        const index =
+          ligne.indexOf(":");
 
         if (index !== -1) {
           const key = ligne
@@ -493,14 +822,19 @@ const AdminPrecommandes = () => {
     return details;
   };
 
-  /* =========================
+  /* =====================================================
      CONSTRUIRE FORMDATA
-  ========================= */
+  ===================================================== */
 
   const construireFormData = () => {
-    const formData = new FormData();
+    const formData =
+      new FormData();
 
-    formData.append("title", form.title.trim());
+    formData.append(
+      "title",
+      form.title.trim()
+    );
+
     formData.append(
       "description",
       form.description.trim()
@@ -508,33 +842,53 @@ const AdminPrecommandes = () => {
 
     formData.append(
       "price",
-      String(Number(form.price) || 0)
+      String(
+        Number(form.price) || 0
+      )
     );
 
     formData.append(
       "montantDepot",
       form.montantDepot === ""
         ? ""
-        : String(Number(form.montantDepot) || 0)
+        : String(
+            Number(
+              form.montantDepot
+            ) || 0
+          )
     );
 
-    if (form.dateDisponibilite) {
+    if (
+      form.dateDisponibilite
+    ) {
       formData.append(
         "dateDisponibilite",
         form.dateDisponibilite
       );
     }
 
-    formData.append("genre", form.genre);
-    formData.append("categorie", form.categorie);
+    formData.append(
+      "genre",
+      form.genre
+    );
+
+    formData.append(
+      "categorie",
+      form.categorie
+    );
 
     if (form.badge) {
-      formData.append("badge", form.badge);
+      formData.append(
+        "badge",
+        form.badge
+      );
     }
 
     formData.append(
       "precommande",
-      String(form.precommande)
+      String(
+        form.precommande
+      )
     );
 
     formData.append(
@@ -554,97 +908,128 @@ const AdminPrecommandes = () => {
 
     formData.append(
       "stockParVariation",
-      JSON.stringify(stockParVariation)
+      JSON.stringify(
+        stockParVariation
+      )
     );
 
     formData.append(
       "stock",
-      String(calculerStockTotal())
+      String(
+        calculerStockTotal()
+      )
     );
 
     formData.append(
       "details",
-      JSON.stringify(convertirDetails())
+      JSON.stringify(
+        convertirDetails()
+      )
     );
 
-    nouvellesImages.forEach((file) => {
-      formData.append("images", file);
-    });
+    nouvellesImages.forEach(
+      (file) => {
+        formData.append(
+          "images",
+          file
+        );
+      }
+    );
 
     formData.append(
       "imagesExistantes",
-      JSON.stringify(imagesExistantes)
+      JSON.stringify(
+        imagesExistantes
+      )
     );
 
     formData.append(
       "mainImageIndex",
-      String(mainImageIndex)
+      String(
+        mainImageIndex
+      )
     );
 
     return formData;
   };
 
-  /* =========================
-     ENREGISTRER
-  ========================= */
+  /* =====================================================
+     ENREGISTRER PRODUIT
+  ===================================================== */
 
-  const enregistrerProduit = async (e) => {
+  const enregistrerProduit = async (
+    e
+  ) => {
     e.preventDefault();
 
     if (!form.title.trim()) {
-      alert("Le titre est requis.");
-      return;
-    }
-
-    if (!form.description.trim()) {
-      alert("La description est requise.");
-      return;
-    }
-
-    if (!form.price || Number(form.price) <= 0) {
-      alert("Le prix doit être supérieur à 0.");
-      return;
-    }
-
-    if (tailles.length === 0) {
-      alert("Ajoute au moins une taille.");
+      alert(
+        "Le titre est requis."
+      );
       return;
     }
 
     if (
-      couleurs.length > 0 &&
-      tailles.length > 0
+      !form.description.trim()
     ) {
-      const stockTotal = calculerStockTotal();
+      alert(
+        "La description est requise."
+      );
+      return;
+    }
 
-      if (stockTotal <= 0) {
-        alert(
-          "Ajoute au moins une quantité dans les variations."
-        );
-        return;
-      }
+    if (
+      !form.price ||
+      Number(form.price) <= 0
+    ) {
+      alert(
+        "Le prix doit être supérieur à 0."
+      );
+      return;
+    }
+
+    if (tailles.length === 0) {
+      alert(
+        "Ajoute au moins une taille."
+      );
+      return;
+    }
+
+    const stockTotal =
+      calculerStockTotal();
+
+    if (stockTotal <= 0) {
+      alert(
+        "Ajoute au moins une quantité en stock."
+      );
+      return;
     }
 
     try {
       setLoading(true);
 
-      const formData = construireFormData();
+      const formData =
+        construireFormData();
 
       const url = editingId
         ? `${API_URL}/api/produits/${editingId}`
         : `${API_URL}/api/produits`;
 
-      const method = editingId ? "PUT" : "POST";
+      const method = editingId
+        ? "PUT"
+        : "POST";
 
-      const response = await fetch(url, {
-        method,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
+      const response =
+        await fetch(url, {
+          method,
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        });
 
-      const data = await response.json();
+      const data =
+        await response.json();
 
       if (!response.ok) {
         throw new Error(
@@ -662,12 +1047,16 @@ const AdminPrecommandes = () => {
         produitEnregistre?._id ||
         editingId;
 
-      /* =========================
+      /* =================================================
          VIDEO
-      ========================= */
+      ================================================= */
 
-      if (videoFile && produitId) {
-        const videoFormData = new FormData();
+      if (
+        videoFile &&
+        produitId
+      ) {
+        const videoFormData =
+          new FormData();
 
         videoFormData.append(
           "video",
@@ -689,16 +1078,17 @@ const AdminPrecommandes = () => {
           form.description.trim()
         );
 
-        const videoResponse = await fetch(
-          `${API_URL}/api/videos/upload-produit`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-            body: videoFormData,
-          }
-        );
+        const videoResponse =
+          await fetch(
+            `${API_URL}/api/videos/upload-produit`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+              body: videoFormData,
+            }
+          );
 
         const videoData =
           await videoResponse.json();
@@ -729,31 +1119,40 @@ const AdminPrecommandes = () => {
     }
   };
 
-  /* =========================
+  /* =====================================================
      SUPPRIMER VIDEO
-  ========================= */
+  ===================================================== */
 
-  const supprimerVideo = async (video) => {
-    if (!video?._id) return;
+  const supprimerVideo = async (
+    video
+  ) => {
+    if (!video?._id) {
+      return;
+    }
 
-    const confirmer = window.confirm(
-      "Voulez-vous vraiment supprimer cette vidéo ?"
-    );
-
-    if (!confirmer) return;
-
-    try {
-      const response = await fetch(
-        `${API_URL}/api/videos/videos/${video._id}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+    const confirmer =
+      window.confirm(
+        "Voulez-vous vraiment supprimer cette vidéo ?"
       );
 
-      const data = await response.json();
+    if (!confirmer) {
+      return;
+    }
+
+    try {
+      const response =
+        await fetch(
+          `${API_URL}/api/videos/videos/${video._id}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+      const data =
+        await response.json();
 
       if (!response.ok) {
         throw new Error(
@@ -766,94 +1165,144 @@ const AdminPrecommandes = () => {
 
       if (editingId) {
         setProduits((prev) =>
-          prev.map((produit) =>
-            produit._id === editingId
-              ? {
-                  ...produit,
-                  videoId: null,
-                }
-              : produit
+          prev.map(
+            (produit) =>
+              produit._id ===
+              editingId
+                ? {
+                    ...produit,
+                    videoId: null,
+                  }
+                : produit
           )
         );
       }
 
       await chargerVideos();
 
-      alert("Vidéo supprimée.");
-    } catch (error) {
-      console.error(error);
-      alert(error.message);
-    }
-  };
-
-  /* =========================
-     SUPPRIMER PRODUIT
-  ========================= */
-
-  const supprimerProduit = async (id) => {
-    const confirmer = window.confirm(
-      "Voulez-vous vraiment supprimer ce modèle ?"
-    );
-
-    if (!confirmer) return;
-
-    try {
-      setLoading(true);
-
-      const response = await fetch(
-        `${API_URL}/api/produits/${id}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      alert(
+        "Vidéo supprimée."
       );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.message ||
-            "Erreur lors de la suppression"
-        );
-      }
-
-      if (editingId === id) {
-        resetForm();
-      }
-
-      await chargerProduits();
-
-      alert("Modèle supprimé avec succès.");
     } catch (error) {
       console.error(error);
       alert(error.message);
-    } finally {
-      setLoading(false);
     }
   };
 
-  /* =========================
-     TOTAL PAR TAILLE
-  ========================= */
+  /* =====================================================
+     SUPPRIMER PRODUIT
+  ===================================================== */
 
-  const totalParTaille = (taille) => {
-    return couleurs.length > 0
-      ? couleurs.reduce(
-          (total, couleur) =>
-            total +
-            (Number(
-              stockParVariation?.[taille]?.[
-                couleur
-              ]
-            ) || 0),
-          0
-        )
-      : Number(
-          stockParVariation?.[taille]?.general
-        ) || 0;
-  };
+  const supprimerProduit =
+    async (id) => {
+      const confirmer =
+        window.confirm(
+          "Voulez-vous vraiment supprimer ce modèle ?"
+        );
+
+      if (!confirmer) {
+        return;
+      }
+
+      try {
+        setLoading(true);
+
+        const response =
+          await fetch(
+            `${API_URL}/api/produits/${id}`,
+            {
+              method: "DELETE",
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+        const data =
+          await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ||
+              "Erreur lors de la suppression"
+          );
+        }
+
+        if (
+          editingId === id
+        ) {
+          resetForm();
+        }
+
+        await chargerProduits();
+
+        alert(
+          "Modèle supprimé avec succès."
+        );
+      } catch (error) {
+        console.error(error);
+        alert(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+  /* =====================================================
+     RENDRE PRODUIT DISPONIBLE
+  ===================================================== */
+
+  const rendreProduitDisponible =
+    async (produitId) => {
+      const confirmer =
+        window.confirm(
+          "Rendre ce produit disponible pour la finalisation des précommandes ?"
+        );
+
+      if (!confirmer) {
+        return;
+      }
+
+      try {
+        setLoading(true);
+
+        const response =
+          await fetch(
+            `${API_URL}/api/precommandes/admin/${produitId}/rendre-disponible`,
+            {
+              method: "PUT",
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+        const data =
+          await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ||
+              "Impossible de rendre le produit disponible."
+          );
+        }
+
+        alert(
+          data.message ||
+            "Produit rendu disponible."
+        );
+
+        await chargerProduits();
+      } catch (error) {
+        console.error(error);
+        alert(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+  /* =====================================================
+     RENDER
+  ===================================================== */
 
   return (
     <Container>
@@ -867,9 +1316,9 @@ const AdminPrecommandes = () => {
         couleurs et quantités.
       </Subtitle>
 
-      {/* =========================
+      {/* =================================================
           FORMULAIRE
-      ========================= */}
+      ================================================= */}
 
       <FormCard>
         <FormTitle>
@@ -878,26 +1327,40 @@ const AdminPrecommandes = () => {
             : "Ajouter un modèle de précommande"}
         </FormTitle>
 
-        <Form onSubmit={enregistrerProduit}>
+        <Form
+          onSubmit={
+            enregistrerProduit
+          }
+        >
           <Field>
-            <Label>Titre du modèle</Label>
+            <Label>
+              Titre du modèle
+            </Label>
 
             <Input
               type="text"
               name="title"
               value={form.title}
-              onChange={handleChange}
+              onChange={
+                handleChange
+              }
               placeholder="Ex: Ensemble premium"
             />
           </Field>
 
           <Field>
-            <Label>Description</Label>
+            <Label>
+              Description
+            </Label>
 
             <Textarea
               name="description"
-              value={form.description}
-              onChange={handleChange}
+              value={
+                form.description
+              }
+              onChange={
+                handleChange
+              }
               placeholder="Description du modèle..."
               rows="5"
             />
@@ -905,14 +1368,20 @@ const AdminPrecommandes = () => {
 
           <Grid>
             <Field>
-              <Label>Prix</Label>
+              <Label>
+                Prix
+              </Label>
 
               <Input
                 type="number"
                 min="0"
                 name="price"
-                value={form.price}
-                onChange={handleChange}
+                value={
+                  form.price
+                }
+                onChange={
+                  handleChange
+                }
                 placeholder="Ex: 25000"
               />
             </Field>
@@ -926,14 +1395,18 @@ const AdminPrecommandes = () => {
                 type="number"
                 min="0"
                 name="montantDepot"
-                value={form.montantDepot}
-                onChange={handleChange}
+                value={
+                  form.montantDepot
+                }
+                onChange={
+                  handleChange
+                }
                 placeholder="Ex: 10000"
               />
 
               <HelpText>
-                Si vide, le backend peut utiliser
-                son montant par défaut.
+                Si vide, le backend peut
+                utiliser son montant par défaut.
               </HelpText>
             </Field>
           </Grid>
@@ -947,18 +1420,26 @@ const AdminPrecommandes = () => {
               <Input
                 type="date"
                 name="dateDisponibilite"
-                value={form.dateDisponibilite}
-                onChange={handleChange}
+                value={
+                  form.dateDisponibilite
+                }
+                onChange={
+                  handleChange
+                }
               />
             </Field>
 
             <Field>
-              <Label>Genre</Label>
+              <Label>
+                Genre
+              </Label>
 
               <Select
                 name="genre"
                 value={form.genre}
-                onChange={handleChange}
+                onChange={
+                  handleChange
+                }
               >
                 <option value="homme">
                   Homme
@@ -977,12 +1458,18 @@ const AdminPrecommandes = () => {
 
           <Grid>
             <Field>
-              <Label>Catégorie</Label>
+              <Label>
+                Catégorie
+              </Label>
 
               <Select
                 name="categorie"
-                value={form.categorie}
-                onChange={handleChange}
+                value={
+                  form.categorie
+                }
+                onChange={
+                  handleChange
+                }
               >
                 <option value="haut">
                   Haut
@@ -1007,12 +1494,16 @@ const AdminPrecommandes = () => {
             </Field>
 
             <Field>
-              <Label>Badge</Label>
+              <Label>
+                Badge
+              </Label>
 
               <Select
                 name="badge"
                 value={form.badge}
-                onChange={handleChange}
+                onChange={
+                  handleChange
+                }
               >
                 <option value="">
                   Aucun badge
@@ -1029,9 +1520,9 @@ const AdminPrecommandes = () => {
             </Field>
           </Grid>
 
-          {/* =========================
+          {/* =================================================
               TAILLES
-          ========================= */}
+          ================================================= */}
 
           <VariationSection>
             <VariationTitle>
@@ -1042,14 +1533,19 @@ const AdminPrecommandes = () => {
               <VariationInput
                 type="text"
                 placeholder="Ex: S, M, L, XL"
-                value={nouvelleTaille}
+                value={
+                  nouvelleTaille
+                }
                 onChange={(e) =>
                   setNouvelleTaille(
                     e.target.value
                   )
                 }
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") {
+                  if (
+                    e.key ===
+                    "Enter"
+                  ) {
                     e.preventDefault();
                     ajouterTaille();
                   }
@@ -1058,41 +1554,50 @@ const AdminPrecommandes = () => {
 
               <VariationAddButton
                 type="button"
-                onClick={ajouterTaille}
+                onClick={
+                  ajouterTaille
+                }
               >
                 + Ajouter
               </VariationAddButton>
             </VariationAddRow>
 
             <VariationList>
-              {tailles.map((taille) => (
-                <VariationTag key={taille}>
-                  <span>{taille}</span>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      supprimerTaille(
-                        taille
-                      )
-                    }
+              {tailles.map(
+                (taille) => (
+                  <VariationTag
+                    key={taille}
                   >
-                    ×
-                  </button>
-                </VariationTag>
-              ))}
+                    <span>
+                      {taille}
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        supprimerTaille(
+                          taille
+                        )
+                      }
+                    >
+                      ×
+                    </button>
+                  </VariationTag>
+                )
+              )}
             </VariationList>
 
-            {tailles.length === 0 && (
+            {tailles.length ===
+              0 && (
               <EmptyVariation>
                 Aucune taille ajoutée.
               </EmptyVariation>
             )}
           </VariationSection>
 
-          {/* =========================
+          {/* =================================================
               COULEURS
-          ========================= */}
+          ================================================= */}
 
           <VariationSection>
             <VariationTitle>
@@ -1103,14 +1608,19 @@ const AdminPrecommandes = () => {
               <VariationInput
                 type="text"
                 placeholder="Ex: Noir, Blanc, Rouge"
-                value={nouvelleCouleur}
+                value={
+                  nouvelleCouleur
+                }
                 onChange={(e) =>
                   setNouvelleCouleur(
                     e.target.value
                   )
                 }
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") {
+                  if (
+                    e.key ===
+                    "Enter"
+                  ) {
                     e.preventDefault();
                     ajouterCouleur();
                   }
@@ -1119,44 +1629,52 @@ const AdminPrecommandes = () => {
 
               <VariationAddButton
                 type="button"
-                onClick={ajouterCouleur}
+                onClick={
+                  ajouterCouleur
+                }
               >
                 + Ajouter
               </VariationAddButton>
             </VariationAddRow>
 
             <VariationList>
-              {couleurs.map((couleur) => (
-                <VariationTag key={couleur}>
-                  <span>{couleur}</span>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      supprimerCouleur(
-                        couleur
-                      )
-                    }
+              {couleurs.map(
+                (couleur) => (
+                  <VariationTag
+                    key={couleur}
                   >
-                    ×
-                  </button>
-                </VariationTag>
-              ))}
+                    <span>
+                      {couleur}
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        supprimerCouleur(
+                          couleur
+                        )
+                      }
+                    >
+                      ×
+                    </button>
+                  </VariationTag>
+                )
+              )}
             </VariationList>
 
-            {couleurs.length === 0 && (
+            {couleurs.length ===
+              0 && (
               <EmptyVariation>
-                Aucune couleur ajoutée. Si le
-                modèle n'a pas de couleur,
-                les quantités seront gérées
+                Aucune couleur ajoutée.
+                Les quantités seront gérées
                 uniquement par taille.
               </EmptyVariation>
             )}
           </VariationSection>
 
-          {/* =========================
+          {/* =================================================
               TABLEAU TAILLE x COULEUR
-          ========================= */}
+          ================================================= */}
 
           {tailles.length > 0 &&
             couleurs.length > 0 && (
@@ -1169,16 +1687,18 @@ const AdminPrecommandes = () => {
 
                     <VariationDescription>
                       Indique combien d'articles
-                      sont disponibles pour
-                      chaque combinaison taille
-                      + couleur.
+                      sont disponibles pour chaque
+                      combinaison taille + couleur.
                     </VariationDescription>
                   </div>
 
                   <StockTotal>
                     Stock total
+
                     <strong>
-                      {calculerStockTotal()}
+                      {
+                        calculerStockTotal()
+                      }
                     </strong>
                   </StockTotal>
                 </VariationHeader>
@@ -1187,32 +1707,54 @@ const AdminPrecommandes = () => {
                   <VariationTable>
                     <thead>
                       <tr>
-                        <th>Taille</th>
+                        <th>
+                          Taille
+                        </th>
 
                         {couleurs.map(
-                          (couleur) => (
-                            <th key={couleur}>
-                              {couleur}
+                          (
+                            couleur
+                          ) => (
+                            <th
+                              key={
+                                couleur
+                              }
+                            >
+                              {
+                                couleur
+                              }
                             </th>
                           )
                         )}
 
-                        <th>Total</th>
+                        <th>
+                          Total
+                        </th>
                       </tr>
                     </thead>
 
                     <tbody>
                       {tailles.map(
-                        (taille) => (
-                          <tr key={taille}>
+                        (
+                          taille
+                        ) => (
+                          <tr
+                            key={
+                              taille
+                            }
+                          >
                             <td>
                               <SizeCell>
-                                {taille}
+                                {
+                                  taille
+                                }
                               </SizeCell>
                             </td>
 
                             {couleurs.map(
-                              (couleur) => (
+                              (
+                                couleur
+                              ) => (
                                 <td
                                   key={
                                     couleur
@@ -1223,17 +1765,18 @@ const AdminPrecommandes = () => {
                                     min="0"
                                     value={
                                       stockParVariation?.[
-                                        taille
-                                      ]?.[
                                         couleur
-                                      ] ?? 0
+                                      ]?.[
+                                        taille
+                                      ] ??
+                                      0
                                     }
                                     onChange={(
                                       e
                                     ) =>
                                       modifierQuantiteVariation(
-                                        taille,
                                         couleur,
+                                        taille,
                                         e
                                           .target
                                           .value
@@ -1260,9 +1803,9 @@ const AdminPrecommandes = () => {
               </VariationSection>
             )}
 
-          {/* =========================
-              QUANTITE PAR TAILLE
-          ========================= */}
+          {/* =================================================
+              QUANTITE PAR TAILLE SANS COULEUR
+          ================================================= */}
 
           {tailles.length > 0 &&
             couleurs.length === 0 && (
@@ -1274,54 +1817,66 @@ const AdminPrecommandes = () => {
                     </VariationTitle>
 
                     <VariationDescription>
-                      Ce modèle n'a pas de
-                      couleur. Indique simplement
-                      la quantité disponible pour
-                      chaque taille.
+                      Ce modèle n'a pas de couleur.
+                      Indique simplement la quantité
+                      disponible pour chaque taille.
                     </VariationDescription>
                   </div>
 
                   <StockTotal>
                     Stock total
+
                     <strong>
-                      {calculerStockTotal()}
+                      {
+                        calculerStockTotal()
+                      }
                     </strong>
                   </StockTotal>
                 </VariationHeader>
 
                 <SimpleStockList>
-                  {tailles.map((taille) => (
-                    <SimpleStockRow
-                      key={taille}
-                    >
-                      <SizeCell>
-                        Taille {taille}
-                      </SizeCell>
+                  {tailles.map(
+                    (taille) => (
+                      <SimpleStockRow
+                        key={
+                          taille
+                        }
+                      >
+                        <SizeCell>
+                          Taille{" "}
+                          {taille}
+                        </SizeCell>
 
-                      <QuantityInput
-                        type="number"
-                        min="0"
-                        value={
-                          stockParVariation?.[
-                            taille
-                          ]?.general ?? 0
-                        }
-                        onChange={(e) =>
-                          modifierQuantiteTaille(
-                            taille,
-                            e.target.value
-                          )
-                        }
-                      />
-                    </SimpleStockRow>
-                  ))}
+                        <QuantityInput
+                          type="number"
+                          min="0"
+                          value={
+                            stockParVariation?.general?.[
+                              taille
+                            ] ??
+                            0
+                          }
+                          onChange={(
+                            e
+                          ) =>
+                            modifierQuantiteTaille(
+                              taille,
+                              e
+                                .target
+                                .value
+                            )
+                          }
+                        />
+                      </SimpleStockRow>
+                    )
+                  )}
                 </SimpleStockList>
               </VariationSection>
             )}
 
-          {/* =========================
+          {/* =================================================
               IMAGES
-          ========================= */}
+          ================================================= */}
 
           <VariationSection>
             <VariationTitle>
@@ -1337,11 +1892,14 @@ const AdminPrecommandes = () => {
                 type="file"
                 accept="image/*"
                 multiple
-                onChange={handleImages}
+                onChange={
+                  handleImages
+                }
               />
             </Field>
 
-            {imagesExistantes.length > 0 && (
+            {imagesExistantes.length >
+              0 && (
               <>
                 <SmallTitle>
                   Photos actuelles
@@ -1349,7 +1907,10 @@ const AdminPrecommandes = () => {
 
                 <ImageGrid>
                   {imagesExistantes.map(
-                    (image, index) => (
+                    (
+                      image,
+                      index
+                    ) => (
                       <ImageItem
                         key={
                           image.publicId ||
@@ -1358,7 +1919,9 @@ const AdminPrecommandes = () => {
                         }
                       >
                         <PreviewImage
-                          src={image.url}
+                          src={
+                            image.url
+                          }
                           alt={`Image ${
                             index + 1
                           }`}
@@ -1401,7 +1964,8 @@ const AdminPrecommandes = () => {
               </>
             )}
 
-            {nouvellesImages.length > 0 && (
+            {nouvellesImages.length >
+              0 && (
               <>
                 <SmallTitle>
                   Nouvelles photos
@@ -1409,61 +1973,69 @@ const AdminPrecommandes = () => {
 
                 <ImageGrid>
                   {nouvellesImages.map(
-                    (file, index) => (
-                      <ImageItem
-                        key={`${file.name}-${index}`}
-                      >
-                        <NewImagePreview
-                          src={URL.createObjectURL(
-                            file
-                          )}
-                          alt={file.name}
-                        />
+                    (
+                      file,
+                      index
+                    ) => {
+                      const imageIndex =
+                        imagesExistantes.length +
+                        index;
 
-                        <ImageActions>
-                          <MainButton
-                            type="button"
-                            $active={
-                              mainImageIndex ===
-                              imagesExistantes.length +
-                                index
+                      return (
+                        <ImageItem
+                          key={`${file.name}-${index}`}
+                        >
+                          <NewImagePreview
+                            src={URL.createObjectURL(
+                              file
+                            )}
+                            alt={
+                              file.name
                             }
-                            onClick={() =>
-                              setMainImageIndex(
-                                imagesExistantes.length +
+                          />
+
+                          <ImageActions>
+                            <MainButton
+                              type="button"
+                              $active={
+                                mainImageIndex ===
+                                imageIndex
+                              }
+                              onClick={() =>
+                                setMainImageIndex(
+                                  imageIndex
+                                )
+                              }
+                            >
+                              {mainImageIndex ===
+                              imageIndex
+                                ? "★ Principale"
+                                : "☆ Principale"}
+                            </MainButton>
+
+                            <DeleteSmallButton
+                              type="button"
+                              onClick={() =>
+                                supprimerNouvelleImage(
                                   index
-                              )
-                            }
-                          >
-                            {mainImageIndex ===
-                            imagesExistantes.length +
-                              index
-                              ? "★ Principale"
-                              : "☆ Principale"}
-                          </MainButton>
-
-                          <DeleteSmallButton
-                            type="button"
-                            onClick={() =>
-                              supprimerNouvelleImage(
-                                index
-                              )
-                            }
-                          >
-                            Supprimer
-                          </DeleteSmallButton>
-                        </ImageActions>
-                      </ImageItem>
-                    )
+                                )
+                              }
+                            >
+                              Supprimer
+                            </DeleteSmallButton>
+                          </ImageActions>
+                        </ImageItem>
+                      );
+                    }
                   )}
                 </ImageGrid>
               </>
             )}
           </VariationSection>
 
-          {/* =========================
+          {/* =================================================
               VIDEO
-          ========================= */}
+          ================================================= */}
 
           <VariationSection>
             <VariationTitle>
@@ -1473,7 +2045,9 @@ const AdminPrecommandes = () => {
             {videoActuelle && (
               <CurrentVideoBox>
                 <video
-                  src={videoActuelle.url}
+                  src={
+                    videoActuelle.url
+                  }
                   controls
                   width="100%"
                 />
@@ -1507,23 +2081,27 @@ const AdminPrecommandes = () => {
               <FileInput
                 type="file"
                 accept="video/*"
-                onChange={handleVideoChange}
+                onChange={
+                  handleVideoChange
+                }
               />
 
               {videoFile && (
                 <SelectedFile>
                   Vidéo sélectionnée :{" "}
                   <strong>
-                    {videoFile.name}
+                    {
+                      videoFile.name
+                    }
                   </strong>
                 </SelectedFile>
               )}
             </Field>
           </VariationSection>
 
-          {/* =========================
+          {/* =================================================
               DETAILS
-          ========================= */}
+          ================================================= */}
 
           <Field>
             <Label>
@@ -1532,8 +2110,12 @@ const AdminPrecommandes = () => {
 
             <Textarea
               name="details"
-              value={form.details}
-              onChange={handleChange}
+              value={
+                form.details
+              }
+              onChange={
+                handleChange
+              }
               placeholder={`matiere: Coton
 coupe: Regular
 origine: Côte d'Ivoire`}
@@ -1546,17 +2128,21 @@ origine: Côte d'Ivoire`}
             </HelpText>
           </Field>
 
-          {/* =========================
+          {/* =================================================
               OPTIONS
-          ========================= */}
+          ================================================= */}
 
           <OptionsBox>
             <CheckboxLabel>
               <input
                 type="checkbox"
                 name="precommande"
-                checked={form.precommande}
-                onChange={handleChange}
+                checked={
+                  form.precommande
+                }
+                onChange={
+                  handleChange
+                }
               />
 
               <span>
@@ -1568,8 +2154,12 @@ origine: Côte d'Ivoire`}
               <input
                 type="checkbox"
                 name="hero"
-                checked={form.hero}
-                onChange={handleChange}
+                checked={
+                  form.hero
+                }
+                onChange={
+                  handleChange
+                }
               />
 
               <span>
@@ -1578,9 +2168,9 @@ origine: Côte d'Ivoire`}
             </CheckboxLabel>
           </OptionsBox>
 
-          {/* =========================
+          {/* =================================================
               BOUTONS
-          ========================= */}
+          ================================================= */}
 
           <ButtonsRow>
             <SubmitButton
@@ -1597,7 +2187,9 @@ origine: Côte d'Ivoire`}
             {editingId && (
               <CancelButton
                 type="button"
-                onClick={resetForm}
+                onClick={
+                  resetForm
+                }
               >
                 Annuler
               </CancelButton>
@@ -1606,24 +2198,27 @@ origine: Côte d'Ivoire`}
         </Form>
       </FormCard>
 
-      {/* =========================
+      {/* =====================================================
           LISTE DES PRODUITS
-      ========================= */}
+      ===================================================== */}
 
       <ListHeader>
         <div>
           <ListTitle>
-            Modèles disponibles
+            Tous les modèles
           </ListTitle>
 
           <ListDescription>
             {produits.length} modèle
-            {produits.length > 1 ? "s" : ""}
+            {produits.length > 1
+              ? "s"
+              : ""}
           </ListDescription>
         </div>
       </ListHeader>
 
-      {loading && produits.length === 0 ? (
+      {loading &&
+      produits.length === 0 ? (
         <Loading>
           Chargement des modèles...
         </Loading>
@@ -1633,193 +2228,247 @@ origine: Côte d'Ivoire`}
         </Empty>
       ) : (
         <ProductGrid>
-          {produits.map((produit) => {
-            const imagePrincipale =
-              produit.images?.find(
-                (image) => image.isMain
-              ) ||
-              produit.images?.[0];
+          {produits.map(
+            (produit) => {
+              const imagePrincipale =
+                produit.images?.find(
+                  (image) =>
+                    image.isMain
+                ) ||
+                produit.images?.[0];
 
-            const video = trouverVideoProduit(
-              produit
-            );
-
-            let variations =
-              produit.stockParVariation ||
-              {};
-
-            if (variations instanceof Map) {
-              variations =
-                Object.fromEntries(
-                  variations
+              const video =
+                trouverVideoProduit(
+                  produit
                 );
-            }
 
-            const stockTotal = Object.values(
-              variations || {}
-            ).reduce(
-              (total, valeurs) => {
-                if (
-                  valeurs instanceof Map
-                ) {
-                  valeurs =
-                    Object.fromEntries(
-                      valeurs
-                    );
-                }
+              const variations =
+                convertirStockEnObjet(
+                  produit.stockParVariation
+                );
 
-                return (
-                  total +
+              let stockTotal = 0;
+
+              if (
+                Array.isArray(
+                  produit.couleurs
+                ) &&
+                produit.couleurs
+                  .length > 0
+              ) {
+                stockTotal =
+                  produit.couleurs.reduce(
+                    (
+                      total,
+                      couleur
+                    ) => {
+                      return (
+                        total +
+                        Object.values(
+                          variations?.[
+                            couleur
+                          ] || {}
+                        ).reduce(
+                          (
+                            somme,
+                            quantite
+                          ) =>
+                            somme +
+                            (Number(
+                              quantite
+                            ) || 0),
+                          0
+                        )
+                      );
+                    },
+                    0
+                  );
+              } else {
+                stockTotal =
                   Object.values(
-                    valeurs || {}
+                    variations?.general ||
+                      {}
                   ).reduce(
-                    (somme, quantite) =>
-                      somme +
+                    (
+                      total,
+                      quantite
+                    ) =>
+                      total +
                       (Number(
                         quantite
                       ) || 0),
                     0
-                  )
-                );
-              },
-              0
-            );
+                  );
+              }
 
-            return (
-              <ProductCard
-                key={produit._id}
-              >
-                {imagePrincipale?.url ? (
-                  <CardImage
-                    src={imagePrincipale.url}
-                    alt={produit.title}
-                  />
-                ) : (
-                  <NoImage>
-                    Aucune image
-                  </NoImage>
-                )}
-
-                <CardContent>
-                  <StatusRow>
-                    <StatusBadge
-                      $active={
-                        produit.precommande
+              return (
+                <ProductCard
+                  key={
+                    produit._id
+                  }
+                >
+                  {imagePrincipale?.url ? (
+                    <CardImage
+                      src={
+                        imagePrincipale.url
                       }
-                    >
-                      {produit.precommande
-                        ? "Précommande active"
-                        : "Précommande inactive"}
-                    </StatusBadge>
+                      alt={
+                        produit.title
+                      }
+                    />
+                  ) : (
+                    <NoImage>
+                      Aucune image
+                    </NoImage>
+                  )}
 
-                    {video && (
-                      <VideoBadge>
-                        🎥 Vidéo
-                      </VideoBadge>
-                    )}
-                  </StatusRow>
+                  <CardContent>
+                    <StatusRow>
+                      <StatusBadge
+                        $active={
+                          produit.precommande
+                        }
+                      >
+                        {produit.precommande
+                          ? produit.disponible
+                            ? "Produit disponible"
+                            : "Précommande active"
+                          : "Précommande inactive"}
+                      </StatusBadge>
 
-                  <CardTitle>
-                    {produit.title}
-                  </CardTitle>
+                      {video && (
+                        <VideoBadge>
+                          🎥 Vidéo
+                        </VideoBadge>
+                      )}
+                    </StatusRow>
 
-                  <CardDescription>
-                    {produit.description}
-                  </CardDescription>
+                    <CardTitle>
+                      {
+                        produit.title
+                      }
+                    </CardTitle>
 
-                  <Price>
-                    {Number(
-                      produit.price || 0
-                    ).toLocaleString(
-                      "fr-FR"
-                    )}{" "}
-                    FCFA
-                  </Price>
+                    <CardDescription>
+                      {
+                        produit.description
+                      }
+                    </CardDescription>
 
-                  <InfoList>
-                    <InfoItem>
-                      <strong>
-                        Dépôt :
-                      </strong>{" "}
-                      {produit.montantDepot
-                        ? `${Number(
-                            produit.montantDepot
-                          ).toLocaleString(
-                            "fr-FR"
-                          )} FCFA`
-                        : "Par défaut"}
-                    </InfoItem>
+                    <Price>
+                      {Number(
+                        produit.price ||
+                          0
+                      ).toLocaleString(
+                        "fr-FR"
+                      )}{" "}
+                      FCFA
+                    </Price>
 
-                    <InfoItem>
-                      <strong>
-                        Stock :
-                      </strong>{" "}
-                      {stockTotal}
-                    </InfoItem>
-
-                    {produit.dateDisponibilite && (
+                    <InfoList>
                       <InfoItem>
                         <strong>
-                          Disponible :
+                          Dépôt :
                         </strong>{" "}
-                        {new Date(
-                          produit.dateDisponibilite
-                        ).toLocaleDateString(
-                          "fr-FR"
-                        )}
+                        {produit.montantDepot
+                          ? `${Number(
+                              produit.montantDepot
+                            ).toLocaleString(
+                              "fr-FR"
+                            )} FCFA`
+                          : "Par défaut"}
                       </InfoItem>
-                    )}
 
-                    <InfoItem>
-                      <strong>
-                        Tailles :
-                      </strong>{" "}
-                      {produit.tailles?.length
-                        ? produit.tailles.join(
-                            ", "
+                      <InfoItem>
+                        <strong>
+                          Stock :
+                        </strong>{" "}
+                        {
+                          stockTotal
+                        }
+                      </InfoItem>
+
+                      {produit.dateDisponibilite && (
+                        <InfoItem>
+                          <strong>
+                            Disponible :
+                          </strong>{" "}
+                          {new Date(
+                            produit.dateDisponibilite
+                          ).toLocaleDateString(
+                            "fr-FR"
+                          )}
+                        </InfoItem>
+                      )}
+
+                      <InfoItem>
+                        <strong>
+                          Tailles :
+                        </strong>{" "}
+                        {produit.tailles
+                          ?.length
+                          ? produit.tailles.join(
+                              ", "
+                            )
+                          : "Aucune"}
+                      </InfoItem>
+
+                      <InfoItem>
+                        <strong>
+                          Couleurs :
+                        </strong>{" "}
+                        {produit.couleurs
+                          ?.length
+                          ? produit.couleurs.join(
+                              ", "
+                            )
+                          : "Aucune"}
+                      </InfoItem>
+                    </InfoList>
+
+                    <CardActions>
+                      <EditButton
+                        type="button"
+                        onClick={() =>
+                          modifierProduit(
+                            produit
                           )
-                        : "Aucune"}
-                    </InfoItem>
+                        }
+                      >
+                        Modifier
+                      </EditButton>
 
-                    <InfoItem>
-                      <strong>
-                        Couleurs :
-                      </strong>{" "}
-                      {produit.couleurs?.length
-                        ? produit.couleurs.join(
-                            ", "
+                      {produit.precommande &&
+                        produit.disponible ===
+                          false && (
+                          <AvailableButton
+                            type="button"
+                            onClick={() =>
+                              rendreProduitDisponible(
+                                produit._id
+                              )
+                            }
+                          >
+                            Rendre disponible
+                          </AvailableButton>
+                        )}
+
+                      <DeleteButton
+                        type="button"
+                        onClick={() =>
+                          supprimerProduit(
+                            produit._id
                           )
-                        : "Aucune"}
-                    </InfoItem>
-                  </InfoList>
-
-                  <CardActions>
-                    <EditButton
-                      type="button"
-                      onClick={() =>
-                        modifierProduit(
-                          produit
-                        )
-                      }
-                    >
-                      Modifier
-                    </EditButton>
-
-                    <DeleteButton
-                      type="button"
-                      onClick={() =>
-                        supprimerProduit(
-                          produit._id
-                        )
-                      }
-                    >
-                      Supprimer
-                    </DeleteButton>
-                  </CardActions>
-                </CardContent>
-              </ProductCard>
-            );
-          })}
+                        }
+                      >
+                        Supprimer
+                      </DeleteButton>
+                    </CardActions>
+                  </CardContent>
+                </ProductCard>
+              );
+            }
+          )}
         </ProductGrid>
       )}
     </Container>
@@ -2188,9 +2837,13 @@ const MainButton = styled.button`
   padding: 8px;
   cursor: pointer;
   background: ${(props) =>
-    props.$active ? "#f1c40f" : "#eef2f7"};
+    props.$active
+      ? "#f1c40f"
+      : "#eef2f7"};
   color: ${(props) =>
-    props.$active ? "#5d4a00" : "#374151"};
+    props.$active
+      ? "#5d4a00"
+      : "#374151"};
   font-size: 12px;
   font-weight: 600;
 `;
@@ -2385,10 +3038,16 @@ const StatusBadge = styled.span`
   border-radius: 15px;
   font-size: 11px;
   font-weight: 700;
+
   background: ${(props) =>
-    props.$active ? "#dcfce7" : "#f3f4f6"};
+    props.$active
+      ? "#dcfce7"
+      : "#f3f4f6"};
+
   color: ${(props) =>
-    props.$active ? "#15803d" : "#6b7280"};
+    props.$active
+      ? "#15803d"
+      : "#6b7280"};
 `;
 
 const VideoBadge = styled.span`
@@ -2438,12 +3097,14 @@ const InfoItem = styled.div`
 
 const CardActions = styled.div`
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-top: 18px;
 `;
 
 const EditButton = styled.button`
   flex: 1;
+  min-width: 100px;
   padding: 10px;
   border: none;
   border-radius: 7px;
@@ -2457,8 +3118,25 @@ const EditButton = styled.button`
   }
 `;
 
+const AvailableButton = styled.button`
+  flex: 1;
+  min-width: 130px;
+  padding: 10px;
+  border: none;
+  border-radius: 7px;
+  background: #dcfce7;
+  color: #15803d;
+  cursor: pointer;
+  font-weight: 600;
+
+  &:hover {
+    background: #bbf7d0;
+  }
+`;
+
 const DeleteButton = styled.button`
   flex: 1;
+  min-width: 100px;
   padding: 10px;
   border: none;
   border-radius: 7px;

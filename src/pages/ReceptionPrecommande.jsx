@@ -68,7 +68,7 @@ const ReceptionPrecommande = () => {
 
       setPrecommandes(data.precommandes || []);
       setTotal(data.total || 0);
-      setPage(data.page || 1);
+      setPage(data.page || pageActuelle);
       setPages(data.pages || 1);
     } catch (error) {
       console.error(error);
@@ -90,15 +90,13 @@ const ReceptionPrecommande = () => {
      FILTRE
   ========================================================= */
 
-  const precommandesFiltrees = precommandes.filter(
-    (precommande) => {
-      if (statutFiltre === "ALL") {
-        return true;
-      }
-
-      return precommande.statut === statutFiltre;
+  const precommandesFiltrees = precommandes.filter((precommande) => {
+    if (statutFiltre === "ALL") {
+      return true;
     }
-  );
+
+    return precommande.statut === statutFiltre;
+  });
 
   /* =========================================================
      OUVRIR DÉTAIL
@@ -120,6 +118,8 @@ const ReceptionPrecommande = () => {
 
     setPrecommandeSelectionnee(null);
     setAdminComment("");
+    setMessage("");
+    setErreur("");
   };
 
   /* =========================================================
@@ -135,6 +135,10 @@ const ReceptionPrecommande = () => {
       setMessage("");
 
       const token = getToken();
+
+      if (!token) {
+        throw new Error("Session administrateur introuvable.");
+      }
 
       const response = await fetch(
         `${API_URL}/api/precommandes/admin/${precommandeSelectionnee._id}/accepter`,
@@ -164,7 +168,7 @@ const ReceptionPrecommande = () => {
       await chargerPrecommandes(page);
 
       setPrecommandeSelectionnee(
-        data.precommande || null
+        data.precommande || precommandeSelectionnee
       );
     } catch (error) {
       console.error(error);
@@ -198,6 +202,10 @@ const ReceptionPrecommande = () => {
 
       const token = getToken();
 
+      if (!token) {
+        throw new Error("Session administrateur introuvable.");
+      }
+
       const response = await fetch(
         `${API_URL}/api/precommandes/admin/${precommandeSelectionnee._id}/refuser`,
         {
@@ -226,7 +234,7 @@ const ReceptionPrecommande = () => {
       await chargerPrecommandes(page);
 
       setPrecommandeSelectionnee(
-        data.precommande || null
+        data.precommande || precommandeSelectionnee
       );
     } catch (error) {
       console.error(error);
@@ -245,12 +253,18 @@ const ReceptionPrecommande = () => {
   ========================================================= */
 
   const getImage = (precommande) => {
-    if (precommande.modele?.image) {
+    if (precommande?.modele?.image) {
       return precommande.modele.image;
     }
 
     if (
-      precommande.produitId?.images &&
+      precommande?.produitId?.image
+    ) {
+      return precommande.produitId.image;
+    }
+
+    if (
+      precommande?.produitId?.images &&
       precommande.produitId.images.length > 0
     ) {
       return (
@@ -266,19 +280,47 @@ const ReceptionPrecommande = () => {
   };
 
   /* =========================================================
+     NOM PRODUIT
+  ========================================================= */
+
+  const getNomProduit = (precommande) => {
+    return (
+      precommande?.modele?.title ||
+      precommande?.produitId?.title ||
+      "Modèle"
+    );
+  };
+
+  /* =========================================================
+     PRIX PRODUIT
+  ========================================================= */
+
+  const getPrixProduit = (precommande) => {
+    return (
+      precommande?.modele?.prix ??
+      precommande?.modele?.price ??
+      precommande?.produitId?.price ??
+      0
+    );
+  };
+
+  /* =========================================================
      FORMAT DATE
   ========================================================= */
 
   const formatDate = (date) => {
     if (!date) return "—";
 
-    return new Date(date).toLocaleString(
-      "fr-FR",
-      {
-        dateStyle: "medium",
-        timeStyle: "short",
-      }
-    );
+    const parsedDate = new Date(date);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return "—";
+    }
+
+    return parsedDate.toLocaleString("fr-FR", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
   };
 
   /* =========================================================
@@ -286,9 +328,39 @@ const ReceptionPrecommande = () => {
   ========================================================= */
 
   const formatPrix = (prix) => {
-    return Number(prix || 0).toLocaleString(
-      "fr-FR"
-    );
+    return Number(prix || 0).toLocaleString("fr-FR");
+  };
+
+  /* =========================================================
+     STATUT
+  ========================================================= */
+
+  const getStatutLabel = (statut) => {
+    switch (statut) {
+      case "PENDING":
+        return "En attente";
+
+      case "ACCEPTED":
+        return "Acceptée";
+
+      case "READY_TO_FINALIZE":
+        return "Prête à finaliser";
+
+      case "FINALIZATION_PENDING":
+        return "Solde en attente";
+
+      case "FINALIZED":
+        return "Finalisée";
+
+      case "REJECTED":
+        return "Refusée";
+
+      case "CANCELLED":
+        return "Annulée";
+
+      default:
+        return statut || "Inconnu";
+    }
   };
 
   /* =========================================================
@@ -300,7 +372,9 @@ const ReceptionPrecommande = () => {
   ).length;
 
   const acceptedCount = precommandes.filter(
-    (item) => item.statut === "ACCEPTED"
+    (item) =>
+      item.statut === "ACCEPTED" ||
+      item.statut === "READY_TO_FINALIZE"
   ).length;
 
   const rejectedCount = precommandes.filter(
@@ -348,7 +422,9 @@ const ReceptionPrecommande = () => {
           onClick={() => chargerPrecommandes(page)}
           disabled={loading}
         >
-          {loading ? "Actualisation..." : "Actualiser"}
+          {loading
+            ? "Actualisation..."
+            : "Actualiser"}
         </RefreshButton>
       </Header>
 
@@ -445,10 +521,54 @@ const ReceptionPrecommande = () => {
         </FilterButton>
 
         <FilterButton
+          $active={
+            statutFiltre === "READY_TO_FINALIZE"
+          }
+          onClick={() =>
+            setStatutFiltre("READY_TO_FINALIZE")
+          }
+        >
+          Prêtes à finaliser
+        </FilterButton>
+
+        <FilterButton
+          $active={
+            statutFiltre === "FINALIZATION_PENDING"
+          }
+          onClick={() =>
+            setStatutFiltre(
+              "FINALIZATION_PENDING"
+            )
+          }
+        >
+          Solde
+        </FilterButton>
+
+        <FilterButton
+          $active={statutFiltre === "FINALIZED"}
+          onClick={() =>
+            setStatutFiltre("FINALIZED")
+          }
+        >
+          Finalisées
+        </FilterButton>
+
+        <FilterButton
           $active={statutFiltre === "REJECTED"}
-          onClick={() => setStatutFiltre("REJECTED")}
+          onClick={() =>
+            setStatutFiltre("REJECTED")
+          }
         >
           Refusées
+        </FilterButton>
+
+        <FilterButton
+          $active={statutFiltre === "CANCELLED"}
+          onClick={() =>
+            setStatutFiltre("CANCELLED")
+          }
+        >
+          Annulées
         </FilterButton>
       </FilterBar>
 
@@ -525,13 +645,10 @@ const ReceptionPrecommande = () => {
                   <ProductImage>
                     {getImage(precommande) ? (
                       <img
-                        src={getImage(
+                        src={getImage(precommande)}
+                        alt={getNomProduit(
                           precommande
                         )}
-                        alt={
-                          precommande.modele
-                            ?.title
-                        }
                       />
                     ) : (
                       <NoProductImage>
@@ -541,11 +658,7 @@ const ReceptionPrecommande = () => {
                   </ProductImage>
 
                   <ProductName>
-                    {precommande.modele
-                      ?.title ||
-                      precommande.produitId
-                        ?.title ||
-                      "Modèle"}
+                    {getNomProduit(precommande)}
                   </ProductName>
                 </ProductCell>
 
@@ -554,12 +667,14 @@ const ReceptionPrecommande = () => {
                 <VariationCell>
                   {precommande.taille && (
                     <VariationTag>
+                      Taille :{" "}
                       {precommande.taille}
                     </VariationTag>
                   )}
 
                   {precommande.couleur && (
                     <VariationTag>
+                      Couleur :{" "}
                       {precommande.couleur}
                     </VariationTag>
                   )}
@@ -583,7 +698,11 @@ const ReceptionPrecommande = () => {
                     {precommande.service ===
                     "orange"
                       ? "Orange Money"
-                      : "Wave"}
+                      : precommande.service ===
+                        "wave"
+                      ? "Wave"
+                      : precommande.service ||
+                        "—"}
                   </PaymentMethod>
                 </DepositCell>
 
@@ -595,17 +714,9 @@ const ReceptionPrecommande = () => {
                       precommande.statut
                     }
                   >
-                    {precommande.statut ===
-                      "PENDING" &&
-                      "En attente"}
-
-                    {precommande.statut ===
-                      "ACCEPTED" &&
-                      "Acceptée"}
-
-                    {precommande.statut ===
-                      "REJECTED" &&
-                      "Refusée"}
+                    {getStatutLabel(
+                      precommande.statut
+                    )}
                   </StatusBadge>
                 </StatusCell>
 
@@ -623,6 +734,7 @@ const ReceptionPrecommande = () => {
                   <ViewButton
                     onClick={(e) => {
                       e.stopPropagation();
+
                       ouvrirDetail(
                         precommande
                       );
@@ -644,7 +756,7 @@ const ReceptionPrecommande = () => {
       {pages > 1 && (
         <Pagination>
           <PageButton
-            disabled={page <= 1}
+            disabled={page <= 1 || loading}
             onClick={() =>
               chargerPrecommandes(
                 page - 1
@@ -659,7 +771,9 @@ const ReceptionPrecommande = () => {
           </PageInfo>
 
           <PageButton
-            disabled={page >= pages}
+            disabled={
+              page >= pages || loading
+            }
             onClick={() =>
               chargerPrecommandes(
                 page + 1
@@ -684,6 +798,10 @@ const ReceptionPrecommande = () => {
               e.stopPropagation()
             }
           >
+            {/* =================================================
+                MODAL HEADER
+            ================================================= */}
+
             <ModalHeader>
               <div>
                 <ModalLabel>
@@ -697,6 +815,7 @@ const ReceptionPrecommande = () => {
 
               <CloseButton
                 onClick={fermerDetail}
+                disabled={actionLoading}
               >
                 ×
               </CloseButton>
@@ -716,10 +835,9 @@ const ReceptionPrecommande = () => {
                       src={getImage(
                         precommandeSelectionnee
                       )}
-                      alt={
+                      alt={getNomProduit(
                         precommandeSelectionnee
-                          .modele?.title
-                      }
+                      )}
                     />
                   ) : (
                     <NoProductImage>
@@ -730,16 +848,16 @@ const ReceptionPrecommande = () => {
 
                 <ProductHeroInfo>
                   <ProductHeroTitle>
-                    {
+                    {getNomProduit(
                       precommandeSelectionnee
-                        .modele?.title
-                    }
+                    )}
                   </ProductHeroTitle>
 
                   <ProductPrice>
                     {formatPrix(
-                      precommandeSelectionnee
-                        .modele?.prix
+                      getPrixProduit(
+                        precommandeSelectionnee
+                      )
                     )}{" "}
                     FCFA
                   </ProductPrice>
@@ -749,17 +867,9 @@ const ReceptionPrecommande = () => {
                       precommandeSelectionnee.statut
                     }
                   >
-                    {precommandeSelectionnee.statut ===
-                      "PENDING" &&
-                      "En attente"}
-
-                    {precommandeSelectionnee.statut ===
-                      "ACCEPTED" &&
-                      "Acceptée"}
-
-                    {precommandeSelectionnee.statut ===
-                      "REJECTED" &&
-                      "Refusée"}
+                    {getStatutLabel(
+                      precommandeSelectionnee.statut
+                    )}
                   </StatusBadge>
                 </ProductHeroInfo>
               </ProductHero>
@@ -806,6 +916,8 @@ const ReceptionPrecommande = () => {
                     <InfoValue>
                       {precommandeSelectionnee
                         .clientId?.telephone ||
+                        precommandeSelectionnee
+                          .clientId?.phone ||
                         "—"}
                     </InfoValue>
                   </InfoItem>
@@ -874,8 +986,30 @@ const ReceptionPrecommande = () => {
 
                     <InfoValue>
                       {formatPrix(
-                        precommandeSelectionnee
-                          .modele?.prix
+                        getPrixProduit(
+                          precommandeSelectionnee
+                        )
+                      )}{" "}
+                      FCFA
+                    </InfoValue>
+                  </InfoItem>
+
+                  <InfoItem>
+                    <InfoLabel>
+                      Montant total
+                    </InfoLabel>
+
+                    <InfoValue>
+                      {formatPrix(
+                        Number(
+                          getPrixProduit(
+                            precommandeSelectionnee
+                          )
+                        ) *
+                          Number(
+                            precommandeSelectionnee.quantite ||
+                              1
+                          )
                       )}{" "}
                       FCFA
                     </InfoValue>
@@ -903,31 +1037,33 @@ const ReceptionPrecommande = () => {
                         {precommandeSelectionnee.service ===
                         "orange"
                           ? "Orange Money"
-                          : "Wave"}
+                          : precommandeSelectionnee.service ===
+                            "wave"
+                          ? "Wave"
+                          : precommandeSelectionnee.service ||
+                            "—"}
                       </InfoValue>
                     </InfoItem>
 
                     <InfoItem>
                       <InfoLabel>
-                        Numéro du client
+                        Numéro du dépôt
                       </InfoLabel>
 
                       <InfoValue>
-                        {
-                          precommandeSelectionnee.numeroDepot
-                        }
+                        {precommandeSelectionnee.numeroDepot ||
+                          "—"}
                       </InfoValue>
                     </InfoItem>
 
                     <InfoItem>
                       <InfoLabel>
-                        Référence
+                        Référence du dépôt
                       </InfoLabel>
 
                       <ReferenceValue>
-                        {
-                          precommandeSelectionnee.referenceDepot
-                        }
+                        {precommandeSelectionnee.referenceDepot ||
+                          "—"}
                       </ReferenceValue>
                     </InfoItem>
 
@@ -946,6 +1082,67 @@ const ReceptionPrecommande = () => {
                   </InfoGrid>
                 </PaymentBox>
               </Section>
+
+              {/* =================================================
+                  INFORMATIONS DE SOLDE
+              ================================================= */}
+
+              {(precommandeSelectionnee.statut ===
+                "FINALIZATION_PENDING" ||
+                precommandeSelectionnee.statut ===
+                  "FINALIZED") && (
+                <Section>
+                  <SectionTitle>
+                    Informations du solde
+                  </SectionTitle>
+
+                  <InfoGrid>
+                    <InfoItem>
+                      <InfoLabel>
+                        Référence du solde
+                      </InfoLabel>
+
+                      <ReferenceValue>
+                        {precommandeSelectionnee.referenceSolde ||
+                          precommandeSelectionnee.reference ||
+                          "—"}
+                      </ReferenceValue>
+                    </InfoItem>
+
+                    <InfoItem>
+                      <InfoLabel>
+                        Montant envoyé
+                      </InfoLabel>
+
+                      <DepositBig>
+                        {formatPrix(
+                          precommandeSelectionnee.montantSolde ||
+                            precommandeSelectionnee.montantEnvoye ||
+                            0
+                        )}{" "}
+                        FCFA
+                      </DepositBig>
+                    </InfoItem>
+
+                    <InfoItem>
+                      <InfoLabel>
+                        Service
+                      </InfoLabel>
+
+                      <InfoValue>
+                        {precommandeSelectionnee.serviceSolde ===
+                        "orange"
+                          ? "Orange Money"
+                          : precommandeSelectionnee.serviceSolde ===
+                            "wave"
+                          ? "Wave"
+                          : precommandeSelectionnee.service ||
+                            "—"}
+                      </InfoValue>
+                    </InfoItem>
+                  </InfoGrid>
+                </Section>
+              )}
 
               {/* =================================================
                   COMMENTAIRE ADMIN
@@ -969,7 +1166,69 @@ const ReceptionPrecommande = () => {
                     "PENDING"
                   }
                 />
+
+                {precommandeSelectionnee.adminComment && (
+                  <ExistingComment>
+                    <ExistingCommentLabel>
+                      Commentaire enregistré
+                    </ExistingCommentLabel>
+
+                    <ExistingCommentText>
+                      {
+                        precommandeSelectionnee.adminComment
+                      }
+                    </ExistingCommentText>
+                  </ExistingComment>
+                )}
               </Section>
+
+              {/* =================================================
+                  DATES
+              ================================================= */}
+
+              <Section>
+                <SectionTitle>
+                  Historique
+                </SectionTitle>
+
+                <HistoryList>
+                  <HistoryItem>
+                    <HistoryDot />
+                    <HistoryContent>
+                      <HistoryLabel>
+                        Créée
+                      </HistoryLabel>
+
+                      <HistoryDate>
+                        {formatDate(
+                          precommandeSelectionnee.createdAt
+                        )}
+                      </HistoryDate>
+                    </HistoryContent>
+                  </HistoryItem>
+
+                  {precommandeSelectionnee.updatedAt && (
+                    <HistoryItem>
+                      <HistoryDot />
+                      <HistoryContent>
+                        <HistoryLabel>
+                          Dernière mise à jour
+                        </HistoryLabel>
+
+                        <HistoryDate>
+                          {formatDate(
+                            precommandeSelectionnee.updatedAt
+                          )}
+                        </HistoryDate>
+                      </HistoryContent>
+                    </HistoryItem>
+                  )}
+                </HistoryList>
+              </Section>
+
+              {/* =================================================
+                  MESSAGES
+              ================================================= */}
 
               {message && (
                 <SuccessMessage>
@@ -1016,6 +1275,7 @@ const ReceptionPrecommande = () => {
               <ModalFooter>
                 <CloseFooterButton
                   onClick={fermerDetail}
+                  disabled={actionLoading}
                 >
                   Fermer
                 </CloseFooterButton>
@@ -1045,6 +1305,7 @@ const PageContainer = styled.div`
 const Header = styled.div`
   max-width: 1400px;
   margin: 0 auto 30px;
+
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
@@ -1068,12 +1329,17 @@ const Title = styled.h1`
   margin: 0;
   color: #222;
   font-size: 32px;
+
+  @media (max-width: 600px) {
+    font-size: 26px;
+  }
 `;
 
 const Subtitle = styled.p`
   margin: 9px 0 0;
   color: #777;
   font-size: 14px;
+  line-height: 1.5;
 `;
 
 const RefreshButton = styled.button`
@@ -1083,6 +1349,13 @@ const RefreshButton = styled.button`
   padding: 12px 18px;
   cursor: pointer;
   font-weight: 700;
+  white-space: nowrap;
+
+  &:hover:not(:disabled) {
+    background: #111;
+    color: white;
+    border-color: #111;
+  }
 
   &:disabled {
     opacity: 0.5;
@@ -1101,6 +1374,10 @@ const StatsGrid = styled.div`
   @media (max-width: 800px) {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  @media (max-width: 450px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const StatCard = styled.div`
@@ -1108,6 +1385,24 @@ const StatCard = styled.div`
   border: 1px solid #e9e9e9;
   border-radius: 14px;
   padding: 20px;
+
+  ${(props) =>
+    props.$pending &&
+    `
+      border-left: 4px solid #e6a400;
+    `}
+
+  ${(props) =>
+    props.$accepted &&
+    `
+      border-left: 4px solid #31954b;
+    `}
+
+  ${(props) =>
+    props.$rejected &&
+    `
+      border-left: 4px solid #c63c3c;
+    `}
 `;
 
 const StatNumber = styled.div`
@@ -1125,6 +1420,7 @@ const StatLabel = styled.div`
 const FilterBar = styled.div`
   max-width: 1400px;
   margin: 0 auto 18px;
+
   background: white;
   border: 1px solid #e9e9e9;
   border-radius: 13px;
@@ -1133,10 +1429,7 @@ const FilterBar = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-
-  @media (max-width: 600px) {
-    flex-wrap: wrap;
-  }
+  flex-wrap: wrap;
 `;
 
 const FilterTitle = styled.span`
@@ -1148,20 +1441,30 @@ const FilterTitle = styled.span`
 
 const FilterButton = styled.button`
   border: none;
+
   background: ${(props) =>
     props.$active ? "#111" : "#f3f3f3"};
+
   color: ${(props) =>
     props.$active ? "#fff" : "#555"};
+
   padding: 9px 14px;
   border-radius: 8px;
   cursor: pointer;
+
   font-size: 12px;
   font-weight: 700;
+
+  &:hover {
+    background: ${(props) =>
+      props.$active ? "#111" : "#e7e7e7"};
+  }
 `;
 
 const ContentCard = styled.div`
   max-width: 1400px;
   margin: auto;
+
   background: white;
   border: 1px solid #e8e8e8;
   border-radius: 15px;
@@ -1170,17 +1473,20 @@ const ContentCard = styled.div`
 
 const TableHeader = styled.div`
   display: grid;
+
   grid-template-columns:
     1.2fr
     1.3fr
     1fr
     1fr
-    0.8fr
+    0.9fr
     1fr
     80px;
 
   gap: 15px;
+
   padding: 15px 20px;
+
   background: #fafafa;
   border-bottom: 1px solid #eee;
 
@@ -1196,20 +1502,28 @@ const TableHeader = styled.div`
 
 const PrecommandeRow = styled.div`
   display: grid;
+
   grid-template-columns:
     1.2fr
     1.3fr
     1fr
     1fr
-    0.8fr
+    0.9fr
     1fr
     80px;
 
   gap: 15px;
+
   padding: 17px 20px;
+
   align-items: center;
+
   border-bottom: 1px solid #eee;
   cursor: pointer;
+
+  &:last-child {
+    border-bottom: none;
+  }
 
   &:hover {
     background: #fafafa;
@@ -1217,6 +1531,7 @@ const PrecommandeRow = styled.div`
 
   @media (max-width: 1050px) {
     display: block;
+    padding: 18px;
   }
 `;
 
@@ -1224,17 +1539,26 @@ const ClientCell = styled.div`
   display: flex;
   align-items: center;
   gap: 10px;
+
+  @media (max-width: 1050px) {
+    margin-bottom: 15px;
+  }
 `;
 
 const Avatar = styled.div`
   width: 37px;
   height: 37px;
+  min-width: 37px;
+
   border-radius: 50%;
+
   background: #111;
   color: white;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
   font-weight: 800;
   font-size: 13px;
 `;
@@ -1253,6 +1577,7 @@ const ClientEmail = styled.div`
   color: #999;
   font-size: 11px;
   margin-top: 3px;
+
   overflow: hidden;
   text-overflow: ellipsis;
 `;
@@ -1261,14 +1586,21 @@ const ProductCell = styled.div`
   display: flex;
   align-items: center;
   gap: 10px;
+
+  @media (max-width: 1050px) {
+    margin-bottom: 15px;
+  }
 `;
 
 const ProductImage = styled.div`
   width: 45px;
   height: 55px;
+
   border-radius: 7px;
   overflow: hidden;
+
   background: #eee;
+
   flex-shrink: 0;
 
   img {
@@ -1281,9 +1613,11 @@ const ProductImage = styled.div`
 const NoProductImage = styled.div`
   width: 100%;
   height: 100%;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
   color: #aaa;
 `;
 
@@ -1298,14 +1632,22 @@ const VariationCell = styled.div`
   align-items: center;
   flex-wrap: wrap;
   gap: 5px;
+
+  @media (max-width: 1050px) {
+    margin-bottom: 15px;
+  }
 `;
 
 const VariationTag = styled.span`
   background: #f1f1f1;
+
   padding: 5px 8px;
+
   border-radius: 6px;
+
   font-size: 10px;
   font-weight: 700;
+
   color: #444;
 `;
 
@@ -1315,7 +1657,11 @@ const QuantityText = styled.span`
   font-weight: 700;
 `;
 
-const DepositCell = styled.div``;
+const DepositCell = styled.div`
+  @media (max-width: 1050px) {
+    margin-bottom: 15px;
+  }
+`;
 
 const DepositAmount = styled.div`
   font-weight: 800;
@@ -1329,45 +1675,69 @@ const PaymentMethod = styled.div`
   font-size: 10px;
 `;
 
-const StatusCell = styled.div``;
+const StatusCell = styled.div`
+  @media (max-width: 1050px) {
+    margin-bottom: 15px;
+  }
+`;
 
 const StatusBadge = styled.span`
   display: inline-flex;
   align-items: center;
+
   padding: 7px 9px;
+
   border-radius: 20px;
 
   font-size: 10px;
   font-weight: 800;
 
   background: ${(props) => {
-    if (props.$status === "ACCEPTED") {
-      return "#e9f7ec";
-    }
+    switch (props.$status) {
+      case "ACCEPTED":
+      case "READY_TO_FINALIZE":
+      case "FINALIZED":
+        return "#e9f7ec";
 
-    if (props.$status === "REJECTED") {
-      return "#fff0f0";
-    }
+      case "REJECTED":
+      case "CANCELLED":
+        return "#fff0f0";
 
-    return "#fff7e6";
+      case "FINALIZATION_PENDING":
+        return "#eef3ff";
+
+      default:
+        return "#fff7e6";
+    }
   }};
 
   color: ${(props) => {
-    if (props.$status === "ACCEPTED") {
-      return "#28743a";
-    }
+    switch (props.$status) {
+      case "ACCEPTED":
+      case "READY_TO_FINALIZE":
+      case "FINALIZED":
+        return "#28743a";
 
-    if (props.$status === "REJECTED") {
-      return "#b53636";
-    }
+      case "REJECTED":
+      case "CANCELLED":
+        return "#b53636";
 
-    return "#a56b00";
+      case "FINALIZATION_PENDING":
+        return "#365bb5";
+
+      default:
+        return "#a56b00";
+    }
   }};
 `;
 
 const DateCell = styled.div`
   color: #777;
   font-size: 11px;
+
+  @media (max-width: 1050px) {
+    margin-bottom: 15px;
+  }
 `;
 
 const ViewCell = styled.div``;
@@ -1375,9 +1745,13 @@ const ViewCell = styled.div``;
 const ViewButton = styled.button`
   border: 1px solid #ddd;
   background: white;
+
   padding: 8px 12px;
+
   border-radius: 7px;
+
   cursor: pointer;
+
   font-size: 11px;
   font-weight: 700;
 
@@ -1411,6 +1785,7 @@ const EmptyText = styled.p`
 const Pagination = styled.div`
   max-width: 1400px;
   margin: 20px auto 0;
+
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1420,9 +1795,18 @@ const Pagination = styled.div`
 const PageButton = styled.button`
   border: 1px solid #ddd;
   background: white;
+
   padding: 9px 15px;
+
   border-radius: 8px;
+
   cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: #111;
+    color: white;
+    border-color: #111;
+  }
 
   &:disabled {
     opacity: 0.4;
@@ -1438,19 +1822,25 @@ const PageInfo = styled.span`
 
 const LoadingContainer = styled.div`
   min-height: 70vh;
+
   display: flex;
   flex-direction: column;
+
   align-items: center;
   justify-content: center;
+
   background: #f7f8fa;
 `;
 
 const Spinner = styled.div`
   width: 40px;
   height: 40px;
+
   border: 4px solid #ddd;
   border-top-color: #111;
+
   border-radius: 50%;
+
   animation: spin 0.8s linear infinite;
 
   @keyframes spin {
@@ -1467,31 +1857,43 @@ const LoadingText = styled.p`
 
 const SuccessMessage = styled.div`
   max-width: 1400px;
+
   margin: 0 auto 20px;
+
   padding: 13px 15px;
+
   background: #eff9f0;
   color: #287038;
+
   border: 1px solid #d7ead9;
   border-radius: 9px;
+
   font-size: 13px;
   font-weight: 600;
 `;
 
 const ErrorMessage = styled.div`
   max-width: 1400px;
+
   margin: 0 auto 20px;
+
   padding: 13px 15px;
+
   background: #fff1f1;
   color: #b33131;
+
   border: 1px solid #f0d0d0;
   border-radius: 9px;
+
   font-size: 13px;
 `;
 
 const ModalOverlay = styled.div`
   position: fixed;
   inset: 0;
+
   z-index: 1000;
+
   background: rgba(0, 0, 0, 0.55);
 
   display: flex;
@@ -1499,108 +1901,193 @@ const ModalOverlay = styled.div`
   align-items: center;
 
   padding: 20px;
+
+  @media (max-width: 600px) {
+    padding: 10px;
+  }
 `;
 
 const Modal = styled.div`
   width: 100%;
   max-width: 850px;
+
   max-height: 92vh;
+
   overflow-y: auto;
+
   background: white;
+
   border-radius: 18px;
-  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25);
+
+  box-shadow:
+    0 25px 80px rgba(0, 0, 0, 0.25);
+
+  @media (max-width: 600px) {
+    max-height: 96vh;
+    border-radius: 14px;
+  }
 `;
 
 const ModalHeader = styled.div`
   padding: 22px 25px;
+
   border-bottom: 1px solid #eee;
 
   display: flex;
   align-items: center;
   justify-content: space-between;
+
+  @media (max-width: 600px) {
+    padding: 18px;
+  }
 `;
 
 const ModalLabel = styled.div`
   font-size: 9px;
   letter-spacing: 2px;
+
   font-weight: 800;
+
   color: #999;
 `;
 
 const ModalTitle = styled.h2`
   margin: 5px 0 0;
+
   color: #222;
+
   font-size: 23px;
+
+  @media (max-width: 600px) {
+    font-size: 19px;
+  }
 `;
 
 const CloseButton = styled.button`
   width: 35px;
   height: 35px;
+
   border: none;
   border-radius: 50%;
+
   background: #f3f3f3;
+
   font-size: 23px;
+
   cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: #111;
+    color: white;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 `;
 
 const ModalBody = styled.div`
   padding: 25px;
+
+  @media (max-width: 600px) {
+    padding: 18px;
+  }
 `;
 
 const ProductHero = styled.div`
   display: flex;
+
   gap: 18px;
+
   padding-bottom: 25px;
+
   border-bottom: 1px solid #eee;
+
+  @media (max-width: 500px) {
+    align-items: center;
+  }
 `;
 
 const LargeProductImage = styled.div`
   width: 110px;
   height: 135px;
+
   border-radius: 12px;
+
   overflow: hidden;
+
   background: #eee;
+
   flex-shrink: 0;
 
   img {
     width: 100%;
     height: 100%;
+
     object-fit: cover;
+  }
+
+  @media (max-width: 500px) {
+    width: 85px;
+    height: 105px;
   }
 `;
 
 const ProductHeroInfo = styled.div`
   display: flex;
+
   flex-direction: column;
+
   align-items: flex-start;
+
   gap: 9px;
 `;
 
 const ProductHeroTitle = styled.h3`
   margin: 5px 0 0;
+
   font-size: 21px;
+
   color: #222;
+
+  @media (max-width: 500px) {
+    font-size: 17px;
+  }
 `;
 
 const ProductPrice = styled.div`
   font-weight: 800;
   font-size: 17px;
+
+  @media (max-width: 500px) {
+    font-size: 14px;
+  }
 `;
 
 const Section = styled.section`
   padding: 22px 0;
+
   border-bottom: 1px solid #eee;
+
+  &:last-child {
+    border-bottom: none;
+  }
 `;
 
 const SectionTitle = styled.h3`
   margin: 0 0 16px;
+
   font-size: 14px;
+
   color: #222;
 `;
 
 const InfoGrid = styled.div`
   display: grid;
+
   grid-template-columns: repeat(2, 1fr);
+
   gap: 15px;
 
   @media (max-width: 550px) {
@@ -1610,54 +2097,77 @@ const InfoGrid = styled.div`
 
 const InfoItem = styled.div`
   background: #f8f8f8;
+
   border-radius: 9px;
+
   padding: 13px;
 `;
 
 const InfoLabel = styled.div`
   color: #999;
+
   font-size: 10px;
+
   font-weight: 700;
+
   margin-bottom: 5px;
 `;
 
 const InfoValue = styled.div`
   color: #333;
+
   font-size: 13px;
+
   font-weight: 700;
+
+  word-break: break-word;
 `;
 
 const ReferenceValue = styled.div`
   color: #111;
+
   font-size: 13px;
+
   font-weight: 800;
+
   word-break: break-all;
 `;
 
 const DepositBig = styled.div`
   color: #287038;
+
   font-size: 15px;
+
   font-weight: 800;
 `;
 
 const PaymentBox = styled.div`
   background: #f8f8f8;
+
   padding: 15px;
+
   border-radius: 12px;
 `;
 
 const CommentTextarea = styled.textarea`
   width: 100%;
+
   min-height: 110px;
+
   resize: vertical;
+
   box-sizing: border-box;
 
   border: 1px solid #ddd;
+
   border-radius: 10px;
+
   padding: 13px;
 
   font-family: inherit;
+
   font-size: 13px;
+
   outline: none;
 
   &:focus {
@@ -1670,12 +2180,100 @@ const CommentTextarea = styled.textarea`
   }
 `;
 
+const ExistingComment = styled.div`
+  margin-top: 12px;
+
+  padding: 13px;
+
+  border-radius: 9px;
+
+  background: #f8f8f8;
+
+  border: 1px solid #eee;
+`;
+
+const ExistingCommentLabel = styled.div`
+  color: #999;
+
+  font-size: 9px;
+
+  font-weight: 800;
+
+  letter-spacing: 1px;
+
+  margin-bottom: 6px;
+`;
+
+const ExistingCommentText = styled.div`
+  color: #444;
+
+  font-size: 13px;
+
+  line-height: 1.5;
+
+  white-space: pre-wrap;
+`;
+
+const HistoryList = styled.div`
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 13px;
+`;
+
+const HistoryItem = styled.div`
+  display: flex;
+
+  align-items: flex-start;
+
+  gap: 10px;
+`;
+
+const HistoryDot = styled.div`
+  width: 9px;
+  height: 9px;
+
+  margin-top: 4px;
+
+  border-radius: 50%;
+
+  background: #111;
+
+  flex-shrink: 0;
+`;
+
+const HistoryContent = styled.div`
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 3px;
+`;
+
+const HistoryLabel = styled.div`
+  color: #444;
+
+  font-size: 12px;
+
+  font-weight: 700;
+`;
+
+const HistoryDate = styled.div`
+  color: #999;
+
+  font-size: 11px;
+`;
+
 const ModalFooter = styled.div`
   padding: 18px 25px;
+
   border-top: 1px solid #eee;
 
   display: flex;
+
   justify-content: flex-end;
+
   gap: 10px;
 
   @media (max-width: 550px) {
@@ -1685,13 +2283,22 @@ const ModalFooter = styled.div`
 
 const RejectButton = styled.button`
   border: 1px solid #e3baba;
+
   background: #fff5f5;
+
   color: #b53636;
 
   padding: 12px 18px;
+
   border-radius: 9px;
+
   cursor: pointer;
+
   font-weight: 800;
+
+  &:hover:not(:disabled) {
+    background: #ffe9e9;
+  }
 
   &:disabled {
     opacity: 0.5;
@@ -1701,13 +2308,22 @@ const RejectButton = styled.button`
 
 const AcceptButton = styled.button`
   border: none;
+
   background: #111;
+
   color: white;
 
   padding: 12px 20px;
+
   border-radius: 9px;
+
   cursor: pointer;
+
   font-weight: 800;
+
+  &:hover:not(:disabled) {
+    background: #333;
+  }
 
   &:disabled {
     opacity: 0.5;
@@ -1717,11 +2333,27 @@ const AcceptButton = styled.button`
 
 const CloseFooterButton = styled.button`
   border: 1px solid #ddd;
+
   background: white;
+
   padding: 11px 20px;
+
   border-radius: 9px;
+
   cursor: pointer;
+
   font-weight: 700;
+
+  &:hover:not(:disabled) {
+    background: #111;
+    color: white;
+    border-color: #111;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 `;
 
 export default ReceptionPrecommande;
