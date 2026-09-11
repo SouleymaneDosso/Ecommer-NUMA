@@ -2374,7 +2374,7 @@ const SoldeField = styled.div`
     border-radius: 11px;
     background: white;
     color: #111;
-    font-size: 13px;
+    font-size: 16px;
     outline: none;
 
     &:focus {
