@@ -50,6 +50,8 @@ export default function CompteClient() {
   const [expandedPrecommandes, setExpandedPrecommandes] = useState({});
 
   const [notifCount, setNotifCount] = useState(0);
+  const [soldeForm, setSoldeForm] = useState({});
+  const [payingSolde, setPayingSolde] = useState({});
 
   const audioRef = useRef(null);
 
@@ -149,14 +151,11 @@ export default function CompteClient() {
             livraison: {
               ...cmd.livraison,
 
-              statut:
-                data.statutLivraison || cmd.livraison?.statut,
+              statut: data.statutLivraison || cmd.livraison?.statut,
 
-              livreurId:
-                data.livreurId || cmd.livraison?.livreurId,
+              livreurId: data.livreurId || cmd.livraison?.livreurId,
 
-              livreur:
-                data.livreur || cmd.livraison?.livreur,
+              livreur: data.livreur || cmd.livraison?.livreur,
             },
           };
         }),
@@ -218,14 +217,11 @@ export default function CompteClient() {
       // COMPTE
       // ----------------------------------------------
 
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/compte`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/compte`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
 
       if (!res.ok) {
         throw new Error("Erreur compte");
@@ -290,9 +286,7 @@ export default function CompteClient() {
       );
 
       if (res.ok) {
-        setFavorites((prev) =>
-          prev.filter((item) => item._id !== favoriteId),
-        );
+        setFavorites((prev) => prev.filter((item) => item._id !== favoriteId));
 
         toast.success("Retiré des favoris");
       } else {
@@ -321,19 +315,12 @@ export default function CompteClient() {
 
   const totalPaid = commandes.reduce((total, c) => {
     if (c.modePaiement === "cod") {
-      return (
-        total +
-        (c.statusCommande === "DELIVERED" ? c.total : 0)
-      );
+      return total + (c.statusCommande === "DELIVERED" ? c.total : 0);
     }
 
     const paid = (c.paiements || [])
       .filter((p) => p.status === "PAID")
-      .reduce(
-        (sum, payment) =>
-          sum + Number(payment.amountExpected || 0),
-        0,
-      );
+      .reduce((sum, payment) => sum + Number(payment.amountExpected || 0), 0);
 
     return total + paid;
   }, 0);
@@ -346,6 +333,46 @@ export default function CompteClient() {
     (total, c) => total + Number(c.total || 0),
     0,
   );
+
+  // ======================================================
+  // PAIEMENTS PRÉCOMMANDE
+  // ======================================================
+
+  const getPaiementDepot = (precommande) => {
+    return (
+      precommande?.paiements?.find((paiement) => paiement.type === "DEPOT") ||
+      null
+    );
+  };
+
+  const getPaiementSolde = (precommande) => {
+    const paiements = precommande?.paiements || [];
+
+    return (
+      [...paiements].reverse().find((paiement) => paiement.type === "SOLDE") ||
+      null
+    );
+  };
+
+  const getServiceDepot = (precommande) => {
+    return getPaiementDepot(precommande)?.service || "";
+  };
+
+  const getNumeroDepot = (precommande) => {
+    return getPaiementDepot(precommande)?.numeroClient || "";
+  };
+
+  const getReferenceDepot = (precommande) => {
+    return getPaiementDepot(precommande)?.reference || "";
+  };
+
+  const getStatutDepot = (precommande) => {
+    return getPaiementDepot(precommande)?.status || "";
+  };
+
+  const getStatutSolde = (precommande) => {
+    return getPaiementSolde(precommande)?.status || "";
+  };
 
   // ======================================================
   // RESTANT
@@ -458,6 +485,103 @@ export default function CompteClient() {
   };
 
   // ======================================================
+  // PAYER LE SOLDE D'UNE PRÉCOMMANDE
+  // ======================================================
+
+  const payerSolde = async (precommande) => {
+    const form = soldeForm[precommande._id] || {};
+
+    const service = form.service?.trim();
+    const numeroClient = form.numeroClient?.trim();
+    const reference = form.reference?.trim();
+
+    const montantEnvoye = Number(
+      form.montantEnvoye ?? precommande.montantSolde ?? 0,
+    );
+
+    if (!service) {
+      toast.error("Sélectionnez un service de paiement.");
+      return;
+    }
+
+    if (!numeroClient) {
+      toast.error("Veuillez renseigner votre numéro.");
+      return;
+    }
+
+    if (!reference) {
+      toast.error("Veuillez renseigner la référence du paiement.");
+      return;
+    }
+
+    if (!montantEnvoye || montantEnvoye <= 0) {
+      toast.error("Montant du solde invalide.");
+      return;
+    }
+
+    if (montantEnvoye !== Number(precommande.montantSolde || 0)) {
+      toast.error(
+        `Le montant attendu est de ${Number(
+          precommande.montantSolde || 0,
+        ).toLocaleString("fr-FR")} FCFA.`,
+      );
+      return;
+    }
+
+    setPayingSolde((prev) => ({
+      ...prev,
+      [precommande._id]: true,
+    }));
+
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/precommandes/${precommande._id}/payer-solde`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            service,
+            numeroClient,
+            reference,
+            montantEnvoye,
+          }),
+        },
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(
+          data?.message || "Impossible d'envoyer le paiement du solde.",
+        );
+      }
+
+      setPrecommandes((prev) =>
+        prev.map((item) =>
+          item._id === precommande._id ? data.precommande || item : item,
+        ),
+      );
+
+      toast.success(
+        data.message ||
+          "Paiement du solde envoyé. Il est maintenant en attente de vérification.",
+      );
+    } catch (error) {
+      console.error("❌ Paiement solde :", error);
+
+      toast.error(error.message || "Une erreur est survenue lors du paiement.");
+    } finally {
+      setPayingSolde((prev) => ({
+        ...prev,
+        [precommande._id]: false,
+      }));
+    }
+  };
+
+  // ======================================================
   // LOADING
   // ======================================================
 
@@ -487,9 +611,7 @@ export default function CompteClient() {
               Espace personnel
             </WelcomeLabel>
 
-            <Title>
-              Bonjour {user?.username || "vous"} 👋
-            </Title>
+            <Title>Bonjour {user?.username || "vous"} 👋</Title>
 
             <Email>{user?.email}</Email>
           </HeaderLeft>
@@ -561,15 +683,13 @@ export default function CompteClient() {
         <Section>
           <SectionHeader>
             <SectionTitleWrap>
-              <SectionEyebrow>
-                Suivi financier
-              </SectionEyebrow>
+              <SectionEyebrow>Suivi financier</SectionEyebrow>
 
               <SectionTitle>Mon coffre</SectionTitle>
 
               <SectionDescription>
-                Suivez simplement le montant payé et le montant
-                restant sur vos commandes.
+                Suivez simplement le montant payé et le montant restant sur vos
+                commandes.
               </SectionDescription>
             </SectionTitleWrap>
           </SectionHeader>
@@ -579,17 +699,13 @@ export default function CompteClient() {
               <CoffreAmount>
                 <span>Montant payé</span>
 
-                <strong>
-                  {totalPaid.toLocaleString("fr-FR")} FCFA
-                </strong>
+                <strong>{totalPaid.toLocaleString("fr-FR")} FCFA</strong>
               </CoffreAmount>
 
               <CoffreRemaining>
                 <span>Montant restant</span>
 
-                <strong>
-                  {remaining.toLocaleString("fr-FR")} FCFA
-                </strong>
+                <strong>{remaining.toLocaleString("fr-FR")} FCFA</strong>
               </CoffreRemaining>
             </CoffreHeader>
 
@@ -612,18 +728,13 @@ export default function CompteClient() {
         <Section>
           <SectionHeader>
             <SectionTitleWrap>
-              <SectionEyebrow>
-                Réservations
-              </SectionEyebrow>
+              <SectionEyebrow>Réservations</SectionEyebrow>
 
-              <SectionTitle>
-                Mes précommandes
-              </SectionTitle>
+              <SectionTitle>Mes précommandes</SectionTitle>
 
               <SectionDescription>
-                Retrouvez ici les modèles que vous avez
-                précommandés ainsi que les informations de votre
-                dépôt.
+                Retrouvez ici les modèles que vous avez précommandés ainsi que
+                les informations de votre dépôt.
               </SectionDescription>
             </SectionTitleWrap>
           </SectionHeader>
@@ -634,9 +745,7 @@ export default function CompteClient() {
                 <FiClock />
               </EmptyIcon>
 
-              <div>
-                Vous n'avez encore aucune précommande.
-              </div>
+              <div>Vous n'avez encore aucune précommande.</div>
 
               <ShopLink to="/precommande">
                 Découvrir les précommandes
@@ -646,9 +755,7 @@ export default function CompteClient() {
           ) : (
             <PrecommandesList>
               {precommandes.map((precommande) => {
-                const status = getPrecommandeStatus(
-                  precommande.statut,
-                );
+                const status = getPrecommandeStatus(precommande.statut);
 
                 const modele = precommande.modele || {};
 
@@ -659,13 +766,10 @@ export default function CompteClient() {
                   produit?.images?.[0]?.url ||
                   "https://via.placeholder.com/300x400";
 
-                const isOpen =
-                  expandedPrecommandes[precommande._id];
+                const isOpen = expandedPrecommandes[precommande._id];
 
                 return (
-                  <PrecommandeCard
-                    key={precommande._id}
-                  >
+                  <PrecommandeCard key={precommande._id}>
                     {/* ================================
                         HEADER
                     ================================= */}
@@ -673,49 +777,35 @@ export default function CompteClient() {
                     <PrecommandeHeader
                       type="button"
                       onClick={() =>
-                        setExpandedPrecommandes(
-                          (prev) => ({
-                            ...prev,
-                            [precommande._id]:
-                              !prev[precommande._id],
-                          }),
-                        )
+                        setExpandedPrecommandes((prev) => ({
+                          ...prev,
+                          [precommande._id]: !prev[precommande._id],
+                        }))
                       }
                     >
                       <PrecommandeMain>
                         <PrecommandeProduct>
                           <PrecommandeImage
                             src={image}
-                            alt={
-                              modele.title ||
-                              produit?.title ||
-                              "Produit"
-                            }
+                            alt={modele.title || produit?.title || "Produit"}
                           />
 
                           <PrecommandeInfo>
-                            <PrecommandeEyebrow>
-                              PRÉCOMMANDE
-                            </PrecommandeEyebrow>
+                            <PrecommandeEyebrow>PRÉCOMMANDE</PrecommandeEyebrow>
 
                             <PrecommandeTitle>
-                              {modele.title ||
-                                produit?.title ||
-                                "Produit"}
+                              {modele.title || produit?.title || "Produit"}
                             </PrecommandeTitle>
 
                             <PrecommandeDate>
                               {precommande.createdAt
                                 ? new Date(
                                     precommande.createdAt,
-                                  ).toLocaleDateString(
-                                    "fr-FR",
-                                    {
-                                      day: "2-digit",
-                                      month: "long",
-                                      year: "numeric",
-                                    },
-                                  )
+                                  ).toLocaleDateString("fr-FR", {
+                                    day: "2-digit",
+                                    month: "long",
+                                    year: "numeric",
+                                  })
                                 : "Date indisponible"}
                             </PrecommandeDate>
                           </PrecommandeInfo>
@@ -723,18 +813,12 @@ export default function CompteClient() {
                       </PrecommandeMain>
 
                       <PrecommandeRight>
-                        <StatusBadge
-                          $type={status.type}
-                        >
+                        <StatusBadge $type={status.type}>
                           {status.icon}
                           {status.label}
                         </StatusBadge>
 
-                        {isOpen ? (
-                          <FiChevronUp />
-                        ) : (
-                          <FiChevronDown />
-                        )}
+                        {isOpen ? <FiChevronUp /> : <FiChevronDown />}
                       </PrecommandeRight>
                     </PrecommandeHeader>
 
@@ -749,8 +833,7 @@ export default function CompteClient() {
                             <span>Taille</span>
 
                             <strong>
-                              {precommande.taille ||
-                                "Non précisée"}
+                              {precommande.taille || "Non précisée"}
                             </strong>
                           </PrecommandeDetail>
 
@@ -758,17 +841,14 @@ export default function CompteClient() {
                             <span>Couleur</span>
 
                             <strong>
-                              {precommande.couleur ||
-                                "Non précisée"}
+                              {precommande.couleur || "Non précisée"}
                             </strong>
                           </PrecommandeDetail>
 
                           <PrecommandeDetail>
                             <span>Quantité</span>
 
-                            <strong>
-                              {precommande.quantite || 1}
-                            </strong>
+                            <strong>{precommande.quantite || 1}</strong>
                           </PrecommandeDetail>
 
                           <PrecommandeDetail>
@@ -776,11 +856,8 @@ export default function CompteClient() {
 
                             <strong>
                               {Number(
-                                precommande.montantDepot ||
-                                  0,
-                              ).toLocaleString(
-                                "fr-FR",
-                              )}{" "}
+                                precommande.montantDepot || 0,
+                              ).toLocaleString("fr-FR")}{" "}
                               FCFA
                             </strong>
                           </PrecommandeDetail>
@@ -797,13 +874,11 @@ export default function CompteClient() {
                             </DepotIcon>
 
                             <div>
-                              <DepotTitle>
-                                Informations du dépôt
-                              </DepotTitle>
+                              <DepotTitle>Informations du dépôt</DepotTitle>
 
                               <DepotSubtitle>
-                                Informations utilisées lors de
-                                votre précommande.
+                                Informations utilisées lors de votre
+                                précommande.
                               </DepotSubtitle>
                             </div>
                           </DepotHeader>
@@ -816,8 +891,8 @@ export default function CompteClient() {
                               </DepotItemTop>
 
                               <strong>
-                                {precommande.service
-                                  ? precommande.service.toUpperCase()
+                                {getServiceDepot(precommande)
+                                  ? getServiceDepot(precommande).toUpperCase()
                                   : "Non précisé"}
                               </strong>
                             </DepotItem>
@@ -829,83 +904,276 @@ export default function CompteClient() {
                               </DepotItemTop>
 
                               <strong>
-                                {precommande.numeroDepot ||
-                                  "Non renseigné"}
+                                {getNumeroDepot(precommande) || "Non renseigné"}
                               </strong>
                             </DepotItem>
 
                             <DepotItem>
                               <DepotItemTop>
                                 <FiHash />
-                                <span>
-                                  Référence du dépôt
-                                </span>
+                                <span>Référence du dépôt</span>
                               </DepotItemTop>
 
                               <strong>
-                                {precommande.referenceDepot ||
+                                {getReferenceDepot(precommande) ||
                                   "Non renseignée"}
+                              </strong>
+                            </DepotItem>
+
+                            <DepotItem>
+                              <DepotItemTop>
+                                <FiCheckCircle />
+                                <span>Statut du dépôt</span>
+                              </DepotItemTop>
+
+                              <strong>
+                                {getStatutDepot(precommande) === "CONFIRMED"
+                                  ? "Confirmé"
+                                  : getStatutDepot(precommande) === "REJECTED"
+                                    ? "Refusé"
+                                    : "En vérification"}
                               </strong>
                             </DepotItem>
                           </DepotGrid>
                         </DepotBox>
+                        {/* ==============================
+    FINALISATION
+============================== */}
+
+                        {precommande.statut === "READY_TO_FINALIZE" &&
+                          precommande.disponiblePourFinalisation && (
+                            <SoldeBox>
+                              <SoldeHeader>
+                                <SoldeIcon>
+                                  <FiCreditCard />
+                                </SoldeIcon>
+
+                                <div>
+                                  <SoldeTitle>Finaliser ma commande</SoldeTitle>
+
+                                  <SoldeSubtitle>
+                                    Votre produit est disponible. Réglez le
+                                    solde pour finaliser votre commande.
+                                  </SoldeSubtitle>
+                                </div>
+                              </SoldeHeader>
+
+                              <SoldeAmount>
+                                <span>Solde à payer</span>
+
+                                <strong>
+                                  {Number(
+                                    precommande.montantSolde || 0,
+                                  ).toLocaleString("fr-FR")}{" "}
+                                  FCFA
+                                </strong>
+                              </SoldeAmount>
+
+                              <SoldeForm>
+                                <SoldeField>
+                                  <label>Service de paiement</label>
+
+                                  <select
+                                    value={
+                                      soldeForm[precommande._id]?.service || ""
+                                    }
+                                    onChange={(e) =>
+                                      setSoldeForm((prev) => ({
+                                        ...prev,
+                                        [precommande._id]: {
+                                          ...prev[precommande._id],
+                                          service: e.target.value,
+                                        },
+                                      }))
+                                    }
+                                  >
+                                    <option value="">Sélectionner</option>
+
+                                    <option value="orange">Orange Money</option>
+
+                                    <option value="wave">Wave</option>
+                                  </select>
+                                </SoldeField>
+
+                                <SoldeField>
+                                  <label>Numéro utilisé</label>
+
+                                  <input
+                                    type="text"
+                                    placeholder="Ex : 0700000000"
+                                    value={
+                                      soldeForm[precommande._id]
+                                        ?.numeroClient || ""
+                                    }
+                                    onChange={(e) =>
+                                      setSoldeForm((prev) => ({
+                                        ...prev,
+                                        [precommande._id]: {
+                                          ...prev[precommande._id],
+                                          numeroClient: e.target.value,
+                                        },
+                                      }))
+                                    }
+                                  />
+                                </SoldeField>
+
+                                <SoldeField>
+                                  <label>Référence du paiement</label>
+
+                                  <input
+                                    type="text"
+                                    placeholder="Référence de transaction"
+                                    value={
+                                      soldeForm[precommande._id]?.reference ||
+                                      ""
+                                    }
+                                    onChange={(e) =>
+                                      setSoldeForm((prev) => ({
+                                        ...prev,
+                                        [precommande._id]: {
+                                          ...prev[precommande._id],
+                                          reference: e.target.value,
+                                        },
+                                      }))
+                                    }
+                                  />
+                                </SoldeField>
+
+                                <SoldeField>
+                                  <label>Montant envoyé</label>
+
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={
+                                      soldeForm[precommande._id]
+                                        ?.montantEnvoye ??
+                                      precommande.montantSolde ??
+                                      0
+                                    }
+                                    onChange={(e) =>
+                                      setSoldeForm((prev) => ({
+                                        ...prev,
+                                        [precommande._id]: {
+                                          ...prev[precommande._id],
+                                          montantEnvoye: e.target.value,
+                                        },
+                                      }))
+                                    }
+                                  />
+                                </SoldeField>
+                              </SoldeForm>
+
+                              <FinalizeButton
+                                type="button"
+                                disabled={Boolean(payingSolde[precommande._id])}
+                                onClick={() => payerSolde(precommande)}
+                              >
+                                {payingSolde[precommande._id]
+                                  ? "Envoi du paiement..."
+                                  : "Payer le solde et finaliser"}
+
+                                {!payingSolde[precommande._id] && (
+                                  <FiArrowRight />
+                                )}
+                              </FinalizeButton>
+                            </SoldeBox>
+                          )}
 
                         {/* ==============================
                             STATUT
                         ============================== */}
 
-                        {precommande.statut ===
-                          "PENDING" && (
-                          <PrecommandeMessage
-                            $type="pending"
-                          >
+                        {precommande.statut === "PENDING" && (
+                          <PrecommandeMessage $type="pending">
                             <FiClock />
 
                             <div>
-                              <strong>
-                                Vérification en cours
-                              </strong>
+                              <strong>Vérification en cours</strong>
 
                               <p>
-                                Votre dépôt est actuellement
-                                en cours de vérification par
-                                notre équipe.
+                                Votre dépôt est actuellement en cours de
+                                vérification par notre équipe.
                               </p>
                             </div>
                           </PrecommandeMessage>
                         )}
 
-                        {precommande.statut ===
-                          "ACCEPTED" && (
-                          <PrecommandeMessage
-                            $type="accepted"
-                          >
+                        {precommande.statut === "ACCEPTED" && (
+                          <PrecommandeMessage $type="accepted">
                             <FiCheckCircle />
 
                             <div>
-                              <strong>
-                                Précommande confirmée
-                              </strong>
+                              <strong>Précommande confirmée</strong>
 
                               <p>
-                                Votre dépôt a été vérifié et
-                                votre précommande est confirmée.
+                                Votre dépôt a été vérifié et votre précommande
+                                est confirmée.
                               </p>
                             </div>
                           </PrecommandeMessage>
                         )}
 
-                        {precommande.statut ===
-                          "REJECTED" && (
-                          <PrecommandeMessage
-                            $type="rejected"
-                          >
+                        {precommande.statut === "FINALIZATION_PENDING" && (
+                          <PrecommandeMessage $type="pending">
                             <FiClock />
 
                             <div>
-                              <strong>
-                                Précommande refusée
-                              </strong>
+                              <strong>Paiement du solde en vérification</strong>
+
+                              <p>
+                                Votre paiement du solde a bien été envoyé. Notre
+                                équipe vérifie actuellement la transaction.
+                              </p>
+
+                              {getPaiementSolde(precommande) && (
+                                <p>
+                                  Référence :{" "}
+                                  <strong>
+                                    {getPaiementSolde(precommande)?.reference ||
+                                      "—"}
+                                  </strong>
+                                </p>
+                              )}
+                            </div>
+                          </PrecommandeMessage>
+                        )}
+
+                        {precommande.statut === "FINALIZED" && (
+                          <PrecommandeMessage $type="accepted">
+                            <FiCheckCircle />
+
+                            <div>
+                              <strong>Commande finalisée 🎉</strong>
+
+                              <p>
+                                Votre solde a été confirmé et votre commande a
+                                été créée avec succès.
+                              </p>
+
+                              {precommande.commandeId && (
+                                <TrackButton
+                                  type="button"
+                                  onClick={() =>
+                                    navigate(
+                                      `/suivi-commande/${precommande.commandeId}`,
+                                    )
+                                  }
+                                >
+                                  Voir ma commande
+                                  <FiArrowRight />
+                                </TrackButton>
+                              )}
+                            </div>
+                          </PrecommandeMessage>
+                        )}
+
+                        {precommande.statut === "REJECTED" && (
+                          <PrecommandeMessage $type="rejected">
+                            <FiClock />
+
+                            <div>
+                              <strong>Précommande refusée</strong>
 
                               <p>
                                 {precommande.adminComment ||
@@ -930,9 +1198,7 @@ export default function CompteClient() {
         <Section>
           <SectionHeader>
             <SectionTitleWrap>
-              <SectionEyebrow>
-                Votre sélection
-              </SectionEyebrow>
+              <SectionEyebrow>Votre sélection</SectionEyebrow>
 
               <SectionTitle>Mes favoris</SectionTitle>
 
@@ -948,9 +1214,7 @@ export default function CompteClient() {
                 <FiHeart />
               </EmptyIcon>
 
-              <div>
-                Vous n'avez encore aucun favori.
-              </div>
+              <div>Vous n'avez encore aucun favori.</div>
 
               <ShopLink to="/collections">
                 Découvrir la collection
@@ -970,23 +1234,17 @@ export default function CompteClient() {
                   <FavoriteCard key={favorite._id}>
                     <FavoriteImage
                       src={image}
-                      alt={
-                        product?.title || "Produit"
-                      }
+                      alt={product?.title || "Produit"}
                     />
 
                     <FavoriteInfo>
-                      <FavoriteLink
-                        to={`/produit/${product?._id}`}
-                      >
+                      <FavoriteLink to={`/produit/${product?._id}`}>
                         {product?.title || "Produit"}
                       </FavoriteLink>
 
                       <FavoritePrice>
                         {product?.price
-                          ? `${product.price.toLocaleString(
-                              "fr-FR",
-                            )} FCFA`
+                          ? `${product.price.toLocaleString("fr-FR")} FCFA`
                           : "Prix indisponible"}
                       </FavoritePrice>
                     </FavoriteInfo>
@@ -994,9 +1252,7 @@ export default function CompteClient() {
                     <DeleteButton
                       type="button"
                       aria-label="Supprimer des favoris"
-                      onClick={() =>
-                        removeFavorite(favorite._id)
-                      }
+                      onClick={() => removeFavorite(favorite._id)}
                     >
                       <FiTrash2 />
                     </DeleteButton>
@@ -1014,17 +1270,13 @@ export default function CompteClient() {
         <Section>
           <SectionHeader>
             <SectionTitleWrap>
-              <SectionEyebrow>
-                Historique
-              </SectionEyebrow>
+              <SectionEyebrow>Historique</SectionEyebrow>
 
-              <SectionTitle>
-                Mes commandes
-              </SectionTitle>
+              <SectionTitle>Mes commandes</SectionTitle>
 
               <SectionDescription>
-                Consultez le statut, le contenu et le suivi de
-                chacune de vos commandes.
+                Consultez le statut, le contenu et le suivi de chacune de vos
+                commandes.
               </SectionDescription>
             </SectionTitleWrap>
           </SectionHeader>
@@ -1035,9 +1287,7 @@ export default function CompteClient() {
                 <FiShoppingBag />
               </EmptyIcon>
 
-              <div>
-                Vous n'avez encore passé aucune commande.
-              </div>
+              <div>Vous n'avez encore passé aucune commande.</div>
 
               <ShopLink to="/collections">
                 Commencer mes achats
@@ -1047,17 +1297,13 @@ export default function CompteClient() {
           ) : (
             <OrdersList>
               {commandes.map((commande) => {
-                const statut =
-                  commande.livraison?.statut ||
-                  "NOT_STARTED";
+                const statut = commande.livraison?.statut || "NOT_STARTED";
 
                 const status = getStatus(statut);
 
                 const isOpen = expanded[commande._id];
 
-                const hasLivreur = Boolean(
-                  commande.livraison?.livreurId,
-                );
+                const hasLivreur = Boolean(commande.livraison?.livreurId);
 
                 return (
                   <OrderCard key={commande._id}>
@@ -1066,24 +1312,18 @@ export default function CompteClient() {
                       onClick={() =>
                         setExpanded((prev) => ({
                           ...prev,
-                          [commande._id]:
-                            !prev[commande._id],
+                          [commande._id]: !prev[commande._id],
                         }))
                       }
                     >
                       <OrderMain>
                         <OrderNumber>
-                          Commande #
-                          {commande._id
-                            .slice(-6)
-                            .toUpperCase()}
+                          Commande #{commande._id.slice(-6).toUpperCase()}
                         </OrderNumber>
 
                         <OrderDate>
                           {commande.createdAt
-                            ? new Date(
-                                commande.createdAt,
-                              ).toLocaleDateString(
+                            ? new Date(commande.createdAt).toLocaleDateString(
                                 "fr-FR",
                                 {
                                   day: "2-digit",
@@ -1097,87 +1337,59 @@ export default function CompteClient() {
 
                       <OrderRight>
                         <OrderTotal>
-                          {Number(
-                            commande.total || 0,
-                          ).toLocaleString(
-                            "fr-FR",
-                          )}{" "}
+                          {Number(commande.total || 0).toLocaleString("fr-FR")}{" "}
                           FCFA
                         </OrderTotal>
 
-                        <StatusBadge
-                          $type={status.type}
-                        >
+                        <StatusBadge $type={status.type}>
                           {status.icon}
                           {status.label}
                         </StatusBadge>
 
-                        {isOpen ? (
-                          <FiChevronUp />
-                        ) : (
-                          <FiChevronDown />
-                        )}
+                        {isOpen ? <FiChevronUp /> : <FiChevronDown />}
                       </OrderRight>
                     </OrderHeader>
 
                     {isOpen && (
                       <OrderDetailsWrapper>
                         <OrderDetails>
-                          {(commande.panier || []).map(
-                            (p, index) => {
-                              const image =
-                                p.images?.[0]?.url ||
-                                p.produitId?.images?.[0]
-                                  ?.url ||
-                                "https://via.placeholder.com/100";
+                          {(commande.panier || []).map((p, index) => {
+                            const image =
+                              p.images?.[0]?.url ||
+                              p.produitId?.images?.[0]?.url ||
+                              "https://via.placeholder.com/100";
 
-                              return (
-                                <OrderProduct
-                                  key={
-                                    p.produitId?._id ||
-                                    `${commande._id}-${index}`
-                                  }
-                                >
-                                  <OrderProductImage
-                                    src={image}
-                                    alt={
-                                      p.nom ||
-                                      p.produitId?.title ||
-                                      "Produit"
-                                    }
-                                  />
+                            return (
+                              <OrderProduct
+                                key={
+                                  p.produitId?._id || `${commande._id}-${index}`
+                                }
+                              >
+                                <OrderProductImage
+                                  src={image}
+                                  alt={p.nom || p.produitId?.title || "Produit"}
+                                />
 
-                                  <OrderProductInfo>
-                                    <OrderProductLink
-                                      to={`/produit/${p.produitId?._id}`}
-                                    >
-                                      {p.nom ||
-                                        p.produitId
-                                          ?.title ||
-                                        "Produit"}
-                                    </OrderProductLink>
+                                <OrderProductInfo>
+                                  <OrderProductLink
+                                    to={`/produit/${p.produitId?._id}`}
+                                  >
+                                    {p.nom || p.produitId?.title || "Produit"}
+                                  </OrderProductLink>
 
-                                    <Quantity>
-                                      Quantité :{" "}
-                                      {p.quantite || 1}
-                                    </Quantity>
-                                  </OrderProductInfo>
-                                </OrderProduct>
-                              );
-                            },
-                          )}
+                                  <Quantity>
+                                    Quantité : {p.quantite || 1}
+                                  </Quantity>
+                                </OrderProductInfo>
+                              </OrderProduct>
+                            );
+                          })}
                         </OrderDetails>
 
                         <TrackingAction>
                           <TrackingActionInfo>
-                            <TrackingActionIcon
-                              $active={hasLivreur}
-                            >
-                              {hasLivreur ? (
-                                <FiTruck />
-                              ) : (
-                                <FiMapPin />
-                              )}
+                            <TrackingActionIcon $active={hasLivreur}>
+                              {hasLivreur ? <FiTruck /> : <FiMapPin />}
                             </TrackingActionIcon>
 
                             <div>
@@ -1198,14 +1410,10 @@ export default function CompteClient() {
                           <TrackButton
                             type="button"
                             onClick={() =>
-                              navigate(
-                                `/suivi-commande/${commande._id}`,
-                              )
+                              navigate(`/suivi-commande/${commande._id}`)
                             }
                           >
-                            {hasLivreur
-                              ? "Suivre"
-                              : "Voir le suivi"}
+                            {hasLivreur ? "Suivre" : "Voir le suivi"}
 
                             <FiArrowRight />
                           </TrackButton>
@@ -1223,9 +1431,7 @@ export default function CompteClient() {
             FOOTER
         ================================================= */}
 
-        <AccountFooter>
-          Votre espace personnel NUMA
-        </AccountFooter>
+        <AccountFooter>Votre espace personnel NUMA</AccountFooter>
       </Container>
     </Page>
   );
@@ -2008,10 +2214,8 @@ const TrackingActionIcon = styled.div`
   width: 43px;
   height: 43px;
   border-radius: 14px;
-  background: ${({ $active }) =>
-    $active ? "#fff" : "#292929"};
-  color: ${({ $active }) =>
-    $active ? "#111" : "#fff"};
+  background: ${({ $active }) => ($active ? "#fff" : "#292929")};
+  color: ${({ $active }) => ($active ? "#111" : "#fff")};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2081,5 +2285,122 @@ const Loader = styled.div`
     to {
       transform: rotate(360deg);
     }
+  }
+`;
+
+const SoldeBox = styled.div`
+  margin-top: 15px;
+  padding: 20px;
+  border-radius: 18px;
+  background: #f7f7f7;
+  border: 1px solid #e5e5e5;
+`;
+
+const SoldeHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+`;
+
+const SoldeIcon = styled.div`
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  background: #111;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const SoldeTitle = styled.div`
+  font-size: 15px;
+  font-weight: 800;
+`;
+
+const SoldeSubtitle = styled.div`
+  margin-top: 4px;
+  color: #777;
+  font-size: 11px;
+  line-height: 1.5;
+`;
+
+const SoldeAmount = styled.div`
+  padding: 15px;
+  border-radius: 14px;
+  background: white;
+  border: 1px solid #e9e9e9;
+  margin-bottom: 15px;
+
+  span {
+    display: block;
+    color: #888;
+    font-size: 11px;
+    margin-bottom: 6px;
+  }
+
+  strong {
+    font-size: 20px;
+  }
+`;
+
+const SoldeForm = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+
+  @media (max-width: 650px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const SoldeField = styled.div`
+  label {
+    display: block;
+    margin-bottom: 6px;
+    color: #666;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  input,
+  select {
+    width: 100%;
+    box-sizing: border-box;
+    height: 44px;
+    padding: 0 12px;
+    border: 1px solid #ddd;
+    border-radius: 11px;
+    background: white;
+    color: #111;
+    font-size: 13px;
+    outline: none;
+
+    &:focus {
+      border-color: #111;
+    }
+  }
+`;
+
+const FinalizeButton = styled.button`
+  width: 100%;
+  margin-top: 14px;
+  height: 48px;
+  border: 0;
+  border-radius: 13px;
+  background: #111;
+  color: white;
+  font-size: 13px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
   }
 `;
