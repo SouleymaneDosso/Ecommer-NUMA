@@ -32,6 +32,15 @@ const Precommande = () => {
 
   const [mediaModalOuvert, setMediaModalOuvert] = useState(false);
 
+  const [nom, setNom] = useState("");
+  const [prenom, setPrenom] = useState("");
+  const [adresse, setAdresse] = useState("");
+  const [ville, setVille] = useState("");
+  const [numero, setNumero] = useState("");
+
+  const codePostal = "00225";
+  const pays = "Côte d'Ivoire";
+
   /* =========================================================
      VIDÉO CUSTOM
   ========================================================= */
@@ -79,8 +88,7 @@ const Precommande = () => {
 
       if (!response.ok) {
         throw new Error(
-          data.message ||
-            "Impossible de récupérer les informations de dépôt.",
+          data.message || "Impossible de récupérer les informations de dépôt.",
         );
       }
 
@@ -88,25 +96,11 @@ const Precommande = () => {
     } catch (error) {
       console.error("INFOS DEPOT :", error);
 
-      setErreur(
-        error.message || "Impossible de récupérer le numéro de dépôt.",
-      );
+      setErreur(error.message || "Impossible de récupérer le numéro de dépôt.");
     } finally {
       setLoadingDepot(false);
     }
   };
-
-  /* =========================================================
-     RÉCUPÉRATION DES MODÈLES
-
-     Backend :
-     GET /api/precommandes/modeles
-
-     Retour :
-     {
-       modeles: [...]
-     }
-  ========================================================= */
 
   const chargerModeles = async () => {
     try {
@@ -118,9 +112,7 @@ const Precommande = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.message || "Impossible de récupérer les modèles.",
-        );
+        throw new Error(data.message || "Impossible de récupérer les modèles.");
       }
 
       setModeles(data.modeles || []);
@@ -219,12 +211,7 @@ const Precommande = () => {
         }
 
         if (typeof image === "object" && image !== null) {
-          url =
-            image.url ||
-            image.secure_url ||
-            image.src ||
-            image.path ||
-            "";
+          url = image.url || image.secure_url || image.src || image.path || "";
         }
 
         if (!url) return;
@@ -245,18 +232,6 @@ const Precommande = () => {
       });
     }
 
-    /* -------------------------
-       VIDÉO
-
-       Backend :
-       video: {
-         _id,
-         url,
-         thumbnail,
-         title
-       }
-    ------------------------- */
-
     let video = modeleSelectionne.video;
 
     if (typeof video === "string") {
@@ -271,11 +246,7 @@ const Precommande = () => {
     }
 
     if (typeof video === "object" && video !== null) {
-      const videoUrl =
-        video.url ||
-        video.secure_url ||
-        video.video ||
-        "";
+      const videoUrl = video.url || video.secure_url || video.video || "";
 
       if (videoUrl) {
         liste.push({
@@ -350,22 +321,6 @@ const Precommande = () => {
     setVideoMuted(false);
   }, [mediaIndex, mediaModalOuvert]);
 
-  /* =========================================================
-     STOCK
-     
-     IMPORTANT :
-     Le backend finalise avec :
-
-     stockParVariation.get(couleurLower)
-       .get(tailleLower)
-
-     Donc :
-       couleur -> taille -> stock
-
-     et NON :
-       taille -> couleur -> stock
-  ========================================================= */
-
   const trouverStockDansObjet = (objet, cle) => {
     if (!objet || typeof objet !== "object") {
       return null;
@@ -375,7 +330,9 @@ const Precommande = () => {
       return objet[cle];
     }
 
-    const cleLower = String(cle || "").trim().toLowerCase();
+    const cleLower = String(cle || "")
+      .trim()
+      .toLowerCase();
 
     const cleTrouvee = Object.keys(objet).find(
       (key) => String(key).trim().toLowerCase() === cleLower,
@@ -407,10 +364,7 @@ const Precommande = () => {
         couleurSelectionnee,
       );
 
-      if (
-        variationCouleur &&
-        typeof variationCouleur === "object"
-      ) {
+      if (variationCouleur && typeof variationCouleur === "object") {
         const stock = trouverStockDansObjet(
           variationCouleur,
           tailleSelectionnee,
@@ -424,40 +378,22 @@ const Precommande = () => {
       }
     }
 
-    /*
-      ---------------------------------------------------------
-      CAS 2 : ANCIEN FORMAT éventuel
-      taille -> couleur
-
-      On le garde uniquement pour être compatible avec
-      d'anciens produits déjà enregistrés.
-      ---------------------------------------------------------
-    */
-
     if (tailleSelectionnee && couleurSelectionnee) {
       const variationTaille = trouverStockDansObjet(
         stockParVariation,
         tailleSelectionnee,
       );
 
-      if (
-        variationTaille &&
-        typeof variationTaille === "object"
-      ) {
+      if (variationTaille && typeof variationTaille === "object") {
         const ancienStock = trouverStockDansObjet(
           variationTaille,
           couleurSelectionnee,
         );
 
-        if (
-          ancienStock !== null &&
-          ancienStock !== undefined
-        ) {
+        if (ancienStock !== null && ancienStock !== undefined) {
           const nombre = Number(ancienStock);
 
-          return Number.isFinite(nombre)
-            ? Math.max(0, nombre)
-            : 0;
+          return Number.isFinite(nombre) ? Math.max(0, nombre) : 0;
         }
       }
     }
@@ -505,12 +441,10 @@ const Precommande = () => {
   const prix = Number(modeleSelectionne?.price || 0);
 
   const montantDepotUnitaire = Number(
-    modeleSelectionne?.montantDepot ||
-      Math.ceil(prix * 0.3),
+    modeleSelectionne?.montantDepot || Math.ceil(prix * 0.3),
   );
 
-  const montantDepotTotal =
-    montantDepotUnitaire * quantite;
+  const montantDepotTotal = montantDepotUnitaire * quantite;
 
   /* =========================================================
      CHANGEMENT TAILLE
@@ -545,9 +479,7 @@ const Precommande = () => {
       return;
     }
 
-    setQuantite((ancienne) =>
-      Math.min(stockDisponible, ancienne + 1),
-    );
+    setQuantite((ancienne) => Math.min(stockDisponible, ancienne + 1));
   };
 
   /* =========================================================
@@ -616,8 +548,7 @@ const Precommande = () => {
 
     const valeur = Number(event.target.value);
 
-    video.currentTime =
-      (valeur / 100) * video.duration;
+    video.currentTime = (valeur / 100) * video.duration;
 
     setVideoProgress(valeur);
   };
@@ -630,9 +561,10 @@ const Precommande = () => {
     const minutes = Math.floor(secondes / 60);
     const seconds = Math.floor(secondes % 60);
 
-    return `${String(minutes).padStart(2, "0")}:${String(
-      seconds,
-    ).padStart(2, "0")}`;
+    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(
+      2,
+      "0",
+    )}`;
   };
 
   const passerPleinEcran = async () => {
@@ -665,10 +597,7 @@ const Precommande = () => {
 
     if (medias.length <= 1) return;
 
-    setMediaIndex(
-      (current) =>
-        (current - 1 + medias.length) % medias.length,
-    );
+    setMediaIndex((current) => (current - 1 + medias.length) % medias.length);
   };
 
   const mediaSuivant = (event) => {
@@ -676,9 +605,7 @@ const Precommande = () => {
 
     if (medias.length <= 1) return;
 
-    setMediaIndex(
-      (current) => (current + 1) % medias.length,
-    );
+    setMediaIndex((current) => (current + 1) % medias.length);
   };
 
   const ouvrirMedia = (index = mediaIndex) => {
@@ -686,26 +613,19 @@ const Precommande = () => {
     setMediaModalOuvert(true);
   };
 
-  /* =========================================================
-     PASSER LA PRÉCOMMANDE
-
-     Backend attendu :
-
-     POST /api/precommandes
-
-     {
-       produitId,
-       service,
-       numeroDepot,
-       referenceDepot,
-       taille,
-       couleur,
-       quantite
-     }
-  ========================================================= */
-
   const envoyerPrecommande = async (e) => {
     e.preventDefault();
+    if (!nom.trim() || !prenom.trim() || !adresse.trim() || !ville) {
+      setErreur("Veuillez remplir toutes vos informations de livraison.");
+      return;
+    }
+
+    if (!numero.trim() || !numero.startsWith("+225")) {
+      setErreur(
+        "Veuillez entrer un numéro de téléphone valide au format +225XXXXXXXX.",
+      );
+      return;
+    }
 
     setMessage("");
     setErreur("");
@@ -715,33 +635,23 @@ const Precommande = () => {
       return;
     }
 
-    if (
-      !tailleSelectionnee &&
-      modeleSelectionne.tailles?.length > 0
-    ) {
+    if (!tailleSelectionnee && modeleSelectionne.tailles?.length > 0) {
       setErreur("Veuillez sélectionner une taille.");
       return;
     }
 
-    if (
-      !couleurSelectionnee &&
-      modeleSelectionne.couleurs?.length > 0
-    ) {
+    if (!couleurSelectionnee && modeleSelectionne.couleurs?.length > 0) {
       setErreur("Veuillez sélectionner une couleur.");
       return;
     }
 
     if (stockDisponible <= 0) {
-      setErreur(
-        "Cette variation n'est actuellement plus disponible.",
-      );
+      setErreur("Cette variation n'est actuellement plus disponible.");
       return;
     }
 
     if (quantite < 1) {
-      setErreur(
-        "La quantité doit être au moins égale à 1.",
-      );
+      setErreur("La quantité doit être au moins égale à 1.");
       return;
     }
 
@@ -753,30 +663,22 @@ const Precommande = () => {
     }
 
     if (!service) {
-      setErreur(
-        "Veuillez choisir un moyen de paiement.",
-      );
+      setErreur("Veuillez choisir un moyen de paiement.");
       return;
     }
 
     if (!numeroDepot.trim()) {
-      setErreur(
-        "Veuillez renseigner le numéro utilisé pour le dépôt.",
-      );
+      setErreur("Veuillez renseigner le numéro utilisé pour le dépôt.");
       return;
     }
 
     if (!referenceDepot.trim()) {
-      setErreur(
-        "Veuillez renseigner la référence du dépôt.",
-      );
+      setErreur("Veuillez renseigner la référence du dépôt.");
       return;
     }
 
     if (!informationsDepot?.numeroDepot) {
-      setErreur(
-        "Le numéro de dépôt est momentanément indisponible.",
-      );
+      setErreur("Le numéro de dépôt est momentanément indisponible.");
       return;
     }
 
@@ -793,6 +695,17 @@ const Precommande = () => {
 
       const body = {
         produitId: modeleSelectionne._id,
+
+        client: {
+          nom: nom.trim(),
+          prenom: prenom.trim(),
+          adresse: adresse.trim(),
+          ville: ville.trim(),
+          codePostal,
+          pays,
+          numero: numero.trim(),
+        },
+
         service,
         numeroDepot: numeroDepot.trim(),
         referenceDepot: referenceDepot.trim(),
@@ -801,28 +714,24 @@ const Precommande = () => {
         quantite,
       };
 
-      const response = await fetch(
-        `${API_URL}/api/precommandes`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token
-              ? {
-                  Authorization: `Bearer ${token}`,
-                }
-              : {}),
-          },
-          body: JSON.stringify(body),
+      const response = await fetch(`${API_URL}/api/precommandes`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token
+            ? {
+                Authorization: `Bearer ${token}`,
+              }
+            : {}),
         },
-      );
+        body: JSON.stringify(body),
+      });
 
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(
-          data.message ||
-            "Impossible d'enregistrer la précommande.",
+          data.message || "Impossible d'enregistrer la précommande.",
         );
       }
 
@@ -861,9 +770,7 @@ const Precommande = () => {
     return (
       <LoadingContainer>
         <Spinner />
-        <LoadingText>
-          Chargement des précommandes...
-        </LoadingText>
+        <LoadingText>Chargement des précommandes...</LoadingText>
       </LoadingContainer>
     );
   }
@@ -872,18 +779,12 @@ const Precommande = () => {
      ERREUR GLOBALE
   ========================================================= */
 
-  if (
-    erreur &&
-    !modeleSelectionne &&
-    modeles.length === 0
-  ) {
+  if (erreur && !modeleSelectionne && modeles.length === 0) {
     return (
       <PageContainer>
         <ErrorBox>{erreur}</ErrorBox>
 
-        <RetryButton onClick={chargerModeles}>
-          Réessayer
-        </RetryButton>
+        <RetryButton onClick={chargerModeles}>Réessayer</RetryButton>
       </PageContainer>
     );
   }
@@ -900,9 +801,8 @@ const Precommande = () => {
         <MainTitle>Précommandes</MainTitle>
 
         <Subtitle>
-          Découvrez nos modèles disponibles en précommande
-          et choisissez votre taille, votre couleur et votre
-          quantité.
+          Découvrez nos modèles disponibles en précommande et choisissez votre
+          taille, votre couleur et votre quantité.
         </Subtitle>
       </Header>
 
@@ -914,9 +814,7 @@ const Precommande = () => {
         </SuccessBox>
       )}
 
-      {erreur && !modeleSelectionne && (
-        <ErrorBox>{erreur}</ErrorBox>
-      )}
+      {erreur && !modeleSelectionne && <ErrorBox>{erreur}</ErrorBox>}
 
       {/* =====================================================
           LISTE DES MODÈLES
@@ -928,36 +826,22 @@ const Precommande = () => {
             <EmptyBox>
               <EmptyIcon>◌</EmptyIcon>
 
-              <h3>
-                Aucune précommande disponible
-              </h3>
+              <h3>Aucune précommande disponible</h3>
 
-              <p>
-                Aucun modèle n'est actuellement disponible
-                en précommande.
-              </p>
+              <p>Aucun modèle n'est actuellement disponible en précommande.</p>
             </EmptyBox>
           ) : (
             modeles.map((modele) => {
               const image =
                 modele.images?.find(
-                  (img) =>
-                    typeof img === "object" &&
-                    img?.isMain &&
-                    img?.url,
+                  (img) => typeof img === "object" && img?.isMain && img?.url,
                 )?.url ||
                 modele.images?.find(
-                  (img) =>
-                    typeof img === "object" &&
-                    img?.url,
+                  (img) => typeof img === "object" && img?.url,
                 )?.url ||
-                (typeof modele.image === "string"
-                  ? modele.image
-                  : "");
+                (typeof modele.image === "string" ? modele.image : "");
 
-              const stockGlobal = Number(
-                modele.stock || 0,
-              );
+              const stockGlobal = Number(modele.stock || 0);
 
               return (
                 <ModelCard key={modele._id}>
@@ -969,14 +853,10 @@ const Precommande = () => {
                         loading="lazy"
                       />
                     ) : (
-                      <NoImage>
-                        Aucune image
-                      </NoImage>
+                      <NoImage>Aucune image</NoImage>
                     )}
 
-                    <PrecommandeBadge>
-                      PRÉCOMMANDE
-                    </PrecommandeBadge>
+                    <PrecommandeBadge>PRÉCOMMANDE</PrecommandeBadge>
 
                     {modele.video && (
                       <VideoCardBadge>
@@ -987,9 +867,7 @@ const Precommande = () => {
                   </CardImageContainer>
 
                   <CardContent>
-                    <CardTitle>
-                      {modele.title}
-                    </CardTitle>
+                    <CardTitle>{modele.title}</CardTitle>
 
                     <CardDescription>
                       {modele.description ||
@@ -998,20 +876,14 @@ const Precommande = () => {
 
                     <CardInfo>
                       <Price>
-                        {Number(
-                          modele.price || 0,
-                        ).toLocaleString("fr-FR")}{" "}
-                        FCFA
+                        {Number(modele.price || 0).toLocaleString("fr-FR")} FCFA
                       </Price>
 
                       <Deposit>
                         Dépôt :{" "}
                         {Number(
                           modele.montantDepot ||
-                            Math.ceil(
-                              Number(modele.price || 0) *
-                                0.3,
-                            ),
+                            Math.ceil(Number(modele.price || 0) * 0.3),
                         ).toLocaleString("fr-FR")}{" "}
                         FCFA
                       </Deposit>
@@ -1020,18 +892,16 @@ const Precommande = () => {
                     {modele.dateDisponibilite && (
                       <Availability>
                         Disponible à partir du{" "}
-                        {new Date(
-                          modele.dateDisponibilite,
-                        ).toLocaleDateString("fr-FR")}
+                        {new Date(modele.dateDisponibilite).toLocaleDateString(
+                          "fr-FR",
+                        )}
                       </Availability>
                     )}
 
                     <VariationSummary>
                       {modele.tailles?.length > 0 && (
                         <VariationLine>
-                          <VariationLabel>
-                            Tailles
-                          </VariationLabel>
+                          <VariationLabel>Tailles</VariationLabel>
 
                           <VariationValues>
                             {modele.tailles.join(" • ")}
@@ -1041,9 +911,7 @@ const Precommande = () => {
 
                       {modele.couleurs?.length > 0 && (
                         <VariationLine>
-                          <VariationLabel>
-                            Couleurs
-                          </VariationLabel>
+                          <VariationLabel>Couleurs</VariationLabel>
 
                           <VariationValues>
                             {modele.couleurs.join(" • ")}
@@ -1055,22 +923,15 @@ const Precommande = () => {
                         <StockMiniDot
                           $available={
                             stockGlobal > 0 ||
-                            Object.keys(
-                              modele.stockParVariation ||
-                                {},
-                            ).length > 0
+                            Object.keys(modele.stockParVariation || {}).length >
+                              0
                           }
                         />
-
                         Stock disponible
                       </StockMini>
                     </VariationSummary>
 
-                    <ActionButton
-                      onClick={() =>
-                        ouvrirModele(modele)
-                      }
-                    >
+                    <ActionButton onClick={() => ouvrirModele(modele)}>
                       Voir le modèle
                       <span>→</span>
                     </ActionButton>
@@ -1109,27 +970,19 @@ const Precommande = () => {
                         muted
                         playsInline
                         preload="metadata"
-                        onClick={() =>
-                          ouvrirMedia(mediaIndex)
-                        }
+                        onClick={() => ouvrirMedia(mediaIndex)}
                       />
                     ) : (
                       <MainImage
                         src={mediaActuel?.url}
-                        alt={
-                          modeleSelectionne.title
-                        }
-                        onClick={() =>
-                          ouvrirMedia(mediaIndex)
-                        }
+                        alt={modeleSelectionne.title}
+                        onClick={() => ouvrirMedia(mediaIndex)}
                       />
                     )}
 
                     <MediaExpandButton
                       type="button"
-                      onClick={() =>
-                        ouvrirMedia(mediaIndex)
-                      }
+                      onClick={() => ouvrirMedia(mediaIndex)}
                       aria-label="Agrandir le média"
                     >
                       ⛶
@@ -1158,62 +1011,39 @@ const Precommande = () => {
 
                     {medias.length > 1 && (
                       <DotsContainer>
-                        {medias.map(
-                          (media, index) => (
-                            <Dot
-                              key={`${media.url}-${index}`}
-                              type="button"
-                              $active={
-                                mediaIndex === index
-                              }
-                              $video={
-                                media.type ===
-                                "video"
-                              }
-                              onClick={() =>
-                                setMediaIndex(
-                                  index,
-                                )
-                              }
-                              aria-label={
-                                media.type ===
-                                "video"
-                                  ? "Afficher la vidéo"
-                                  : `Afficher la photo ${
-                                      index + 1
-                                    }`
-                              }
-                            >
-                              {media.type ===
-                              "video"
-                                ? "▶"
-                                : ""}
-                            </Dot>
-                          ),
-                        )}
+                        {medias.map((media, index) => (
+                          <Dot
+                            key={`${media.url}-${index}`}
+                            type="button"
+                            $active={mediaIndex === index}
+                            $video={media.type === "video"}
+                            onClick={() => setMediaIndex(index)}
+                            aria-label={
+                              media.type === "video"
+                                ? "Afficher la vidéo"
+                                : `Afficher la photo ${index + 1}`
+                            }
+                          >
+                            {media.type === "video" ? "▶" : ""}
+                          </Dot>
+                        ))}
                       </DotsContainer>
                     )}
                   </>
                 ) : (
-                  <NoImage>
-                    Aucune image disponible
-                  </NoImage>
+                  <NoImage>Aucune image disponible</NoImage>
                 )}
               </MediaContainer>
 
               {medias.length > 0 && (
                 <MediaDescription>
                   <MediaCurrent>
-                    {mediaActuel?.type ===
-                    "video"
+                    {mediaActuel?.type === "video"
                       ? "Vidéo du modèle"
                       : `Photo ${mediaIndex + 1} / ${medias.length}`}
                   </MediaCurrent>
 
-                  <MediaHint>
-                    Cliquez sur le média pour
-                    l'agrandir
-                  </MediaHint>
+                  <MediaHint>Cliquez sur le média pour l'agrandir</MediaHint>
                 </MediaDescription>
               )}
             </MediaSection>
@@ -1223,13 +1053,9 @@ const Precommande = () => {
             ================================================= */}
 
             <InformationSection>
-              <PrecommandeLabel>
-                PRÉCOMMANDE
-              </PrecommandeLabel>
+              <PrecommandeLabel>PRÉCOMMANDE</PrecommandeLabel>
 
-              <DetailTitle>
-                {modeleSelectionne.title}
-              </DetailTitle>
+              <DetailTitle>{modeleSelectionne.title}</DetailTitle>
 
               <DetailDescription>
                 {modeleSelectionne.description ||
@@ -1237,16 +1063,11 @@ const Precommande = () => {
               </DetailDescription>
 
               <PriceBlock>
-                <CurrentPrice>
-                  {prix.toLocaleString("fr-FR")} FCFA
-                </CurrentPrice>
+                <CurrentPrice>{prix.toLocaleString("fr-FR")} FCFA</CurrentPrice>
 
                 <DepositText>
                   Dépôt par article :{" "}
-                  {montantDepotUnitaire.toLocaleString(
-                    "fr-FR",
-                  )}{" "}
-                  FCFA
+                  {montantDepotUnitaire.toLocaleString("fr-FR")} FCFA
                 </DepositText>
               </PriceBlock>
 
@@ -1255,21 +1076,16 @@ const Precommande = () => {
                   <DateIcon>◷</DateIcon>
 
                   <div>
-                    <DateLabel>
-                      DISPONIBILITÉ
-                    </DateLabel>
+                    <DateLabel>DISPONIBILITÉ</DateLabel>
 
                     <DateValue>
                       {new Date(
                         modeleSelectionne.dateDisponibilite,
-                      ).toLocaleDateString(
-                        "fr-FR",
-                        {
-                          day: "numeric",
-                          month: "long",
-                          year: "numeric",
-                        },
-                      )}
+                      ).toLocaleDateString("fr-FR", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })}
                     </DateValue>
                   </div>
                 </DateBox>
@@ -1279,33 +1095,21 @@ const Precommande = () => {
                   TAILLES
               ================================================= */}
 
-              {modeleSelectionne.tailles?.length >
-                0 && (
+              {modeleSelectionne.tailles?.length > 0 && (
                 <FieldGroup>
-                  <FieldLabel>
-                    Taille
-                  </FieldLabel>
+                  <FieldLabel>Taille</FieldLabel>
 
                   <ChoiceGrid>
-                    {modeleSelectionne.tailles.map(
-                      (taille) => (
-                        <ChoiceButton
-                          type="button"
-                          key={taille}
-                          $active={
-                            tailleSelectionnee ===
-                            taille
-                          }
-                          onClick={() =>
-                            changerTaille(
-                              taille,
-                            )
-                          }
-                        >
-                          {taille}
-                        </ChoiceButton>
-                      ),
-                    )}
+                    {modeleSelectionne.tailles.map((taille) => (
+                      <ChoiceButton
+                        type="button"
+                        key={taille}
+                        $active={tailleSelectionnee === taille}
+                        onClick={() => changerTaille(taille)}
+                      >
+                        {taille}
+                      </ChoiceButton>
+                    ))}
                   </ChoiceGrid>
                 </FieldGroup>
               )}
@@ -1314,35 +1118,23 @@ const Precommande = () => {
                   COULEURS
               ================================================= */}
 
-              {modeleSelectionne.couleurs?.length >
-                0 && (
+              {modeleSelectionne.couleurs?.length > 0 && (
                 <FieldGroup>
-                  <FieldLabel>
-                    Couleur
-                  </FieldLabel>
+                  <FieldLabel>Couleur</FieldLabel>
 
                   <ChoiceGrid>
-                    {modeleSelectionne.couleurs.map(
-                      (couleur) => (
-                        <ChoiceButton
-                          type="button"
-                          key={couleur}
-                          $active={
-                            couleurSelectionnee ===
-                            couleur
-                          }
-                          onClick={() =>
-                            changerCouleur(
-                              couleur,
-                            )
-                          }
-                        >
-                          <ColorCircle />
+                    {modeleSelectionne.couleurs.map((couleur) => (
+                      <ChoiceButton
+                        type="button"
+                        key={couleur}
+                        $active={couleurSelectionnee === couleur}
+                        onClick={() => changerCouleur(couleur)}
+                      >
+                        <ColorCircle />
 
-                          {couleur}
-                        </ChoiceButton>
-                      ),
-                    )}
+                        {couleur}
+                      </ChoiceButton>
+                    ))}
                   </ChoiceGrid>
                 </FieldGroup>
               )}
@@ -1351,73 +1143,54 @@ const Precommande = () => {
                   STOCK
               ================================================= */}
 
-              <StockCard
-                $available={
-                  stockDisponible > 0
-                }
-              >
+              <StockCard $available={stockDisponible > 0}>
                 <StockTop>
                   <div>
-                    <StockLabel>
-                      STOCK DISPONIBLE
-                    </StockLabel>
+                    <StockLabel>STOCK DISPONIBLE</StockLabel>
 
                     <StockVariationName>
-                      {couleurSelectionnee ||
-                        tailleSelectionnee
+                      {couleurSelectionnee || tailleSelectionnee
                         ? "Pour votre sélection"
                         : "Stock actuel"}
                     </StockVariationName>
                   </div>
 
-                  <StockNumber
-                    $available={
-                      stockDisponible > 0
-                    }
-                  >
+                  <StockNumber $available={stockDisponible > 0}>
                     {stockDisponible}
                   </StockNumber>
                 </StockTop>
 
-                {tailleSelectionnee ||
-                couleurSelectionnee ? (
+                {tailleSelectionnee || couleurSelectionnee ? (
                   <StockVariation>
                     <StockVariationItem>
                       {couleurSelectionnee && (
                         <span>
                           Couleur
-                          <strong>
-                            {couleurSelectionnee}
-                          </strong>
+                          <strong>{couleurSelectionnee}</strong>
                         </span>
                       )}
 
                       {tailleSelectionnee && (
                         <span>
                           Taille
-                          <strong>
-                            {tailleSelectionnee}
-                          </strong>
+                          <strong>{tailleSelectionnee}</strong>
                         </span>
                       )}
                     </StockVariationItem>
                   </StockVariation>
                 ) : (
                   <StockVariation>
-                    Sélectionnez une variation pour
-                    voir son stock.
+                    Sélectionnez une variation pour voir son stock.
                   </StockVariation>
                 )}
 
                 {stockDisponible > 0 ? (
                   <StockAvailableText>
-                    ✓ Cette variation peut être
-                    précommandée
+                    ✓ Cette variation peut être précommandée
                   </StockAvailableText>
                 ) : (
                   <StockUnavailableText>
-                    Cette variation n'est plus
-                    disponible.
+                    Cette variation n'est plus disponible.
                   </StockUnavailableText>
                 )}
               </StockCard>
@@ -1427,34 +1200,24 @@ const Precommande = () => {
               ================================================= */}
 
               <FieldGroup>
-                <FieldLabel>
-                  Quantité
-                </FieldLabel>
+                <FieldLabel>Quantité</FieldLabel>
 
                 <QuantityContainer>
                   <QuantityButton
                     type="button"
-                    onClick={
-                      diminuerQuantite
-                    }
+                    onClick={diminuerQuantite}
                     disabled={quantite <= 1}
                   >
                     −
                   </QuantityButton>
 
-                  <QuantityValue>
-                    {quantite}
-                  </QuantityValue>
+                  <QuantityValue>{quantite}</QuantityValue>
 
                   <QuantityButton
                     type="button"
-                    onClick={
-                      augmenterQuantite
-                    }
+                    onClick={augmenterQuantite}
                     disabled={
-                      stockDisponible <= 0 ||
-                      quantite >=
-                        stockDisponible
+                      stockDisponible <= 0 || quantite >= stockDisponible
                     }
                   >
                     +
@@ -1463,11 +1226,8 @@ const Precommande = () => {
 
                 {stockDisponible > 0 && (
                   <QuantityHint>
-                    Maximum :{" "}
-                    {stockDisponible} article
-                    {stockDisponible > 1
-                      ? "s"
-                      : ""}
+                    Maximum : {stockDisponible} article
+                    {stockDisponible > 1 ? "s" : ""}
                   </QuantityHint>
                 )}
               </FieldGroup>
@@ -1480,12 +1240,7 @@ const Precommande = () => {
                 <SummaryRow>
                   <span>Prix unitaire</span>
 
-                  <strong>
-                    {prix.toLocaleString(
-                      "fr-FR",
-                    )}{" "}
-                    FCFA
-                  </strong>
+                  <strong>{prix.toLocaleString("fr-FR")} FCFA</strong>
                 </SummaryRow>
 
                 <SummaryRow>
@@ -1498,10 +1253,7 @@ const Precommande = () => {
                   <span>Dépôt unitaire</span>
 
                   <strong>
-                    {montantDepotUnitaire.toLocaleString(
-                      "fr-FR",
-                    )}{" "}
-                    FCFA
+                    {montantDepotUnitaire.toLocaleString("fr-FR")} FCFA
                   </strong>
                 </SummaryRow>
 
@@ -1509,10 +1261,7 @@ const Precommande = () => {
                   <span>Total du dépôt</span>
 
                   <strong>
-                    {montantDepotTotal.toLocaleString(
-                      "fr-FR",
-                    )}{" "}
-                    FCFA
+                    {montantDepotTotal.toLocaleString("fr-FR")} FCFA
                   </strong>
                 </SummaryTotal>
               </SummaryBox>
@@ -1520,28 +1269,100 @@ const Precommande = () => {
               {/* =================================================
                   FORMULAIRE PAIEMENT
               ================================================= */}
+              <FormTitle>Informations de livraison</FormTitle>
 
-              <Form
-                onSubmit={envoyerPrecommande}
-              >
-                <FormTitle>
-                  Informations du dépôt
-                </FormTitle>
+              <FieldGroup>
+                <FieldLabel htmlFor="nom">Nom</FieldLabel>
+
+                <Input
+                  id="nom"
+                  type="text"
+                  placeholder="Votre nom"
+                  value={nom}
+                  onChange={(e) => setNom(e.target.value)}
+                />
+              </FieldGroup>
+
+              <FieldGroup>
+                <FieldLabel htmlFor="prenom">Prénom</FieldLabel>
+
+                <Input
+                  id="prenom"
+                  type="text"
+                  placeholder="Votre prénom"
+                  value={prenom}
+                  onChange={(e) => setPrenom(e.target.value)}
+                />
+              </FieldGroup>
+
+              <FieldGroup>
+                <FieldLabel htmlFor="adresse">Adresse</FieldLabel>
+
+                <Input
+                  id="adresse"
+                  type="text"
+                  placeholder="Votre adresse de livraison"
+                  value={adresse}
+                  onChange={(e) => setAdresse(e.target.value)}
+                />
+              </FieldGroup>
+
+              <FieldGroup>
+                <FieldLabel htmlFor="ville">Ville</FieldLabel>
+
+                <Input
+                  id="ville"
+                  type="text"
+                  placeholder="Votre ville"
+                  value={ville}
+                  onChange={(e) => setVille(e.target.value)}
+                />
+              </FieldGroup>
+
+              <FieldGroup>
+                <FieldLabel htmlFor="numero">Numéro de téléphone</FieldLabel>
+
+                <Input
+                  id="numero"
+                  type="tel"
+                  inputMode="tel"
+                  placeholder="+225XXXXXXXX"
+                  value={numero}
+                  onChange={(e) => {
+                    let value = e.target.value;
+
+                    if (!value.startsWith("+225")) {
+                      value = "+225" + value.replace(/^\+225\s*/, "");
+                    }
+
+                    setNumero(value);
+                  }}
+                />
+              </FieldGroup>
+
+              <FieldGroup>
+                <FieldLabel htmlFor="codePostal">Code postal</FieldLabel>
+
+                <Input id="codePostal" value={codePostal} disabled />
+              </FieldGroup>
+
+              <FieldGroup>
+                <FieldLabel htmlFor="pays">Pays</FieldLabel>
+
+                <Input id="pays" value={pays} disabled />
+              </FieldGroup>
+              <Form onSubmit={envoyerPrecommande}>
+                <FormTitle>Informations du dépôt</FormTitle>
 
                 <DepotInfoBox>
                   <DepotInfoHeader>
-                    <DepotInfoIcon>
-                      ₣
-                    </DepotInfoIcon>
+                    <DepotInfoIcon>₣</DepotInfoIcon>
 
                     <div>
-                      <DepotInfoTitle>
-                        Effectuez votre dépôt
-                      </DepotInfoTitle>
+                      <DepotInfoTitle>Effectuez votre dépôt</DepotInfoTitle>
 
                       <DepotInfoText>
-                        Envoyez le montant du dépôt
-                        sur le numéro indiqué
+                        Envoyez le montant du dépôt sur le numéro indiqué
                         ci-dessous.
                       </DepotInfoText>
                     </div>
@@ -1550,22 +1371,17 @@ const Precommande = () => {
                   {loadingDepot ? (
                     <DepotLoading>
                       <MiniSpinner />
-                      Chargement du numéro de
-                      dépôt...
+                      Chargement du numéro de dépôt...
                     </DepotLoading>
                   ) : informationsDepot?.numeroDepot ? (
-                    <DepotNumber>
-                      {informationsDepot.numeroDepot}
-                    </DepotNumber>
+                    <DepotNumber>{informationsDepot.numeroDepot}</DepotNumber>
                   ) : (
                     <DepotError>
-                      Le numéro de dépôt est
-                      momentanément indisponible.
+                      Le numéro de dépôt est momentanément indisponible.
                     </DepotError>
                   )}
 
-                  {informationsDepot?.services?.length >
-                    0 && (
+                  {informationsDepot?.services?.length > 0 && (
                     <SupportedServices>
                       Moyens acceptés :{" "}
                       {informationsDepot.services
@@ -1581,79 +1397,46 @@ const Precommande = () => {
                   )}
 
                   <DepotWarning>
-                    Après avoir effectué le dépôt,
-                    renseignez le numéro utilisé
-                    pour effectuer le paiement ainsi
-                    que la référence de la
+                    Après avoir effectué le dépôt, renseignez le numéro utilisé
+                    pour effectuer le paiement ainsi que la référence de la
                     transaction.
                   </DepotWarning>
                 </DepotInfoBox>
 
                 <FieldGroup>
-                  <FieldLabel>
-                    Moyen de paiement
-                  </FieldLabel>
+                  <FieldLabel>Moyen de paiement</FieldLabel>
 
                   <PaymentGrid>
                     <PaymentButton
                       type="button"
-                      $active={
-                        service === "orange"
-                      }
-                      onClick={() =>
-                        setService("orange")
-                      }
+                      $active={service === "orange"}
+                      onClick={() => setService("orange")}
                     >
-                      <PaymentLogo>
-                        OM
-                      </PaymentLogo>
+                      <PaymentLogo>OM</PaymentLogo>
 
                       <div>
-                        <PaymentName>
-                          Orange Money
-                        </PaymentName>
+                        <PaymentName>Orange Money</PaymentName>
 
-                        <PaymentSmall>
-                          Paiement mobile
-                        </PaymentSmall>
+                        <PaymentSmall>Paiement mobile</PaymentSmall>
                       </div>
 
-                      {service ===
-                        "orange" && (
-                        <PaymentCheck>
-                          ✓
-                        </PaymentCheck>
-                      )}
+                      {service === "orange" && <PaymentCheck>✓</PaymentCheck>}
                     </PaymentButton>
 
                     <PaymentButton
                       type="button"
-                      $active={
-                        service === "wave"
-                      }
-                      onClick={() =>
-                        setService("wave")
-                      }
+                      $active={service === "wave"}
+                      onClick={() => setService("wave")}
                     >
-                      <PaymentLogo>
-                        W
-                      </PaymentLogo>
+                      <PaymentLogo>W</PaymentLogo>
 
                       <div>
-                        <PaymentName>
-                          Wave
-                        </PaymentName>
+                        <PaymentName>Wave</PaymentName>
 
-                        <PaymentSmall>
-                          Paiement mobile
-                        </PaymentSmall>
+                        <PaymentSmall>Paiement mobile</PaymentSmall>
                       </div>
 
-                      {service === "wave" && (
-                        <PaymentCheck>
-                          ✓
-                        </PaymentCheck>
-                      )}
+                      {service === "wave" && <PaymentCheck>✓</PaymentCheck>}
                     </PaymentButton>
                   </PaymentGrid>
                 </FieldGroup>
@@ -1670,11 +1453,7 @@ const Precommande = () => {
                     autoComplete="tel"
                     placeholder="Ex : 07 XX XX XX XX"
                     value={numeroDepot}
-                    onChange={(e) =>
-                      setNumeroDepot(
-                        e.target.value,
-                      )
-                    }
+                    onChange={(e) => setNumeroDepot(e.target.value)}
                   />
                 </FieldGroup>
 
@@ -1688,32 +1467,17 @@ const Precommande = () => {
                     type="text"
                     placeholder="Entrez la référence de votre dépôt"
                     value={referenceDepot}
-                    onChange={(e) =>
-                      setReferenceDepot(
-                        e.target.value,
-                      )
-                    }
+                    onChange={(e) => setReferenceDepot(e.target.value)}
                   />
                 </FieldGroup>
 
-                {erreur && (
-                  <FormError>
-                    {erreur}
-                  </FormError>
-                )}
+                {erreur && <FormError>{erreur}</FormError>}
 
-                {message && (
-                  <FormSuccess>
-                    {message}
-                  </FormSuccess>
-                )}
+                {message && <FormSuccess>{message}</FormSuccess>}
 
                 <SubmitButton
                   type="submit"
-                  disabled={
-                    loadingCommande ||
-                    stockDisponible <= 0
-                  }
+                  disabled={loadingCommande || stockDisponible <= 0}
                 >
                   {loadingCommande ? (
                     <>
@@ -1729,9 +1493,8 @@ const Precommande = () => {
                 </SubmitButton>
 
                 <SecurityText>
-                  Votre précommande sera vérifiée
-                  par notre équipe avant validation
-                  définitive.
+                  Votre précommande sera vérifiée par notre équipe avant
+                  validation définitive.
                 </SecurityText>
               </Form>
             </InformationSection>
@@ -1743,254 +1506,162 @@ const Precommande = () => {
           MODAL PHOTO / VIDÉO
       ===================================================== */}
 
-      {mediaModalOuvert &&
-        mediaActuel && (
-          <MediaModal
-            role="dialog"
-            aria-modal="true"
-            aria-label="Visionneuse média"
-            onClick={() =>
-              setMediaModalOuvert(false)
-            }
-          >
-            <ModalTopBar
-              onClick={(e) =>
-                e.stopPropagation()
-              }
+      {mediaModalOuvert && mediaActuel && (
+        <MediaModal
+          role="dialog"
+          aria-modal="true"
+          aria-label="Visionneuse média"
+          onClick={() => setMediaModalOuvert(false)}
+        >
+          <ModalTopBar onClick={(e) => e.stopPropagation()}>
+            <ModalCounter>
+              {mediaIndex + 1} / {medias.length}
+            </ModalCounter>
+
+            <ModalTitle>
+              {mediaActuel.type === "video"
+                ? mediaActuel.title || "Vidéo du modèle"
+                : modeleSelectionne.title}
+            </ModalTitle>
+
+            <ModalCloseButton
+              type="button"
+              onClick={() => setMediaModalOuvert(false)}
+              aria-label="Fermer"
             >
-              <ModalCounter>
-                {mediaIndex + 1} / {medias.length}
-              </ModalCounter>
+              ×
+            </ModalCloseButton>
+          </ModalTopBar>
 
-              <ModalTitle>
-                {mediaActuel.type ===
-                "video"
-                  ? mediaActuel.title ||
-                    "Vidéo du modèle"
-                  : modeleSelectionne.title}
-              </ModalTitle>
-
-              <ModalCloseButton
-                type="button"
-                onClick={() =>
-                  setMediaModalOuvert(false)
-                }
-                aria-label="Fermer"
-              >
-                ×
-              </ModalCloseButton>
-            </ModalTopBar>
-
-            <ModalContent
-              onClick={(e) =>
-                e.stopPropagation()
-              }
-            >
-              {mediaActuel.type ===
-              "video" ? (
-                <CustomVideoPlayer>
-                  <ModalVideo
-                    ref={videoRef}
-                    src={mediaActuel.url}
-                    playsInline
-                    preload="metadata"
-                    muted={videoMuted}
-                    onTimeUpdate={
-                      handleVideoTimeUpdate
-                    }
-                    onLoadedMetadata={
-                      handleVideoLoadedMetadata
-                    }
-                    onPlay={() =>
-                      setVideoPlaying(true)
-                    }
-                    onPause={() =>
-                      setVideoPlaying(false)
-                    }
-                    onEnded={
-                      handleVideoEnded
-                    }
-                    onClick={toggleVideo}
-                  />
-
-                  <VideoOverlayPlay
-                    type="button"
-                    $visible={
-                      !videoPlaying
-                    }
-                    onClick={toggleVideo}
-                    aria-label={
-                      videoPlaying
-                        ? "Mettre en pause"
-                        : "Lire la vidéo"
-                    }
-                  >
-                    {videoPlaying
-                      ? "Ⅱ"
-                      : "▶"}
-                  </VideoOverlayPlay>
-
-                  <VideoControls>
-                    <VideoProgressRow>
-                      <VideoTime>
-                        {formatVideoTime(
-                          videoCurrentTime,
-                        )}
-                      </VideoTime>
-
-                      <VideoRange
-                        type="range"
-                        min="0"
-                        max="100"
-                        step="0.1"
-                        value={
-                          videoProgress
-                        }
-                        onChange={
-                          handleVideoSeek
-                        }
-                        aria-label="Progression de la vidéo"
-                      />
-
-                      <VideoTime>
-                        {formatVideoTime(
-                          videoDuration,
-                        )}
-                      </VideoTime>
-                    </VideoProgressRow>
-
-                    <VideoButtons>
-                      <VideoControlButton
-                        type="button"
-                        onClick={toggleVideo}
-                        aria-label={
-                          videoPlaying
-                            ? "Pause"
-                            : "Lecture"
-                        }
-                      >
-                        {videoPlaying
-                          ? "Ⅱ"
-                          : "▶"}
-                      </VideoControlButton>
-
-                      <VideoControlButton
-                        type="button"
-                        onClick={toggleMute}
-                        aria-label={
-                          videoMuted
-                            ? "Activer le son"
-                            : "Couper le son"
-                        }
-                      >
-                        {videoMuted
-                          ? "⌁"
-                          : "◖"}
-                      </VideoControlButton>
-
-                      <VideoControlTitle>
-                        {mediaActuel.title ||
-                          "Vidéo du modèle"}
-                      </VideoControlTitle>
-
-                      <VideoControlButton
-                        type="button"
-                        onClick={
-                          passerPleinEcran
-                        }
-                        aria-label="Plein écran"
-                      >
-                        ⛶
-                      </VideoControlButton>
-                    </VideoButtons>
-                  </VideoControls>
-                </CustomVideoPlayer>
-              ) : (
-                <ModalImage
+          <ModalContent onClick={(e) => e.stopPropagation()}>
+            {mediaActuel.type === "video" ? (
+              <CustomVideoPlayer>
+                <ModalVideo
+                  ref={videoRef}
                   src={mediaActuel.url}
-                  alt={
-                    modeleSelectionne.title
-                  }
+                  playsInline
+                  preload="metadata"
+                  muted={videoMuted}
+                  onTimeUpdate={handleVideoTimeUpdate}
+                  onLoadedMetadata={handleVideoLoadedMetadata}
+                  onPlay={() => setVideoPlaying(true)}
+                  onPause={() => setVideoPlaying(false)}
+                  onEnded={handleVideoEnded}
+                  onClick={toggleVideo}
                 />
-              )}
-            </ModalContent>
 
-            {medias.length > 1 && (
-              <>
-                <ModalNavigation
-                  $left
+                <VideoOverlayPlay
                   type="button"
-                  onClick={mediaPrecedent}
-                  aria-label="Média précédent"
-                  onMouseDown={(e) =>
-                    e.stopPropagation()
+                  $visible={!videoPlaying}
+                  onClick={toggleVideo}
+                  aria-label={
+                    videoPlaying ? "Mettre en pause" : "Lire la vidéo"
                   }
                 >
-                  ‹
-                </ModalNavigation>
+                  {videoPlaying ? "Ⅱ" : "▶"}
+                </VideoOverlayPlay>
 
-                <ModalNavigation
-                  type="button"
-                  onClick={mediaSuivant}
-                  aria-label="Média suivant"
-                  onMouseDown={(e) =>
-                    e.stopPropagation()
-                  }
-                >
-                  ›
-                </ModalNavigation>
+                <VideoControls>
+                  <VideoProgressRow>
+                    <VideoTime>{formatVideoTime(videoCurrentTime)}</VideoTime>
 
-                <ModalThumbnails
-                  onClick={(e) =>
-                    e.stopPropagation()
-                  }
-                >
-                  {medias.map(
-                    (media, index) => (
-                      <ModalThumbnail
-                        type="button"
-                        key={`${media.url}-${index}`}
-                        $active={
-                          index === mediaIndex
-                        }
-                        onClick={() =>
-                          setMediaIndex(
-                            index,
-                          )
-                        }
-                      >
-                        {media.type ===
-                        "video" ? (
-                          <ThumbnailVideoIcon>
-                            ▶
-                          </ThumbnailVideoIcon>
-                        ) : (
-                          <ThumbnailImage
-                            src={media.url}
-                            alt=""
-                          />
-                        )}
-                      </ModalThumbnail>
-                    ),
-                  )}
-                </ModalThumbnails>
-              </>
+                    <VideoRange
+                      type="range"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      value={videoProgress}
+                      onChange={handleVideoSeek}
+                      aria-label="Progression de la vidéo"
+                    />
+
+                    <VideoTime>{formatVideoTime(videoDuration)}</VideoTime>
+                  </VideoProgressRow>
+
+                  <VideoButtons>
+                    <VideoControlButton
+                      type="button"
+                      onClick={toggleVideo}
+                      aria-label={videoPlaying ? "Pause" : "Lecture"}
+                    >
+                      {videoPlaying ? "Ⅱ" : "▶"}
+                    </VideoControlButton>
+
+                    <VideoControlButton
+                      type="button"
+                      onClick={toggleMute}
+                      aria-label={
+                        videoMuted ? "Activer le son" : "Couper le son"
+                      }
+                    >
+                      {videoMuted ? "⌁" : "◖"}
+                    </VideoControlButton>
+
+                    <VideoControlTitle>
+                      {mediaActuel.title || "Vidéo du modèle"}
+                    </VideoControlTitle>
+
+                    <VideoControlButton
+                      type="button"
+                      onClick={passerPleinEcran}
+                      aria-label="Plein écran"
+                    >
+                      ⛶
+                    </VideoControlButton>
+                  </VideoButtons>
+                </VideoControls>
+              </CustomVideoPlayer>
+            ) : (
+              <ModalImage src={mediaActuel.url} alt={modeleSelectionne.title} />
             )}
+          </ModalContent>
 
-            <ModalKeyboardHint
-              onClick={(e) =>
-                e.stopPropagation()
-              }
-            >
-              <span>
-                ESC
-              </span>{" "}
-              pour fermer
-              {medias.length > 1 &&
-                " • ← → pour naviguer"}
-            </ModalKeyboardHint>
-          </MediaModal>
-        )}
+          {medias.length > 1 && (
+            <>
+              <ModalNavigation
+                $left
+                type="button"
+                onClick={mediaPrecedent}
+                aria-label="Média précédent"
+                onMouseDown={(e) => e.stopPropagation()}
+              >
+                ‹
+              </ModalNavigation>
+
+              <ModalNavigation
+                type="button"
+                onClick={mediaSuivant}
+                aria-label="Média suivant"
+                onMouseDown={(e) => e.stopPropagation()}
+              >
+                ›
+              </ModalNavigation>
+
+              <ModalThumbnails onClick={(e) => e.stopPropagation()}>
+                {medias.map((media, index) => (
+                  <ModalThumbnail
+                    type="button"
+                    key={`${media.url}-${index}`}
+                    $active={index === mediaIndex}
+                    onClick={() => setMediaIndex(index)}
+                  >
+                    {media.type === "video" ? (
+                      <ThumbnailVideoIcon>▶</ThumbnailVideoIcon>
+                    ) : (
+                      <ThumbnailImage src={media.url} alt="" />
+                    )}
+                  </ModalThumbnail>
+                ))}
+              </ModalThumbnails>
+            </>
+          )}
+
+          <ModalKeyboardHint onClick={(e) => e.stopPropagation()}>
+            <span>ESC</span> pour fermer
+            {medias.length > 1 && " • ← → pour naviguer"}
+          </ModalKeyboardHint>
+        </MediaModal>
+      )}
     </PageContainer>
   );
 };
@@ -2001,13 +1672,12 @@ const Precommande = () => {
 
 const PageContainer = styled.div`
   min-height: 100vh;
-  background:
-    radial-gradient(
-      circle at top,
-      #ffffff 0,
-      #f8f8f8 38%,
-      #f5f5f5 100%
-    );
+  background: radial-gradient(
+    circle at top,
+    #ffffff 0,
+    #f8f8f8 38%,
+    #f5f5f5 100%
+  );
   padding: 50px 25px 90px;
 
   @media (max-width: 600px) {
@@ -2076,8 +1746,7 @@ const ModelCard = styled.article`
 
   &:hover {
     transform: translateY(-5px);
-    box-shadow:
-      0 18px 45px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.08);
   }
 `;
 
@@ -2142,8 +1811,7 @@ const VideoCardBadge = styled.div`
   font-size: 10px;
   font-weight: 800;
 
-  box-shadow:
-    0 5px 18px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.12);
 
   span {
     font-size: 9px;
@@ -2231,8 +1899,7 @@ const StockMiniDot = styled.span`
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: ${(props) =>
-    props.$available ? "#32804a" : "#b33a3a"};
+  background: ${(props) => (props.$available ? "#32804a" : "#b33a3a")};
 `;
 
 const ActionButton = styled.button`
@@ -2330,8 +1997,7 @@ const MediaContainer = styled.div`
   border-radius: 24px;
   overflow: hidden;
 
-  box-shadow:
-    0 25px 70px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.12);
 `;
 
 const MainImage = styled.img`
@@ -2364,8 +2030,7 @@ const MediaExpandButton = styled.button`
   width: 42px;
   height: 42px;
 
-  border: 1px solid
-    rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.25);
 
   border-radius: 50%;
 
@@ -2391,8 +2056,7 @@ const MediaExpandButton = styled.button`
 const MediaArrow = styled.button`
   position: absolute;
 
-  ${(props) =>
-    props.$left ? "left: 15px;" : "right: 15px;"}
+  ${(props) => (props.$left ? "left: 15px;" : "right: 15px;")}
 
   top: 50%;
   transform: translateY(-50%);
@@ -2401,8 +2065,7 @@ const MediaArrow = styled.button`
   height: 42px;
 
   border-radius: 50%;
-  border: 1px solid
-    rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.22);
 
   background: rgba(0, 0, 0, 0.42);
   color: white;
@@ -2446,11 +2109,9 @@ const DotsContainer = styled.div`
 `;
 
 const Dot = styled.button`
-  width: ${(props) =>
-    props.$video ? "31px" : "9px"};
+  width: ${(props) => (props.$video ? "31px" : "9px")};
 
-  height: ${(props) =>
-    props.$video ? "31px" : "9px"};
+  height: ${(props) => (props.$video ? "31px" : "9px")};
 
   border-radius: 50%;
 
@@ -2469,8 +2130,7 @@ const Dot = styled.button`
   align-items: center;
   justify-content: center;
 
-  font-size: ${(props) =>
-    props.$video ? "10px" : "0"};
+  font-size: ${(props) => (props.$video ? "10px" : "0")};
 
   padding: 0;
   cursor: pointer;
@@ -2508,8 +2168,7 @@ const InformationSection = styled.div`
 
   border: 1px solid #ececec;
 
-  box-shadow:
-    0 15px 45px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.04);
 
   @media (max-width: 600px) {
     padding: 22px;
@@ -2642,15 +2301,11 @@ const ChoiceGrid = styled.div`
 `;
 
 const ChoiceButton = styled.button`
-  border: 1px solid
-    ${(props) =>
-      props.$active ? "#111" : "#dddddd"};
+  border: 1px solid ${(props) => (props.$active ? "#111" : "#dddddd")};
 
-  background: ${(props) =>
-    props.$active ? "#111" : "#fff"};
+  background: ${(props) => (props.$active ? "#111" : "#fff")};
 
-  color: ${(props) =>
-    props.$active ? "#fff" : "#333"};
+  color: ${(props) => (props.$active ? "#fff" : "#333")};
 
   padding: 11px 15px;
 
@@ -2679,8 +2334,7 @@ const ColorCircle = styled.span`
 
   background: currentColor;
 
-  border: 1px solid
-    rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(0, 0, 0, 0.15);
 `;
 
 const StockCard = styled.div`
@@ -2690,16 +2344,9 @@ const StockCard = styled.div`
 
   border-radius: 14px;
 
-  background: ${(props) =>
-    props.$available
-      ? "#f3f8f3"
-      : "#fff2f2"};
+  background: ${(props) => (props.$available ? "#f3f8f3" : "#fff2f2")};
 
-  border: 1px solid
-    ${(props) =>
-      props.$available
-        ? "#dceadc"
-        : "#f1d2d2"};
+  border: 1px solid ${(props) => (props.$available ? "#dceadc" : "#f1d2d2")};
 `;
 
 const StockTop = styled.div`
@@ -2731,10 +2378,7 @@ const StockNumber = styled.span`
   font-size: 24px;
   font-weight: 900;
 
-  color: ${(props) =>
-    props.$available
-      ? "#26733a"
-      : "#b33a3a"};
+  color: ${(props) => (props.$available ? "#26733a" : "#b33a3a")};
 `;
 
 const StockVariation = styled.div`
@@ -2902,12 +2546,7 @@ const DepotInfoBox = styled.div`
 
   border-radius: 15px;
 
-  background:
-    linear-gradient(
-      135deg,
-      #f8fafc,
-      #f3f5f7
-    );
+  background: linear-gradient(135deg, #f8fafc, #f3f5f7);
 `;
 
 const DepotInfoHeader = styled.div`
@@ -3065,12 +2704,9 @@ const PaymentGrid = styled.div`
 const PaymentButton = styled.button`
   position: relative;
 
-  border: 1px solid
-    ${(props) =>
-      props.$active ? "#111" : "#ddd"};
+  border: 1px solid ${(props) => (props.$active ? "#111" : "#ddd")};
 
-  background: ${(props) =>
-    props.$active ? "#f4f4f4" : "#fff"};
+  background: ${(props) => (props.$active ? "#f4f4f4" : "#fff")};
 
   border-radius: 12px;
 
@@ -3175,9 +2811,7 @@ const Input = styled.input`
   &:focus {
     border-color: #111;
 
-    box-shadow:
-      0 0 0 3px
-      rgba(17, 17, 17, 0.05);
+    box-shadow: 0 0 0 3px rgba(17, 17, 17, 0.05);
   }
 `;
 
@@ -3428,8 +3062,7 @@ const ButtonSpinner = styled.span`
   width: 18px;
   height: 18px;
 
-  border: 2px solid
-    rgba(255, 255, 255, 0.35);
+  border: 2px solid rgba(255, 255, 255, 0.35);
 
   border-top-color: white;
 
@@ -3455,12 +3088,11 @@ const MediaModal = styled.div`
 
   z-index: 99999;
 
-  background:
-    radial-gradient(
-      circle at center,
-      rgba(35, 35, 35, 0.98),
-      rgba(0, 0, 0, 0.99)
-    );
+  background: radial-gradient(
+    circle at center,
+    rgba(35, 35, 35, 0.98),
+    rgba(0, 0, 0, 0.99)
+  );
 
   display: flex;
 
@@ -3505,12 +3137,7 @@ const ModalTopBar = styled.div`
 
   gap: 20px;
 
-  background:
-    linear-gradient(
-      to bottom,
-      rgba(0, 0, 0, 0.75),
-      transparent
-    );
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.75), transparent);
 
   z-index: 20;
 `;
@@ -3547,8 +3174,7 @@ const ModalCloseButton = styled.button`
   width: 40px;
   height: 40px;
 
-  border: 1px solid
-    rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 
   border-radius: 50%;
 
@@ -3640,9 +3266,7 @@ const CustomVideoPlayer = styled.div`
 
   overflow: hidden;
 
-  box-shadow:
-    0 35px 100px
-    rgba(0, 0, 0, 0.55);
+  box-shadow: 0 35px 100px rgba(0, 0, 0, 0.55);
 
   animation: mediaAppear 0.25s ease;
 
@@ -3703,8 +3327,7 @@ const VideoOverlayPlay = styled.button`
 
   border-radius: 50%;
 
-  border: 1px solid
-    rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.3);
 
   background: rgba(0, 0, 0, 0.45);
 
@@ -3714,16 +3337,13 @@ const VideoOverlayPlay = styled.button`
 
   font-size: 23px;
 
-  padding-left: ${(props) =>
-    props.$visible ? "4px" : "0"};
+  padding-left: ${(props) => (props.$visible ? "4px" : "0")};
 
   cursor: pointer;
 
-  opacity: ${(props) =>
-    props.$visible ? 1 : 0};
+  opacity: ${(props) => (props.$visible ? 1 : 0)};
 
-  pointer-events: ${(props) =>
-    props.$visible ? "auto" : "none"};
+  pointer-events: ${(props) => (props.$visible ? "auto" : "none")};
 
   transition:
     opacity 0.25s ease,
@@ -3732,9 +3352,7 @@ const VideoOverlayPlay = styled.button`
   z-index: 5;
 
   &:hover {
-    transform:
-      translate(-50%, -50%)
-      scale(1.07);
+    transform: translate(-50%, -50%) scale(1.07);
 
     background: rgba(0, 0, 0, 0.65);
   }
@@ -3754,13 +3372,12 @@ const VideoControls = styled.div`
 
   padding: 20px 18px 15px;
 
-  background:
-    linear-gradient(
-      to top,
-      rgba(0, 0, 0, 0.82),
-      rgba(0, 0, 0, 0.25),
-      transparent
-    );
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.82),
+    rgba(0, 0, 0, 0.25),
+    transparent
+  );
 
   z-index: 10;
 `;
@@ -3787,7 +3404,7 @@ const VideoRange = styled.input`
   flex: 1;
 
   width: 100%;
-font-size: 16px;
+  font-size: 16px;
   height: 4px;
 
   appearance: none;
@@ -3812,8 +3429,7 @@ font-size: 16px;
 
     cursor: pointer;
 
-    box-shadow:
-      0 1px 7px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 1px 7px rgba(0, 0, 0, 0.35);
   }
 
   &::-moz-range-thumb {
@@ -3890,10 +3506,7 @@ const VideoControlTitle = styled.div`
 const ModalNavigation = styled.button`
   position: absolute;
 
-  ${(props) =>
-    props.$left
-      ? "left: 18px;"
-      : "right: 18px;"}
+  ${(props) => (props.$left ? "left: 18px;" : "right: 18px;")}
 
   top: 50%;
 
@@ -3904,8 +3517,7 @@ const ModalNavigation = styled.button`
 
   border-radius: 50%;
 
-  border: 1px solid
-    rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 
   background: rgba(255, 255, 255, 0.08);
 
@@ -3926,9 +3538,7 @@ const ModalNavigation = styled.button`
   &:hover {
     background: rgba(255, 255, 255, 0.18);
 
-    transform:
-      translateY(-50%)
-      scale(1.05);
+    transform: translateY(-50%) scale(1.05);
   }
 
   @media (max-width: 700px) {
@@ -3937,10 +3547,7 @@ const ModalNavigation = styled.button`
 
     font-size: 30px;
 
-    ${(props) =>
-      props.$left
-        ? "left: 7px;"
-        : "right: 7px;"}
+    ${(props) => (props.$left ? "left: 7px;" : "right: 7px;")}
   }
 `;
 
@@ -3986,17 +3593,13 @@ const ModalThumbnail = styled.button`
   border-radius: 7px;
 
   border: 2px solid
-    ${(props) =>
-      props.$active
-        ? "#fff"
-        : "rgba(255,255,255,0.2)"};
+    ${(props) => (props.$active ? "#fff" : "rgba(255,255,255,0.2)")};
 
   background: #151515;
 
   cursor: pointer;
 
-  opacity: ${(props) =>
-    props.$active ? 1 : 0.65};
+  opacity: ${(props) => (props.$active ? 1 : 0.65)};
 
   transition: 0.2s;
 
@@ -4026,12 +3629,7 @@ const ThumbnailVideoIcon = styled.div`
 
   font-size: 14px;
 
-  background:
-    radial-gradient(
-      circle,
-      #333,
-      #111
-    );
+  background: radial-gradient(circle, #333, #111);
 `;
 
 const ModalKeyboardHint = styled.div`
@@ -4056,8 +3654,7 @@ const ModalKeyboardHint = styled.div`
 
     padding: 3px 5px;
 
-    border: 1px solid
-      rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.18);
 
     border-radius: 4px;
 
