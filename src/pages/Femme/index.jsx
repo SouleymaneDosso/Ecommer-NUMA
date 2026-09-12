@@ -1,9 +1,4 @@
-import React, {
-  useState,
-  useEffect,
-  useMemo,
-  useContext,
-} from "react";
+import React, { useState, useEffect, useMemo, useContext } from "react";
 import styled, { keyframes } from "styled-components";
 import {
   FiHeart,
@@ -52,11 +47,9 @@ const PageWrapper = styled.main`
   min-height: 100vh;
   box-sizing: border-box;
 
-  background: ${({ $isdark }) =>
-    $isdark ? "#0d0d0d" : "#f8f7f4"};
+  background: ${({ $isdark }) => ($isdark ? "#0d0d0d" : "#f8f7f4")};
 
-  color: ${({ $isdark }) =>
-    $isdark ? "#fff" : "#111"};
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
 
   padding: 2.5rem 4% 5rem;
 
@@ -109,8 +102,7 @@ const Eyebrow = styled.span`
 
   text-transform: uppercase;
 
-  color: ${({ $isdark }) =>
-    $isdark ? "#999" : "#888"};
+  color: ${({ $isdark }) => ($isdark ? "#999" : "#888")};
 `;
 
 const PageTitle = styled.h1`
@@ -163,8 +155,7 @@ const SearchIcon = styled(FiSearch)`
 
   transform: translateY(-50%);
 
-  color: ${({ $isdark }) =>
-    $isdark ? "#aaa" : "#777"};
+  color: ${({ $isdark }) => ($isdark ? "#aaa" : "#777")};
 
   pointer-events: none;
 `;
@@ -177,15 +168,11 @@ const SearchInput = styled.input`
 
   padding: 0 12px 0 38px;
 
-  border: 1px solid
-    ${({ $isdark }) =>
-      $isdark ? "#333" : "#dedcd7"};
+  border: 1px solid ${({ $isdark }) => ($isdark ? "#333" : "#dedcd7")};
 
-  background: ${({ $isdark }) =>
-    $isdark ? "#151515" : "#fff"};
+  background: ${({ $isdark }) => ($isdark ? "#151515" : "#fff")};
 
-  color: ${({ $isdark }) =>
-    $isdark ? "#fff" : "#111"};
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
 
   outline: none;
 
@@ -194,8 +181,7 @@ const SearchInput = styled.input`
   transition: border 0.2s ease;
 
   &:focus {
-    border-color: ${({ $isdark }) =>
-      $isdark ? "#777" : "#111"};
+    border-color: ${({ $isdark }) => ($isdark ? "#777" : "#111")};
   }
 
   &::placeholder {
@@ -215,8 +201,7 @@ const FilterWrapper = styled.div`
 
   padding: 4px;
 
-  background: ${({ $isdark }) =>
-    $isdark ? "#151515" : "#eeece8"};
+  background: ${({ $isdark }) => ($isdark ? "#151515" : "#eeece8")};
 
   border-radius: 30px;
 
@@ -243,20 +228,10 @@ const FilterButton = styled.button`
   padding: 8px 14px;
 
   background: ${({ $active, $isdark }) =>
-    $active
-      ? $isdark
-        ? "#fff"
-        : "#111"
-      : "transparent"};
+    $active ? ($isdark ? "#fff" : "#111") : "transparent"};
 
   color: ${({ $active, $isdark }) =>
-    $active
-      ? $isdark
-        ? "#111"
-        : "#fff"
-      : $isdark
-        ? "#aaa"
-        : "#555"};
+    $active ? ($isdark ? "#111" : "#fff") : $isdark ? "#aaa" : "#555"};
 
   font-size: 0.62rem;
 
@@ -269,8 +244,7 @@ const FilterButton = styled.button`
   transition: all 0.25s ease;
 
   &:hover {
-    color: ${({ $isdark }) =>
-      $isdark ? "#fff" : "#111"};
+    color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
   }
 `;
 
@@ -291,15 +265,11 @@ const Select = styled.select`
 
   padding: 0 35px 0 13px;
 
-  border: 1px solid
-    ${({ $isdark }) =>
-      $isdark ? "#333" : "#dedcd7"};
+  border: 1px solid ${({ $isdark }) => ($isdark ? "#333" : "#dedcd7")};
 
-  background: ${({ $isdark }) =>
-    $isdark ? "#151515" : "#fff"};
+  background: ${({ $isdark }) => ($isdark ? "#151515" : "#fff")};
 
-  color: ${({ $isdark }) =>
-    $isdark ? "#fff" : "#111"};
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
 
   font-size: 0.72rem;
 
@@ -330,21 +300,18 @@ const SelectIcon = styled(FiChevronDown)`
 const Grid = styled.div`
   display: grid;
 
-  grid-template-columns:
-    repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 
   gap: 1.8rem 1rem;
 
   @media (min-width: 700px) {
-    grid-template-columns:
-      repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
 
     gap: 2.2rem 1.2rem;
   }
 
   @media (min-width: 1150px) {
-    grid-template-columns:
-      repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
 
     gap: 2.8rem 1.4rem;
   }
@@ -365,8 +332,7 @@ const ProductCard = styled.article`
 
   animation: ${fadeUp} 0.55s ease both;
 
-  transition:
-    transform 0.35s ease;
+  transition: transform 0.35s ease;
 
   &:hover {
     transform: translateY(-6px);
@@ -392,8 +358,7 @@ const ImageWrapper = styled.div`
 
   overflow: hidden;
 
-  background: ${({ $isdark }) =>
-    $isdark ? "#191919" : "#ebe9e4"};
+  background: ${({ $isdark }) => ($isdark ? "#191919" : "#ebe9e4")};
 `;
 
 const ProductImage = styled.img`
@@ -406,8 +371,7 @@ const ProductImage = styled.img`
 
   object-fit: cover;
 
-  opacity: ${({ $active }) =>
-    $active ? 1 : 0};
+  opacity: ${({ $active }) => ($active ? 1 : 0)};
 
   transition:
     opacity 0.5s ease,
@@ -442,9 +406,7 @@ const Badge = styled.div`
   padding: 6px 9px;
 
   background: ${({ $isdark }) =>
-    $isdark
-      ? "rgba(255,255,255,.95)"
-      : "rgba(255,255,255,.9)"};
+    $isdark ? "rgba(255,255,255,.95)" : "rgba(255,255,255,.9)"};
 
   color: #111;
 
@@ -485,15 +447,13 @@ const FavoriteButton = styled.button`
   align-items: center;
   justify-content: center;
 
-  border: 1px solid
-    rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.35);
 
   border-radius: 50%;
 
   background: rgba(255, 255, 255, 0.92);
 
-  color: ${({ $favorite }) =>
-    $favorite ? "#111" : "#777"};
+  color: ${({ $favorite }) => ($favorite ? "#111" : "#777")};
 
   cursor: pointer;
 
@@ -548,8 +508,7 @@ const ProductTitle = styled.h2`
 
   letter-spacing: 0.1px;
 
-  color: ${({ $isdark }) =>
-    $isdark ? "#fff" : "#111"};
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
 
   display: -webkit-box;
 
@@ -573,8 +532,7 @@ const ProductPrice = styled.div`
 
   letter-spacing: 0.2px;
 
-  color: ${({ $isdark }) =>
-    $isdark ? "#ddd" : "#222"};
+  color: ${({ $isdark }) => ($isdark ? "#ddd" : "#222")};
 
   @media (max-width: 600px) {
     font-size: 0.7rem;
@@ -599,8 +557,7 @@ const Gadget = styled.span`
 
   text-transform: uppercase;
 
-  color: ${({ $isdark }) =>
-    $isdark ? "#aaa" : "#888"};
+  color: ${({ $isdark }) => ($isdark ? "#aaa" : "#888")};
 
   white-space: nowrap;
 
@@ -620,10 +577,7 @@ const Validation = styled.div`
 
   font-weight: 600;
 
-  color: ${({ $disponible }) =>
-    $disponible
-      ? "#23804b"
-      : "#b83232"};
+  color: ${({ $disponible }) => ($disponible ? "#23804b" : "#b83232")};
 
   @media (max-width: 600px) {
     font-size: 0.48rem;
@@ -641,14 +595,11 @@ const LoadMore = styled.button`
 
   padding: 13px 35px;
 
-  border: 1px solid
-    ${({ $isdark }) =>
-      $isdark ? "#fff" : "#111"};
+  border: 1px solid ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
 
   background: transparent;
 
-  color: ${({ $isdark }) =>
-    $isdark ? "#fff" : "#111"};
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
 
   font-size: 0.65rem;
 
@@ -665,11 +616,9 @@ const LoadMore = styled.button`
     color 0.25s ease;
 
   &:hover {
-    background: ${({ $isdark }) =>
-      $isdark ? "#fff" : "#111"};
+    background: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
 
-    color: ${({ $isdark }) =>
-      $isdark ? "#111" : "#fff"};
+    color: ${({ $isdark }) => ($isdark ? "#111" : "#fff")};
   }
 `;
 
@@ -682,12 +631,7 @@ const SkeletonCard = styled.div`
 
   min-height: 60vh;
 
-  background: linear-gradient(
-    90deg,
-    #eee 0%,
-    #ddd 50%,
-    #eee 100%
-  );
+  background: linear-gradient(90deg, #eee 0%, #ddd 50%, #eee 100%);
 
   background-size: 800px 100%;
 
@@ -705,8 +649,7 @@ const ModalOverlay = styled.div`
 
   padding: 1rem;
 
-  display: ${({ $show }) =>
-    $show ? "flex" : "none"};
+  display: ${({ $show }) => ($show ? "flex" : "none")};
 
   align-items: center;
   justify-content: center;
@@ -782,47 +725,29 @@ export default function Femme() {
 
   const [products, setProducts] = useState([]);
   const [favorites, setFavorites] = useState([]);
-  const [imageIndexes, setImageIndexes] =
-    useState({});
+  const [imageIndexes, setImageIndexes] = useState({});
 
-  const [filter, setFilter] =
-    useState("tout");
+  const [filter, setFilter] = useState("tout");
 
-  const [sort, setSort] =
-    useState("default");
+  const [sort, setSort] = useState("default");
 
-  const [search, setSearch] =
-    useState("");
+  const [search, setSearch] = useState("");
 
-  const [loading, setLoading] =
-    useState(true);
+  const [loading, setLoading] = useState(true);
 
-  const [limit, setLimit] =
-    useState(12);
+  const [limit, setLimit] = useState(12);
 
-  const [showModal, setShowModal] =
-    useState(false);
+  const [showModal, setShowModal] = useState(false);
 
-  const token =
-    localStorage.getItem("token");
+  const token = localStorage.getItem("token");
 
   /* =========================================================
      STOCK
   ========================================================= */
 
-  const calculStock = (
-    stockParVariation = {}
-  ) => {
-    return Object.values(
-      stockParVariation
-    ).reduce((total, tailles) => {
-      return (
-        total +
-        Object.values(tailles).reduce(
-          (n, v) => n + Number(v),
-          0
-        )
-      );
+  const calculStock = (stockParVariation = {}) => {
+    return Object.values(stockParVariation).reduce((total, tailles) => {
+      return total + Object.values(tailles).reduce((n, v) => n + Number(v), 0);
     }, 0);
   };
 
@@ -833,16 +758,14 @@ export default function Femme() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/produits`
-        );
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits`);
 
         const data = await res.json();
-
         const valid = data.filter(
           (p) =>
             p.images?.length &&
-            p.genre === "femme"
+            p.genre?.toLowerCase() === "femme" &&
+            !(p.precommande === true && p.disponible === false),
         );
 
         setProducts(valid);
@@ -850,23 +773,14 @@ export default function Femme() {
         const indexes = {};
 
         valid.forEach((p) => {
-          const mainIndex =
-            p.images.findIndex(
-              (img) => img.isMain
-            );
+          const mainIndex = p.images.findIndex((img) => img.isMain);
 
-          indexes[p._id] =
-            mainIndex >= 0
-              ? mainIndex
-              : 0;
+          indexes[p._id] = mainIndex >= 0 ? mainIndex : 0;
         });
 
         setImageIndexes(indexes);
 
-        setTimeout(
-          () => setLoading(false),
-          500
-        );
+        setTimeout(() => setLoading(false), 500);
       } catch (error) {
         console.error(error);
 
@@ -884,25 +798,14 @@ export default function Femme() {
   useEffect(() => {
     if (!token) return;
 
-    fetch(
-      `${import.meta.env.VITE_API_URL}/api/favorites`,
-      {
-        headers: {
-          Authorization:
-            `Bearer ${token}`,
-        },
-      }
-    )
+    fetch(`${import.meta.env.VITE_API_URL}/api/favorites`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
       .then((res) => res.json())
       .then((data) => {
-        setFavorites(
-          data
-            .map(
-              (f) =>
-                f.productId?._id
-            )
-            .filter(Boolean)
-        );
+        setFavorites(data.map((f) => f.productId?._id).filter(Boolean));
       })
       .catch(console.error);
   }, [token]);
@@ -920,40 +823,28 @@ export default function Femme() {
           method: "POST",
 
           headers: {
-            "Content-Type":
-              "application/json",
+            "Content-Type": "application/json",
 
-            Authorization:
-              `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
 
           body: JSON.stringify({
             productId: id,
           }),
-        }
+        },
       );
 
       const data = await res.json();
 
       if (res.ok) {
         if (data.active) {
-          setFavorites((prev) => [
-            ...prev,
-            id,
-          ]);
+          setFavorites((prev) => [...prev, id]);
         } else {
-          setFavorites((prev) =>
-            prev.filter(
-              (f) => f !== id
-            )
-          );
+          setFavorites((prev) => prev.filter((f) => f !== id));
         }
       }
     } catch (error) {
-      console.error(
-        "Erreur favoris :",
-        error
-      );
+      console.error("Erreur favoris :", error);
     }
   };
 
@@ -971,20 +862,16 @@ export default function Femme() {
         };
 
         products.forEach((p) => {
-          if (!p.images?.length)
-            return;
+          if (!p.images?.length) return;
 
-          updated[p._id] =
-            ((prev[p._id] || 0) + 1) %
-            p.images.length;
+          updated[p._id] = ((prev[p._id] || 0) + 1) % p.images.length;
         });
 
         return updated;
       });
     }, 3200);
 
-    return () =>
-      clearInterval(interval);
+    return () => clearInterval(interval);
   }, [products]);
 
   /* =========================================================
@@ -995,51 +882,28 @@ export default function Femme() {
     let filtered =
       filter === "tout"
         ? products
-        : products.filter(
-            (p) =>
-              p.categorie
-                ?.toLowerCase()
-                .trim() === filter
-          );
+        : products.filter((p) => p.categorie?.toLowerCase().trim() === filter);
 
     if (search.trim()) {
-      filtered =
-        filtered.filter((p) =>
-          p.title
-            ?.toLowerCase()
-            .includes(
-              search.toLowerCase()
-            )
-        );
+      filtered = filtered.filter((p) =>
+        p.title?.toLowerCase().includes(search.toLowerCase()),
+      );
     }
 
     if (sort === "asc") {
       filtered = [...filtered].sort(
-        (a, b) =>
-          Number(a.price) -
-          Number(b.price)
+        (a, b) => Number(a.price) - Number(b.price),
       );
     }
 
     if (sort === "desc") {
       filtered = [...filtered].sort(
-        (a, b) =>
-          Number(b.price) -
-          Number(a.price)
+        (a, b) => Number(b.price) - Number(a.price),
       );
     }
 
-    return filtered.slice(
-      0,
-      limit
-    );
-  }, [
-    products,
-    filter,
-    sort,
-    search,
-    limit,
-  ]);
+    return filtered.slice(0, limit);
+  }, [products, filter, sort, search, limit]);
 
   /* =========================================================
      LOADING
@@ -1055,65 +919,40 @@ export default function Femme() {
 
   return (
     <PageWrapper $isdark={$isdark}>
-
       {/* HEADER */}
 
       <PageHeader>
-
         <TitleArea>
-          <Eyebrow $isdark={$isdark}>
-            Collection 2026
-          </Eyebrow>
+          <Eyebrow $isdark={$isdark}>Collection 2026</Eyebrow>
 
-          <PageTitle>
-            Femme
-          </PageTitle>
+          <PageTitle>Femme</PageTitle>
         </TitleArea>
 
         <ControlsWrapper>
-
           {/* SEARCH */}
 
           <SearchBox>
-            <SearchIcon
-              $isdark={$isdark}
-            />
+            <SearchIcon $isdark={$isdark} />
 
             <SearchInput
               $isdark={$isdark}
               placeholder="Rechercher une pièce..."
               value={search}
-              onChange={(e) =>
-                setSearch(
-                  e.target.value
-                )
-              }
+              onChange={(e) => setSearch(e.target.value)}
             />
           </SearchBox>
 
           {/* FILTRES */}
 
           <FilterWrapper>
-            {[
-              "tout",
-              "haut",
-              "bas",
-              "robe",
-              "chaussure",
-            ].map((cat) => (
+            {["tout", "haut", "bas", "robe", "chaussure"].map((cat) => (
               <FilterButton
                 key={cat}
-                $active={
-                  filter === cat
-                }
+                $active={filter === cat}
                 $isdark={$isdark}
-                onClick={() =>
-                  setFilter(cat)
-                }
+                onClick={() => setFilter(cat)}
               >
-                {cat === "tout"
-                  ? "Tout"
-                  : cat}
+                {cat === "tout" ? "Tout" : cat}
               </FilterButton>
             ))}
           </FilterWrapper>
@@ -1124,158 +963,91 @@ export default function Femme() {
             <Select
               $isdark={$isdark}
               value={sort}
-              onChange={(e) =>
-                setSort(
-                  e.target.value
-                )
-              }
+              onChange={(e) => setSort(e.target.value)}
             >
-              <option value="default">
-                Trier
-              </option>
+              <option value="default">Trier</option>
 
-              <option value="asc">
-                Prix croissant
-              </option>
+              <option value="asc">Prix croissant</option>
 
-              <option value="desc">
-                Prix décroissant
-              </option>
+              <option value="desc">Prix décroissant</option>
             </Select>
 
             <SelectIcon />
           </SortBox>
-
         </ControlsWrapper>
-
       </PageHeader>
 
       {/* PRODUITS */}
 
       <Grid>
         {filteredProducts.map((p) => {
-          const isFav =
-            favorites.includes(
-              p._id
-            );
+          const isFav = favorites.includes(p._id);
 
-          const totalStock =
-            calculStock(
-              p.stockParVariation
-            );
+          const totalStock = calculStock(p.stockParVariation);
 
           return (
             <ProductCard
               key={p._id}
-              onClick={() =>
-                navigate(
-                  `/produit/${p._id}`
-                )
-              }
+              onClick={() => navigate(`/produit/${p._id}`)}
             >
-
               {/* IMAGE */}
 
-              <ImageWrapper
-                $isdark={$isdark}
-              >
-
-                {p.images.map(
-                  (img, index) => (
-                    <ProductImage
-                      key={index}
-                      src={img.url}
-                      alt={p.title}
-                      loading="lazy"
-                      $active={
-                        imageIndexes[
-                          p._id
-                        ] === index
-                      }
-                    />
-                  )
-                )}
+              <ImageWrapper $isdark={$isdark}>
+                {p.images.map((img, index) => (
+                  <ProductImage
+                    key={index}
+                    src={img.url}
+                    alt={p.title}
+                    loading="lazy"
+                    $active={imageIndexes[p._id] === index}
+                  />
+                ))}
 
                 <ImageShade />
 
-                {p.badge && (
-                  <Badge
-                    $isdark={$isdark}
-                  >
-                    {p.badge}
-                  </Badge>
-                )}
+                {p.badge && <Badge $isdark={$isdark}>{p.badge}</Badge>}
 
                 <FavoriteButton
                   $favorite={isFav}
                   onClick={(e) => {
                     e.stopPropagation();
 
-                    toggleFavorite(
-                      p._id
-                    );
+                    toggleFavorite(p._id);
                   }}
                   aria-label="Ajouter aux favoris"
                 >
-                  {isFav ? (
-                    <FaHeart />
-                  ) : (
-                    <FiHeart />
-                  )}
+                  {isFav ? <FaHeart /> : <FiHeart />}
                 </FavoriteButton>
-
               </ImageWrapper>
 
               {/* INFOS */}
 
               <CardContent>
-
                 <ProductTop>
-                  <ProductTitle
-                    $isdark={$isdark}
-                  >
-                    {p.title}
-                  </ProductTitle>
+                  <ProductTitle $isdark={$isdark}>{p.title}</ProductTitle>
                 </ProductTop>
 
-                <ProductPrice
-                  $isdark={$isdark}
-                >
-                  {Number(
-                    p.price
-                  ).toLocaleString()}{" "}
-                  FCFA
+                <ProductPrice $isdark={$isdark}>
+                  {Number(p.price).toLocaleString()} FCFA
                 </ProductPrice>
 
                 <ProductMeta>
-
                   {p.gadget ? (
-                    <Gadget
-                      $isdark={$isdark}
-                    >
-                      {p.gadget}
-                    </Gadget>
+                    <Gadget $isdark={$isdark}>{p.gadget}</Gadget>
                   ) : (
                     <span />
                   )}
 
-                  <Validation
-                    $disponible={
-                      totalStock > 0
-                    }
-                  >
-                    {totalStock >
-                    10 ? (
+                  <Validation $disponible={totalStock > 0}>
+                    {totalStock > 10 ? (
                       <>
                         <FiCheckCircle />
                         En stock
                       </>
-                    ) : totalStock >
-                      0 ? (
+                    ) : totalStock > 0 ? (
                       <>
                         <FiAlertCircle />
-                        Plus que{" "}
-                        {totalStock}
+                        Plus que {totalStock}
                       </>
                     ) : (
                       <>
@@ -1284,11 +1056,8 @@ export default function Femme() {
                       </>
                     )}
                   </Validation>
-
                 </ProductMeta>
-
               </CardContent>
-
             </ProductCard>
           );
         })}
@@ -1296,16 +1065,10 @@ export default function Femme() {
 
       {/* VOIR PLUS */}
 
-      {filteredProducts.length >=
-        limit && (
+      {filteredProducts.length >= limit && (
         <LoadMore
           $isdark={$isdark}
-          onClick={() =>
-            setLimit(
-              (prev) =>
-                prev + 12
-            )
-          }
+          onClick={() => setLimit((prev) => prev + 12)}
         >
           Voir plus
         </LoadMore>
@@ -1313,20 +1076,11 @@ export default function Femme() {
 
       {/* MODAL */}
 
-      <ModalOverlay
-        $show={showModal}
-      >
+      <ModalOverlay $show={showModal}>
         <ModalContent>
+          <h2>Connexion requise</h2>
 
-          <h2>
-            Connexion requise
-          </h2>
-
-          <p>
-            Vous devez être connecté
-            pour ajouter un produit à
-            vos favoris.
-          </p>
+          <p>Vous devez être connecté pour ajouter un produit à vos favoris.</p>
 
           <ModalButton
             onClick={() => {
@@ -1336,10 +1090,8 @@ export default function Femme() {
           >
             Se connecter
           </ModalButton>
-
         </ModalContent>
       </ModalOverlay>
-
     </PageWrapper>
   );
 }

@@ -56,11 +56,7 @@ const shimmer = keyframes`
 const PageWrapper = styled.main`
   min-height: 100vh;
   background:
-    radial-gradient(
-      circle at 15% 10%,
-      rgba(0, 0, 0, 0.035),
-      transparent 28%
-    ),
+    radial-gradient(circle at 15% 10%, rgba(0, 0, 0, 0.035), transparent 28%),
     #f7f6f3;
   color: #111;
   padding: 0 0 100px;
@@ -219,8 +215,7 @@ const FilterButton = styled.button`
   align-items: center;
   gap: 7px;
   padding: 10px 15px;
-  border: 1px solid
-    ${({ $active }) => ($active ? "#111" : "rgba(0,0,0,0.1)")};
+  border: 1px solid ${({ $active }) => ($active ? "#111" : "rgba(0,0,0,0.1)")};
   background: ${({ $active }) => ($active ? "#111" : "transparent")};
   color: ${({ $active }) => ($active ? "#fff" : "#555")};
   border-radius: 999px;
@@ -399,14 +394,13 @@ const BannerImage = styled.img`
 const BannerOverlay = styled.div`
   position: absolute;
   inset: 0;
-  background:
-    linear-gradient(
-      90deg,
-      rgba(0, 0, 0, 0.78) 0%,
-      rgba(0, 0, 0, 0.42) 38%,
-      rgba(0, 0, 0, 0.08) 75%,
-      rgba(0, 0, 0, 0.18) 100%
-    );
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.78) 0%,
+    rgba(0, 0, 0, 0.42) 38%,
+    rgba(0, 0, 0, 0.08) 75%,
+    rgba(0, 0, 0, 0.18) 100%
+  );
 `;
 
 const BannerText = styled.div`
@@ -494,8 +488,7 @@ const Dot = styled.button`
   height: 4px;
   border: none;
   padding: 0;
-  background: ${({ $active }) =>
-    $active ? "#fff" : "rgba(255,255,255,0.35)"};
+  background: ${({ $active }) => ($active ? "#fff" : "rgba(255,255,255,0.35)")};
   cursor: pointer;
   transition: all 0.3s ease;
 `;
@@ -621,8 +614,7 @@ const ProductDots = styled.div`
 const ProductDot = styled.div`
   width: ${({ $active }) => ($active ? "19px" : "6px")};
   height: 3px;
-  background: ${({ $active }) =>
-    $active ? "#fff" : "rgba(255,255,255,0.6)"};
+  background: ${({ $active }) => ($active ? "#fff" : "rgba(255,255,255,0.6)")};
   transition: all 0.25s ease;
 `;
 
@@ -738,12 +730,7 @@ const SkeletonGrid = styled.div`
 
 const SkeletonCard = styled.div`
   aspect-ratio: 0.78;
-  background: linear-gradient(
-    90deg,
-    #e7e6e3 0%,
-    #f3f2ef 50%,
-    #e7e6e3 100%
-  );
+  background: linear-gradient(90deg, #e7e6e3 0%, #f3f2ef 50%, #e7e6e3 100%);
   background-size: 500px 100%;
   animation: ${shimmer} 1.3s infinite linear;
 `;
@@ -772,14 +759,16 @@ export default function Collection() {
   useEffect(() => {
     async function fetchProducts() {
       try {
-        const res = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/produits`
-        );
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits`);
 
         const data = await res.json();
 
         const validProducts = Array.isArray(data)
-          ? data.filter((p) => p.images?.length)
+          ? data.filter(
+              (p) =>
+                p.images?.length &&
+                !(p.precommande === true && p.disponible === false),
+            )
           : [];
 
         setProducts(validProducts);
@@ -844,9 +833,7 @@ export default function Collection() {
 
     if (!element) return;
 
-    const index = Math.round(
-      element.scrollLeft / element.clientWidth
-    );
+    const index = Math.round(element.scrollLeft / element.clientWidth);
 
     setImageIndexes((prev) => ({
       ...prev,
@@ -860,11 +847,7 @@ export default function Collection() {
 
   const genres = useMemo(() => {
     const uniqueGenres = [
-      ...new Set(
-        products
-          .map((p) => p.genre)
-          .filter(Boolean)
-      ),
+      ...new Set(products.map((p) => p.genre).filter(Boolean)),
     ];
 
     return ["Tous", ...uniqueGenres];
@@ -878,38 +861,26 @@ export default function Collection() {
     let result =
       genreFilter === "Tous"
         ? [...products]
-        : products.filter(
-            (p) => p.genre === genreFilter
-          );
+        : products.filter((p) => p.genre === genreFilter);
 
     switch (sortBy) {
       case "price-asc":
-        result.sort(
-          (a, b) =>
-            Number(a.price) - Number(b.price)
-        );
+        result.sort((a, b) => Number(a.price) - Number(b.price));
         break;
 
       case "price-desc":
-        result.sort(
-          (a, b) =>
-            Number(b.price) - Number(a.price)
-        );
+        result.sort((a, b) => Number(b.price) - Number(a.price));
         break;
 
       case "title-asc":
         result.sort((a, b) =>
-          String(a.title || "").localeCompare(
-            String(b.title || "")
-          )
+          String(a.title || "").localeCompare(String(b.title || "")),
         );
         break;
 
       case "title-desc":
         result.sort((a, b) =>
-          String(b.title || "").localeCompare(
-            String(a.title || "")
-          )
+          String(b.title || "").localeCompare(String(a.title || "")),
         );
         break;
 
@@ -948,9 +919,7 @@ export default function Collection() {
                 <span>Collection</span>
               </Eyebrow>
 
-              <CollectionTitle>
-                Collection
-              </CollectionTitle>
+              <CollectionTitle>Collection</CollectionTitle>
             </IntroLeft>
           </Intro>
 
@@ -971,7 +940,6 @@ export default function Collection() {
   return (
     <PageWrapper>
       <PageInner>
-
         {/* =================================================
             INTRO
         ================================================= */}
@@ -982,14 +950,11 @@ export default function Collection() {
               <span>Maison Numa — Collection</span>
             </Eyebrow>
 
-            <CollectionTitle>
-              Collection
-            </CollectionTitle>
+            <CollectionTitle>Collection</CollectionTitle>
 
             <CollectionSub>
-              Des pièces pensées pour construire une
-              silhouette forte, élégante et immédiatement
-              reconnaissable.
+              Des pièces pensées pour construire une silhouette forte, élégante
+              et immédiatement reconnaissable.
             </CollectionSub>
           </IntroLeft>
 
@@ -1018,36 +983,22 @@ export default function Collection() {
           </FilterScroll>
 
           <ToolbarRight>
-            <CountBadge>
-              {filteredProducts.length} produits
-            </CountBadge>
+            <CountBadge>{filteredProducts.length} produits</CountBadge>
 
             <SortWrapper>
               <SortSelect
                 value={sortBy}
-                onChange={(e) =>
-                  setSortBy(e.target.value)
-                }
+                onChange={(e) => setSortBy(e.target.value)}
               >
-                <option value="default">
-                  Trier par
-                </option>
+                <option value="default">Trier par</option>
 
-                <option value="price-asc">
-                  Prix croissant
-                </option>
+                <option value="price-asc">Prix croissant</option>
 
-                <option value="price-desc">
-                  Prix décroissant
-                </option>
+                <option value="price-desc">Prix décroissant</option>
 
-                <option value="title-asc">
-                  Nom A → Z
-                </option>
+                <option value="title-asc">Nom A → Z</option>
 
-                <option value="title-desc">
-                  Nom Z → A
-                </option>
+                <option value="title-desc">Nom Z → A</option>
               </SortSelect>
 
               <SortIcon size={15} />
@@ -1061,171 +1012,115 @@ export default function Collection() {
 
         {filteredProducts.length === 0 ? (
           <EmptyState>
-            <strong>
-              Aucun produit trouvé
-            </strong>
+            <strong>Aucun produit trouvé</strong>
 
-            <span>
-              Essayez une autre catégorie.
-            </span>
+            <span>Essayez une autre catégorie.</span>
           </EmptyState>
         ) : (
           <Grid>
             {filteredProducts.map((product, index) => (
               <Fragment key={product._id}>
-
                 {/* =========================================
                     BANNER
                 ========================================= */}
 
-                {index === 2 &&
-                  bannerImages.length > 0 && (
-                    <BannerCard>
-                      <BannerWrapper ref={bannerRef}>
-                        {bannerImages.map((image, i) => (
-                          <BannerSlide key={i}>
-                            <BannerImage
-                              src={image.url}
-                              alt={`Collection ${i + 1}`}
-                            />
-
-                            <BannerOverlay />
-
-                            <BannerText>
-                              <BannerLabel>
-                                Nouvelle saison
-                              </BannerLabel>
-
-                              <BannerTitle>
-                                Dress to impress.
-                              </BannerTitle>
-
-                              <BannerDesc>
-                                Une collection pensée pour
-                                celles et ceux qui veulent
-                                une allure forte, propre et
-                                remarquable.
-                              </BannerDesc>
-                            </BannerText>
-                          </BannerSlide>
-                        ))}
-                      </BannerWrapper>
-
-                      <Dots>
-                        {bannerImages.map((_, i) => (
-                          <Dot
-                            key={i}
-                            $active={
-                              i === activeSlide
-                            }
-                            onClick={() => {
-                              setActiveSlide(i);
-
-                              bannerRef.current?.scrollTo(
-                                {
-                                  left:
-                                    i *
-                                    bannerRef.current
-                                      .clientWidth,
-                                  behavior: "smooth",
-                                }
-                              );
-                            }}
+                {index === 2 && bannerImages.length > 0 && (
+                  <BannerCard>
+                    <BannerWrapper ref={bannerRef}>
+                      {bannerImages.map((image, i) => (
+                        <BannerSlide key={i}>
+                          <BannerImage
+                            src={image.url}
+                            alt={`Collection ${i + 1}`}
                           />
-                        ))}
-                      </Dots>
-                    </BannerCard>
-                  )}
+
+                          <BannerOverlay />
+
+                          <BannerText>
+                            <BannerLabel>Nouvelle saison</BannerLabel>
+
+                            <BannerTitle>Dress to impress.</BannerTitle>
+
+                            <BannerDesc>
+                              Une collection pensée pour celles et ceux qui
+                              veulent une allure forte, propre et remarquable.
+                            </BannerDesc>
+                          </BannerText>
+                        </BannerSlide>
+                      ))}
+                    </BannerWrapper>
+
+                    <Dots>
+                      {bannerImages.map((_, i) => (
+                        <Dot
+                          key={i}
+                          $active={i === activeSlide}
+                          onClick={() => {
+                            setActiveSlide(i);
+
+                            bannerRef.current?.scrollTo({
+                              left: i * bannerRef.current.clientWidth,
+                              behavior: "smooth",
+                            });
+                          }}
+                        />
+                      ))}
+                    </Dots>
+                  </BannerCard>
+                )}
 
                 {/* =========================================
                     PRODUCT
                 ========================================= */}
 
                 <ProductCard
-                  onClick={() =>
-                    navigate(
-                      `/produit/${product._id}`
-                    )
-                  }
+                  onClick={() => navigate(`/produit/${product._id}`)}
                 >
                   <ImageArea>
-
-                    <Badge>
-                      {getBadgeText(
-                        index,
-                        product
-                      )}
-                    </Badge>
+                    <Badge>{getBadgeText(index, product)}</Badge>
 
                     <ProductArrow>
-                      <FiArrowUpRight
-                        size={18}
-                      />
+                      <FiArrowUpRight size={18} />
                     </ProductArrow>
 
                     <ProductCarousel
                       ref={(element) => {
-                        carouselRefs.current[
-                          product._id
-                        ] = element;
+                        carouselRefs.current[product._id] = element;
                       }}
-                      onScroll={() =>
-                        handleProductScroll(
-                          product._id
-                        )
-                      }
+                      onScroll={() => handleProductScroll(product._id)}
                     >
-                      {product.images?.map(
-                        (image, imageIndex) => (
-                          <ProductSlide
-                            key={imageIndex}
-                          >
-                            <ProductImage
-                              src={image.url}
-                              alt={product.title}
-                              loading="lazy"
-                            />
-                          </ProductSlide>
-                        )
-                      )}
+                      {product.images?.map((image, imageIndex) => (
+                        <ProductSlide key={imageIndex}>
+                          <ProductImage
+                            src={image.url}
+                            alt={product.title}
+                            loading="lazy"
+                          />
+                        </ProductSlide>
+                      ))}
                     </ProductCarousel>
 
                     {product.images?.length > 1 && (
                       <ProductDots>
-                        {product.images.map(
-                          (_, imageIndex) => (
-                            <ProductDot
-                              key={imageIndex}
-                              $active={
-                                imageIndexes[
-                                  product._id
-                                ] === imageIndex
-                              }
-                            />
-                          )
-                        )}
+                        {product.images.map((_, imageIndex) => (
+                          <ProductDot
+                            key={imageIndex}
+                            $active={imageIndexes[product._id] === imageIndex}
+                          />
+                        ))}
                       </ProductDots>
                     )}
                   </ImageArea>
 
                   <ProductInfo>
-                    <ProductGenre>
-                      {product.genre ||
-                        "Collection"}
-                    </ProductGenre>
+                    <ProductGenre>{product.genre || "Collection"}</ProductGenre>
 
-                    <ProductTitle>
-                      {product.title}
-                    </ProductTitle>
+                    <ProductTitle>{product.title}</ProductTitle>
 
                     <ProductBottom>
-                      <ProductPrice>
-                        {product.price} FCFA
-                      </ProductPrice>
+                      <ProductPrice>{product.price} FCFA</ProductPrice>
 
-                      <ProductMiniLabel>
-                        Découvrir
-                      </ProductMiniLabel>
+                      <ProductMiniLabel>Découvrir</ProductMiniLabel>
                     </ProductBottom>
                   </ProductInfo>
                 </ProductCard>

@@ -99,8 +99,7 @@ const Hero = styled.section`
       : "radial-gradient(circle at 80% 20%, #eeeeee 0%, #fafafa 35%, #ffffff 75%)"};
 
   border-bottom: 1px solid
-    ${({ $isdark }) =>
-      $isdark ? "rgba(255,255,255,.08)" : "rgba(0,0,0,.07)"};
+    ${({ $isdark }) => ($isdark ? "rgba(255,255,255,.08)" : "rgba(0,0,0,.07)")};
 
   @media (max-width: 768px) {
     min-height: 360px;
@@ -229,8 +228,7 @@ const Toolbar = styled.section`
   backdrop-filter: blur(18px);
 
   border-bottom: 1px solid
-    ${({ $isdark }) =>
-      $isdark ? "rgba(255,255,255,.08)" : "rgba(0,0,0,.07)"};
+    ${({ $isdark }) => ($isdark ? "rgba(255,255,255,.08)" : "rgba(0,0,0,.07)")};
 
   @media (max-width: 900px) {
     flex-direction: column;
@@ -269,11 +267,9 @@ const SearchInput = styled.input`
   padding: 13px 42px 13px 43px;
 
   border: 1px solid
-    ${({ $isdark }) =>
-      $isdark ? "rgba(255,255,255,.14)" : "rgba(0,0,0,.12)"};
+    ${({ $isdark }) => ($isdark ? "rgba(255,255,255,.14)" : "rgba(0,0,0,.12)")};
 
-  background: ${({ $isdark }) =>
-    $isdark ? "rgba(255,255,255,.04)" : "#fff"};
+  background: ${({ $isdark }) => ($isdark ? "rgba(255,255,255,.04)" : "#fff")};
 
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
 
@@ -410,11 +406,9 @@ const Select = styled.select`
   border-radius: 999px;
 
   border: 1px solid
-    ${({ $isdark }) =>
-      $isdark ? "rgba(255,255,255,.14)" : "rgba(0,0,0,.12)"};
+    ${({ $isdark }) => ($isdark ? "rgba(255,255,255,.14)" : "rgba(0,0,0,.12)")};
 
-  background: ${({ $isdark }) =>
-    $isdark ? "#161616" : "#fff"};
+  background: ${({ $isdark }) => ($isdark ? "#161616" : "#fff")};
 
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
 
@@ -496,8 +490,7 @@ const ImageWrapper = styled.div`
 
   overflow: hidden;
 
-  background: ${({ $isdark }) =>
-    $isdark ? "#191919" : "#f3f3f1"};
+  background: ${({ $isdark }) => ($isdark ? "#191919" : "#f3f3f1")};
 
   margin-bottom: 14px;
 `;
@@ -533,11 +526,7 @@ const ProductOverlay = styled.div`
 
   padding: 14px;
 
-  background: linear-gradient(
-    to top,
-    rgba(0, 0, 0, 0.48),
-    transparent 45%
-  );
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.48), transparent 45%);
 
   opacity: 0;
 
@@ -652,8 +641,7 @@ const FavoriteButton = styled.button`
   background: ${({ $favorite }) =>
     $favorite ? "#111" : "rgba(255,255,255,.92)"};
 
-  color: ${({ $favorite }) =>
-    $favorite ? "#fff" : "#111"};
+  color: ${({ $favorite }) => ($favorite ? "#fff" : "#111")};
 
   font-size: 17px;
 
@@ -726,11 +714,9 @@ const Gadget = styled.span`
 
   padding: 5px 7px;
 
-  background: ${({ $isdark }) =>
-    $isdark ? "#fff" : "#111"};
+  background: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
 
-  color: ${({ $isdark }) =>
-    $isdark ? "#111" : "#fff"};
+  color: ${({ $isdark }) => ($isdark ? "#111" : "#fff")};
 
   font-size: 0.5rem;
 
@@ -760,11 +746,9 @@ const Validation = styled.div`
 
   font-weight: 600;
 
-  color: ${({ $disponible }) =>
-    $disponible ? "#15803d" : "#dc2626"};
+  color: ${({ $disponible }) => ($disponible ? "#15803d" : "#dc2626")};
 
-  background: ${({ $disponible }) =>
-    $disponible ? "#dcfce7" : "#fee2e2"};
+  background: ${({ $disponible }) => ($disponible ? "#dcfce7" : "#fee2e2")};
 
   svg {
     font-size: 12px;
@@ -799,13 +783,11 @@ const LoadMore = styled.button`
   padding: 15px 25px;
 
   border: 1px solid
-    ${({ $isdark }) =>
-      $isdark ? "rgba(255,255,255,.25)" : "#111"};
+    ${({ $isdark }) => ($isdark ? "rgba(255,255,255,.25)" : "#111")};
 
   background: transparent;
 
-  color: ${({ $isdark }) =>
-    $isdark ? "#fff" : "#111"};
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
 
   cursor: pointer;
 
@@ -820,11 +802,9 @@ const LoadMore = styled.button`
   transition: all 0.25s ease;
 
   &:hover {
-    background: ${({ $isdark }) =>
-      $isdark ? "#fff" : "#111"};
+    background: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
 
-    color: ${({ $isdark }) =>
-      $isdark ? "#111" : "#fff"};
+    color: ${({ $isdark }) => ($isdark ? "#111" : "#fff")};
 
     transform: translateY(-3px);
   }
@@ -851,8 +831,7 @@ const EmptyState = styled.div`
   padding: 40px;
 
   border: 1px solid
-    ${({ $isdark }) =>
-      $isdark ? "rgba(255,255,255,.08)" : "rgba(0,0,0,.08)"};
+    ${({ $isdark }) => ($isdark ? "rgba(255,255,255,.08)" : "rgba(0,0,0,.08)")};
 `;
 
 const EmptyIcon = styled.div`
@@ -867,8 +846,7 @@ const EmptyIcon = styled.div`
 
   margin-bottom: 18px;
 
-  background: ${({ $isdark }) =>
-    $isdark ? "#1b1b1b" : "#f3f3f3"};
+  background: ${({ $isdark }) => ($isdark ? "#1b1b1b" : "#f3f3f3")};
 
   font-size: 24px;
 `;
@@ -910,12 +888,9 @@ const Loader = styled.div`
 
   border-radius: 50%;
 
-  border: 3px solid
-    ${({ $isdark }) =>
-      $isdark ? "#292929" : "#e5e5e5"};
+  border: 3px solid ${({ $isdark }) => ($isdark ? "#292929" : "#e5e5e5")};
 
-  border-top-color: ${({ $isdark }) =>
-    $isdark ? "#fff" : "#111"};
+  border-top-color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
 
   animation: ${spin} 0.8s linear infinite;
 `;
@@ -952,15 +927,9 @@ const SkeletonCard = styled.div`
 
   background: linear-gradient(
     90deg,
-    ${({ $isdark }) =>
-        $isdark ? "#151515" : "#eeeeee"}
-      0%,
-    ${({ $isdark }) =>
-        $isdark ? "#222" : "#f8f8f8"}
-      50%,
-    ${({ $isdark }) =>
-        $isdark ? "#151515" : "#eeeeee"}
-      100%
+    ${({ $isdark }) => ($isdark ? "#151515" : "#eeeeee")} 0%,
+    ${({ $isdark }) => ($isdark ? "#222" : "#f8f8f8")} 50%,
+    ${({ $isdark }) => ($isdark ? "#151515" : "#eeeeee")} 100%
   );
 
   background-size: 500px 100%;
@@ -979,8 +948,7 @@ const ModalOverlay = styled.div`
 
   z-index: 1000;
 
-  display: ${({ $show }) =>
-    $show ? "flex" : "none"};
+  display: ${({ $show }) => ($show ? "flex" : "none")};
 
   align-items: center;
   justify-content: center;
@@ -1001,11 +969,9 @@ const ModalContent = styled.div`
 
   padding: 45px 35px;
 
-  background: ${({ $isdark }) =>
-    $isdark ? "#171717" : "#fff"};
+  background: ${({ $isdark }) => ($isdark ? "#171717" : "#fff")};
 
-  color: ${({ $isdark }) =>
-    $isdark ? "#fff" : "#111"};
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
 
   text-align: center;
 
@@ -1035,11 +1001,9 @@ const ModalClose = styled.button`
   align-items: center;
   justify-content: center;
 
-  background: ${({ $isdark }) =>
-    $isdark ? "#242424" : "#f2f2f2"};
+  background: ${({ $isdark }) => ($isdark ? "#242424" : "#f2f2f2")};
 
-  color: ${({ $isdark }) =>
-    $isdark ? "#fff" : "#111"};
+  color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
 
   cursor: pointer;
 `;
@@ -1056,11 +1020,9 @@ const ModalIcon = styled.div`
 
   border-radius: 50%;
 
-  background: ${({ $isdark }) =>
-    $isdark ? "#fff" : "#111"};
+  background: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
 
-  color: ${({ $isdark }) =>
-    $isdark ? "#111" : "#fff"};
+  color: ${({ $isdark }) => ($isdark ? "#111" : "#fff")};
 
   font-size: 25px;
 `;
@@ -1092,11 +1054,9 @@ const ModalButton = styled.button`
 
   border: none;
 
-  background: ${({ $isdark }) =>
-    $isdark ? "#fff" : "#111"};
+  background: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
 
-  color: ${({ $isdark }) =>
-    $isdark ? "#111" : "#fff"};
+  color: ${({ $isdark }) => ($isdark ? "#111" : "#fff")};
 
   cursor: pointer;
 
@@ -1150,18 +1110,9 @@ export default function Homme() {
   ======================================================= */
 
   const calculStock = (stockParVariation = {}) => {
-    return Object.values(stockParVariation).reduce(
-      (total, tailles) => {
-        return (
-          total +
-          Object.values(tailles).reduce(
-            (v, n) => v + Number(n),
-            0
-          )
-        );
-      },
-      0
-    );
+    return Object.values(stockParVariation).reduce((total, tailles) => {
+      return total + Object.values(tailles).reduce((v, n) => v + Number(n), 0);
+    }, 0);
   };
 
   /* =======================================================
@@ -1171,16 +1122,15 @@ export default function Homme() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/produits`
-        );
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits`);
 
         const data = await res.json();
 
         const valid = data.filter(
           (p) =>
             p.images?.length &&
-            p.genre?.toLowerCase() === "homme"
+            p.genre?.toLowerCase() === "homme" &&
+            !(p.precommande === true && p.disponible === false),
         );
 
         setProducts(valid);
@@ -1188,12 +1138,9 @@ export default function Homme() {
         const indexes = {};
 
         valid.forEach((p) => {
-          const mainIndex = p.images.findIndex(
-            (img) => img.isMain
-          );
+          const mainIndex = p.images.findIndex((img) => img.isMain);
 
-          indexes[p._id] =
-            mainIndex >= 0 ? mainIndex : 0;
+          indexes[p._id] = mainIndex >= 0 ? mainIndex : 0;
         });
 
         setImageIndexes(indexes);
@@ -1217,21 +1164,14 @@ export default function Homme() {
   useEffect(() => {
     if (!token) return;
 
-    fetch(
-      `${import.meta.env.VITE_API_URL}/api/favorites`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    )
+    fetch(`${import.meta.env.VITE_API_URL}/api/favorites`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
       .then((res) => res.json())
       .then((data) => {
-        setFavorites(
-          data
-            .map((f) => f.productId?._id)
-            .filter(Boolean)
-        );
+        setFavorites(data.map((f) => f.productId?._id).filter(Boolean));
       })
       .catch(console.error);
   }, [token]);
@@ -1260,28 +1200,20 @@ export default function Homme() {
           body: JSON.stringify({
             productId: id,
           }),
-        }
+        },
       );
 
       const data = await res.json();
 
       if (res.ok) {
         if (data.active) {
-          setFavorites((prev) => [
-            ...prev,
-            id,
-          ]);
+          setFavorites((prev) => [...prev, id]);
         } else {
-          setFavorites((prev) =>
-            prev.filter((f) => f !== id)
-          );
+          setFavorites((prev) => prev.filter((f) => f !== id));
         }
       }
     } catch (error) {
-      console.error(
-        "Erreur favoris :",
-        error
-      );
+      console.error("Erreur favoris :", error);
     }
   };
 
@@ -1299,9 +1231,7 @@ export default function Homme() {
         };
 
         products.forEach((p) => {
-          updated[p._id] =
-            ((prev[p._id] || 0) + 1) %
-            p.images.length;
+          updated[p._id] = ((prev[p._id] || 0) + 1) % p.images.length;
         });
 
         return updated;
@@ -1319,41 +1249,24 @@ export default function Homme() {
     let filtered =
       filter === "tout"
         ? products
-        : products.filter(
-            (p) =>
-              p.categorie
-                ?.toLowerCase()
-                .trim() === filter
-          );
+        : products.filter((p) => p.categorie?.toLowerCase().trim() === filter);
 
     if (search.trim()) {
       filtered = filtered.filter((p) =>
-        p.title
-          ?.toLowerCase()
-          .includes(search.toLowerCase())
+        p.title?.toLowerCase().includes(search.toLowerCase()),
       );
     }
 
     if (sort === "asc") {
-      filtered = [...filtered].sort(
-        (a, b) => a.price - b.price
-      );
+      filtered = [...filtered].sort((a, b) => a.price - b.price);
     }
 
     if (sort === "desc") {
-      filtered = [...filtered].sort(
-        (a, b) => b.price - a.price
-      );
+      filtered = [...filtered].sort((a, b) => b.price - a.price);
     }
 
     return filtered.slice(0, limit);
-  }, [
-    products,
-    filter,
-    sort,
-    search,
-    limit,
-  ]);
+  }, [products, filter, sort, search, limit]);
 
   /* =======================================================
      LOADING
@@ -1366,21 +1279,14 @@ export default function Homme() {
           <HeroInner>
             <Eyebrow>Collection</Eyebrow>
 
-            <HeroTitle>
-              Homme
-            </HeroTitle>
+            <HeroTitle>Homme</HeroTitle>
           </HeroInner>
         </Hero>
 
         <SkeletonGrid>
-          {Array.from({ length: 8 }).map(
-            (_, index) => (
-              <SkeletonCard
-                key={index}
-                $isdark={$isdark}
-              />
-            )
-          )}
+          {Array.from({ length: 8 }).map((_, index) => (
+            <SkeletonCard key={index} $isdark={$isdark} />
+          ))}
         </SkeletonGrid>
       </PageWrapper>
     );
@@ -1398,20 +1304,14 @@ export default function Homme() {
 
       <Hero $isdark={$isdark}>
         <HeroInner>
-          <Eyebrow>
-            Numa — Collection Homme
-          </Eyebrow>
+          <Eyebrow>Numa — Collection Homme</Eyebrow>
 
-          <HeroTitle>
-            Homme
-          </HeroTitle>
+          <HeroTitle>Homme</HeroTitle>
 
           <HeroBottom>
             <HeroDescription>
-              Une sélection pensée pour une allure
-              contemporaine, précise et assumée.
-              Découvrez les pièces essentielles de
-              la collection homme.
+              Une sélection pensée pour une allure contemporaine, précise et
+              assumée. Découvrez les pièces essentielles de la collection homme.
             </HeroDescription>
 
             <ProductCount>
@@ -1442,10 +1342,7 @@ export default function Homme() {
             />
 
             {search && (
-              <ClearSearch
-                $isdark={$isdark}
-                onClick={() => setSearch("")}
-              >
+              <ClearSearch $isdark={$isdark} onClick={() => setSearch("")}>
                 <FiX />
               </ClearSearch>
             )}
@@ -1483,17 +1380,11 @@ export default function Homme() {
                 setLimit(12);
               }}
             >
-              <option value="default">
-                Trier
-              </option>
+              <option value="default">Trier</option>
 
-              <option value="asc">
-                Prix croissant
-              </option>
+              <option value="asc">Prix croissant</option>
 
-              <option value="desc">
-                Prix décroissant
-              </option>
+              <option value="desc">Prix décroissant</option>
             </Select>
           </SortWrapper>
         </Toolbar>
@@ -1509,105 +1400,64 @@ export default function Homme() {
                 <FiShoppingBag />
               </EmptyIcon>
 
-              <EmptyTitle>
-                Aucun produit trouvé
-              </EmptyTitle>
+              <EmptyTitle>Aucun produit trouvé</EmptyTitle>
 
               <EmptyText>
-                Nous n'avons trouvé aucune pièce
-                correspondant à votre recherche.
-                Essayez une autre catégorie ou un
-                autre terme.
+                Nous n'avons trouvé aucune pièce correspondant à votre
+                recherche. Essayez une autre catégorie ou un autre terme.
               </EmptyText>
             </EmptyState>
           ) : (
             filteredProducts.map((p, index) => {
-              const isFav =
-                favorites.includes(p._id);
+              const isFav = favorites.includes(p._id);
 
-              const totalStock =
-                calculStock(
-                  p.stockParVariation
-                );
+              const totalStock = calculStock(p.stockParVariation);
 
               return (
                 <ProductCard
                   key={p._id}
                   style={{
-                    animationDelay: `${Math.min(
-                      index * 0.04,
-                      0.4
-                    )}s`,
+                    animationDelay: `${Math.min(index * 0.04, 0.4)}s`,
                   }}
-                  onClick={() =>
-                    navigate(
-                      `/produit/${p._id}`
-                    )
-                  }
+                  onClick={() => navigate(`/produit/${p._id}`)}
                 >
-                  <ImageWrapper
-                    $isdark={$isdark}
-                  >
-                    {p.images.map(
-                      (img, imageIndex) => (
-                        <ProductImage
-                          className="product-image"
-                          key={imageIndex}
-                          src={img.url}
-                          alt={p.title}
-                          loading="lazy"
-                          $active={
-                            imageIndexes[
-                              p._id
-                            ] === imageIndex
-                          }
-                        />
-                      )
-                    )}
+                  <ImageWrapper $isdark={$isdark}>
+                    {p.images.map((img, imageIndex) => (
+                      <ProductImage
+                        className="product-image"
+                        key={imageIndex}
+                        src={img.url}
+                        alt={p.title}
+                        loading="lazy"
+                        $active={imageIndexes[p._id] === imageIndex}
+                      />
+                    ))}
 
-                    {p.badge && (
-                      <Badge
-                        $isdark={$isdark}
-                      >
-                        {p.badge}
-                      </Badge>
-                    )}
+                    {p.badge && <Badge $isdark={$isdark}>{p.badge}</Badge>}
 
                     <FavoriteButton
                       $favorite={isFav}
                       onClick={(e) => {
                         e.stopPropagation();
 
-                        toggleFavorite(
-                          p._id
-                        );
+                        toggleFavorite(p._id);
                       }}
                       aria-label={
-                        isFav
-                          ? "Retirer des favoris"
-                          : "Ajouter aux favoris"
+                        isFav ? "Retirer des favoris" : "Ajouter aux favoris"
                       }
                     >
-                      {isFav ? (
-                        <FaHeart />
-                      ) : (
-                        <FiHeart />
-                      )}
+                      {isFav ? <FaHeart /> : <FiHeart />}
                     </FavoriteButton>
 
                     <ProductOverlay className="product-overlay">
-                      <OverlayText>
-                        Découvrir
-                      </OverlayText>
+                      <OverlayText>Découvrir</OverlayText>
 
                       <QuickButton
                         className="quick-button"
                         onClick={(e) => {
                           e.stopPropagation();
 
-                          navigate(
-                            `/produit/${p._id}`
-                          );
+                          navigate(`/produit/${p._id}`);
                         }}
                       >
                         Voir la pièce
@@ -1618,28 +1468,16 @@ export default function Homme() {
 
                   <CardContent>
                     <ProductTop>
-                      <ProductTitle>
-                        {p.title}
-                      </ProductTitle>
+                      <ProductTitle>{p.title}</ProductTitle>
 
                       {p.gadget && (
-                        <Gadget
-                          $isdark={$isdark}
-                        >
-                          {p.gadget}
-                        </Gadget>
+                        <Gadget $isdark={$isdark}>{p.gadget}</Gadget>
                       )}
                     </ProductTop>
 
-                    <ProductPrice>
-                      {p.price} FCFA
-                    </ProductPrice>
+                    <ProductPrice>{p.price} FCFA</ProductPrice>
 
-                    <Validation
-                      $disponible={
-                        totalStock > 0
-                      }
-                    >
+                    <Validation $disponible={totalStock > 0}>
                       {totalStock > 10 ? (
                         <>
                           <FiCheckCircle />
@@ -1648,8 +1486,7 @@ export default function Homme() {
                       ) : totalStock > 0 ? (
                         <>
                           <FiAlertCircle />
-                          Plus que{" "}
-                          {totalStock}
+                          Plus que {totalStock}
                         </>
                       ) : (
                         <>
@@ -1669,18 +1506,12 @@ export default function Homme() {
             LOAD MORE
         ================================================= */}
 
-        {filteredProducts.length >=
-          limit &&
-          filteredProducts.length <
-            products.length && (
+        {filteredProducts.length >= limit &&
+          filteredProducts.length < products.length && (
             <LoadMoreWrapper>
               <LoadMore
                 $isdark={$isdark}
-                onClick={() =>
-                  setLimit(
-                    (prev) => prev + 12
-                  )
-                }
+                onClick={() => setLimit((prev) => prev + 12)}
               >
                 Voir plus
                 <FiArrowRight />
@@ -1695,12 +1526,7 @@ export default function Homme() {
 
       <ModalOverlay $show={showModal}>
         <ModalContent $isdark={$isdark}>
-          <ModalClose
-            $isdark={$isdark}
-            onClick={() =>
-              setShowModal(false)
-            }
-          >
+          <ModalClose $isdark={$isdark} onClick={() => setShowModal(false)}>
             <FiX />
           </ModalClose>
 
@@ -1708,14 +1534,11 @@ export default function Homme() {
             <FiHeart />
           </ModalIcon>
 
-          <ModalTitle>
-            Connexion requise
-          </ModalTitle>
+          <ModalTitle>Connexion requise</ModalTitle>
 
           <ModalText>
-            Connectez-vous à votre compte pour
-            ajouter cette pièce à vos favoris et
-            retrouver votre sélection plus tard.
+            Connectez-vous à votre compte pour ajouter cette pièce à vos favoris
+            et retrouver votre sélection plus tard.
           </ModalText>
 
           <ModalButton
