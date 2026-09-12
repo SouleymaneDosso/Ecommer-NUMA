@@ -253,6 +253,93 @@ const SectionHeader = styled.div`
   }
 `;
 
+const candyPulse = keyframes`
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 105, 180, 0.55);
+  }
+
+  70% {
+    box-shadow: 0 0 0 16px rgba(255, 105, 180, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 105, 180, 0);
+  }
+`;
+
+const PrecommandeBtn = styled(Link)`
+  position: relative;
+  overflow: hidden;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+
+  padding: 16px 25px;
+
+  background: #ff69b4;
+  color: #fff;
+
+  text-decoration: none;
+
+  font-size: 0.9rem;
+  font-weight: 900;
+  letter-spacing: 0.3px;
+
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+
+  animation: ${candyPulse} 2s infinite;
+
+  transition:
+    transform 0.3s ease,
+    background 0.3s ease,
+    box-shadow 0.3s ease;
+
+  &::before {
+    content: "";
+
+    position: absolute;
+    top: 0;
+    left: -120%;
+
+    width: 70%;
+    height: 100%;
+
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.7),
+      transparent
+    );
+
+    transform: skewX(-20deg);
+  }
+
+  &:hover {
+    transform: translateY(-5px) scale(1.03);
+
+    background: #ff4fa8;
+
+    box-shadow:
+      0 15px 35px rgba(255, 105, 180, 0.4),
+      0 0 25px rgba(255, 105, 180, 0.35);
+  }
+
+  &:hover::before {
+    animation: ${shimmer} 0.8s ease;
+  }
+
+  svg {
+    transition: transform 0.3s ease;
+  }
+
+  &:hover svg {
+    transform: translateX(5px);
+  }
+`;
+
 /* =========================================================
    HERO
 ========================================================= */
@@ -1301,12 +1388,12 @@ export default function HomePremium() {
   };
 
   const videoSuivante = () => {
-  if (video.length <= 1) return;
+    if (video.length <= 1) return;
 
-  setVideoIndex((current) => {
-    return (current + 1) % video.length;
-  });
-};
+    setVideoIndex((current) => {
+      return (current + 1) % video.length;
+    });
+  };
 
   const couperSon = () => {
     if (videoRef.current) {
@@ -1317,30 +1404,30 @@ export default function HomePremium() {
 
   // fetch video
 
-const fetchVideo = async () => {
-  try {
-    const res = await fetch(
-      `${import.meta.env.VITE_API_URL}/api/videos/produits`
-    );
+  const fetchVideo = async () => {
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/videos/produits`,
+      );
 
-    if (!res.ok) {
-      throw new Error("Impossible de récupérer les vidéos produits");
+      if (!res.ok) {
+        throw new Error("Impossible de récupérer les vidéos produits");
+      }
+
+      const data = await res.json();
+
+      const videos = Array.isArray(data?.videos)
+        ? data.videos.filter((item) => item?.url && item?.produitId)
+        : [];
+
+      setVideo(videos);
+      setVideoIndex(0);
+    } catch (error) {
+      console.error("Erreur vidéos produits :", error);
+      setVideo([]);
+      setVideoIndex(0);
     }
-
-    const data = await res.json();
-
-    const videos = Array.isArray(data?.videos)
-      ? data.videos.filter((item) => item?.url && item?.produitId)
-      : [];
-
-    setVideo(videos);
-    setVideoIndex(0);
-  } catch (error) {
-    console.error("Erreur vidéos produits :", error);
-    setVideo([]);
-    setVideoIndex(0);
-  }
-};
+  };
 
   /* =======================================================
      FETCH PRODUCTS
@@ -1548,6 +1635,11 @@ const fetchVideo = async () => {
                 Explorer la collection
                 <FaArrowRight />
               </HeroBtn>
+
+              <PrecommandeBtn to="/precommande">
+                Précommander maintenant
+                <FaArrowRight />
+              </PrecommandeBtn>
             </HeroActions>
           </HeroText>
         </HeroContent>
@@ -1559,34 +1651,34 @@ const fetchVideo = async () => {
       </Hero>
 
       <VideoSection>
-  {Array.isArray(video) && video.length > 0 ? (
-    <VideoPlayer
-      ref={videoRef}
-      key={video[videoIndex]._id}
-      src={video[videoIndex].url}
-      autoPlay
-      playsInline
-      preload="auto"
-      controls={false}
-      disablePictureInPicture
-      controlsList="nodownload noplaybackrate noremoteplayback"
-      onEnded={videoSuivante}
-      onPlay={() => setIsPlaying(true)}
-      onPause={() => setIsPlaying(false)}
-    />
-  ) : null}
+        {Array.isArray(video) && video.length > 0 ? (
+          <VideoPlayer
+            ref={videoRef}
+            key={video[videoIndex]._id}
+            src={video[videoIndex].url}
+            autoPlay
+            playsInline
+            preload="auto"
+            controls={false}
+            disablePictureInPicture
+            controlsList="nodownload noplaybackrate noremoteplayback"
+            onEnded={videoSuivante}
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
+          />
+        ) : null}
 
-  <VideoControls>
-    <VideoButton onClick={toggleVideo}>
-      {isPlaying ? <Pause size={20} /> : <Play size={20} />}
-    </VideoButton>
+        <VideoControls>
+          <VideoButton onClick={toggleVideo}>
+            {isPlaying ? <Pause size={20} /> : <Play size={20} />}
+          </VideoButton>
 
-    <VideoButton onClick={couperSon}>
-      {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
-    </VideoButton>
-  </VideoControls>
-</VideoSection>
-      
+          <VideoButton onClick={couperSon}>
+            {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+          </VideoButton>
+        </VideoControls>
+      </VideoSection>
+
       {/* ===================================================
           UNIVERS
       =================================================== */}

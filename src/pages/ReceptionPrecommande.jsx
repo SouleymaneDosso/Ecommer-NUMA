@@ -18,7 +18,8 @@ const ReceptionPrecommande = () => {
   const [pages, setPages] = useState(1);
   const [total, setTotal] = useState(0);
 
-  const [precommandeSelectionnee, setPrecommandeSelectionnee] = useState(null);
+  const [precommandeSelectionnee, setPrecommandeSelectionnee] =
+    useState(null);
 
   const [adminComment, setAdminComment] = useState("");
 
@@ -31,39 +32,91 @@ const ReceptionPrecommande = () => {
   };
 
   /* =========================================================
-     CHARGER LES PRÉCOMMANDES
+     PAIEMENTS
   ========================================================= */
+
   const getPaiementDepot = (precommande) => {
     return (
-      precommande?.paiements?.find((paiement) => paiement.type === "DEPOT") ||
+      precommande?.paiements?.find(
+        (paiement) => paiement.type === "DEPOT",
+      ) ||
       precommande?.paiements?.[0] ||
       null
     );
   };
 
-  const getServicePaiement = (precommande) => {
-    const paiement = getPaiementDepot(precommande);
+  /*
+   * IMPORTANT :
+   * Le backend peut avoir plusieurs paiements SOLDE.
+   * On prend donc toujours le dernier.
+   */
+  const getPaiementSolde = (precommande) => {
+    const paiements = precommande?.paiements || [];
 
-    return paiement?.service || "";
+    return (
+      [...paiements]
+        .reverse()
+        .find((paiement) => paiement.type === "SOLDE") || null
+    );
+  };
+
+  const getServicePaiement = (precommande) => {
+    return getPaiementDepot(precommande)?.service || "";
   };
 
   const getNumeroPaiement = (precommande) => {
-    const paiement = getPaiementDepot(precommande);
-
-    return paiement?.numeroClient || "";
+    return getPaiementDepot(precommande)?.numeroClient || "";
   };
 
   const getReferencePaiement = (precommande) => {
-    const paiement = getPaiementDepot(precommande);
-
-    return paiement?.reference || "";
+    return getPaiementDepot(precommande)?.reference || "";
   };
 
   const getMontantPaiement = (precommande) => {
     const paiement = getPaiementDepot(precommande);
 
-    return paiement?.montantEnvoye ?? precommande?.montantDepot ?? 0;
+    return (
+      paiement?.montantEnvoye ??
+      precommande?.montantDepot ??
+      0
+    );
   };
+
+  const getServiceSolde = (precommande) => {
+    return getPaiementSolde(precommande)?.service || "";
+  };
+
+  const getNumeroSolde = (precommande) => {
+    return getPaiementSolde(precommande)?.numeroClient || "";
+  };
+
+  const getReferenceSolde = (precommande) => {
+    return getPaiementSolde(precommande)?.reference || "";
+  };
+
+  const getMontantSoldeEnvoye = (precommande) => {
+    const paiement = getPaiementSolde(precommande);
+
+    return paiement?.montantEnvoye ?? 0;
+  };
+
+  const getMontantSoldeAttendu = (precommande) => {
+    const paiement = getPaiementSolde(precommande);
+
+    return (
+      paiement?.montantAttendu ??
+      precommande?.montantSolde ??
+      0
+    );
+  };
+
+  const getStatutSolde = (precommande) => {
+    return getPaiementSolde(precommande)?.status || "";
+  };
+
+  /* =========================================================
+     CHARGER LES PRÉCOMMANDES
+  ========================================================= */
 
   const chargerPrecommandes = async (pageActuelle = page) => {
     try {
@@ -91,7 +144,8 @@ const ReceptionPrecommande = () => {
 
       if (!response.ok) {
         throw new Error(
-          data.message || "Impossible de récupérer les précommandes.",
+          data.message ||
+            "Impossible de récupérer les précommandes.",
         );
       }
 
@@ -99,10 +153,27 @@ const ReceptionPrecommande = () => {
       setTotal(data.total || 0);
       setPage(data.page || pageActuelle);
       setPages(data.pages || 1);
+
+      /*
+       * Si le détail est ouvert, on actualise également
+       * la précommande sélectionnée.
+       */
+      if (precommandeSelectionnee?._id) {
+        const updated = (data.precommandes || []).find(
+          (item) => item._id === precommandeSelectionnee._id,
+        );
+
+        if (updated) {
+          setPrecommandeSelectionnee(updated);
+        }
+      }
     } catch (error) {
       console.error(error);
 
-      setErreur(error.message || "Erreur lors du chargement des précommandes.");
+      setErreur(
+        error.message ||
+          "Erreur lors du chargement des précommandes.",
+      );
     } finally {
       setLoading(false);
     }
@@ -116,13 +187,15 @@ const ReceptionPrecommande = () => {
      FILTRE
   ========================================================= */
 
-  const precommandesFiltrees = precommandes.filter((precommande) => {
-    if (statutFiltre === "ALL") {
-      return true;
-    }
+  const precommandesFiltrees = precommandes.filter(
+    (precommande) => {
+      if (statutFiltre === "ALL") {
+        return true;
+      }
 
-    return precommande.statut === statutFiltre;
-  });
+      return precommande.statut === statutFiltre;
+    },
+  );
 
   /* =========================================================
      OUVRIR DÉTAIL
@@ -149,7 +222,7 @@ const ReceptionPrecommande = () => {
   };
 
   /* =========================================================
-     ACCEPTER
+     ACCEPTER PRÉCOMMANDE
   ========================================================= */
 
   const accepter = async () => {
@@ -163,7 +236,9 @@ const ReceptionPrecommande = () => {
       const token = getToken();
 
       if (!token) {
-        throw new Error("Session administrateur introuvable.");
+        throw new Error(
+          "Session administrateur introuvable.",
+        );
       }
 
       const response = await fetch(
@@ -184,26 +259,35 @@ const ReceptionPrecommande = () => {
 
       if (!response.ok) {
         throw new Error(
-          data.message || "Impossible d'accepter la précommande.",
+          data.message ||
+            "Impossible d'accepter la précommande.",
         );
       }
 
-      setMessage("Précommande acceptée avec succès.");
+      setMessage(
+        "Précommande acceptée avec succès.",
+      );
+
+      setPrecommandeSelectionnee(
+        data.precommande ||
+          precommandeSelectionnee,
+      );
 
       await chargerPrecommandes(page);
-
-      setPrecommandeSelectionnee(data.precommande || precommandeSelectionnee);
     } catch (error) {
       console.error(error);
 
-      setErreur(error.message || "Erreur lors de l'acceptation.");
+      setErreur(
+        error.message ||
+          "Erreur lors de l'acceptation.",
+      );
     } finally {
       setActionLoading(false);
     }
   };
 
   /* =========================================================
-     REFUSER
+     REFUSER PRÉCOMMANDE
   ========================================================= */
 
   const refuser = async () => {
@@ -223,7 +307,9 @@ const ReceptionPrecommande = () => {
       const token = getToken();
 
       if (!token) {
-        throw new Error("Session administrateur introuvable.");
+        throw new Error(
+          "Session administrateur introuvable.",
+        );
       }
 
       const response = await fetch(
@@ -244,19 +330,197 @@ const ReceptionPrecommande = () => {
 
       if (!response.ok) {
         throw new Error(
-          data.message || "Impossible de refuser la précommande.",
+          data.message ||
+            "Impossible de refuser la précommande.",
         );
       }
 
       setMessage("Précommande refusée.");
 
-      await chargerPrecommandes(page);
+      setPrecommandeSelectionnee(
+        data.precommande ||
+          precommandeSelectionnee,
+      );
 
-      setPrecommandeSelectionnee(data.precommande || precommandeSelectionnee);
+      await chargerPrecommandes(page);
     } catch (error) {
       console.error(error);
 
-      setErreur(error.message || "Erreur lors du refus.");
+      setErreur(
+        error.message ||
+          "Erreur lors du refus.",
+      );
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  /* =========================================================
+     CONFIRMER LE SOLDE
+  ========================================================= */
+
+  const confirmerSolde = async () => {
+    if (!precommandeSelectionnee) return;
+
+    const paiementSolde = getPaiementSolde(
+      precommandeSelectionnee,
+    );
+
+    if (!paiementSolde) {
+      setErreur(
+        "Aucun paiement de solde trouvé pour cette précommande.",
+      );
+      return;
+    }
+
+    const confirmation = window.confirm(
+      `Confirmer le paiement du solde de ${formatPrix(
+        paiementSolde.montantEnvoye,
+      )} FCFA ?\n\nCette action créera automatiquement la commande finale.`,
+    );
+
+    if (!confirmation) return;
+
+    try {
+      setActionLoading(true);
+      setErreur("");
+      setMessage("");
+
+      const token = getToken();
+
+      if (!token) {
+        throw new Error(
+          "Session administrateur introuvable.",
+        );
+      }
+
+      const response = await fetch(
+        `${API_URL}/api/precommandes/admin/${precommandeSelectionnee._id}/confirmer-solde`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message ||
+            "Impossible de confirmer le solde.",
+        );
+      }
+
+      setMessage(
+        data.message ||
+          "Solde confirmé. La commande finale a été créée.",
+      );
+
+      setPrecommandeSelectionnee(
+        data.precommande ||
+          precommandeSelectionnee,
+      );
+
+      await chargerPrecommandes(page);
+    } catch (error) {
+      console.error(
+        "❌ Confirmation solde :",
+        error,
+      );
+
+      setErreur(
+        error.message ||
+          "Erreur lors de la confirmation du solde.",
+      );
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  /* =========================================================
+     REJETER LE SOLDE
+  ========================================================= */
+
+  const rejeterSolde = async () => {
+    if (!precommandeSelectionnee) return;
+
+    const paiementSolde = getPaiementSolde(
+      precommandeSelectionnee,
+    );
+
+    if (!paiementSolde) {
+      setErreur(
+        "Aucun paiement de solde trouvé pour cette précommande.",
+      );
+      return;
+    }
+
+    const confirmation = window.confirm(
+      "Voulez-vous vraiment rejeter ce paiement de solde ?\n\nLe client pourra effectuer un nouveau paiement du solde.",
+    );
+
+    if (!confirmation) return;
+
+    try {
+      setActionLoading(true);
+      setErreur("");
+      setMessage("");
+
+      const token = getToken();
+
+      if (!token) {
+        throw new Error(
+          "Session administrateur introuvable.",
+        );
+      }
+
+      const response = await fetch(
+        `${API_URL}/api/precommandes/admin/${precommandeSelectionnee._id}/rejeter-solde`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            adminComment,
+          }),
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message ||
+            "Impossible de rejeter le solde.",
+        );
+      }
+
+      setMessage(
+        data.message ||
+          "Paiement du solde rejeté.",
+      );
+
+      setPrecommandeSelectionnee(
+        data.precommande ||
+          precommandeSelectionnee,
+      );
+
+      await chargerPrecommandes(page);
+    } catch (error) {
+      console.error(
+        "❌ Rejet solde :",
+        error,
+      );
+
+      setErreur(
+        error.message ||
+          "Erreur lors du rejet du solde.",
+      );
     } finally {
       setActionLoading(false);
     }
@@ -280,7 +544,9 @@ const ReceptionPrecommande = () => {
       precommande.produitId.images.length > 0
     ) {
       return (
-        precommande.produitId.images.find((image) => image.isMain)?.url ||
+        precommande.produitId.images.find(
+          (image) => image.isMain,
+        )?.url ||
         precommande.produitId.images[0]?.url ||
         ""
       );
@@ -295,7 +561,9 @@ const ReceptionPrecommande = () => {
 
   const getNomProduit = (precommande) => {
     return (
-      precommande?.modele?.title || precommande?.produitId?.title || "Modèle"
+      precommande?.modele?.title ||
+      precommande?.produitId?.title ||
+      "Modèle"
     );
   };
 
@@ -336,7 +604,25 @@ const ReceptionPrecommande = () => {
   ========================================================= */
 
   const formatPrix = (prix) => {
-    return Number(prix || 0).toLocaleString("fr-FR");
+    return Number(prix || 0).toLocaleString(
+      "fr-FR",
+    );
+  };
+
+  /* =========================================================
+     NOM SERVICE
+  ========================================================= */
+
+  const getNomService = (service) => {
+    if (service === "orange") {
+      return "Orange Money";
+    }
+
+    if (service === "wave") {
+      return "Wave";
+    }
+
+    return service || "—";
   };
 
   /* =========================================================
@@ -372,6 +658,26 @@ const ReceptionPrecommande = () => {
   };
 
   /* =========================================================
+     STATUT PAIEMENT SOLDE
+  ========================================================= */
+
+  const getStatutSoldeLabel = (status) => {
+    switch (status) {
+      case "PENDING":
+        return "En attente de vérification";
+
+      case "CONFIRMED":
+        return "Confirmé";
+
+      case "REJECTED":
+        return "Rejeté";
+
+      default:
+        return "—";
+    }
+  };
+
+  /* =========================================================
      STATISTIQUES
   ========================================================= */
 
@@ -380,7 +686,18 @@ const ReceptionPrecommande = () => {
   ).length;
 
   const acceptedCount = precommandes.filter(
-    (item) => item.statut === "ACCEPTED" || item.statut === "READY_TO_FINALIZE",
+    (item) =>
+      item.statut === "ACCEPTED" ||
+      item.statut === "READY_TO_FINALIZE",
+  ).length;
+
+  const soldePendingCount = precommandes.filter(
+    (item) =>
+      item.statut === "FINALIZATION_PENDING",
+  ).length;
+
+  const finalizedCount = precommandes.filter(
+    (item) => item.statut === "FINALIZED",
   ).length;
 
   const rejectedCount = precommandes.filter(
@@ -391,11 +708,16 @@ const ReceptionPrecommande = () => {
      LOADING
   ========================================================= */
 
-  if (loading && precommandes.length === 0) {
+  if (
+    loading &&
+    precommandes.length === 0
+  ) {
     return (
       <LoadingContainer>
         <Spinner />
-        <LoadingText>Chargement des précommandes...</LoadingText>
+        <LoadingText>
+          Chargement des précommandes...
+        </LoadingText>
       </LoadingContainer>
     );
   }
@@ -408,21 +730,29 @@ const ReceptionPrecommande = () => {
 
       <Header>
         <div>
-          <SmallLabel>ESPACE ADMINISTRATEUR</SmallLabel>
+          <SmallLabel>
+            ESPACE ADMINISTRATEUR
+          </SmallLabel>
 
-          <Title>Précommandes reçues</Title>
+          <Title>
+            Précommandes reçues
+          </Title>
 
           <Subtitle>
-            Consultez, vérifiez et validez les précommandes envoyées par vos
-            clients.
+            Consultez, vérifiez et validez les
+            précommandes envoyées par vos clients.
           </Subtitle>
         </div>
 
         <RefreshButton
-          onClick={() => chargerPrecommandes(page)}
+          onClick={() =>
+            chargerPrecommandes(page)
+          }
           disabled={loading}
         >
-          {loading ? "Actualisation..." : "Actualiser"}
+          {loading
+            ? "Actualisation..."
+            : "Actualiser"}
         </RefreshButton>
       </Header>
 
@@ -430,9 +760,17 @@ const ReceptionPrecommande = () => {
           MESSAGE
       ===================================================== */}
 
-      {message && <SuccessMessage>✓ {message}</SuccessMessage>}
+      {message && (
+        <SuccessMessage>
+          ✓ {message}
+        </SuccessMessage>
+      )}
 
-      {erreur && <ErrorMessage>{erreur}</ErrorMessage>}
+      {erreur && (
+        <ErrorMessage>
+          {erreur}
+        </ErrorMessage>
+      )}
 
       {/* =====================================================
           STATISTIQUES
@@ -440,27 +778,63 @@ const ReceptionPrecommande = () => {
 
       <StatsGrid>
         <StatCard>
-          <StatNumber>{total}</StatNumber>
+          <StatNumber>
+            {total}
+          </StatNumber>
 
-          <StatLabel>Total</StatLabel>
+          <StatLabel>
+            Total
+          </StatLabel>
         </StatCard>
 
         <StatCard $pending>
-          <StatNumber>{pendingCount}</StatNumber>
+          <StatNumber>
+            {pendingCount}
+          </StatNumber>
 
-          <StatLabel>En attente</StatLabel>
+          <StatLabel>
+            En attente
+          </StatLabel>
         </StatCard>
 
         <StatCard $accepted>
-          <StatNumber>{acceptedCount}</StatNumber>
+          <StatNumber>
+            {acceptedCount}
+          </StatNumber>
 
-          <StatLabel>Acceptées</StatLabel>
+          <StatLabel>
+            Acceptées / disponibles
+          </StatLabel>
+        </StatCard>
+
+        <StatCard $solde>
+          <StatNumber>
+            {soldePendingCount}
+          </StatNumber>
+
+          <StatLabel>
+            Solde à vérifier
+          </StatLabel>
+        </StatCard>
+
+        <StatCard $finalized>
+          <StatNumber>
+            {finalizedCount}
+          </StatNumber>
+
+          <StatLabel>
+            Finalisées
+          </StatLabel>
         </StatCard>
 
         <StatCard $rejected>
-          <StatNumber>{rejectedCount}</StatNumber>
+          <StatNumber>
+            {rejectedCount}
+          </StatNumber>
 
-          <StatLabel>Refusées</StatLabel>
+          <StatLabel>
+            Refusées
+          </StatLabel>
         </StatCard>
       </StatsGrid>
 
@@ -469,60 +843,109 @@ const ReceptionPrecommande = () => {
       ===================================================== */}
 
       <FilterBar>
-        <FilterTitle>Filtrer</FilterTitle>
+        <FilterTitle>
+          Filtrer
+        </FilterTitle>
 
         <FilterButton
-          $active={statutFiltre === "ALL"}
-          onClick={() => setStatutFiltre("ALL")}
+          $active={
+            statutFiltre === "ALL"
+          }
+          onClick={() =>
+            setStatutFiltre("ALL")
+          }
         >
           Toutes
         </FilterButton>
 
         <FilterButton
-          $active={statutFiltre === "PENDING"}
-          onClick={() => setStatutFiltre("PENDING")}
+          $active={
+            statutFiltre === "PENDING"
+          }
+          onClick={() =>
+            setStatutFiltre("PENDING")
+          }
         >
           En attente
         </FilterButton>
 
         <FilterButton
-          $active={statutFiltre === "ACCEPTED"}
-          onClick={() => setStatutFiltre("ACCEPTED")}
+          $active={
+            statutFiltre === "ACCEPTED"
+          }
+          onClick={() =>
+            setStatutFiltre("ACCEPTED")
+          }
         >
           Acceptées
         </FilterButton>
 
         <FilterButton
-          $active={statutFiltre === "READY_TO_FINALIZE"}
-          onClick={() => setStatutFiltre("READY_TO_FINALIZE")}
+          $active={
+            statutFiltre ===
+            "READY_TO_FINALIZE"
+          }
+          onClick={() =>
+            setStatutFiltre(
+              "READY_TO_FINALIZE",
+            )
+          }
         >
           Prêtes à finaliser
         </FilterButton>
 
         <FilterButton
-          $active={statutFiltre === "FINALIZATION_PENDING"}
-          onClick={() => setStatutFiltre("FINALIZATION_PENDING")}
+          $active={
+            statutFiltre ===
+            "FINALIZATION_PENDING"
+          }
+          onClick={() =>
+            setStatutFiltre(
+              "FINALIZATION_PENDING",
+            )
+          }
         >
-          Solde
+          Solde à vérifier
         </FilterButton>
 
         <FilterButton
-          $active={statutFiltre === "FINALIZED"}
-          onClick={() => setStatutFiltre("FINALIZED")}
+          $active={
+            statutFiltre ===
+            "FINALIZED"
+          }
+          onClick={() =>
+            setStatutFiltre(
+              "FINALIZED",
+            )
+          }
         >
           Finalisées
         </FilterButton>
 
         <FilterButton
-          $active={statutFiltre === "REJECTED"}
-          onClick={() => setStatutFiltre("REJECTED")}
+          $active={
+            statutFiltre ===
+            "REJECTED"
+          }
+          onClick={() =>
+            setStatutFiltre(
+              "REJECTED",
+            )
+          }
         >
           Refusées
         </FilterButton>
 
         <FilterButton
-          $active={statutFiltre === "CANCELLED"}
-          onClick={() => setStatutFiltre("CANCELLED")}
+          $active={
+            statutFiltre ===
+            "CANCELLED"
+          }
+          onClick={() =>
+            setStatutFiltre(
+              "CANCELLED",
+            )
+          }
         >
           Annulées
         </FilterButton>
@@ -543,124 +966,200 @@ const ReceptionPrecommande = () => {
           <span></span>
         </TableHeader>
 
-        {precommandesFiltrees.length === 0 ? (
+        {precommandesFiltrees.length ===
+        0 ? (
           <EmptyState>
-            <EmptyIcon>◌</EmptyIcon>
+            <EmptyIcon>
+              ◌
+            </EmptyIcon>
 
-            <EmptyTitle>Aucune précommande</EmptyTitle>
+            <EmptyTitle>
+              Aucune précommande
+            </EmptyTitle>
 
             <EmptyText>
-              Aucune demande ne correspond au filtre sélectionné.
+              Aucune demande ne correspond
+              au filtre sélectionné.
             </EmptyText>
           </EmptyState>
         ) : (
-          precommandesFiltrees.map((precommande) => (
-            <PrecommandeRow
-              key={precommande._id}
-              onClick={() => ouvrirDetail(precommande)}
-            >
-              {/* CLIENT */}
+          precommandesFiltrees.map(
+            (precommande) => (
+              <PrecommandeRow
+                key={
+                  precommande._id
+                }
+                onClick={() =>
+                  ouvrirDetail(
+                    precommande,
+                  )
+                }
+              >
+                {/* CLIENT */}
 
-              <ClientCell>
-                <Avatar>
-                  {(precommande.clientId?.username || "C")
-                    .charAt(0)
-                    .toUpperCase()}
-                </Avatar>
+                <ClientCell>
+                  <Avatar>
+                    {(
+                      precommande
+                        .clientId
+                        ?.username ||
+                      "C"
+                    )
+                      .charAt(0)
+                      .toUpperCase()}
+                  </Avatar>
 
-                <ClientInfo>
-                  <ClientName>
-                    {precommande.clientId?.username || "Client"}
-                  </ClientName>
+                  <ClientInfo>
+                    <ClientName>
+                      {precommande
+                        .clientId
+                        ?.username ||
+                        "Client"}
+                    </ClientName>
 
-                  <ClientEmail>
-                    {precommande.clientId?.email || "—"}
-                  </ClientEmail>
-                </ClientInfo>
-              </ClientCell>
+                    <ClientEmail>
+                      {precommande
+                        .clientId
+                        ?.email ||
+                        "—"}
+                    </ClientEmail>
+                  </ClientInfo>
+                </ClientCell>
 
-              {/* MODÈLE */}
+                {/* MODÈLE */}
 
-              <ProductCell>
-                <ProductImage>
-                  {getImage(precommande) ? (
-                    <img
-                      src={getImage(precommande)}
-                      alt={getNomProduit(precommande)}
-                    />
-                  ) : (
-                    <NoProductImage>—</NoProductImage>
+                <ProductCell>
+                  <ProductImage>
+                    {getImage(
+                      precommande,
+                    ) ? (
+                      <img
+                        src={getImage(
+                          precommande,
+                        )}
+                        alt={getNomProduit(
+                          precommande,
+                        )}
+                      />
+                    ) : (
+                      <NoProductImage>
+                        —
+                      </NoProductImage>
+                    )}
+                  </ProductImage>
+
+                  <ProductName>
+                    {getNomProduit(
+                      precommande,
+                    )}
+                  </ProductName>
+                </ProductCell>
+
+                {/* VARIATION */}
+
+                <VariationCell>
+                  {precommande.taille && (
+                    <VariationTag>
+                      Taille :{" "}
+                      {
+                        precommande.taille
+                      }
+                    </VariationTag>
                   )}
-                </ProductImage>
 
-                <ProductName>{getNomProduit(precommande)}</ProductName>
-              </ProductCell>
+                  {precommande.couleur && (
+                    <VariationTag>
+                      Couleur :{" "}
+                      {
+                        precommande.couleur
+                      }
+                    </VariationTag>
+                  )}
 
-              {/* VARIATION */}
+                  <QuantityText>
+                    ×{" "}
+                    {
+                      precommande.quantite ||
+                      1
+                    }
+                  </QuantityText>
+                </VariationCell>
 
-              <VariationCell>
-                {precommande.taille && (
-                  <VariationTag>Taille : {precommande.taille}</VariationTag>
-                )}
+                {/* DÉPÔT */}
 
-                {precommande.couleur && (
-                  <VariationTag>Couleur : {precommande.couleur}</VariationTag>
-                )}
+                <DepositCell>
+                  <DepositAmount>
+                    {formatPrix(
+                      getMontantPaiement(
+                        precommande,
+                      ),
+                    )}{" "}
+                    FCFA
+                  </DepositAmount>
 
-                <QuantityText>× {precommande.quantite || 1}</QuantityText>
-              </VariationCell>
+                  <PaymentMethod>
+                    {getNomService(
+                      getServicePaiement(
+                        precommande,
+                      ),
+                    )}
+                  </PaymentMethod>
 
-              {/* DÉPÔT */}
+                  <DepositSmallInfo>
+                    N° :{" "}
+                    {getNumeroPaiement(
+                      precommande,
+                    ) || "—"}
+                  </DepositSmallInfo>
 
-              <DepositCell>
-                <DepositAmount>
-                  {formatPrix(getMontantPaiement(precommande))} FCFA
-                </DepositAmount>
+                  <DepositSmallInfo>
+                    Réf. :{" "}
+                    {getReferencePaiement(
+                      precommande,
+                    ) || "—"}
+                  </DepositSmallInfo>
+                </DepositCell>
 
-                <PaymentMethod>
-                  {getServicePaiement(precommande) === "orange"
-                    ? "Orange Money"
-                    : getServicePaiement(precommande) === "wave"
-                      ? "Wave"
-                      : getServicePaiement(precommande) || "—"}
-                </PaymentMethod>
+                {/* STATUT */}
 
-                <DepositSmallInfo>
-                  N° : {getNumeroPaiement(precommande) || "—"}
-                </DepositSmallInfo>
+                <StatusCell>
+                  <StatusBadge
+                    $status={
+                      precommande.statut
+                    }
+                  >
+                    {getStatutLabel(
+                      precommande.statut,
+                    )}
+                  </StatusBadge>
+                </StatusCell>
 
-                <DepositSmallInfo>
-                  Réf. : {getReferencePaiement(precommande) || "—"}
-                </DepositSmallInfo>
-              </DepositCell>
+                {/* DATE */}
 
-              {/* STATUT */}
+                <DateCell>
+                  {formatDate(
+                    precommande.createdAt,
+                  )}
+                </DateCell>
 
-              <StatusCell>
-                <StatusBadge $status={precommande.statut}>
-                  {getStatutLabel(precommande.statut)}
-                </StatusBadge>
-              </StatusCell>
+                {/* ACTION */}
 
-              {/* DATE */}
+                <ViewCell>
+                  <ViewButton
+                    onClick={(e) => {
+                      e.stopPropagation();
 
-              <DateCell>{formatDate(precommande.createdAt)}</DateCell>
-
-              {/* ACTION */}
-
-              <ViewCell>
-                <ViewButton
-                  onClick={(e) => {
-                    e.stopPropagation();
-
-                    ouvrirDetail(precommande);
-                  }}
-                >
-                  Voir
-                </ViewButton>
-              </ViewCell>
-            </PrecommandeRow>
-          ))
+                      ouvrirDetail(
+                        precommande,
+                      );
+                    }}
+                  >
+                    Voir
+                  </ViewButton>
+                </ViewCell>
+              </PrecommandeRow>
+            ),
+          )
         )}
       </ContentCard>
 
@@ -671,8 +1170,14 @@ const ReceptionPrecommande = () => {
       {pages > 1 && (
         <Pagination>
           <PageButton
-            disabled={page <= 1 || loading}
-            onClick={() => chargerPrecommandes(page - 1)}
+            disabled={
+              page <= 1 || loading
+            }
+            onClick={() =>
+              chargerPrecommandes(
+                page - 1,
+              )
+            }
           >
             Précédent
           </PageButton>
@@ -682,8 +1187,15 @@ const ReceptionPrecommande = () => {
           </PageInfo>
 
           <PageButton
-            disabled={page >= pages || loading}
-            onClick={() => chargerPrecommandes(page + 1)}
+            disabled={
+              page >= pages ||
+              loading
+            }
+            onClick={() =>
+              chargerPrecommandes(
+                page + 1,
+              )
+            }
           >
             Suivant
           </PageButton>
@@ -695,20 +1207,33 @@ const ReceptionPrecommande = () => {
       ===================================================== */}
 
       {precommandeSelectionnee && (
-        <ModalOverlay onClick={fermerDetail}>
-          <Modal onClick={(e) => e.stopPropagation()}>
-            {/* =================================================
-                MODAL HEADER
-            ================================================= */}
+        <ModalOverlay
+          onClick={fermerDetail}
+        >
+          <Modal
+            onClick={(e) =>
+              e.stopPropagation()
+            }
+          >
+            {/* HEADER */}
 
             <ModalHeader>
               <div>
-                <ModalLabel>PRÉCOMMANDE</ModalLabel>
+                <ModalLabel>
+                  PRÉCOMMANDE
+                </ModalLabel>
 
-                <ModalTitle>Détails de la demande</ModalTitle>
+                <ModalTitle>
+                  Détails de la demande
+                </ModalTitle>
               </div>
 
-              <CloseButton onClick={fermerDetail} disabled={actionLoading}>
+              <CloseButton
+                onClick={fermerDetail}
+                disabled={
+                  actionLoading
+                }
+              >
                 ×
               </CloseButton>
             </ModalHeader>
@@ -720,27 +1245,48 @@ const ReceptionPrecommande = () => {
 
               <ProductHero>
                 <LargeProductImage>
-                  {getImage(precommandeSelectionnee) ? (
+                  {getImage(
+                    precommandeSelectionnee,
+                  ) ? (
                     <img
-                      src={getImage(precommandeSelectionnee)}
-                      alt={getNomProduit(precommandeSelectionnee)}
+                      src={getImage(
+                        precommandeSelectionnee,
+                      )}
+                      alt={getNomProduit(
+                        precommandeSelectionnee,
+                      )}
                     />
                   ) : (
-                    <NoProductImage>—</NoProductImage>
+                    <NoProductImage>
+                      —
+                    </NoProductImage>
                   )}
                 </LargeProductImage>
 
                 <ProductHeroInfo>
                   <ProductHeroTitle>
-                    {getNomProduit(precommandeSelectionnee)}
+                    {getNomProduit(
+                      precommandeSelectionnee,
+                    )}
                   </ProductHeroTitle>
 
                   <ProductPrice>
-                    {formatPrix(getPrixProduit(precommandeSelectionnee))} FCFA
+                    {formatPrix(
+                      getPrixProduit(
+                        precommandeSelectionnee,
+                      ),
+                    )}{" "}
+                    FCFA
                   </ProductPrice>
 
-                  <StatusBadge $status={precommandeSelectionnee.statut}>
-                    {getStatutLabel(precommandeSelectionnee.statut)}
+                  <StatusBadge
+                    $status={
+                      precommandeSelectionnee.statut
+                    }
+                  >
+                    {getStatutLabel(
+                      precommandeSelectionnee.statut,
+                    )}
                   </StatusBadge>
                 </ProductHeroInfo>
               </ProductHero>
@@ -750,40 +1296,62 @@ const ReceptionPrecommande = () => {
               ================================================= */}
 
               <Section>
-                <SectionTitle>Informations client</SectionTitle>
+                <SectionTitle>
+                  Informations client
+                </SectionTitle>
 
                 <InfoGrid>
                   <InfoItem>
-                    <InfoLabel>Nom / pseudo</InfoLabel>
+                    <InfoLabel>
+                      Nom / pseudo
+                    </InfoLabel>
 
                     <InfoValue>
-                      {precommandeSelectionnee.clientId?.username || "—"}
-                    </InfoValue>
-                  </InfoItem>
-
-                  <InfoItem>
-                    <InfoLabel>Email</InfoLabel>
-
-                    <InfoValue>
-                      {precommandeSelectionnee.clientId?.email || "—"}
-                    </InfoValue>
-                  </InfoItem>
-
-                  <InfoItem>
-                    <InfoLabel>Téléphone</InfoLabel>
-
-                    <InfoValue>
-                      {precommandeSelectionnee.clientId?.telephone ||
-                        precommandeSelectionnee.clientId?.phone ||
+                      {precommandeSelectionnee
+                        .clientId
+                        ?.username ||
                         "—"}
                     </InfoValue>
                   </InfoItem>
 
                   <InfoItem>
-                    <InfoLabel>Date de demande</InfoLabel>
+                    <InfoLabel>
+                      Email
+                    </InfoLabel>
 
                     <InfoValue>
-                      {formatDate(precommandeSelectionnee.createdAt)}
+                      {precommandeSelectionnee
+                        .clientId
+                        ?.email ||
+                        "—"}
+                    </InfoValue>
+                  </InfoItem>
+
+                  <InfoItem>
+                    <InfoLabel>
+                      Téléphone
+                    </InfoLabel>
+
+                    <InfoValue>
+                      {precommandeSelectionnee
+                        .clientId
+                        ?.telephone ||
+                        precommandeSelectionnee
+                          .clientId
+                          ?.phone ||
+                        "—"}
+                    </InfoValue>
+                  </InfoItem>
+
+                  <InfoItem>
+                    <InfoLabel>
+                      Date de demande
+                    </InfoLabel>
+
+                    <InfoValue>
+                      {formatDate(
+                        precommandeSelectionnee.createdAt,
+                      )}
                     </InfoValue>
                   </InfoItem>
                 </InfoGrid>
@@ -794,113 +1362,184 @@ const ReceptionPrecommande = () => {
               ================================================= */}
 
               <Section>
-                <SectionTitle>Choix du client</SectionTitle>
+                <SectionTitle>
+                  Choix du client
+                </SectionTitle>
 
                 <InfoGrid>
                   <InfoItem>
-                    <InfoLabel>Taille</InfoLabel>
+                    <InfoLabel>
+                      Taille
+                    </InfoLabel>
 
                     <InfoValue>
-                      {precommandeSelectionnee.taille || "—"}
+                      {precommandeSelectionnee.taille ||
+                        "—"}
                     </InfoValue>
                   </InfoItem>
 
                   <InfoItem>
-                    <InfoLabel>Couleur</InfoLabel>
+                    <InfoLabel>
+                      Couleur
+                    </InfoLabel>
 
                     <InfoValue>
-                      {precommandeSelectionnee.couleur || "—"}
+                      {precommandeSelectionnee.couleur ||
+                        "—"}
                     </InfoValue>
                   </InfoItem>
 
                   <InfoItem>
-                    <InfoLabel>Quantité</InfoLabel>
+                    <InfoLabel>
+                      Quantité
+                    </InfoLabel>
 
                     <InfoValue>
-                      {precommandeSelectionnee.quantite || 1}
+                      {precommandeSelectionnee.quantite ||
+                        1}
                     </InfoValue>
                   </InfoItem>
 
                   <InfoItem>
-                    <InfoLabel>Prix unitaire</InfoLabel>
-
-                    <InfoValue>
-                      {formatPrix(getPrixProduit(precommandeSelectionnee))} FCFA
-                    </InfoValue>
-                  </InfoItem>
-
-                  <InfoItem>
-                    <InfoLabel>Montant total</InfoLabel>
+                    <InfoLabel>
+                      Prix unitaire
+                    </InfoLabel>
 
                     <InfoValue>
                       {formatPrix(
-                        Number(getPrixProduit(precommandeSelectionnee)) *
-                          Number(precommandeSelectionnee.quantite || 1),
+                        getPrixProduit(
+                          precommandeSelectionnee,
+                        ),
                       )}{" "}
                       FCFA
                     </InfoValue>
+                  </InfoItem>
+
+                  <InfoItem>
+                    <InfoLabel>
+                      Montant total
+                    </InfoLabel>
+
+                    <InfoValue>
+                      {formatPrix(
+                        Number(
+                          getPrixProduit(
+                            precommandeSelectionnee,
+                          ),
+                        ) *
+                          Number(
+                            precommandeSelectionnee.quantite ||
+                              1,
+                          ),
+                      )}{" "}
+                      FCFA
+                    </InfoValue>
+                  </InfoItem>
+
+                  <InfoItem>
+                    <InfoLabel>
+                      Dépôt demandé
+                    </InfoLabel>
+
+                    <InfoValue>
+                      {formatPrix(
+                        precommandeSelectionnee.montantDepot ||
+                          0,
+                      )}{" "}
+                      FCFA
+                    </InfoValue>
+                  </InfoItem>
+
+                  <InfoItem>
+                    <InfoLabel>
+                      Solde à payer
+                    </InfoLabel>
+
+                    <DepositBig>
+                      {formatPrix(
+                        precommandeSelectionnee.montantSolde ||
+                          0,
+                      )}{" "}
+                      FCFA
+                    </DepositBig>
                   </InfoItem>
                 </InfoGrid>
               </Section>
 
               {/* =================================================
-                  PAIEMENT
+                  DÉPÔT
               ================================================= */}
 
               <Section>
-                <SectionTitle>Informations du dépôt</SectionTitle>
+                <SectionTitle>
+                  Informations du dépôt
+                </SectionTitle>
 
                 <PaymentBox>
                   <InfoGrid>
                     <InfoItem>
-                      <InfoLabel>Service choisi</InfoLabel>
+                      <InfoLabel>
+                        Service choisi
+                      </InfoLabel>
 
                       <InfoValue>
-                        {getServicePaiement(precommandeSelectionnee) ===
-                        "orange"
-                          ? "Orange Money"
-                          : getServicePaiement(precommandeSelectionnee) ===
-                              "wave"
-                            ? "Wave"
-                            : getServicePaiement(precommandeSelectionnee) ||
-                              "—"}
+                        {getNomService(
+                          getServicePaiement(
+                            precommandeSelectionnee,
+                          ),
+                        )}
                       </InfoValue>
                     </InfoItem>
 
                     <InfoItem>
-                      <InfoLabel>Numéro utilisé pour le dépôt</InfoLabel>
+                      <InfoLabel>
+                        Numéro utilisé
+                      </InfoLabel>
 
                       <InfoValue>
-                        {getNumeroPaiement(precommandeSelectionnee) || "—"}
+                        {getNumeroPaiement(
+                          precommandeSelectionnee,
+                        ) || "—"}
                       </InfoValue>
                     </InfoItem>
 
                     <InfoItem>
-                      <InfoLabel>Référence du dépôt</InfoLabel>
+                      <InfoLabel>
+                        Référence du dépôt
+                      </InfoLabel>
 
                       <ReferenceValue>
-                        {getReferencePaiement(precommandeSelectionnee) || "—"}
+                        {getReferencePaiement(
+                          precommandeSelectionnee,
+                        ) || "—"}
                       </ReferenceValue>
                     </InfoItem>
 
                     <InfoItem>
-                      <InfoLabel>Montant envoyé</InfoLabel>
+                      <InfoLabel>
+                        Montant envoyé
+                      </InfoLabel>
 
                       <DepositBig>
                         {formatPrix(
-                          getMontantPaiement(precommandeSelectionnee),
+                          getMontantPaiement(
+                            precommandeSelectionnee,
+                          ),
                         )}{" "}
                         FCFA
                       </DepositBig>
                     </InfoItem>
 
                     <InfoItem>
-                      <InfoLabel>Montant attendu</InfoLabel>
+                      <InfoLabel>
+                        Montant attendu
+                      </InfoLabel>
 
                       <InfoValue>
                         {formatPrix(
-                          getPaiementDepot(precommandeSelectionnee)
-                            ?.montantAttendu ??
+                          getPaiementDepot(
+                            precommandeSelectionnee,
+                          )?.montantAttendu ??
                             precommandeSelectionnee.montantDepot ??
                             0,
                         )}{" "}
@@ -909,67 +1548,309 @@ const ReceptionPrecommande = () => {
                     </InfoItem>
 
                     <InfoItem>
-                      <InfoLabel>Statut du dépôt</InfoLabel>
+                      <InfoLabel>
+                        Statut du dépôt
+                      </InfoLabel>
 
-                      <InfoValue>
-                        {getPaiementDepot(precommandeSelectionnee)?.status ===
+                      <PaymentStatus
+                        $status={
+                          getPaiementDepot(
+                            precommandeSelectionnee,
+                          )?.status
+                        }
+                      >
+                        {getPaiementDepot(
+                          precommandeSelectionnee,
+                        )?.status ===
                         "CONFIRMED"
-                          ? "Confirmé"
-                          : getPaiementDepot(precommandeSelectionnee)
-                                ?.status === "REJECTED"
-                            ? "Rejeté"
-                            : "En attente"}
-                      </InfoValue>
+                          ? "✓ Confirmé"
+                          : getPaiementDepot(
+                                precommandeSelectionnee,
+                              )?.status ===
+                              "REJECTED"
+                            ? "✕ Rejeté"
+                            : "⏳ En attente"}
+                      </PaymentStatus>
                     </InfoItem>
                   </InfoGrid>
                 </PaymentBox>
               </Section>
 
               {/* =================================================
-                  INFORMATIONS DE SOLDE
+                  SOLDE
               ================================================= */}
 
-              {(precommandeSelectionnee.statut === "FINALIZATION_PENDING" ||
-                precommandeSelectionnee.statut === "FINALIZED") && (
+              {getPaiementSolde(
+                precommandeSelectionnee,
+              ) && (
                 <Section>
-                  <SectionTitle>Informations du solde</SectionTitle>
+                  <SectionTitle>
+                    Informations du solde
+                  </SectionTitle>
 
-                  <InfoGrid>
-                    <InfoItem>
-                      <InfoLabel>Référence du solde</InfoLabel>
+                  <SoldePaymentBox
+                    $pending={
+                      getStatutSolde(
+                        precommandeSelectionnee,
+                      ) === "PENDING"
+                    }
+                  >
+                    <SoldeHeader>
+                      <div>
+                        <SoldeTitle>
+                          Paiement du solde
+                        </SoldeTitle>
 
-                      <ReferenceValue>
-                        {precommandeSelectionnee.referenceSolde ||
-                          precommandeSelectionnee.reference ||
-                          "—"}
-                      </ReferenceValue>
-                    </InfoItem>
+                        <SoldeSubtitle>
+                          {getStatutSoldeLabel(
+                            getStatutSolde(
+                              precommandeSelectionnee,
+                            ),
+                          )}
+                        </SoldeSubtitle>
+                      </div>
 
-                    <InfoItem>
-                      <InfoLabel>Montant envoyé</InfoLabel>
+                      <SoldeStatusBadge
+                        $status={
+                          getStatutSolde(
+                            precommandeSelectionnee,
+                          )
+                        }
+                      >
+                        {getStatutSoldeLabel(
+                          getStatutSolde(
+                            precommandeSelectionnee,
+                          ),
+                        )}
+                      </SoldeStatusBadge>
+                    </SoldeHeader>
 
-                      <DepositBig>
-                        {formatPrix(
-                          precommandeSelectionnee.montantSolde ||
-                            precommandeSelectionnee.montantEnvoye ||
-                            0,
-                        )}{" "}
-                        FCFA
-                      </DepositBig>
-                    </InfoItem>
+                    <InfoGrid>
+                      <InfoItem>
+                        <InfoLabel>
+                          Service
+                        </InfoLabel>
 
-                    <InfoItem>
-                      <InfoLabel>Service</InfoLabel>
+                        <InfoValue>
+                          {getNomService(
+                            getServiceSolde(
+                              precommandeSelectionnee,
+                            ),
+                          )}
+                        </InfoValue>
+                      </InfoItem>
 
-                      <InfoValue>
-                        {precommandeSelectionnee.serviceSolde === "orange"
-                          ? "Orange Money"
-                          : precommandeSelectionnee.serviceSolde === "wave"
-                            ? "Wave"
-                            : precommandeSelectionnee.service || "—"}
-                      </InfoValue>
-                    </InfoItem>
-                  </InfoGrid>
+                      <InfoItem>
+                        <InfoLabel>
+                          Numéro utilisé
+                        </InfoLabel>
+
+                        <InfoValue>
+                          {getNumeroSolde(
+                            precommandeSelectionnee,
+                          ) || "—"}
+                        </InfoValue>
+                      </InfoItem>
+
+                      <InfoItem>
+                        <InfoLabel>
+                          Référence du paiement
+                        </InfoLabel>
+
+                        <ReferenceValue>
+                          {getReferenceSolde(
+                            precommandeSelectionnee,
+                          ) || "—"}
+                        </ReferenceValue>
+                      </InfoItem>
+
+                      <InfoItem>
+                        <InfoLabel>
+                          Montant envoyé
+                        </InfoLabel>
+
+                        <DepositBig>
+                          {formatPrix(
+                            getMontantSoldeEnvoye(
+                              precommandeSelectionnee,
+                            ),
+                          )}{" "}
+                          FCFA
+                        </DepositBig>
+                      </InfoItem>
+
+                      <InfoItem>
+                        <InfoLabel>
+                          Montant attendu
+                        </InfoLabel>
+
+                        <InfoValue>
+                          {formatPrix(
+                            getMontantSoldeAttendu(
+                              precommandeSelectionnee,
+                            ),
+                          )}{" "}
+                          FCFA
+                        </InfoValue>
+                      </InfoItem>
+
+                      <InfoItem>
+                        <InfoLabel>
+                          Envoyé le
+                        </InfoLabel>
+
+                        <InfoValue>
+                          {formatDate(
+                            getPaiementSolde(
+                              precommandeSelectionnee,
+                            )?.submittedAt,
+                          )}
+                        </InfoValue>
+                      </InfoItem>
+
+                      {getPaiementSolde(
+                        precommandeSelectionnee,
+                      )?.confirmedAt && (
+                        <InfoItem>
+                          <InfoLabel>
+                            Confirmé le
+                          </InfoLabel>
+
+                          <InfoValue>
+                            {formatDate(
+                              getPaiementSolde(
+                                precommandeSelectionnee,
+                              )?.confirmedAt,
+                            )}
+                          </InfoValue>
+                        </InfoItem>
+                      )}
+
+                      {getPaiementSolde(
+                        precommandeSelectionnee,
+                      )?.adminComment && (
+                        <InfoItem>
+                          <InfoLabel>
+                            Commentaire du paiement
+                          </InfoLabel>
+
+                          <InfoValue>
+                            {
+                              getPaiementSolde(
+                                precommandeSelectionnee,
+                              )?.adminComment
+                            }
+                          </InfoValue>
+                        </InfoItem>
+                      )}
+                    </InfoGrid>
+
+                    {/* =================================================
+                        ACTIONS SOLDE
+                    ================================================= */}
+
+                    {precommandeSelectionnee.statut ===
+                      "FINALIZATION_PENDING" &&
+                      getStatutSolde(
+                        precommandeSelectionnee,
+                      ) === "PENDING" && (
+                        <SoldeActionBox>
+                          <SoldeActionTitle>
+                            Vérification nécessaire
+                          </SoldeActionTitle>
+
+                          <SoldeActionText>
+                            Vérifiez la transaction
+                            Orange Money / Wave puis
+                            confirmez ou rejetez le paiement.
+                          </SoldeActionText>
+
+                          <SoldeActions>
+                            <RejectSoldeButton
+                              type="button"
+                              onClick={
+                                rejeterSolde
+                              }
+                              disabled={
+                                actionLoading
+                              }
+                            >
+                              {actionLoading
+                                ? "Traitement..."
+                                : "Rejeter le solde"}
+                            </RejectSoldeButton>
+
+                            <ConfirmSoldeButton
+                              type="button"
+                              onClick={
+                                confirmerSolde
+                              }
+                              disabled={
+                                actionLoading
+                              }
+                            >
+                              {actionLoading
+                                ? "Traitement..."
+                                : "Confirmer le solde"}
+                            </ConfirmSoldeButton>
+                          </SoldeActions>
+                        </SoldeActionBox>
+                      )}
+
+                    {precommandeSelectionnee.statut ===
+                      "FINALIZED" && (
+                      <FinalizedBox>
+                        <FinalizedIcon>
+                          ✓
+                        </FinalizedIcon>
+
+                        <div>
+                          <FinalizedTitle>
+                            Paiement confirmé
+                          </FinalizedTitle>
+
+                          <FinalizedText>
+                            Le solde a été confirmé
+                            et la commande finale a
+                            été créée automatiquement.
+                          </FinalizedText>
+
+                          {precommandeSelectionnee.commandeId && (
+                            <CommandeId>
+                              Commande :{" "}
+                              <strong>
+                                {
+                                  precommandeSelectionnee.commandeId
+                                }
+                              </strong>
+                            </CommandeId>
+                          )}
+                        </div>
+                      </FinalizedBox>
+                    )}
+
+                    {precommandeSelectionnee.statut ===
+                      "READY_TO_FINALIZE" && (
+                      <WaitingClientBox>
+                        <WaitingIcon>
+                          ⏳
+                        </WaitingIcon>
+
+                        <div>
+                          <WaitingTitle>
+                            En attente du client
+                          </WaitingTitle>
+
+                          <WaitingText>
+                            Le produit est disponible.
+                            Le client doit maintenant
+                            payer le solde pour finaliser
+                            sa commande.
+                          </WaitingText>
+                        </div>
+                      </WaitingClientBox>
+                    )}
+                  </SoldePaymentBox>
                 </Section>
               )}
 
@@ -978,55 +1859,141 @@ const ReceptionPrecommande = () => {
               ================================================= */}
 
               <Section>
-                <SectionTitle>Commentaire administrateur</SectionTitle>
+                <SectionTitle>
+                  Commentaire administrateur
+                </SectionTitle>
 
                 <CommentTextarea
                   value={adminComment}
-                  onChange={(e) => setAdminComment(e.target.value)}
+                  onChange={(e) =>
+                    setAdminComment(
+                      e.target.value,
+                    )
+                  }
                   placeholder="Ajouter une remarque concernant cette précommande..."
-                  disabled={precommandeSelectionnee.statut !== "PENDING"}
+                  disabled={
+                    precommandeSelectionnee.statut !==
+                    "PENDING" &&
+                    precommandeSelectionnee.statut !==
+                    "FINALIZATION_PENDING"
+                  }
                 />
 
                 {precommandeSelectionnee.adminComment && (
                   <ExistingComment>
                     <ExistingCommentLabel>
-                      Commentaire enregistré
+                      COMMENTAIRE ENREGISTRÉ
                     </ExistingCommentLabel>
 
                     <ExistingCommentText>
-                      {precommandeSelectionnee.adminComment}
+                      {
+                        precommandeSelectionnee.adminComment
+                      }
                     </ExistingCommentText>
                   </ExistingComment>
                 )}
               </Section>
 
               {/* =================================================
-                  DATES
+                  HISTORIQUE
               ================================================= */}
 
               <Section>
-                <SectionTitle>Historique</SectionTitle>
+                <SectionTitle>
+                  Historique
+                </SectionTitle>
 
                 <HistoryList>
                   <HistoryItem>
                     <HistoryDot />
                     <HistoryContent>
-                      <HistoryLabel>Créée</HistoryLabel>
+                      <HistoryLabel>
+                        Créée
+                      </HistoryLabel>
 
                       <HistoryDate>
-                        {formatDate(precommandeSelectionnee.createdAt)}
+                        {formatDate(
+                          precommandeSelectionnee.createdAt,
+                        )}
                       </HistoryDate>
                     </HistoryContent>
                   </HistoryItem>
+
+                  {getPaiementDepot(
+                    precommandeSelectionnee,
+                  )?.submittedAt && (
+                    <HistoryItem>
+                      <HistoryDot />
+                      <HistoryContent>
+                        <HistoryLabel>
+                          Dépôt envoyé
+                        </HistoryLabel>
+
+                        <HistoryDate>
+                          {formatDate(
+                            getPaiementDepot(
+                              precommandeSelectionnee,
+                            )?.submittedAt,
+                          )}
+                        </HistoryDate>
+                      </HistoryContent>
+                    </HistoryItem>
+                  )}
+
+                  {getPaiementSolde(
+                    precommandeSelectionnee,
+                  )?.submittedAt && (
+                    <HistoryItem>
+                      <HistoryDot />
+                      <HistoryContent>
+                        <HistoryLabel>
+                          Solde envoyé
+                        </HistoryLabel>
+
+                        <HistoryDate>
+                          {formatDate(
+                            getPaiementSolde(
+                              precommandeSelectionnee,
+                            )?.submittedAt,
+                          )}
+                        </HistoryDate>
+                      </HistoryContent>
+                    </HistoryItem>
+                  )}
+
+                  {getPaiementSolde(
+                    precommandeSelectionnee,
+                  )?.confirmedAt && (
+                    <HistoryItem>
+                      <HistoryDot />
+                      <HistoryContent>
+                        <HistoryLabel>
+                          Solde confirmé
+                        </HistoryLabel>
+
+                        <HistoryDate>
+                          {formatDate(
+                            getPaiementSolde(
+                              precommandeSelectionnee,
+                            )?.confirmedAt,
+                          )}
+                        </HistoryDate>
+                      </HistoryContent>
+                    </HistoryItem>
+                  )}
 
                   {precommandeSelectionnee.updatedAt && (
                     <HistoryItem>
                       <HistoryDot />
                       <HistoryContent>
-                        <HistoryLabel>Dernière mise à jour</HistoryLabel>
+                        <HistoryLabel>
+                          Dernière mise à jour
+                        </HistoryLabel>
 
                         <HistoryDate>
-                          {formatDate(precommandeSelectionnee.updatedAt)}
+                          {formatDate(
+                            precommandeSelectionnee.updatedAt,
+                          )}
                         </HistoryDate>
                       </HistoryContent>
                     </HistoryItem>
@@ -1038,28 +2005,48 @@ const ReceptionPrecommande = () => {
                   MESSAGES
               ================================================= */}
 
-              {message && <SuccessMessage>✓ {message}</SuccessMessage>}
+              {message && (
+                <SuccessMessage>
+                  ✓ {message}
+                </SuccessMessage>
+              )}
 
-              {erreur && <ErrorMessage>{erreur}</ErrorMessage>}
+              {erreur && (
+                <ErrorMessage>
+                  {erreur}
+                </ErrorMessage>
+              )}
             </ModalBody>
 
             {/* =================================================
-                ACTIONS
+                ACTIONS FOOTER
             ================================================= */}
 
-            {precommandeSelectionnee.statut === "PENDING" && (
+            {precommandeSelectionnee.statut ===
+              "PENDING" && (
               <ModalFooter>
-                <RejectButton onClick={refuser} disabled={actionLoading}>
-                  {actionLoading ? "Traitement..." : "Refuser"}
+                <RejectButton
+                  onClick={refuser}
+                  disabled={actionLoading}
+                >
+                  {actionLoading
+                    ? "Traitement..."
+                    : "Refuser"}
                 </RejectButton>
 
-                <AcceptButton onClick={accepter} disabled={actionLoading}>
-                  {actionLoading ? "Traitement..." : "Accepter la précommande"}
+                <AcceptButton
+                  onClick={accepter}
+                  disabled={actionLoading}
+                >
+                  {actionLoading
+                    ? "Traitement..."
+                    : "Accepter la précommande"}
                 </AcceptButton>
               </ModalFooter>
             )}
 
-            {precommandeSelectionnee.statut !== "PENDING" && (
+            {precommandeSelectionnee.statut !==
+              "PENDING" && (
               <ModalFooter>
                 <CloseFooterButton
                   onClick={fermerDetail}
@@ -1156,8 +2143,12 @@ const StatsGrid = styled.div`
   margin: 0 auto 25px;
 
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 15px;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
 
   @media (max-width: 800px) {
     grid-template-columns: repeat(2, 1fr);
@@ -1184,6 +2175,18 @@ const StatCard = styled.div`
     props.$accepted &&
     `
       border-left: 4px solid #31954b;
+    `}
+
+  ${(props) =>
+    props.$solde &&
+    `
+      border-left: 4px solid #365bb5;
+    `}
+
+  ${(props) =>
+    props.$finalized &&
+    `
+      border-left: 4px solid #17863b;
     `}
 
   ${(props) =>
@@ -1230,9 +2233,11 @@ const FilterTitle = styled.span`
 const FilterButton = styled.button`
   border: none;
 
-  background: ${(props) => (props.$active ? "#111" : "#f3f3f3")};
+  background: ${(props) =>
+    props.$active ? "#111" : "#f3f3f3"};
 
-  color: ${(props) => (props.$active ? "#fff" : "#555")};
+  color: ${(props) =>
+    props.$active ? "#fff" : "#555"};
 
   padding: 9px 14px;
   border-radius: 8px;
@@ -1242,7 +2247,8 @@ const FilterButton = styled.button`
   font-weight: 700;
 
   &:hover {
-    background: ${(props) => (props.$active ? "#111" : "#e7e7e7")};
+    background: ${(props) =>
+      props.$active ? "#111" : "#e7e7e7"};
   }
 `;
 
@@ -1458,6 +2464,13 @@ const PaymentMethod = styled.div`
   margin-top: 4px;
   color: #888;
   font-size: 10px;
+`;
+
+const DepositSmallInfo = styled.div`
+  margin-top: 3px;
+  color: #777;
+  font-size: 10px;
+  line-height: 1.4;
 `;
 
 const StatusCell = styled.div`
@@ -1881,56 +2894,330 @@ const InfoGrid = styled.div`
 
 const InfoItem = styled.div`
   background: #f8f8f8;
-
   border-radius: 9px;
-
   padding: 13px;
 `;
 
 const InfoLabel = styled.div`
   color: #999;
-
   font-size: 10px;
-
   font-weight: 700;
-
   margin-bottom: 5px;
 `;
 
 const InfoValue = styled.div`
   color: #333;
-
   font-size: 13px;
-
   font-weight: 700;
-
   word-break: break-word;
 `;
 
 const ReferenceValue = styled.div`
   color: #111;
-
   font-size: 13px;
-
   font-weight: 800;
-
   word-break: break-all;
 `;
 
 const DepositBig = styled.div`
   color: #287038;
-
   font-size: 15px;
-
   font-weight: 800;
 `;
 
 const PaymentBox = styled.div`
   background: #f8f8f8;
-
   padding: 15px;
+  border-radius: 12px;
+`;
+
+const PaymentStatus = styled.div`
+  color: ${(props) => {
+    if (props.$status === "CONFIRMED") {
+      return "#287038";
+    }
+
+    if (props.$status === "REJECTED") {
+      return "#b53636";
+    }
+
+    return "#a56b00";
+  }};
+
+  font-size: 13px;
+  font-weight: 800;
+`;
+
+const SoldePaymentBox = styled.div`
+  background: ${(props) =>
+    props.$pending
+      ? "#f5f8ff"
+      : "#f8f8f8"};
+
+  border: 1px solid
+    ${(props) =>
+      props.$pending
+        ? "#dce5ff"
+        : "#eee"};
+
+  padding: 17px;
+
+  border-radius: 14px;
+`;
+
+const SoldeHeader = styled.div`
+  display: flex;
+
+  justify-content: space-between;
+  align-items: flex-start;
+
+  gap: 15px;
+
+  margin-bottom: 17px;
+
+  @media (max-width: 550px) {
+    flex-direction: column;
+  }
+`;
+
+const SoldeTitle = styled.div`
+  color: #222;
+  font-size: 15px;
+  font-weight: 800;
+`;
+
+const SoldeSubtitle = styled.div`
+  margin-top: 4px;
+  color: #777;
+  font-size: 11px;
+`;
+
+const SoldeStatusBadge = styled.span`
+  display: inline-flex;
+  padding: 7px 10px;
+  border-radius: 20px;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  background: ${(props) => {
+    if (props.$status === "CONFIRMED") {
+      return "#e9f7ec";
+    }
+
+    if (props.$status === "REJECTED") {
+      return "#fff0f0";
+    }
+
+    return "#eef3ff";
+  }};
+
+  color: ${(props) => {
+    if (props.$status === "CONFIRMED") {
+      return "#28743a";
+    }
+
+    if (props.$status === "REJECTED") {
+      return "#b53636";
+    }
+
+    return "#365bb5";
+  }};
+`;
+
+const SoldeActionBox = styled.div`
+  margin-top: 16px;
+
+  padding: 17px;
+
+  background: white;
+
+  border: 1px solid #dfe6f7;
 
   border-radius: 12px;
+`;
+
+const SoldeActionTitle = styled.div`
+  font-size: 13px;
+  font-weight: 800;
+  color: #222;
+`;
+
+const SoldeActionText = styled.p`
+  margin: 6px 0 15px;
+
+  color: #777;
+
+  font-size: 11px;
+
+  line-height: 1.5;
+`;
+
+const SoldeActions = styled.div`
+  display: flex;
+
+  justify-content: flex-end;
+
+  gap: 10px;
+
+  @media (max-width: 550px) {
+    flex-direction: column;
+  }
+`;
+
+const RejectSoldeButton = styled.button`
+  border: 1px solid #e3baba;
+
+  background: #fff5f5;
+
+  color: #b53636;
+
+  padding: 12px 18px;
+
+  border-radius: 9px;
+
+  cursor: pointer;
+
+  font-weight: 800;
+
+  &:hover:not(:disabled) {
+    background: #ffe9e9;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+const ConfirmSoldeButton = styled.button`
+  border: none;
+
+  background: #287038;
+
+  color: white;
+
+  padding: 12px 20px;
+
+  border-radius: 9px;
+
+  cursor: pointer;
+
+  font-weight: 800;
+
+  &:hover:not(:disabled) {
+    background: #1f5b2e;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+const FinalizedBox = styled.div`
+  margin-top: 16px;
+
+  display: flex;
+
+  align-items: flex-start;
+
+  gap: 12px;
+
+  padding: 16px;
+
+  background: #eff9f0;
+
+  border: 1px solid #d7ead9;
+
+  border-radius: 12px;
+`;
+
+const FinalizedIcon = styled.div`
+  width: 35px;
+  height: 35px;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background: #287038;
+
+  color: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-weight: 900;
+`;
+
+const FinalizedTitle = styled.div`
+  color: #287038;
+
+  font-size: 13px;
+
+  font-weight: 800;
+`;
+
+const FinalizedText = styled.div`
+  margin-top: 5px;
+
+  color: #4f7056;
+
+  font-size: 11px;
+
+  line-height: 1.5;
+`;
+
+const CommandeId = styled.div`
+  margin-top: 8px;
+
+  color: #287038;
+
+  font-size: 11px;
+
+  word-break: break-all;
+`;
+
+const WaitingClientBox = styled.div`
+  margin-top: 16px;
+
+  display: flex;
+
+  align-items: flex-start;
+
+  gap: 12px;
+
+  padding: 16px;
+
+  background: #fffaf0;
+
+  border: 1px solid #f0dfb4;
+
+  border-radius: 12px;
+`;
+
+const WaitingIcon = styled.div`
+  font-size: 22px;
+`;
+
+const WaitingTitle = styled.div`
+  color: #8c6500;
+
+  font-size: 13px;
+
+  font-weight: 800;
+`;
+
+const WaitingText = styled.div`
+  margin-top: 5px;
+
+  color: #806f3e;
+
+  font-size: 11px;
+
+  line-height: 1.5;
 `;
 
 const CommentTextarea = styled.textarea`
@@ -1960,6 +3247,7 @@ const CommentTextarea = styled.textarea`
 
   &:disabled {
     background: #f5f5f5;
+
     cursor: not-allowed;
   }
 `;
@@ -2016,6 +3304,7 @@ const HistoryItem = styled.div`
 
 const HistoryDot = styled.div`
   width: 9px;
+
   height: 9px;
 
   margin-top: 4px;
@@ -2086,6 +3375,7 @@ const RejectButton = styled.button`
 
   &:disabled {
     opacity: 0.5;
+
     cursor: not-allowed;
   }
 `;
@@ -2111,6 +3401,7 @@ const AcceptButton = styled.button`
 
   &:disabled {
     opacity: 0.5;
+
     cursor: not-allowed;
   }
 `;
@@ -2130,21 +3421,17 @@ const CloseFooterButton = styled.button`
 
   &:hover:not(:disabled) {
     background: #111;
+
     color: white;
+
     border-color: #111;
   }
 
   &:disabled {
     opacity: 0.5;
+
     cursor: not-allowed;
   }
-`;
-
-const DepositSmallInfo = styled.div`
-  margin-top: 3px;
-  color: #777;
-  font-size: 10px;
-  line-height: 1.4;
 `;
 
 export default ReceptionPrecommande;
