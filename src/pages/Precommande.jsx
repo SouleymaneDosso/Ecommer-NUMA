@@ -1539,6 +1539,7 @@ const Precommande = () => {
                 <ModalVideo
                   ref={videoRef}
                   src={mediaActuel.url}
+                  poster={mediaActuel.thumbnail}
                   playsInline
                   preload="metadata"
                   muted={videoMuted}
