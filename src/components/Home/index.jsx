@@ -14,6 +14,13 @@ import {
 import { ThemeContext } from "../../Utils/Context";
 
 /* =========================================================
+   HELPER — PRÉCOMMANDE
+========================================================= */
+
+const estPrecommande = (product) =>
+  product?.precommande === true && product?.disponible === false;
+
+/* =========================================================
    ANIMATIONS
 ========================================================= */
 
@@ -21,6 +28,7 @@ const fadeIn = keyframes`
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -72,6 +80,30 @@ const float = keyframes`
   }
 `;
 
+const candyPulse = keyframes`
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 105, 180, 0.55);
+  }
+
+  70% {
+    box-shadow: 0 0 0 16px rgba(255, 105, 180, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 105, 180, 0);
+  }
+`;
+
+const spin = keyframes`
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+`;
+
 /* =========================================================
    SCROLL REVEAL
 ========================================================= */
@@ -111,11 +143,14 @@ function RevealOnScroll({ children, delay = 0 }) {
 
 const RevealWrapper = styled.div`
   opacity: ${({ $visible }) => ($visible ? 1 : 0)};
+
   transform: ${({ $visible }) =>
     $visible ? "translateY(0)" : "translateY(45px)"};
+
   transition:
     opacity 0.9s ease,
     transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+
   transition-delay: ${({ $delay }) => `${$delay}s`};
 `;
 
@@ -201,6 +236,7 @@ const SectionHeader = styled.div`
     display: inline-flex;
     align-items: center;
     gap: 10px;
+
     margin-bottom: 18px;
 
     font-size: 0.72rem;
@@ -213,9 +249,12 @@ const SectionHeader = styled.div`
     &::before,
     &::after {
       content: "";
+
       width: 25px;
       height: 1px;
+
       background: currentColor;
+
       opacity: 0.5;
     }
   }
@@ -225,12 +264,14 @@ const SectionHeader = styled.div`
 
     font-size: clamp(2.1rem, 4vw, 3.6rem);
     line-height: 1.05;
+
     letter-spacing: -0.04em;
     font-weight: 800;
   }
 
   p {
     max-width: 720px;
+
     margin: 0 auto;
 
     font-size: 1rem;
@@ -253,19 +294,9 @@ const SectionHeader = styled.div`
   }
 `;
 
-const candyPulse = keyframes`
-  0% {
-    box-shadow: 0 0 0 0 rgba(255, 105, 180, 0.55);
-  }
-
-  70% {
-    box-shadow: 0 0 0 16px rgba(255, 105, 180, 0);
-  }
-
-  100% {
-    box-shadow: 0 0 0 0 rgba(255, 105, 180, 0);
-  }
-`;
+/* =========================================================
+   PRECOMMANDE BUTTON
+========================================================= */
 
 const PrecommandeBtn = styled(Link)`
   position: relative;
@@ -339,20 +370,17 @@ const PrecommandeBtn = styled(Link)`
     transform: translateX(5px);
   }
 `;
-const spin = keyframes`
-  from {
-    transform: rotate(0deg);
-  }
 
-  to {
-    transform: rotate(360deg);
-  }
-`;
+/* =========================================================
+   PRECOMMANDE BADGE
+========================================================= */
 
 const PrecommandeBadge = styled(Link)`
   position: relative;
+
   width: 155px;
   height: 155px;
+
   border-radius: 50%;
 
   display: flex;
@@ -361,6 +389,7 @@ const PrecommandeBadge = styled(Link)`
 
   background: #ff69b4;
   color: white;
+
   text-decoration: none;
 
   box-shadow:
@@ -390,6 +419,7 @@ const PrecommandeBadge = styled(Link)`
 
   .letter {
     position: absolute;
+
     left: 50%;
     top: 50%;
 
@@ -398,7 +428,9 @@ const PrecommandeBadge = styled(Link)`
     font-size: 9px;
     font-weight: 900;
     letter-spacing: 1.5px;
+
     text-transform: uppercase;
+
     white-space: pre;
 
     color: white;
@@ -409,6 +441,7 @@ const PrecommandeBadge = styled(Link)`
     inset: 9px;
 
     border: 1px solid rgba(255, 255, 255, 0.4);
+
     border-radius: 50%;
   }
 
@@ -437,6 +470,7 @@ const PrecommandeBadge = styled(Link)`
 
   &:hover .center {
     transform: scale(1.12);
+
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
   }
 
@@ -466,15 +500,19 @@ const PrecommandeBadge = styled(Link)`
     }
   }
 `;
+
 /* =========================================================
    HERO
 ========================================================= */
 
 const Hero = styled.section`
   position: relative;
+
   height: min(920px, 100vh);
   min-height: 680px;
+
   overflow: hidden;
+
   background: #090909;
 
   @media (max-width: 768px) {
@@ -485,9 +523,11 @@ const Hero = styled.section`
 
 const Slide = styled.div`
   position: absolute;
+
   inset: -1%;
 
   background-image: ${({ $image }) => `url("${$image}")`};
+
   background-size: cover;
   background-position: center;
 
@@ -502,7 +542,9 @@ const Slide = styled.div`
 
 const HeroGradient = styled.div`
   position: absolute;
+
   inset: 0;
+
   z-index: 1;
 
   background:
@@ -526,6 +568,7 @@ const HeroGradient = styled.div`
 
 const HeroContent = styled.div`
   position: relative;
+
   z-index: 3;
 
   height: 100%;
@@ -534,6 +577,7 @@ const HeroContent = styled.div`
   align-items: center;
 
   width: min(1240px, 92%);
+
   margin: 0 auto;
 
   padding-top: 90px;
@@ -541,6 +585,7 @@ const HeroContent = styled.div`
 
 const HeroText = styled.div`
   max-width: 760px;
+
   color: white;
 
   animation: ${fadeUp} 1s ease forwards;
@@ -555,15 +600,19 @@ const HeroText = styled.div`
     font-size: 0.75rem;
     font-weight: 800;
     letter-spacing: 4px;
+
     text-transform: uppercase;
 
     opacity: 0.78;
 
     &::before {
       content: "";
+
       width: 38px;
       height: 1px;
+
       background: white;
+
       opacity: 0.7;
     }
   }
@@ -572,16 +621,21 @@ const HeroText = styled.div`
     margin: 0 0 25px;
 
     font-size: clamp(3.2rem, 6vw, 6.5rem);
+
     line-height: 0.96;
+
     letter-spacing: -0.065em;
+
     font-weight: 800;
   }
 
   p {
     max-width: 570px;
+
     margin: 0;
 
     font-size: 1.05rem;
+
     line-height: 1.8;
 
     opacity: 0.82;
@@ -604,6 +658,7 @@ const HeroActions = styled.div`
   display: flex;
   align-items: center;
   gap: 15px;
+
   margin-top: 35px;
 
   flex-wrap: wrap;
@@ -624,6 +679,7 @@ const HeroBtn = styled(Link)`
   color: #111;
 
   text-decoration: none;
+
   font-size: 0.9rem;
   font-weight: 800;
 
@@ -635,6 +691,7 @@ const HeroBtn = styled(Link)`
     content: "";
 
     position: absolute;
+
     top: 0;
     left: -100%;
 
@@ -653,6 +710,7 @@ const HeroBtn = styled(Link)`
 
   &:hover {
     transform: translateY(-4px);
+
     box-shadow: 0 18px 35px rgba(0, 0, 0, 0.25);
   }
 
@@ -671,6 +729,7 @@ const HeroBtn = styled(Link)`
 
 const HeroMeta = styled.div`
   position: absolute;
+
   bottom: 35px;
   left: 4%;
 
@@ -683,7 +742,9 @@ const HeroMeta = styled.div`
   color: white;
 
   font-size: 0.7rem;
+
   letter-spacing: 2px;
+
   text-transform: uppercase;
 
   opacity: 0.65;
@@ -691,6 +752,7 @@ const HeroMeta = styled.div`
   span {
     width: 34px;
     height: 1px;
+
     background: white;
   }
 
@@ -705,7 +767,9 @@ const HeroMeta = styled.div`
 
 const FeatureGrid = styled.div`
   display: grid;
+
   grid-template-columns: repeat(2, 1fr);
+
   gap: 25px;
 
   @media (max-width: 800px) {
@@ -744,10 +808,12 @@ const FeatureImg = styled.img`
 
 const FeatureOverlay = styled.div`
   position: absolute;
+
   inset: 0;
 
   display: flex;
   flex-direction: column;
+
   justify-content: flex-end;
 
   padding: 42px;
@@ -768,10 +834,12 @@ const FeatureOverlay = styled.div`
 
 const FeatureNumber = styled.span`
   position: absolute;
+
   top: 30px;
   right: 30px;
 
   font-size: 0.72rem;
+
   letter-spacing: 2px;
 
   opacity: 0.65;
@@ -793,8 +861,11 @@ const FeatureBadge = styled.span`
   backdrop-filter: blur(12px);
 
   font-size: 0.7rem;
+
   font-weight: 800;
+
   letter-spacing: 2px;
+
   text-transform: uppercase;
 `;
 
@@ -802,6 +873,7 @@ const FeatureTitle = styled.h3`
   margin: 0 0 12px;
 
   font-size: clamp(2rem, 4vw, 3rem);
+
   line-height: 1;
 
   letter-spacing: -0.04em;
@@ -813,6 +885,7 @@ const FeatureText = styled.p`
   margin: 0 0 22px;
 
   font-size: 0.98rem;
+
   line-height: 1.7;
 
   opacity: 0.82;
@@ -842,6 +915,7 @@ const FeatureLink = styled(Link)`
 
   &:hover {
     gap: 16px;
+
     border-color: white;
   }
 `;
@@ -852,8 +926,10 @@ const FeatureLink = styled(Link)`
 
 const DotsRow = styled.div`
   display: flex;
+
   justify-content: center;
   align-items: center;
+
   gap: 9px;
 
   margin-top: 25px;
@@ -868,6 +944,7 @@ const Dot = styled.button`
   padding: 0;
 
   border: none;
+
   border-radius: 99px;
 
   overflow: hidden;
@@ -894,6 +971,7 @@ const Dot = styled.button`
 
 const DotProgress = styled.span`
   position: absolute;
+
   inset: 0 auto 0 0;
 
   width: ${({ $width }) => `${$width}%`};
@@ -909,6 +987,7 @@ const DotProgress = styled.span`
 
 const CarouselSection = styled.div`
   width: min(1240px, 92%);
+
   margin: 0 auto;
 `;
 
@@ -930,6 +1009,7 @@ const MiniCarousel = styled.div`
 
 const MiniSlide = styled.div`
   position: absolute;
+
   inset: 0;
 
   opacity: ${({ $active }) => ($active ? 1 : 0)};
@@ -960,6 +1040,7 @@ const MiniOverlay = styled.div`
   bottom: 25px;
 
   display: flex;
+
   align-items: center;
   justify-content: space-between;
 
@@ -977,6 +1058,7 @@ const MiniOverlay = styled.div`
 
   @media (max-width: 650px) {
     flex-direction: column;
+
     align-items: flex-start;
 
     padding: 20px;
@@ -1003,7 +1085,9 @@ const MiniInfo = styled.div`
 
 const MiniCTA = styled(Link)`
   display: inline-flex;
+
   align-items: center;
+
   gap: 10px;
 
   flex-shrink: 0;
@@ -1011,11 +1095,13 @@ const MiniCTA = styled(Link)`
   padding: 13px 20px;
 
   color: #111;
+
   background: white;
 
   text-decoration: none;
 
   font-size: 0.8rem;
+
   font-weight: 800;
 
   transition:
@@ -1024,6 +1110,7 @@ const MiniCTA = styled(Link)`
 
   &:hover {
     transform: translateY(-3px);
+
     background: #f0f0f0;
   }
 `;
@@ -1034,6 +1121,7 @@ const MiniCTA = styled(Link)`
 
 const BestSellerSection = styled.div`
   width: min(1240px, 92%);
+
   margin: 0 auto;
 `;
 
@@ -1045,7 +1133,8 @@ const BestCarousel = styled.div`
 
   overflow: hidden;
 
-  background: ${({ $isDark }) => ($isDark ? "#0d0d0d" : "#f2f2f2")};
+  background: ${({ $isDark }) =>
+    $isDark ? "#0d0d0d" : "#f2f2f2"};
 
   box-shadow: 0 30px 90px rgba(0, 0, 0, 0.15);
 
@@ -1060,6 +1149,7 @@ const BestCarousel = styled.div`
 
 const BestSlide = styled.div`
   position: absolute;
+
   inset: 0;
 
   opacity: ${({ $active }) => ($active ? 1 : 0)};
@@ -1079,6 +1169,7 @@ const BestSlideInner = styled.div`
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
+
     grid-template-rows: 48% 52%;
   }
 `;
@@ -1089,10 +1180,12 @@ const BestImageWrap = styled.div`
   overflow: hidden;
 
   display: flex;
+
   align-items: center;
   justify-content: center;
 
-  background: ${({ $isDark }) => ($isDark ? "#0a0a0a" : "#eaeaea")};
+  background: ${({ $isDark }) =>
+    $isDark ? "#0a0a0a" : "#eaeaea"};
 `;
 
 const BestImage = styled.img`
@@ -1117,12 +1210,15 @@ const BestBadge = styled.div`
   left: 25px;
 
   display: inline-flex;
+
   align-items: center;
+
   gap: 8px;
 
   padding: 9px 13px;
 
   background: rgba(0, 0, 0, 0.55);
+
   color: white;
 
   border: 1px solid rgba(255, 255, 255, 0.15);
@@ -1130,13 +1226,17 @@ const BestBadge = styled.div`
   backdrop-filter: blur(12px);
 
   font-size: 0.68rem;
+
   font-weight: 800;
+
   letter-spacing: 2px;
 `;
 
 const BestContent = styled.div`
   display: flex;
+
   flex-direction: column;
+
   justify-content: center;
 
   padding: 65px;
@@ -1155,8 +1255,11 @@ const BestSmall = styled.span`
   margin-bottom: 15px;
 
   font-size: 0.7rem;
+
   font-weight: 800;
+
   letter-spacing: 3px;
+
   text-transform: uppercase;
 
   opacity: 0.5;
@@ -1178,6 +1281,7 @@ const BestSubtitle = styled.p`
   margin: 0 0 24px;
 
   font-size: 0.98rem;
+
   line-height: 1.85;
 
   opacity: 0.68;
@@ -1187,6 +1291,7 @@ const BestPrice = styled.div`
   margin-bottom: 27px;
 
   font-size: 1.4rem;
+
   font-weight: 800;
 `;
 
@@ -1194,7 +1299,9 @@ const BestBtn = styled(Link)`
   width: fit-content;
 
   display: inline-flex;
+
   align-items: center;
+
   gap: 11px;
 
   padding: 15px 22px;
@@ -1206,6 +1313,7 @@ const BestBtn = styled(Link)`
   text-decoration: none;
 
   font-size: 0.82rem;
+
   font-weight: 800;
 
   transition:
@@ -1231,9 +1339,11 @@ const CarouselArrow = styled.button`
   position: absolute;
 
   top: 50%;
+
   transform: translateY(-50%);
 
-  ${({ $left }) => ($left ? "left: 18px;" : "right: 18px;")}
+  ${({ $left }) =>
+    $left ? "left: 18px;" : "right: 18px;"}
 
   z-index: 5;
 
@@ -1241,12 +1351,14 @@ const CarouselArrow = styled.button`
   height: 46px;
 
   display: flex;
+
   align-items: center;
   justify-content: center;
 
   border: 1px solid rgba(255, 255, 255, 0.2);
 
   background: rgba(0, 0, 0, 0.35);
+
   color: white;
 
   backdrop-filter: blur(12px);
@@ -1267,7 +1379,8 @@ const CarouselArrow = styled.button`
     width: 40px;
     height: 40px;
 
-    ${({ $left }) => ($left ? "left: 10px;" : "right: 10px;")}
+    ${({ $left }) =>
+      $left ? "left: 10px;" : "right: 10px;"}
   }
 `;
 
@@ -1277,6 +1390,7 @@ const CarouselArrow = styled.button`
 
 const BenefitsSection = styled.div`
   width: min(1120px, 92%);
+
   margin: 0 auto;
 
   display: grid;
@@ -1300,11 +1414,15 @@ const BenefitCard = styled.div`
   min-height: 250px;
 
   background: ${({ $isDark }) =>
-    $isDark ? "rgba(255,255,255,0.035)" : "rgba(255,255,255,0.75)"};
+    $isDark
+      ? "rgba(255,255,255,0.035)"
+      : "rgba(255,255,255,0.75)"};
 
   border: 1px solid
     ${({ $isDark }) =>
-      $isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.06)"};
+      $isDark
+        ? "rgba(255,255,255,0.07)"
+        : "rgba(0,0,0,0.06)"};
 
   box-shadow: 0 15px 45px rgba(0, 0, 0, 0.06);
 
@@ -1334,7 +1452,9 @@ const BenefitCard = styled.div`
     border-radius: 50%;
 
     background: ${({ $isDark }) =>
-      $isDark ? "rgba(255,255,255,0.025)" : "rgba(0,0,0,0.025)"};
+      $isDark
+        ? "rgba(255,255,255,0.025)"
+        : "rgba(0,0,0,0.025)"};
   }
 `;
 
@@ -1343,14 +1463,17 @@ const BenefitIcon = styled.div`
   height: 58px;
 
   display: flex;
+
   align-items: center;
   justify-content: center;
 
   margin-bottom: 25px;
 
-  background: ${({ $isDark }) => ($isDark ? "#fff" : "#111")};
+  background: ${({ $isDark }) =>
+    $isDark ? "#fff" : "#111"};
 
-  color: ${({ $isDark }) => ($isDark ? "#111" : "#fff")};
+  color: ${({ $isDark }) =>
+    $isDark ? "#111" : "#fff"};
 
   font-size: 21px;
 
@@ -1361,6 +1484,7 @@ const BenefitTitle = styled.h3`
   margin: 0 0 10px;
 
   font-size: 1.05rem;
+
   font-weight: 800;
 `;
 
@@ -1370,6 +1494,7 @@ const BenefitText = styled.p`
   margin: 0;
 
   font-size: 0.9rem;
+
   line-height: 1.75;
 
   opacity: 0.62;
@@ -1383,6 +1508,7 @@ const EmptyState = styled.div`
   min-height: 400px;
 
   display: flex;
+
   align-items: center;
   justify-content: center;
 
@@ -1392,14 +1518,16 @@ const EmptyState = styled.div`
 `;
 
 /* =========================================================
-   VIDEO — HERO STYLE
+   VIDEO
 ========================================================= */
 
 const VideoSection = styled.section`
   position: relative;
 
   width: 100%;
+
   height: min(920px, 100vh);
+
   min-height: 680px;
 
   overflow: hidden;
@@ -1408,18 +1536,21 @@ const VideoSection = styled.section`
 
   @media (max-width: 768px) {
     height: 760px;
+
     min-height: 680px;
   }
 `;
 
 const VideoPlayer = styled.video`
   position: absolute;
+
   inset: -1%;
 
   width: 102%;
   height: 102%;
 
   object-fit: cover;
+
   object-position: center;
 
   background: #090909;
@@ -1431,30 +1562,41 @@ const VideoPlayer = styled.video`
 
 const VideoControls = styled.div`
   position: absolute;
+
   bottom: 20px;
   left: 20px;
+
   display: flex;
+
   gap: 10px;
+
   z-index: 10;
 `;
 
 const VideoButton = styled.button`
   width: 42px;
   height: 42px;
+
   border: none;
+
   border-radius: 50%;
+
   display: flex;
+
   align-items: center;
   justify-content: center;
+
   cursor: pointer;
 
   background: rgba(0, 0, 0, 0.6);
+
   color: white;
 
   transition: 0.2s ease;
 
   &:hover {
     background: rgba(0, 0, 0, 0.8);
+
     transform: scale(1.05);
   }
 `;
@@ -1473,12 +1615,17 @@ export default function HomePremium() {
 
   const [bestSlide, setBestSlide] = useState(0);
   const [bestProgress, setBestProgress] = useState(0);
+
   const [video, setVideo] = useState([]);
   const [videoIndex, setVideoIndex] = useState(0);
+
   const { theme } = useContext(ThemeContext);
+
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
-  const [precommandeDisponible, setPrecommandeDisponible] = useState(false);
+
+  const [precommandeDisponible, setPrecommandeDisponible] =
+    useState(false);
 
   const $isDark = theme === "light";
 
@@ -1488,7 +1635,9 @@ export default function HomePremium() {
 
   const duration = 4200;
 
-  // video configuration
+  /* =======================================================
+     VIDEO CONTROLS
+  ======================================================= */
 
   const pauseVideo = () => {
     if (videoRef.current) {
@@ -1517,17 +1666,20 @@ export default function HomePremium() {
   const videoSuivante = () => {
     if (video.length <= 1) return;
 
-    setVideoIndex((current) => {
-      return (current + 1) % video.length;
-    });
+    setVideoIndex((current) => (current + 1) % video.length);
   };
 
   const couperSon = () => {
     if (videoRef.current) {
       videoRef.current.muted = !videoRef.current.muted;
+
       setIsMuted(videoRef.current.muted);
     }
   };
+
+  /* =======================================================
+     CIRCULAR TEXT
+  ======================================================= */
 
   const CircularText = ({ text }) => {
     const characters = [...text];
@@ -1535,7 +1687,8 @@ export default function HomePremium() {
     return (
       <div className="textCircle" aria-hidden="true">
         {characters.map((char, index) => {
-          const angle = (360 / characters.length) * index;
+          const angle =
+            (360 / characters.length) * index;
 
           return (
             <span
@@ -1543,9 +1696,9 @@ export default function HomePremium() {
               className="letter"
               style={{
                 transform: `
-                rotate(${angle}deg)
-                translateY(-68px)
-              `,
+                  rotate(${angle}deg)
+                  translateY(-68px)
+                `,
               }}
             >
               {char}
@@ -1555,6 +1708,10 @@ export default function HomePremium() {
       </div>
     );
   };
+
+  /* =======================================================
+     VÉRIFICATION PRÉCOMMANDE
+  ======================================================= */
 
   useEffect(() => {
     const verifierPrecommande = async () => {
@@ -1576,7 +1733,11 @@ export default function HomePremium() {
 
         setPrecommandeDisponible(modeles.length > 0);
       } catch (error) {
-        console.error("Erreur vérification précommande :", error);
+        console.error(
+          "Erreur vérification précommande :",
+          error,
+        );
+
         setPrecommandeDisponible(false);
       }
     };
@@ -1584,7 +1745,9 @@ export default function HomePremium() {
     verifierPrecommande();
   }, []);
 
-  // fetch video
+  /* =======================================================
+     FETCH VIDEO
+  ======================================================= */
 
   const fetchVideo = async () => {
     try {
@@ -1593,19 +1756,27 @@ export default function HomePremium() {
       );
 
       if (!res.ok) {
-        throw new Error("Impossible de récupérer les vidéos produits");
+        throw new Error(
+          "Impossible de récupérer les vidéos produits",
+        );
       }
 
       const data = await res.json();
 
       const videos = Array.isArray(data?.videos)
-        ? data.videos.filter((item) => item?.url && item?.produitId)
+        ? data.videos.filter(
+            (item) => item?.url && item?.produitId,
+          )
         : [];
 
       setVideo(videos);
       setVideoIndex(0);
     } catch (error) {
-      console.error("Erreur vidéos produits :", error);
+      console.error(
+        "Erreur vidéos produits :",
+        error,
+      );
+
       setVideo([]);
       setVideoIndex(0);
     }
@@ -1618,17 +1789,27 @@ export default function HomePremium() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits`);
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/produits`,
+        );
 
         if (!res.ok) {
-          throw new Error("Impossible de récupérer les produits");
+          throw new Error(
+            "Impossible de récupérer les produits",
+          );
         }
 
         const data = await res.json();
 
-        setProducts(Array.isArray(data) ? data : []);
+        setProducts(
+          Array.isArray(data) ? data : [],
+        );
       } catch (error) {
-        console.error("Erreur produits :", error);
+        console.error(
+          "Erreur produits :",
+          error,
+        );
+
         setProducts([]);
       }
     };
@@ -1641,15 +1822,45 @@ export default function HomePremium() {
      PRODUCT FILTERS
   ======================================================= */
 
+  /*
+   * HERO
+   *
+   * On garde volontairement les produits hero
+   * tels quels pour ne pas modifier ton slider principal.
+   */
   const heroProducts = useMemo(
     () => products.filter((p) => p.hero),
     [products],
   );
 
-  const carouselProducts = useMemo(() => products.slice(0, 5), [products]);
+  /*
+   * FOCUS
+   *
+   * Les précommandes actives ne doivent pas apparaître
+   * dans le carousel principal.
+   */
+  const carouselProducts = useMemo(
+    () =>
+      products
+        .filter((product) => !estPrecommande(product))
+        .slice(0, 5),
+    [products],
+  );
 
+  /*
+   * BEST SELLERS / SÉLECTION
+   *
+   * Les précommandes actives sont également exclues.
+   */
   const bestSellers = useMemo(
-    () => products.filter((p) => p.badge?.toLowerCase() === "new").slice(0, 5),
+    () =>
+      products
+        .filter(
+          (product) =>
+            product.badge?.toLowerCase() === "new" &&
+            !estPrecommande(product),
+        )
+        .slice(0, 5),
     [products],
   );
 
@@ -1675,7 +1886,10 @@ export default function HomePremium() {
     if (heroProducts.length <= 1) return;
 
     const interval = setInterval(() => {
-      setSlide((current) => (current + 1) % heroProducts.length);
+      setSlide(
+        (current) =>
+          (current + 1) % heroProducts.length,
+      );
     }, 5000);
 
     return () => clearInterval(interval);
@@ -1693,7 +1907,11 @@ export default function HomePremium() {
     miniIntervalRef.current = setInterval(() => {
       setMiniProgress((previous) => {
         if (previous + step >= 100) {
-          setMiniSlide((current) => (current + 1) % carouselProducts.length);
+          setMiniSlide(
+            (current) =>
+              (current + 1) %
+              carouselProducts.length,
+          );
 
           return 0;
         }
@@ -1702,11 +1920,12 @@ export default function HomePremium() {
       });
     }, 50);
 
-    return () => clearInterval(miniIntervalRef.current);
+    return () =>
+      clearInterval(miniIntervalRef.current);
   }, [carouselProducts.length]);
 
   /* =======================================================
-     BEST SELLERS
+     BEST SELLERS AUTOPLAY
   ======================================================= */
 
   useEffect(() => {
@@ -1717,7 +1936,11 @@ export default function HomePremium() {
     bestIntervalRef.current = setInterval(() => {
       setBestProgress((previous) => {
         if (previous + step >= 100) {
-          setBestSlide((current) => (current + 1) % bestSellers.length);
+          setBestSlide(
+            (current) =>
+              (current + 1) %
+              bestSellers.length,
+          );
 
           return 0;
         }
@@ -1726,7 +1949,8 @@ export default function HomePremium() {
       });
     }, 50);
 
-    return () => clearInterval(bestIntervalRef.current);
+    return () =>
+      clearInterval(bestIntervalRef.current);
   }, [bestSellers.length]);
 
   /* =======================================================
@@ -1737,7 +1961,9 @@ export default function HomePremium() {
     if (!carouselProducts.length) return;
 
     setMiniSlide((current) =>
-      current === 0 ? carouselProducts.length - 1 : current - 1,
+      current === 0
+        ? carouselProducts.length - 1
+        : current - 1,
     );
 
     setMiniProgress(0);
@@ -1746,7 +1972,10 @@ export default function HomePremium() {
   const nextMini = () => {
     if (!carouselProducts.length) return;
 
-    setMiniSlide((current) => (current + 1) % carouselProducts.length);
+    setMiniSlide(
+      (current) =>
+        (current + 1) % carouselProducts.length,
+    );
 
     setMiniProgress(0);
   };
@@ -1759,7 +1988,9 @@ export default function HomePremium() {
     if (!bestSellers.length) return;
 
     setBestSlide((current) =>
-      current === 0 ? bestSellers.length - 1 : current - 1,
+      current === 0
+        ? bestSellers.length - 1
+        : current - 1,
     );
 
     setBestProgress(0);
@@ -1768,7 +1999,10 @@ export default function HomePremium() {
   const nextBest = () => {
     if (!bestSellers.length) return;
 
-    setBestSlide((current) => (current + 1) % bestSellers.length);
+    setBestSlide(
+      (current) =>
+        (current + 1) % bestSellers.length,
+    );
 
     setBestProgress(0);
   };
@@ -1797,7 +2031,9 @@ export default function HomePremium() {
             $active
             $image=""
             style={{
-              background: $isDark ? "#111" : "#e8e8e8",
+              background: $isDark
+                ? "#111"
+                : "#e8e8e8",
             }}
           />
         )}
@@ -1806,10 +2042,14 @@ export default function HomePremium() {
 
         <HeroContent>
           <HeroText>
-            <div className="eyebrow">NUMA — COLLECTION</div>
+            <div className="eyebrow">
+              NUMA — COLLECTION
+            </div>
+
             <p>
-              Des silhouettes fortes, des détails maîtrisés et une élégance
-              pensée pour marquer les esprits.
+              Des silhouettes fortes, des détails
+              maîtrisés et une élégance pensée pour
+              marquer les esprits.
             </p>
 
             <HeroActions>
@@ -1842,6 +2082,10 @@ export default function HomePremium() {
         </HeroMeta>
       </Hero>
 
+      {/* ===================================================
+          VIDEO
+      =================================================== */}
+
       <VideoSection>
         {Array.isArray(video) && video.length > 0 ? (
           <VideoPlayer
@@ -1862,11 +2106,19 @@ export default function HomePremium() {
 
         <VideoControls>
           <VideoButton onClick={toggleVideo}>
-            {isPlaying ? <Pause size={20} /> : <Play size={20} />}
+            {isPlaying ? (
+              <Pause size={20} />
+            ) : (
+              <Play size={20} />
+            )}
           </VideoButton>
 
           <VideoButton onClick={couperSon}>
-            {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+            {isMuted ? (
+              <VolumeX size={20} />
+            ) : (
+              <Volume2 size={20} />
+            )}
           </VideoButton>
         </VideoControls>
       </VideoSection>
@@ -1879,34 +2131,57 @@ export default function HomePremium() {
         <RevealOnScroll>
           <Container>
             <SectionHeader>
-              <div className="eyebrow">UNIVERS</div>
+              <div className="eyebrow">
+                UNIVERS
+              </div>
 
-              <h2>Des silhouettes qui imposent le style.</h2>
+              <h2>
+                Des silhouettes qui imposent le style.
+              </h2>
 
               <p>
-                Deux univers, une seule signature : l'élégance, la présence et
-                le détail qui fait la différence.
+                Deux univers, une seule signature :
+                l'élégance, la présence et le détail qui
+                fait la différence.
               </p>
             </SectionHeader>
 
             <FeatureGrid>
+              {/* ===============================
+                  HOMME
+              =============================== */}
+
               {products
-                .filter((product) => product.genre?.toLowerCase() === "homme")
+                .filter(
+                  (product) =>
+                    product.genre?.toLowerCase() ===
+                      "homme" &&
+                    !estPrecommande(product),
+                )
                 .slice(0, 1)
                 .map((product) => (
                   <FeatureCard key={product._id}>
-                    <FeatureImg src={getImg(product)} alt={product.title} />
+                    <FeatureImg
+                      src={getImg(product)}
+                      alt={product.title}
+                    />
 
                     <FeatureOverlay>
-                      <FeatureNumber>01 / 02</FeatureNumber>
+                      <FeatureNumber>
+                        01 / 02
+                      </FeatureNumber>
 
-                      <FeatureBadge>Univers Homme</FeatureBadge>
+                      <FeatureBadge>
+                        Univers Homme
+                      </FeatureBadge>
 
-                      <FeatureTitle>Homme</FeatureTitle>
+                      <FeatureTitle>
+                        Homme
+                      </FeatureTitle>
 
                       <FeatureText>
-                        Pour l'homme qui veut une allure forte, propre et
-                        assumée.
+                        Pour l'homme qui veut une allure
+                        forte, propre et assumée.
                       </FeatureText>
 
                       <FeatureLink to="/homme">
@@ -1917,23 +2192,41 @@ export default function HomePremium() {
                   </FeatureCard>
                 ))}
 
+              {/* ===============================
+                  FEMME
+              =============================== */}
+
               {products
-                .filter((product) => product.genre?.toLowerCase() === "femme")
+                .filter(
+                  (product) =>
+                    product.genre?.toLowerCase() ===
+                      "femme" &&
+                    !estPrecommande(product),
+                )
                 .slice(0, 1)
                 .map((product) => (
                   <FeatureCard key={product._id}>
-                    <FeatureImg src={getImg(product)} alt={product.title} />
+                    <FeatureImg
+                      src={getImg(product)}
+                      alt={product.title}
+                    />
 
                     <FeatureOverlay>
-                      <FeatureNumber>02 / 02</FeatureNumber>
+                      <FeatureNumber>
+                        02 / 02
+                      </FeatureNumber>
 
-                      <FeatureBadge>Univers Femme</FeatureBadge>
+                      <FeatureBadge>
+                        Univers Femme
+                      </FeatureBadge>
 
-                      <FeatureTitle>Femme</FeatureTitle>
+                      <FeatureTitle>
+                        Femme
+                      </FeatureTitle>
 
                       <FeatureText>
-                        Pour la femme qui veut captiver avec confiance et
-                        élégance.
+                        Pour la femme qui veut captiver
+                        avec confiance et élégance.
                       </FeatureText>
 
                       <FeatureLink to="/femme">
@@ -1956,40 +2249,73 @@ export default function HomePremium() {
         <RevealOnScroll>
           <CarouselSection>
             <SectionHeader>
-              <div className="eyebrow">FOCUS</div>
+              <div className="eyebrow">
+                FOCUS
+              </div>
 
-              <h2>Des pièces qui attirent le regard.</h2>
+              <h2>
+                Des pièces qui attirent le regard.
+              </h2>
 
               <p>
-                Une sélection de créations pensées pour marquer les esprits dès
-                le premier regard.
+                Une sélection de créations pensées pour
+                marquer les esprits dès le premier regard.
               </p>
             </SectionHeader>
 
             {carouselProducts.length > 0 ? (
               <>
                 <MiniCarousel $isDark={$isDark}>
-                  {carouselProducts.map((product, index) => (
-                    <MiniSlide key={product._id} $active={index === miniSlide}>
-                      <MiniSlideImg src={getImg(product)} alt={product.title} />
+                  {carouselProducts.map(
+                    (product, index) => (
+                      <MiniSlide
+                        key={product._id}
+                        $active={index === miniSlide}
+                      >
+                        <MiniSlideImg
+                          src={getImg(product)}
+                          alt={product.title}
+                        />
 
-                      <MiniOverlay>
-                        <MiniInfo>
-                          <h3>{product.title}</h3>
+                        <MiniOverlay>
+                          <MiniInfo>
+                            <h3>
+                              {product.title}
+                            </h3>
 
-                          <p>
-                            {product.subtitle ||
-                              "Une pièce signature à forte présence."}
-                          </p>
-                        </MiniInfo>
+                            <p>
+                              {product.subtitle ||
+                                "Une pièce signature à forte présence."}
+                            </p>
+                          </MiniInfo>
 
-                        <MiniCTA to={`/produit/${product._id}`}>
-                          Voir le produit
-                          <FaArrowRight />
-                        </MiniCTA>
-                      </MiniOverlay>
-                    </MiniSlide>
-                  ))}
+                          {/*
+                           * Sécurité :
+                           * normalement aucune précommande
+                           * n'arrive ici grâce au filtre.
+                           *
+                           * Mais si une précommande est
+                           * malgré tout présente, elle ira
+                           * vers /precommande.
+                           */}
+
+                          <MiniCTA
+                            to={
+                              estPrecommande(product)
+                                ? "/precommande"
+                                : `/produit/${product._id}`
+                            }
+                          >
+                            {estPrecommande(product)
+                              ? "Précommander"
+                              : "Voir le produit"}
+
+                            <FaArrowRight />
+                          </MiniCTA>
+                        </MiniOverlay>
+                      </MiniSlide>
+                    ),
+                  )}
 
                   {carouselProducts.length > 1 && (
                     <>
@@ -2012,25 +2338,35 @@ export default function HomePremium() {
                 </MiniCarousel>
 
                 <DotsRow>
-                  {carouselProducts.map((_, index) => (
-                    <Dot
-                      key={index}
-                      $active={index === miniSlide}
-                      $isDark={$isDark}
-                      onClick={() => {
-                        setMiniSlide(index);
-                        setMiniProgress(0);
-                      }}
-                    >
-                      {index === miniSlide && (
-                        <DotProgress $width={miniProgress} $isDark={$isDark} />
-                      )}
-                    </Dot>
-                  ))}
+                  {carouselProducts.map(
+                    (_, index) => (
+                      <Dot
+                        key={index}
+                        $active={
+                          index === miniSlide
+                        }
+                        $isDark={$isDark}
+                        onClick={() => {
+                          setMiniSlide(index);
+                          setMiniProgress(0);
+                        }}
+                      >
+                        {index === miniSlide && (
+                          <DotProgress
+                            $width={miniProgress}
+                            $isDark={$isDark}
+                          />
+                        )}
+                      </Dot>
+                    ),
+                  )}
                 </DotsRow>
               </>
             ) : (
-              <EmptyState>Aucune pièce disponible pour le moment.</EmptyState>
+              <EmptyState>
+                Aucune pièce disponible pour le
+                moment.
+              </EmptyState>
             )}
           </CarouselSection>
         </RevealOnScroll>
@@ -2044,57 +2380,96 @@ export default function HomePremium() {
         <RevealOnScroll>
           <BestSellerSection>
             <SectionHeader>
-              <div className="eyebrow">SÉLECTION</div>
+              <div className="eyebrow">
+                SÉLECTION
+              </div>
 
-              <h2>Les pièces les plus convoitées.</h2>
+              <h2>
+                Les pièces les plus convoitées.
+              </h2>
 
               <p>
-                Une sélection pensée pour celles et ceux qui veulent une allure
-                marquante, élégante et mémorable.
+                Une sélection pensée pour celles et ceux
+                qui veulent une allure marquante,
+                élégante et mémorable.
               </p>
             </SectionHeader>
 
             {bestSellers.length > 0 ? (
               <>
                 <BestCarousel $isDark={$isDark}>
-                  {bestSellers.map((product, index) => (
-                    <BestSlide key={product._id} $active={index === bestSlide}>
-                      <BestSlideInner>
-                        <BestImageWrap $isDark={$isDark}>
-                          <BestImage
-                            src={getImg(product)}
-                            alt={product.title}
-                          />
-
-                          <BestBadge>
-                            <FaStar />
-                            BEST SELLER
-                          </BestBadge>
-                        </BestImageWrap>
-
-                        <BestContent $isDark={$isDark}>
-                          <BestSmall>Collection Signature</BestSmall>
-
-                          <BestTitle>{product.title}</BestTitle>
-
-                          <BestSubtitle>
-                            {product.subtitle ||
-                              "Une pièce forte pensée pour révéler votre présence avec style, élégance et caractère."}
-                          </BestSubtitle>
-
-                          <BestPrice>{product.price} FCFA</BestPrice>
-
-                          <BestBtn
-                            to={`/produit/${product._id}`}
+                  {bestSellers.map(
+                    (product, index) => (
+                      <BestSlide
+                        key={product._id}
+                        $active={
+                          index === bestSlide
+                        }
+                      >
+                        <BestSlideInner>
+                          <BestImageWrap
                             $isDark={$isDark}
                           >
-                            Voir le produit
-                            <FaArrowRight />
-                          </BestBtn>
-                        </BestContent>
-                      </BestSlideInner>
-                    </BestSlide>
-                  ))}
+                            <BestImage
+                              src={getImg(product)}
+                              alt={product.title}
+                            />
+
+                            <BestBadge>
+                              <FaStar />
+                              BEST SELLER
+                            </BestBadge>
+                          </BestImageWrap>
+
+                          <BestContent
+                            $isDark={$isDark}
+                          >
+                            <BestSmall>
+                              Collection Signature
+                            </BestSmall>
+
+                            <BestTitle>
+                              {product.title}
+                            </BestTitle>
+
+                            <BestSubtitle>
+                              {product.subtitle ||
+                                "Une pièce forte pensée pour révéler votre présence avec style, élégance et caractère."}
+                            </BestSubtitle>
+
+                            <BestPrice>
+                              {product.price} FCFA
+                            </BestPrice>
+
+                            {/*
+                             * Même sécurité ici :
+                             * une précommande éventuelle
+                             * redirige vers /precommande.
+                             */}
+
+                            <BestBtn
+                              to={
+                                estPrecommande(
+                                  product,
+                                )
+                                  ? "/precommande"
+                                  : `/produit/${product._id}`
+                              }
+                              $isDark={$isDark}
+                            >
+                              {estPrecommande(
+                                product,
+                              )
+                                ? "Précommander"
+                                : "Voir le produit"}
+
+                              <FaArrowRight />
+                            </BestBtn>
+                          </BestContent>
+                        </BestSlideInner>
+                      </BestSlide>
+                    ),
+                  )}
 
                   {bestSellers.length > 1 && (
                     <>
@@ -2117,29 +2492,41 @@ export default function HomePremium() {
                 </BestCarousel>
 
                 <DotsRow>
-                  {bestSellers.map((_, index) => (
-                    <Dot
-                      key={index}
-                      $active={index === bestSlide}
-                      $isDark={$isDark}
-                      onClick={() => {
-                        setBestSlide(index);
-                        setBestProgress(0);
-                      }}
-                    >
-                      {index === bestSlide && (
-                        <DotProgress $width={bestProgress} $isDark={$isDark} />
-                      )}
-                    </Dot>
-                  ))}
+                  {bestSellers.map(
+                    (_, index) => (
+                      <Dot
+                        key={index}
+                        $active={
+                          index === bestSlide
+                        }
+                        $isDark={$isDark}
+                        onClick={() => {
+                          setBestSlide(index);
+                          setBestProgress(0);
+                        }}
+                      >
+                        {index === bestSlide && (
+                          <DotProgress
+                            $width={bestProgress}
+                            $isDark={$isDark}
+                          />
+                        )}
+                      </Dot>
+                    ),
+                  )}
                 </DotsRow>
               </>
             ) : (
               <EmptyState>
                 <div>
-                  <h3>Notre sélection arrive bientôt.</h3>
+                  <h3>
+                    Notre sélection arrive bientôt.
+                  </h3>
 
-                  <p>De nouvelles pièces seront bientôt disponibles.</p>
+                  <p>
+                    De nouvelles pièces seront bientôt
+                    disponibles.
+                  </p>
                 </div>
               </EmptyState>
             )}
@@ -2155,13 +2542,17 @@ export default function HomePremium() {
         <RevealOnScroll>
           <Container>
             <SectionHeader>
-              <div className="eyebrow">L'EXPÉRIENCE NUMA</div>
+              <div className="eyebrow">
+                L'EXPÉRIENCE NUMA
+              </div>
 
-              <h2>Pourquoi choisir Numa ?</h2>
+              <h2>
+                Pourquoi choisir Numa ?
+              </h2>
 
               <p>
-                Parce que votre expérience compte autant que la pièce que vous
-                choisissez.
+                Parce que votre expérience compte autant
+                que la pièce que vous choisissez.
               </p>
             </SectionHeader>
 
@@ -2171,11 +2562,14 @@ export default function HomePremium() {
                   <FaTruck />
                 </BenefitIcon>
 
-                <BenefitTitle>Livraison rapide</BenefitTitle>
+                <BenefitTitle>
+                  Livraison rapide
+                </BenefitTitle>
 
                 <BenefitText>
-                  Recevez vos articles rapidement, soigneusement emballés et
-                  prêts à être portés.
+                  Recevez vos articles rapidement,
+                  soigneusement emballés et prêts à être
+                  portés.
                 </BenefitText>
               </BenefitCard>
 
@@ -2184,11 +2578,14 @@ export default function HomePremium() {
                   <FaShieldAlt />
                 </BenefitIcon>
 
-                <BenefitTitle>Paiement sécurisé</BenefitTitle>
+                <BenefitTitle>
+                  Paiement sécurisé
+                </BenefitTitle>
 
                 <BenefitText>
-                  Vos transactions sont protégées pour vous offrir une
-                  expérience d'achat sereine.
+                  Vos transactions sont protégées pour
+                  vous offrir une expérience d'achat
+                  sereine.
                 </BenefitText>
               </BenefitCard>
 
@@ -2197,11 +2594,14 @@ export default function HomePremium() {
                   <FaUndo />
                 </BenefitIcon>
 
-                <BenefitTitle>Retour facile</BenefitTitle>
+                <BenefitTitle>
+                  Retour facile
+                </BenefitTitle>
 
                 <BenefitText>
-                  Une pièce ne vous convient pas ? Notre processus de retour est
-                  simple et rapide.
+                  Une pièce ne vous convient pas ? Notre
+                  processus de retour est simple et
+                  rapide.
                 </BenefitText>
               </BenefitCard>
             </BenefitsSection>

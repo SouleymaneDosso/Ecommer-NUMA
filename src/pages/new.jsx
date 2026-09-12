@@ -1,5 +1,12 @@
 // src/pages/Nouveautes.jsx
-import { useState, useEffect, useRef, useMemo, useCallback, Fragment } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback,
+  Fragment,
+} from "react";
 import styled from "styled-components";
 import { LoaderWrapper, Loader } from "../Utils/Rotate";
 import { useNavigate } from "react-router-dom";
@@ -289,7 +296,12 @@ export default function Nouveautes() {
       try {
         const res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits`);
         const data = await res.json();
-        const newProducts = data.filter((p) => p.badge === "new");
+
+        const newProducts = data.filter(
+          (p) =>
+            p.badge === "new" &&
+            !(p.precommande === true && p.disponible === false),
+        );
         setProducts(newProducts);
 
         const indexes = {};
@@ -304,10 +316,16 @@ export default function Nouveautes() {
     fetchProducts();
   }, []);
 
-  const genres = useMemo(() => ["Tous", ...new Set(products.map((p) => p.genre).filter(Boolean))], [products]);
+  const genres = useMemo(
+    () => ["Tous", ...new Set(products.map((p) => p.genre).filter(Boolean))],
+    [products],
+  );
 
   const filteredProducts = useMemo(() => {
-    let result = genreFilter === "Tous" ? [...products] : products.filter((p) => p.genre === genreFilter);
+    let result =
+      genreFilter === "Tous"
+        ? [...products]
+        : products.filter((p) => p.genre === genreFilter);
     switch (sortBy) {
       case "price-asc":
         result.sort((a, b) => a.price - b.price);
@@ -332,14 +350,23 @@ export default function Nouveautes() {
     setImageIndexes((prev) => ({ ...prev, [id]: index }));
   }, []);
 
-  if (loading) return <LoaderWrapper><Loader /></LoaderWrapper>;
+  if (loading)
+    return (
+      <LoaderWrapper>
+        <Loader />
+      </LoaderWrapper>
+    );
 
   return (
     <PageWrapper>
       <Sidebar>
         <SidebarTitle>Catégories</SidebarTitle>
         {genres.map((g) => (
-          <FilterButton key={g} active={genreFilter === g} onClick={() => setGenreFilter(g)}>
+          <FilterButton
+            key={g}
+            active={genreFilter === g}
+            onClick={() => setGenreFilter(g)}
+          >
             <FiFilter /> {g}
           </FilterButton>
         ))}
@@ -355,7 +382,10 @@ export default function Nouveautes() {
           <TopRight>
             <CountBadge>{filteredProducts.length} produits</CountBadge>
             <SortWrapper>
-              <SortSelect value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+              <SortSelect
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+              >
                 <option value="default">Trier</option>
                 <option value="price-asc">Prix croissant</option>
                 <option value="price-desc">Prix décroissant</option>
@@ -368,14 +398,21 @@ export default function Nouveautes() {
         </TopBar>
 
         {filteredProducts.length === 0 ? (
-          <EmptyState>Aucune nouveauté trouvée pour cette catégorie.</EmptyState>
+          <EmptyState>
+            Aucune nouveauté trouvée pour cette catégorie.
+          </EmptyState>
         ) : (
           <Grid>
             {filteredProducts.map((p, index) => (
               <Fragment key={p._id}>
                 {/* BANNIERE AU MILIEU */}
                 {index === 2 && filteredProducts[0]?.images?.length > 0 && (
-                  <ProductCard style={{ gridColumn: "1 / -1" }} onClick={() => navigate(`/produit/${filteredProducts[0]._id}`)}>
+                  <ProductCard
+                    style={{ gridColumn: "1 / -1" }}
+                    onClick={() =>
+                      navigate(`/produit/${filteredProducts[0]._id}`)
+                    }
+                  >
                     <ProductCarousel
                       ref={(el) => (carouselRefs.current["banner"] = el)}
                       onScroll={() => {
@@ -388,14 +425,20 @@ export default function Nouveautes() {
                     >
                       {filteredProducts[0].images.map((img, idx) => (
                         <ProductSlide key={idx}>
-                          <ProductImage src={img.url} alt={`Banner ${idx + 1}`} />
+                          <ProductImage
+                            src={img.url}
+                            alt={`Banner ${idx + 1}`}
+                          />
                         </ProductSlide>
                       ))}
                     </ProductCarousel>
 
                     <ProductDots>
                       {filteredProducts[0].images.map((_, idx) => (
-                        <ProductDot key={idx} active={idx === imageIndexes["banner"]} />
+                        <ProductDot
+                          key={idx}
+                          active={idx === imageIndexes["banner"]}
+                        />
                       ))}
                     </ProductDots>
                   </ProductCard>
@@ -404,7 +447,10 @@ export default function Nouveautes() {
                 {/* PRODUIT NORMAL */}
                 <ProductCard onClick={() => navigate(`/produit/${p._id}`)}>
                   <ImageArea>
-                    <ProductCarousel ref={(el) => (carouselRefs.current[p._id] = el)} onScroll={() => handleProductScroll(p._id)}>
+                    <ProductCarousel
+                      ref={(el) => (carouselRefs.current[p._id] = el)}
+                      onScroll={() => handleProductScroll(p._id)}
+                    >
                       {p.images.map((img, idx) => (
                         <ProductSlide key={idx}>
                           <ProductImage src={img.url} alt={p.title} />
@@ -415,7 +461,10 @@ export default function Nouveautes() {
                     {p.images.length > 1 && (
                       <ProductDots>
                         {p.images.map((_, idx) => (
-                          <ProductDot key={idx} active={imageIndexes[p._id] === idx} />
+                          <ProductDot
+                            key={idx}
+                            active={imageIndexes[p._id] === idx}
+                          />
                         ))}
                       </ProductDots>
                     )}
