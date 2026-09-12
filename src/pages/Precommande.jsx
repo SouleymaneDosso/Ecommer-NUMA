@@ -248,11 +248,13 @@ const Precommande = () => {
     if (typeof video === "object" && video !== null) {
       const videoUrl = video.url || video.secure_url || video.video || "";
 
+      const videoThumbnail = video.thumbnail || video.poster || "";
+
       if (videoUrl) {
         liste.push({
           type: "video",
           url: videoUrl,
-          thumbnail: video.thumbnail || "",
+          thumbnail: videoThumbnail,
           title: video.title || "Vidéo du modèle",
         });
       }
@@ -967,6 +969,7 @@ const Precommande = () => {
                       <VideoPreview
                         key={mediaActuel.url}
                         src={mediaActuel.url}
+                        poster={mediaActuel.thumbnail || undefined}
                         muted
                         playsInline
                         preload="metadata"
@@ -1539,7 +1542,7 @@ const Precommande = () => {
                 <ModalVideo
                   ref={videoRef}
                   src={mediaActuel.url}
-                  poster={mediaActuel.thumbnail}
+                  poster={mediaActuel.thumbnail || undefined}
                   playsInline
                   preload="metadata"
                   muted={videoMuted}
