@@ -1,6 +1,26 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 
+import {
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  Maximize2,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  CalendarDays,
+  Check,
+  ArrowLeft,
+  ArrowRight,
+  CreditCard,
+  Video as VideoIcon,
+  Images,
+  PackageCheck,
+  ShieldCheck,
+} from "lucide-react";
+
 const API_URL = import.meta.env.VITE_API_URL;
 
 const Precommande = () => {
@@ -42,11 +62,18 @@ const Precommande = () => {
   const pays = "Côte d'Ivoire";
 
   /* =========================================================
-     VIDÉO CUSTOM
+     VIDÉOS
   ========================================================= */
 
+  // Vidéo dans la modale
   const videoRef = useRef(null);
+
+  // Vidéo de l'aperçu principal
+  const previewVideoRef = useRef(null);
+
   const [videoPlaying, setVideoPlaying] = useState(false);
+  const [previewVideoPlaying, setPreviewVideoPlaying] = useState(false);
+
   const [videoMuted, setVideoMuted] = useState(false);
   const [videoProgress, setVideoProgress] = useState(0);
   const [videoDuration, setVideoDuration] = useState(0);
@@ -155,6 +182,8 @@ const Precommande = () => {
 
     setMediaModalOuvert(false);
 
+    setPreviewVideoPlaying(false);
+
     setTimeout(() => {
       window.scrollTo({
         top: 0,
@@ -173,6 +202,17 @@ const Precommande = () => {
 
     setMessage("");
     setErreur("");
+
+    if (previewVideoRef.current) {
+      previewVideoRef.current.pause();
+    }
+
+    if (videoRef.current) {
+      videoRef.current.pause();
+    }
+
+    setPreviewVideoPlaying(false);
+    setVideoPlaying(false);
   };
 
   /* =========================================================
@@ -216,10 +256,6 @@ const Precommande = () => {
 
         if (!url) return;
 
-        /*
-          Évite de doubler l'image principale
-          si elle est déjà présente dans "image".
-        */
         const dejaPresente = liste.some((media) => media.url === url);
 
         if (!dejaPresente) {
@@ -232,7 +268,11 @@ const Precommande = () => {
       });
     }
 
-    let video = modeleSelectionne.video;
+    /* -------------------------
+       VIDÉO
+    ------------------------- */
+
+    const video = modeleSelectionne.video;
 
     if (typeof video === "string") {
       if (video.trim()) {
@@ -266,7 +306,7 @@ const Precommande = () => {
   const mediaActuel = medias[mediaIndex];
 
   /* =========================================================
-     FERMER LE MODAL AVEC ESC
+     FERMER LE MODAL AVEC ESC + NAVIGATION CLAVIER
   ========================================================= */
 
   useEffect(() => {
@@ -312,7 +352,7 @@ const Precommande = () => {
   }, [mediaModalOuvert]);
 
   /* =========================================================
-     RESET VIDÉO
+     RESET VIDÉOS QUAND LE MÉDIA CHANGE
   ========================================================= */
 
   useEffect(() => {
@@ -321,7 +361,22 @@ const Precommande = () => {
     setVideoDuration(0);
     setVideoCurrentTime(0);
     setVideoMuted(false);
-  }, [mediaIndex, mediaModalOuvert]);
+    setPreviewVideoPlaying(false);
+
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+
+    if (previewVideoRef.current) {
+      previewVideoRef.current.pause();
+      previewVideoRef.current.currentTime = 0;
+    }
+  }, [mediaIndex]);
+
+  /* =========================================================
+     STOCK
+  ========================================================= */
 
   const trouverStockDansObjet = (objet, cle) => {
     if (!objet || typeof objet !== "object") {
@@ -354,11 +409,9 @@ const Precommande = () => {
 
     const stockParVariation = modeleSelectionne.stockParVariation;
 
-    /*
-      ---------------------------------------------------------
-      CAS 1 : COULEUR + TAILLE
-      ---------------------------------------------------------
-    */
+    /* ---------------------------------------------------------
+       CAS 1 : COULEUR + TAILLE
+    --------------------------------------------------------- */
 
     if (couleurSelectionnee && tailleSelectionnee) {
       const variationCouleur = trouverStockDansObjet(
@@ -380,6 +433,10 @@ const Precommande = () => {
       }
     }
 
+    /* ---------------------------------------------------------
+       CAS 2 : TAILLE + COULEUR INVERSÉ
+    --------------------------------------------------------- */
+
     if (tailleSelectionnee && couleurSelectionnee) {
       const variationTaille = trouverStockDansObjet(
         stockParVariation,
@@ -400,18 +457,11 @@ const Precommande = () => {
       }
     }
 
-    /*
-      ---------------------------------------------------------
-      CAS 3 : PRODUIT SANS COULEUR
-      ---------------------------------------------------------
-    */
+    /* ---------------------------------------------------------
+       CAS 3 : PRODUIT SANS COULEUR
+    --------------------------------------------------------- */
 
     if (tailleSelectionnee && !couleurSelectionnee) {
-      /*
-        Le backend actuel utilise le stock global lorsqu'il
-        n'y a pas de variation couleur/taille exploitable.
-      */
-
       const stockGlobal = Number(modeleSelectionne.stock);
 
       if (Number.isFinite(stockGlobal)) {
@@ -419,11 +469,9 @@ const Precommande = () => {
       }
     }
 
-    /*
-      ---------------------------------------------------------
-      CAS 4 : STOCK GLOBAL
-      ---------------------------------------------------------
-    */
+    /* ---------------------------------------------------------
+       CAS 4 : STOCK GLOBAL
+    --------------------------------------------------------- */
 
     const stockGlobal = Number(modeleSelectionne.stock);
 
@@ -485,7 +533,39 @@ const Precommande = () => {
   };
 
   /* =========================================================
-     VIDÉO CUSTOM
+     VIDÉO PRINCIPALE
+  ========================================================= */
+
+  const togglePreviewVideo = async () => {
+    const video = previewVideoRef.current;
+
+    if (!video) return;
+
+    try {
+      if (video.paused) {
+        await video.play();
+      } else {
+        video.pause();
+      }
+    } catch (error) {
+      console.error("LECTURE VIDÉO APERÇU :", error);
+    }
+  };
+
+  const handlePreviewPlay = () => {
+    setPreviewVideoPlaying(true);
+  };
+
+  const handlePreviewPause = () => {
+    setPreviewVideoPlaying(false);
+  };
+
+  const handlePreviewEnded = () => {
+    setPreviewVideoPlaying(false);
+  };
+
+  /* =========================================================
+     VIDÉO MODALE
   ========================================================= */
 
   const toggleVideo = async () => {
@@ -496,10 +576,8 @@ const Precommande = () => {
     try {
       if (video.paused) {
         await video.play();
-        setVideoPlaying(true);
       } else {
         video.pause();
-        setVideoPlaying(false);
       }
     } catch (error) {
       console.error("LECTURE VIDÉO :", error);
@@ -512,6 +590,7 @@ const Precommande = () => {
     if (!video) return;
 
     video.muted = !video.muted;
+
     setVideoMuted(video.muted);
   };
 
@@ -561,12 +640,13 @@ const Precommande = () => {
     }
 
     const minutes = Math.floor(secondes / 60);
+
     const seconds = Math.floor(secondes % 60);
 
-    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(
+    return `${String(minutes).padStart(
       2,
       "0",
-    )}`;
+    )}:${String(seconds).padStart(2, "0")}`;
   };
 
   const passerPleinEcran = async () => {
@@ -615,9 +695,14 @@ const Precommande = () => {
     setMediaModalOuvert(true);
   };
 
+  /* =========================================================
+     PRÉCOMMANDE
+  ========================================================= */
+
   const envoyerPrecommande = async (e) => {
     e.preventDefault();
-    if (!nom.trim() || !prenom.trim() || !adresse.trim() || !ville) {
+
+    if (!nom.trim() || !prenom.trim() || !adresse.trim() || !ville.trim()) {
       setErreur("Veuillez remplir toutes vos informations de livraison.");
       return;
     }
@@ -689,12 +774,6 @@ const Precommande = () => {
 
       const token = getToken();
 
-      /*
-        IMPORTANT :
-        On envoie exactement les champs utilisés par
-        creerPrecommande dans le backend.
-      */
-
       const body = {
         produitId: modeleSelectionne._id,
 
@@ -718,14 +797,17 @@ const Precommande = () => {
 
       const response = await fetch(`${API_URL}/api/precommandes`, {
         method: "POST",
+
         headers: {
           "Content-Type": "application/json",
+
           ...(token
             ? {
                 Authorization: `Bearer ${token}`,
               }
             : {}),
         },
+
         body: JSON.stringify(body),
       });
 
@@ -745,11 +827,6 @@ const Precommande = () => {
       setNumeroDepot("");
       setReferenceDepot("");
       setQuantite(1);
-
-      /*
-        Le modèle peut disparaître de l'endpoint si son stock
-        ou son état change côté backend.
-      */
 
       await chargerModeles();
     } catch (error) {
@@ -786,7 +863,9 @@ const Precommande = () => {
       <PageContainer>
         <ErrorBox>{erreur}</ErrorBox>
 
-        <RetryButton onClick={chargerModeles}>Réessayer</RetryButton>
+        <RetryButton type="button" onClick={chargerModeles}>
+          Réessayer
+        </RetryButton>
       </PageContainer>
     );
   }
@@ -810,7 +889,9 @@ const Precommande = () => {
 
       {message && (
         <SuccessBox>
-          <SuccessIcon>✓</SuccessIcon>
+          <SuccessIcon>
+            <Check size={15} />
+          </SuccessIcon>
 
           <div>{message}</div>
         </SuccessBox>
@@ -826,7 +907,9 @@ const Precommande = () => {
         <ModelesGrid>
           {modeles.length === 0 ? (
             <EmptyBox>
-              <EmptyIcon>◌</EmptyIcon>
+              <EmptyIcon>
+                <PackageCheck size={42} />
+              </EmptyIcon>
 
               <h3>Aucune précommande disponible</h3>
 
@@ -862,7 +945,7 @@ const Precommande = () => {
 
                     {modele.video && (
                       <VideoCardBadge>
-                        <span>▶</span>
+                        <VideoIcon size={13} strokeWidth={2.2} />
                         Vidéo
                       </VideoCardBadge>
                     )}
@@ -933,9 +1016,12 @@ const Precommande = () => {
                       </StockMini>
                     </VariationSummary>
 
-                    <ActionButton onClick={() => ouvrirModele(modele)}>
+                    <ActionButton
+                      type="button"
+                      onClick={() => ouvrirModele(modele)}
+                    >
                       Voir le modèle
-                      <span>→</span>
+                      <ArrowRight size={17} strokeWidth={2.4} />
                     </ActionButton>
                   </CardContent>
                 </ModelCard>
@@ -951,8 +1037,8 @@ const Precommande = () => {
 
       {modeleSelectionne && (
         <DetailContainer>
-          <BackButton onClick={fermerModele}>
-            <span>←</span>
+          <BackButton type="button" onClick={fermerModele}>
+            <ArrowLeft size={17} />
             Retour aux modèles
           </BackButton>
 
@@ -966,15 +1052,50 @@ const Precommande = () => {
                 {medias.length > 0 ? (
                   <>
                     {mediaActuel?.type === "video" ? (
-                      <VideoPreview
-                        key={mediaActuel.url}
-                        src={mediaActuel.url}
-                        poster={mediaActuel.thumbnail || undefined}
-                        muted
-                        playsInline
-                        preload="metadata"
-                        onClick={() => ouvrirMedia(mediaIndex)}
-                      />
+                      <PreviewVideoWrapper>
+                        <VideoPreview
+                          ref={previewVideoRef}
+                          key={mediaActuel.url}
+                          src={mediaActuel.url}
+                          poster={mediaActuel.thumbnail || undefined}
+                          muted
+                          playsInline
+                          preload="metadata"
+                          onPlay={handlePreviewPlay}
+                          onPause={handlePreviewPause}
+                          onEnded={handlePreviewEnded}
+                          onClick={() => ouvrirMedia(mediaIndex)}
+                        />
+
+                        {/* PLAY / PAUSE SUR LA VIDÉO PRINCIPALE */}
+                        <PreviewVideoPlayButton
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            togglePreviewVideo();
+                          }}
+                          aria-label={
+                            previewVideoPlaying
+                              ? "Mettre la vidéo en pause"
+                              : "Lire la vidéo"
+                          }
+                        >
+                          {previewVideoPlaying ? (
+                            <Pause size={21} strokeWidth={2.3} />
+                          ) : (
+                            <Play
+                              size={21}
+                              strokeWidth={2.3}
+                              fill="currentColor"
+                            />
+                          )}
+                        </PreviewVideoPlayButton>
+
+                        <PreviewVideoLabel>
+                          <VideoIcon size={13} strokeWidth={2} />
+                          VIDÉO
+                        </PreviewVideoLabel>
+                      </PreviewVideoWrapper>
                     ) : (
                       <MainImage
                         src={mediaActuel?.url}
@@ -985,10 +1106,13 @@ const Precommande = () => {
 
                     <MediaExpandButton
                       type="button"
-                      onClick={() => ouvrirMedia(mediaIndex)}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        ouvrirMedia(mediaIndex);
+                      }}
                       aria-label="Agrandir le média"
                     >
-                      ⛶
+                      <Maximize2 size={18} strokeWidth={2.2} />
                     </MediaExpandButton>
 
                     {medias.length > 1 && (
@@ -999,7 +1123,7 @@ const Precommande = () => {
                           onClick={mediaPrecedent}
                           aria-label="Média précédent"
                         >
-                          ‹
+                          <ChevronLeft size={23} strokeWidth={2} />
                         </MediaArrow>
 
                         <MediaArrow
@@ -1007,7 +1131,7 @@ const Precommande = () => {
                           onClick={mediaSuivant}
                           aria-label="Média suivant"
                         >
-                          ›
+                          <ChevronRight size={23} strokeWidth={2} />
                         </MediaArrow>
                       </>
                     )}
@@ -1027,7 +1151,13 @@ const Precommande = () => {
                                 : `Afficher la photo ${index + 1}`
                             }
                           >
-                            {media.type === "video" ? "▶" : ""}
+                            {media.type === "video" ? (
+                              <Play
+                                size={10}
+                                fill="currentColor"
+                                strokeWidth={2.5}
+                              />
+                            ) : null}
                           </Dot>
                         ))}
                       </DotsContainer>
@@ -1041,9 +1171,17 @@ const Precommande = () => {
               {medias.length > 0 && (
                 <MediaDescription>
                   <MediaCurrent>
-                    {mediaActuel?.type === "video"
-                      ? "Vidéo du modèle"
-                      : `Photo ${mediaIndex + 1} / ${medias.length}`}
+                    {mediaActuel?.type === "video" ? (
+                      <>
+                        <VideoIcon size={13} />
+                        Vidéo du modèle
+                      </>
+                    ) : (
+                      <>
+                        <Images size={13} />
+                        Photo {mediaIndex + 1} / {medias.length}
+                      </>
+                    )}
                   </MediaCurrent>
 
                   <MediaHint>Cliquez sur le média pour l'agrandir</MediaHint>
@@ -1076,7 +1214,9 @@ const Precommande = () => {
 
               {modeleSelectionne.dateDisponibilite && (
                 <DateBox>
-                  <DateIcon>◷</DateIcon>
+                  <DateIcon>
+                    <CalendarDays size={18} />
+                  </DateIcon>
 
                   <div>
                     <DateLabel>DISPONIBILITÉ</DateLabel>
@@ -1111,6 +1251,8 @@ const Precommande = () => {
                         onClick={() => changerTaille(taille)}
                       >
                         {taille}
+
+                        {tailleSelectionnee === taille && <Check size={14} />}
                       </ChoiceButton>
                     ))}
                   </ChoiceGrid>
@@ -1136,6 +1278,8 @@ const Precommande = () => {
                         <ColorCircle />
 
                         {couleur}
+
+                        {couleurSelectionnee === couleur && <Check size={14} />}
                       </ChoiceButton>
                     ))}
                   </ChoiceGrid>
@@ -1189,7 +1333,8 @@ const Precommande = () => {
 
                 {stockDisponible > 0 ? (
                   <StockAvailableText>
-                    ✓ Cette variation peut être précommandée
+                    <Check size={13} />
+                    Cette variation peut être précommandée
                   </StockAvailableText>
                 ) : (
                   <StockUnavailableText>
@@ -1270,96 +1415,101 @@ const Precommande = () => {
               </SummaryBox>
 
               {/* =================================================
-                  FORMULAIRE PAIEMENT
+                  FORMULAIRE
               ================================================= */}
-              <FormTitle>Informations de livraison</FormTitle>
 
-              <FieldGroup>
-                <FieldLabel htmlFor="nom">Nom</FieldLabel>
-
-                <Input
-                  id="nom"
-                  type="text"
-                  placeholder="Votre nom"
-                  value={nom}
-                  onChange={(e) => setNom(e.target.value)}
-                />
-              </FieldGroup>
-
-              <FieldGroup>
-                <FieldLabel htmlFor="prenom">Prénom</FieldLabel>
-
-                <Input
-                  id="prenom"
-                  type="text"
-                  placeholder="Votre prénom"
-                  value={prenom}
-                  onChange={(e) => setPrenom(e.target.value)}
-                />
-              </FieldGroup>
-
-              <FieldGroup>
-                <FieldLabel htmlFor="adresse">Adresse</FieldLabel>
-
-                <Input
-                  id="adresse"
-                  type="text"
-                  placeholder="Votre adresse de livraison"
-                  value={adresse}
-                  onChange={(e) => setAdresse(e.target.value)}
-                />
-              </FieldGroup>
-
-              <FieldGroup>
-                <FieldLabel htmlFor="ville">Ville</FieldLabel>
-
-                <Input
-                  id="ville"
-                  type="text"
-                  placeholder="Votre ville"
-                  value={ville}
-                  onChange={(e) => setVille(e.target.value)}
-                />
-              </FieldGroup>
-
-              <FieldGroup>
-                <FieldLabel htmlFor="numero">Numéro de téléphone</FieldLabel>
-
-                <Input
-                  id="numero"
-                  type="tel"
-                  inputMode="tel"
-                  placeholder="+225XXXXXXXX"
-                  value={numero}
-                  onChange={(e) => {
-                    let value = e.target.value;
-
-                    if (!value.startsWith("+225")) {
-                      value = "+225" + value.replace(/^\+225\s*/, "");
-                    }
-
-                    setNumero(value);
-                  }}
-                />
-              </FieldGroup>
-
-              <FieldGroup>
-                <FieldLabel htmlFor="codePostal">Code postal</FieldLabel>
-
-                <Input id="codePostal" value={codePostal} disabled />
-              </FieldGroup>
-
-              <FieldGroup>
-                <FieldLabel htmlFor="pays">Pays</FieldLabel>
-
-                <Input id="pays" value={pays} disabled />
-              </FieldGroup>
               <Form onSubmit={envoyerPrecommande}>
+                <FormTitle>Informations de livraison</FormTitle>
+
+                <FieldGroup>
+                  <FieldLabel htmlFor="nom">Nom</FieldLabel>
+
+                  <Input
+                    id="nom"
+                    type="text"
+                    placeholder="Votre nom"
+                    value={nom}
+                    onChange={(e) => setNom(e.target.value)}
+                  />
+                </FieldGroup>
+
+                <FieldGroup>
+                  <FieldLabel htmlFor="prenom">Prénom</FieldLabel>
+
+                  <Input
+                    id="prenom"
+                    type="text"
+                    placeholder="Votre prénom"
+                    value={prenom}
+                    onChange={(e) => setPrenom(e.target.value)}
+                  />
+                </FieldGroup>
+
+                <FieldGroup>
+                  <FieldLabel htmlFor="adresse">Adresse</FieldLabel>
+
+                  <Input
+                    id="adresse"
+                    type="text"
+                    placeholder="Votre adresse de livraison"
+                    value={adresse}
+                    onChange={(e) => setAdresse(e.target.value)}
+                  />
+                </FieldGroup>
+
+                <FieldGroup>
+                  <FieldLabel htmlFor="ville">Ville</FieldLabel>
+
+                  <Input
+                    id="ville"
+                    type="text"
+                    placeholder="Votre ville"
+                    value={ville}
+                    onChange={(e) => setVille(e.target.value)}
+                  />
+                </FieldGroup>
+
+                <FieldGroup>
+                  <FieldLabel htmlFor="numero">Numéro de téléphone</FieldLabel>
+
+                  <Input
+                    id="numero"
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    placeholder="+225XXXXXXXX"
+                    value={numero}
+                    onChange={(e) => {
+                      let value = e.target.value;
+
+                      if (!value.startsWith("+225")) {
+                        value = "+225" + value.replace(/^\+?225\s*/, "");
+                      }
+
+                      setNumero(value);
+                    }}
+                  />
+                </FieldGroup>
+
+                <FieldGroup>
+                  <FieldLabel htmlFor="codePostal">Code postal</FieldLabel>
+
+                  <Input id="codePostal" value={codePostal} disabled />
+                </FieldGroup>
+
+                <FieldGroup>
+                  <FieldLabel htmlFor="pays">Pays</FieldLabel>
+
+                  <Input id="pays" value={pays} disabled />
+                </FieldGroup>
+
                 <FormTitle>Informations du dépôt</FormTitle>
 
                 <DepotInfoBox>
                   <DepotInfoHeader>
-                    <DepotInfoIcon>₣</DepotInfoIcon>
+                    <DepotInfoIcon>
+                      <CreditCard size={17} />
+                    </DepotInfoIcon>
 
                     <div>
                       <DepotInfoTitle>Effectuez votre dépôt</DepotInfoTitle>
@@ -1423,7 +1573,11 @@ const Precommande = () => {
                         <PaymentSmall>Paiement mobile</PaymentSmall>
                       </div>
 
-                      {service === "orange" && <PaymentCheck>✓</PaymentCheck>}
+                      {service === "orange" && (
+                        <PaymentCheck>
+                          <Check size={11} />
+                        </PaymentCheck>
+                      )}
                     </PaymentButton>
 
                     <PaymentButton
@@ -1439,7 +1593,11 @@ const Precommande = () => {
                         <PaymentSmall>Paiement mobile</PaymentSmall>
                       </div>
 
-                      {service === "wave" && <PaymentCheck>✓</PaymentCheck>}
+                      {service === "wave" && (
+                        <PaymentCheck>
+                          <Check size={11} />
+                        </PaymentCheck>
+                      )}
                     </PaymentButton>
                   </PaymentGrid>
                 </FieldGroup>
@@ -1490,12 +1648,13 @@ const Precommande = () => {
                   ) : (
                     <>
                       Confirmer la précommande
-                      <span>→</span>
+                      <ArrowRight size={17} />
                     </>
                   )}
                 </SubmitButton>
 
                 <SecurityText>
+                  <ShieldCheck size={13} />
                   Votre précommande sera vérifiée par notre équipe avant
                   validation définitive.
                 </SecurityText>
@@ -1532,7 +1691,7 @@ const Precommande = () => {
               onClick={() => setMediaModalOuvert(false)}
               aria-label="Fermer"
             >
-              ×
+              <X size={22} strokeWidth={2} />
             </ModalCloseButton>
           </ModalTopBar>
 
@@ -1557,12 +1716,19 @@ const Precommande = () => {
                 <VideoOverlayPlay
                   type="button"
                   $visible={!videoPlaying}
-                  onClick={toggleVideo}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    toggleVideo();
+                  }}
                   aria-label={
                     videoPlaying ? "Mettre en pause" : "Lire la vidéo"
                   }
                 >
-                  {videoPlaying ? "Ⅱ" : "▶"}
+                  {videoPlaying ? (
+                    <Pause size={31} strokeWidth={2} />
+                  ) : (
+                    <Play size={31} strokeWidth={2} fill="currentColor" />
+                  )}
                 </VideoOverlayPlay>
 
                 <VideoControls>
@@ -1588,7 +1754,11 @@ const Precommande = () => {
                       onClick={toggleVideo}
                       aria-label={videoPlaying ? "Pause" : "Lecture"}
                     >
-                      {videoPlaying ? "Ⅱ" : "▶"}
+                      {videoPlaying ? (
+                        <Pause size={16} />
+                      ) : (
+                        <Play size={16} fill="currentColor" />
+                      )}
                     </VideoControlButton>
 
                     <VideoControlButton
@@ -1598,7 +1768,11 @@ const Precommande = () => {
                         videoMuted ? "Activer le son" : "Couper le son"
                       }
                     >
-                      {videoMuted ? "⌁" : "◖"}
+                      {videoMuted ? (
+                        <VolumeX size={17} />
+                      ) : (
+                        <Volume2 size={17} />
+                      )}
                     </VideoControlButton>
 
                     <VideoControlTitle>
@@ -1610,7 +1784,7 @@ const Precommande = () => {
                       onClick={passerPleinEcran}
                       aria-label="Plein écran"
                     >
-                      ⛶
+                      <Maximize2 size={17} />
                     </VideoControlButton>
                   </VideoButtons>
                 </VideoControls>
@@ -1629,7 +1803,7 @@ const Precommande = () => {
                 aria-label="Média précédent"
                 onMouseDown={(e) => e.stopPropagation()}
               >
-                ‹
+                <ChevronLeft size={27} />
               </ModalNavigation>
 
               <ModalNavigation
@@ -1638,7 +1812,7 @@ const Precommande = () => {
                 aria-label="Média suivant"
                 onMouseDown={(e) => e.stopPropagation()}
               >
-                ›
+                <ChevronRight size={27} />
               </ModalNavigation>
 
               <ModalThumbnails onClick={(e) => e.stopPropagation()}>
@@ -1650,7 +1824,9 @@ const Precommande = () => {
                     onClick={() => setMediaIndex(index)}
                   >
                     {media.type === "video" ? (
-                      <ThumbnailVideoIcon>▶</ThumbnailVideoIcon>
+                      <ThumbnailVideoIcon>
+                        <Play size={17} fill="currentColor" strokeWidth={2} />
+                      </ThumbnailVideoIcon>
                     ) : (
                       <ThumbnailImage src={media.url} alt="" />
                     )}
@@ -1671,63 +1847,96 @@ const Precommande = () => {
 };
 
 /* ============================================================
-   STYLES
+   STYLES — PAGE
 ============================================================ */
 
 const PageContainer = styled.div`
   min-height: 100vh;
+
   background: radial-gradient(
-    circle at top,
-    #ffffff 0,
-    #f8f8f8 38%,
-    #f5f5f5 100%
+    circle at 50% -10%,
+    rgba(255, 255, 255, 1) 0,
+    rgba(248, 248, 248, 0.98) 35%,
+    #f4f4f4 100%
   );
+
   padding: 50px 25px 90px;
 
   @media (max-width: 600px) {
-    padding: 35px 15px 60px;
+    padding: 32px 14px 60px;
   }
 `;
 
 const Header = styled.div`
   max-width: 900px;
+
   margin: 0 auto 48px;
+
   text-align: center;
 `;
 
 const SmallTitle = styled.div`
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 4px;
-  color: #777;
-  margin-bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 7px 12px;
+
+  border-radius: 999px;
+
+  background: #111;
+  color: white;
+
+  font-size: 9px;
+  font-weight: 900;
+
+  letter-spacing: 2.5px;
+
+  margin-bottom: 15px;
 `;
 
 const MainTitle = styled.h1`
   margin: 0;
+
   font-size: 46px;
+
   color: #171717;
-  font-weight: 800;
-  letter-spacing: -1.5px;
+
+  font-weight: 850;
+
+  letter-spacing: -1.8px;
 
   @media (max-width: 600px) {
     font-size: 34px;
+    letter-spacing: -1px;
   }
 `;
 
 const Subtitle = styled.p`
   max-width: 680px;
+
   margin: 16px auto 0;
+
   color: #777;
+
   line-height: 1.8;
+
   font-size: 14px;
+
+  @media (max-width: 600px) {
+    font-size: 13px;
+  }
 `;
 
 const ModelesGrid = styled.div`
   max-width: 1220px;
+
   margin: auto;
+
   display: grid;
+
   grid-template-columns: repeat(3, 1fr);
+
   gap: 26px;
 
   @media (max-width: 1000px) {
@@ -1740,24 +1949,39 @@ const ModelesGrid = styled.div`
 `;
 
 const ModelCard = styled.article`
+  position: relative;
+
   background: #fff;
+
   border-radius: 22px;
+
   overflow: hidden;
-  border: 1px solid #e9e9e9;
+
+  border: 1px solid #e8e8e8;
+
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.025);
+
   transition:
-    transform 0.25s ease,
-    box-shadow 0.25s ease;
+    transform 0.3s ease,
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
 
   &:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.08);
+    transform: translateY(-6px);
+
+    border-color: #ddd;
+
+    box-shadow: 0 22px 55px rgba(0, 0, 0, 0.09);
   }
 `;
 
 const CardImageContainer = styled.div`
   position: relative;
+
   height: 380px;
+
   background: #ededed;
+
   overflow: hidden;
 
   @media (max-width: 650px) {
@@ -1768,58 +1992,86 @@ const CardImageContainer = styled.div`
 const CardImage = styled.img`
   width: 100%;
   height: 100%;
+
   object-fit: cover;
+
   display: block;
+
+  transition: transform 0.55s cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  ${ModelCard}:hover & {
+    transform: scale(1.035);
+  }
 `;
 
 const NoImage = styled.div`
   width: 100%;
   height: 100%;
+
   display: flex;
+
   align-items: center;
   justify-content: center;
+
   color: #999;
+
   background: #eeeeee;
+
   font-size: 13px;
 `;
 
 const PrecommandeBadge = styled.div`
   position: absolute;
+
   top: 16px;
   left: 16px;
+
   background: rgba(17, 17, 17, 0.94);
+
   color: white;
+
   padding: 8px 12px;
+
   border-radius: 30px;
+
   font-size: 9px;
+
   font-weight: 800;
+
   letter-spacing: 1.4px;
+
   backdrop-filter: blur(10px);
+
+  box-shadow: 0 7px 20px rgba(0, 0, 0, 0.15);
 `;
 
 const VideoCardBadge = styled.div`
   position: absolute;
+
   right: 16px;
   top: 16px;
 
   display: inline-flex;
+
   align-items: center;
+
   gap: 6px;
 
   padding: 8px 11px;
+
   border-radius: 30px;
 
   background: rgba(255, 255, 255, 0.92);
+
   color: #111;
 
   font-size: 10px;
+
   font-weight: 800;
 
   box-shadow: 0 5px 18px rgba(0, 0, 0, 0.12);
 
-  span {
-    font-size: 9px;
-  }
+  backdrop-filter: blur(10px);
 `;
 
 const CardContent = styled.div`
@@ -1828,16 +2080,25 @@ const CardContent = styled.div`
 
 const CardTitle = styled.h2`
   margin: 0 0 10px;
+
   color: #222;
+
   font-size: 21px;
+
   font-weight: 800;
+
+  letter-spacing: -0.4px;
 `;
 
 const CardDescription = styled.p`
   color: #777;
+
   font-size: 13px;
+
   line-height: 1.7;
+
   min-height: 66px;
+
   margin: 0;
 `;
 
@@ -1847,40 +2108,57 @@ const CardInfo = styled.div`
 
 const Price = styled.div`
   font-size: 21px;
+
   font-weight: 800;
+
   color: #111;
+
+  letter-spacing: -0.3px;
 `;
 
 const Deposit = styled.div`
   margin-top: 5px;
+
   color: #777;
+
   font-size: 12px;
 `;
 
 const Availability = styled.div`
   margin-top: 13px;
+
   padding: 11px 13px;
+
   background: #f6f6f6;
+
   border-radius: 10px;
+
   font-size: 11px;
+
   color: #555;
 `;
 
 const VariationSummary = styled.div`
   margin-top: 17px;
+
   display: flex;
+
   flex-direction: column;
+
   gap: 8px;
 `;
 
 const VariationLine = styled.div`
   display: flex;
+
   gap: 8px;
+
   font-size: 12px;
 `;
 
 const VariationLabel = styled.span`
   font-weight: 800;
+
   color: #333;
 `;
 
@@ -1890,101 +2168,150 @@ const VariationValues = styled.span`
 
 const StockMini = styled.div`
   display: flex;
+
   align-items: center;
+
   gap: 7px;
 
   margin-top: 2px;
 
   color: #777;
+
   font-size: 11px;
 `;
 
 const StockMiniDot = styled.span`
   width: 7px;
   height: 7px;
+
+  flex: 0 0 7px;
+
   border-radius: 50%;
+
   background: ${(props) => (props.$available ? "#32804a" : "#b33a3a")};
+
+  box-shadow: 0 0 0 3px
+    ${(props) =>
+      props.$available ? "rgba(50,128,74,0.08)" : "rgba(179,58,58,0.08)"};
 `;
 
 const ActionButton = styled.button`
   width: 100%;
 
   display: flex;
+
   align-items: center;
   justify-content: center;
+
   gap: 10px;
 
   border: none;
+
   background: #111;
+
   color: white;
 
   padding: 15px;
+
   border-radius: 11px;
 
   margin-top: 21px;
 
   font-weight: 800;
+
   cursor: pointer;
 
   transition:
     background 0.2s ease,
-    transform 0.2s ease;
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 
-  span {
+  svg {
     transition: transform 0.2s ease;
   }
 
   &:hover {
     background: #292929;
 
-    span {
+    box-shadow: 0 9px 24px rgba(0, 0, 0, 0.14);
+
+    svg {
       transform: translateX(4px);
     }
   }
+
+  &:active {
+    transform: scale(0.985);
+  }
 `;
+
+/* ============================================================
+   DÉTAIL
+============================================================ */
 
 const DetailContainer = styled.div`
   max-width: 1260px;
+
   margin: auto;
 `;
 
 const BackButton = styled.button`
   display: inline-flex;
+
   align-items: center;
+
   gap: 9px;
 
   border: none;
+
   background: transparent;
+
   color: #333;
 
   font-weight: 700;
+
   cursor: pointer;
 
   margin-bottom: 25px;
+
   padding: 8px 0;
+
+  transition: 0.2s;
+
+  svg {
+    transition: transform 0.2s ease;
+  }
 
   &:hover {
     color: #000;
-  }
 
-  span {
-    font-size: 18px;
+    svg {
+      transform: translateX(-3px);
+    }
   }
 `;
 
 const DetailGrid = styled.div`
   display: grid;
-  grid-template-columns: 1.04fr 0.96fr;
+
+  grid-template-columns:
+    1.04fr
+    0.96fr;
+
   gap: 45px;
+
   align-items: start;
 
   @media (max-width: 950px) {
     grid-template-columns: 1fr;
+
+    gap: 28px;
   }
 `;
 
 const MediaSection = styled.div`
   position: sticky;
+
   top: 20px;
 
   @media (max-width: 950px) {
@@ -1994,66 +2321,197 @@ const MediaSection = styled.div`
 
 const MediaContainer = styled.div`
   position: relative;
+
   width: 100%;
+
   aspect-ratio: 4 / 5;
 
   background: #111;
+
   border-radius: 24px;
+
   overflow: hidden;
 
-  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.13);
+
+  isolation: isolate;
+
+  @media (max-width: 600px) {
+    border-radius: 19px;
+  }
 `;
 
 const MainImage = styled.img`
   width: 100%;
   height: 100%;
+
   object-fit: cover;
+
   display: block;
+
   cursor: zoom-in;
 
-  transition: transform 0.35s ease;
+  transition: transform 0.45s cubic-bezier(0.2, 0.7, 0.2, 1);
 
   &:hover {
-    transform: scale(1.015);
+    transform: scale(1.018);
   }
+`;
+
+const PreviewVideoWrapper = styled.div`
+  position: relative;
+
+  width: 100%;
+  height: 100%;
+
+  overflow: hidden;
+
+  background: #080808;
 `;
 
 const VideoPreview = styled.video`
   width: 100%;
   height: 100%;
+
   object-fit: cover;
+
   display: block;
+
   cursor: zoom-in;
+
+  background: #080808;
+`;
+
+const PreviewVideoPlayButton = styled.button`
+  position: absolute;
+
+  left: 20px;
+  bottom: 20px;
+
+  width: 50px;
+  height: 50px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid rgba(255, 255, 255, 0.3);
+
+  border-radius: 50%;
+
+  background: rgba(0, 0, 0, 0.68);
+
+  color: white;
+
+  backdrop-filter: blur(12px);
+
+  cursor: pointer;
+
+  z-index: 7;
+
+  box-shadow: 0 9px 28px rgba(0, 0, 0, 0.3);
+
+  transition:
+    transform 0.22s ease,
+    background 0.22s ease,
+    border-color 0.22s ease;
+
+  &:hover {
+    transform: scale(1.08);
+
+    background: rgba(0, 0, 0, 0.85);
+
+    border-color: rgba(255, 255, 255, 0.55);
+  }
+
+  &:active {
+    transform: scale(0.94);
+  }
+
+  @media (max-width: 600px) {
+    left: 15px;
+    bottom: 15px;
+
+    width: 46px;
+    height: 46px;
+  }
+`;
+
+const PreviewVideoLabel = styled.div`
+  position: absolute;
+
+  left: 20px;
+  top: 20px;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 7px;
+
+  padding: 8px 11px;
+
+  border-radius: 999px;
+
+  background: rgba(0, 0, 0, 0.5);
+
+  color: rgba(255, 255, 255, 0.92);
+
+  border: 1px solid rgba(255, 255, 255, 0.14);
+
+  backdrop-filter: blur(10px);
+
+  font-size: 9px;
+
+  font-weight: 900;
+
+  letter-spacing: 1.2px;
+
+  z-index: 6;
+
+  pointer-events: none;
+
+  @media (max-width: 600px) {
+    left: 14px;
+    top: 14px;
+  }
 `;
 
 const MediaExpandButton = styled.button`
   position: absolute;
+
   top: 16px;
   right: 16px;
 
   width: 42px;
   height: 42px;
 
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
   border: 1px solid rgba(255, 255, 255, 0.25);
 
   border-radius: 50%;
 
   background: rgba(0, 0, 0, 0.45);
+
   color: white;
 
   backdrop-filter: blur(10px);
 
-  font-size: 20px;
-
   cursor: pointer;
 
-  z-index: 4;
+  z-index: 8;
 
   transition: 0.2s ease;
 
   &:hover {
-    background: rgba(0, 0, 0, 0.7);
-    transform: scale(1.05);
+    background: rgba(0, 0, 0, 0.72);
+
+    transform: scale(1.06);
   }
 `;
 
@@ -2063,40 +2521,50 @@ const MediaArrow = styled.button`
   ${(props) => (props.$left ? "left: 15px;" : "right: 15px;")}
 
   top: 50%;
+
   transform: translateY(-50%);
 
   width: 42px;
   height: 42px;
 
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
   border-radius: 50%;
+
   border: 1px solid rgba(255, 255, 255, 0.22);
 
   background: rgba(0, 0, 0, 0.42);
+
   color: white;
 
   backdrop-filter: blur(10px);
 
-  font-size: 31px;
-  line-height: 1;
-
   cursor: pointer;
-  z-index: 4;
+
+  z-index: 8;
 
   transition: 0.2s ease;
 
   &:hover {
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.72);
+
+    transform: translateY(-50%) scale(1.06);
   }
 `;
 
 const DotsContainer = styled.div`
   position: absolute;
+
   bottom: 18px;
   left: 50%;
 
   transform: translateX(-50%);
 
   display: flex;
+
   align-items: center;
   justify-content: center;
 
@@ -2105,11 +2573,14 @@ const DotsContainer = styled.div`
   padding: 9px 13px;
 
   background: rgba(0, 0, 0, 0.38);
+
   backdrop-filter: blur(10px);
+
+  border: 1px solid rgba(255, 255, 255, 0.1);
 
   border-radius: 30px;
 
-  z-index: 5;
+  z-index: 8;
 `;
 
 const Dot = styled.button`
@@ -2131,15 +2602,17 @@ const Dot = styled.button`
   color: #111;
 
   display: flex;
+
   align-items: center;
   justify-content: center;
 
-  font-size: ${(props) => (props.$video ? "10px" : "0")};
-
   padding: 0;
+
   cursor: pointer;
 
-  transition: 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
 
   &:hover {
     transform: scale(1.18);
@@ -2148,26 +2621,47 @@ const Dot = styled.button`
 
 const MediaDescription = styled.div`
   display: flex;
+
   justify-content: space-between;
+
   align-items: center;
+
+  gap: 15px;
 
   padding: 14px 5px;
 `;
 
 const MediaCurrent = styled.span`
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 6px;
+
   font-weight: 800;
+
   color: #333;
+
   font-size: 12px;
 `;
 
 const MediaHint = styled.span`
   color: #999;
+
   font-size: 11px;
+
+  text-align: right;
+
+  @media (max-width: 500px) {
+    display: none;
+  }
 `;
 
 const InformationSection = styled.div`
   background: white;
+
   border-radius: 24px;
+
   padding: 31px;
 
   border: 1px solid #ececec;
@@ -2176,6 +2670,7 @@ const InformationSection = styled.div`
 
   @media (max-width: 600px) {
     padding: 22px;
+
     border-radius: 20px;
   }
 `;
@@ -2184,6 +2679,7 @@ const PrecommandeLabel = styled.div`
   display: inline-flex;
 
   background: #111;
+
   color: white;
 
   border-radius: 20px;
@@ -2191,6 +2687,7 @@ const PrecommandeLabel = styled.div`
   padding: 7px 12px;
 
   font-size: 9px;
+
   font-weight: 800;
 
   letter-spacing: 1.2px;
@@ -2200,15 +2697,21 @@ const DetailTitle = styled.h2`
   margin: 15px 0 10px;
 
   font-size: 33px;
+
   line-height: 1.15;
 
   color: #1d1d1d;
 
   letter-spacing: -0.7px;
+
+  @media (max-width: 600px) {
+    font-size: 27px;
+  }
 `;
 
 const DetailDescription = styled.p`
   color: #777;
+
   line-height: 1.75;
 
   margin: 0 0 20px;
@@ -2220,30 +2723,39 @@ const PriceBlock = styled.div`
   padding: 19px 0;
 
   border-top: 1px solid #eee;
+
   border-bottom: 1px solid #eee;
 `;
 
 const CurrentPrice = styled.div`
   font-size: 28px;
+
   font-weight: 900;
+
   color: #111;
+
+  letter-spacing: -0.7px;
 `;
 
 const DepositText = styled.div`
   margin-top: 7px;
 
   color: #777;
+
   font-size: 12px;
 `;
 
 const DateBox = styled.div`
   display: flex;
+
   align-items: center;
+
   gap: 13px;
 
   margin-top: 18px;
 
   background: #f7f7f7;
+
   padding: 15px;
 
   border-radius: 13px;
@@ -2253,20 +2765,23 @@ const DateIcon = styled.div`
   width: 39px;
   height: 39px;
 
+  flex: 0 0 39px;
+
   display: flex;
+
   align-items: center;
   justify-content: center;
 
   border-radius: 11px;
 
   background: #111;
-  color: white;
 
-  font-size: 18px;
+  color: white;
 `;
 
 const DateLabel = styled.div`
   font-size: 9px;
+
   font-weight: 900;
 
   color: #888;
@@ -2278,6 +2793,7 @@ const DateValue = styled.div`
   margin-top: 4px;
 
   font-weight: 800;
+
   color: #333;
 
   font-size: 13px;
@@ -2295,12 +2811,15 @@ const FieldLabel = styled.label`
   color: #222;
 
   font-size: 12px;
+
   font-weight: 800;
 `;
 
 const ChoiceGrid = styled.div`
   display: flex;
+
   flex-wrap: wrap;
+
   gap: 9px;
 `;
 
@@ -2320,19 +2839,27 @@ const ChoiceButton = styled.button`
   font-weight: 700;
 
   display: flex;
+
   align-items: center;
+
   gap: 8px;
 
-  transition: 0.2s;
+  transition: 0.2s ease;
 
   &:hover {
     border-color: #111;
+  }
+
+  &:active {
+    transform: scale(0.97);
   }
 `;
 
 const ColorCircle = styled.span`
   width: 9px;
   height: 9px;
+
+  flex: 0 0 9px;
 
   border-radius: 50%;
 
@@ -2355,7 +2882,9 @@ const StockCard = styled.div`
 
 const StockTop = styled.div`
   display: flex;
+
   justify-content: space-between;
+
   align-items: center;
 `;
 
@@ -2363,6 +2892,7 @@ const StockLabel = styled.span`
   display: block;
 
   font-size: 9px;
+
   font-weight: 900;
 
   letter-spacing: 1px;
@@ -2380,6 +2910,7 @@ const StockVariationName = styled.div`
 
 const StockNumber = styled.span`
   font-size: 24px;
+
   font-weight: 900;
 
   color: ${(props) => (props.$available ? "#26733a" : "#b33a3a")};
@@ -2389,17 +2920,22 @@ const StockVariation = styled.div`
   margin-top: 12px;
 
   color: #777;
+
   font-size: 11px;
 `;
 
 const StockVariationItem = styled.div`
   display: flex;
+
   flex-wrap: wrap;
+
   gap: 8px;
 
   span {
     display: inline-flex;
+
     align-items: center;
+
     gap: 5px;
 
     padding: 6px 9px;
@@ -2417,9 +2953,16 @@ const StockVariationItem = styled.div`
 const StockAvailableText = styled.div`
   margin-top: 11px;
 
+  display: flex;
+
+  align-items: center;
+
+  gap: 5px;
+
   color: #287038;
 
   font-size: 11px;
+
   font-weight: 700;
 `;
 
@@ -2429,11 +2972,13 @@ const StockUnavailableText = styled.div`
   color: #b33131;
 
   font-size: 11px;
+
   font-weight: 700;
 `;
 
 const QuantityContainer = styled.div`
   display: inline-flex;
+
   align-items: center;
 
   border: 1px solid #ddd;
@@ -2455,8 +3000,11 @@ const QuantityButton = styled.button`
 
   cursor: pointer;
 
+  transition: 0.2s;
+
   &:disabled {
     cursor: not-allowed;
+
     opacity: 0.35;
   }
 
@@ -2489,12 +3037,16 @@ const SummaryBox = styled.div`
   background: #f7f7f7;
 
   border-radius: 14px;
+
+  border: 1px solid rgba(0, 0, 0, 0.035);
 `;
 
 const SummaryRow = styled.div`
   display: flex;
 
   justify-content: space-between;
+
+  gap: 15px;
 
   padding: 7px 0;
 
@@ -2504,6 +3056,8 @@ const SummaryRow = styled.div`
 
   strong {
     color: #222;
+
+    text-align: right;
   }
 `;
 
@@ -2518,11 +3072,17 @@ const SummaryTotal = styled.div`
 
   justify-content: space-between;
 
+  gap: 15px;
+
   font-size: 14px;
 
   font-weight: 900;
 
   color: #111;
+
+  strong {
+    text-align: right;
+  }
 `;
 
 const Form = styled.form`
@@ -2555,7 +3115,9 @@ const DepotInfoBox = styled.div`
 
 const DepotInfoHeader = styled.div`
   display: flex;
+
   gap: 12px;
+
   align-items: flex-start;
 `;
 
@@ -2568,9 +3130,11 @@ const DepotInfoIcon = styled.div`
   border-radius: 10px;
 
   background: #111;
+
   color: white;
 
   display: flex;
+
   align-items: center;
   justify-content: center;
 
@@ -2617,6 +3181,8 @@ const DepotNumber = styled.div`
   text-align: center;
 
   color: #111827;
+
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.035);
 `;
 
 const SupportedServices = styled.div`
@@ -2631,8 +3197,10 @@ const SupportedServices = styled.div`
 
 const DepotLoading = styled.div`
   display: flex;
+
   align-items: center;
   justify-content: center;
+
   gap: 8px;
 
   margin-top: 17px;
@@ -2717,6 +3285,7 @@ const PaymentButton = styled.button`
   padding: 13px;
 
   display: flex;
+
   align-items: center;
 
   gap: 10px;
@@ -2725,10 +3294,14 @@ const PaymentButton = styled.button`
 
   text-align: left;
 
-  transition: 0.2s;
+  transition: 0.2s ease;
 
   &:hover {
     border-color: #111;
+  }
+
+  &:active {
+    transform: scale(0.985);
   }
 `;
 
@@ -2745,6 +3318,7 @@ const PaymentLogo = styled.div`
   color: white;
 
   display: flex;
+
   align-items: center;
   justify-content: center;
 
@@ -2781,13 +3355,16 @@ const PaymentCheck = styled.div`
   border-radius: 50%;
 
   background: #111;
+
   color: white;
 
   display: flex;
+
   align-items: center;
   justify-content: center;
 
   font-size: 10px;
+
   font-weight: 900;
 `;
 
@@ -2810,12 +3387,27 @@ const Input = styled.input`
 
   background: white;
 
-  transition: 0.2s;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
 
   &:focus {
     border-color: #111;
 
     box-shadow: 0 0 0 3px rgba(17, 17, 17, 0.05);
+  }
+
+  &:disabled {
+    background: #f5f5f5;
+
+    color: #888;
+
+    cursor: not-allowed;
+  }
+
+  &::placeholder {
+    color: #aaa;
   }
 `;
 
@@ -2873,23 +3465,28 @@ const SubmitButton = styled.button`
   cursor: pointer;
 
   display: flex;
+
   align-items: center;
   justify-content: center;
 
   gap: 10px;
 
-  transition: 0.2s;
+  transition: 0.2s ease;
 
-  span {
+  svg {
     transition: transform 0.2s ease;
   }
 
   &:hover:not(:disabled) {
     background: #292929;
 
-    span {
+    svg {
       transform: translateX(4px);
     }
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.99);
   }
 
   &:disabled {
@@ -2900,6 +3497,13 @@ const SubmitButton = styled.button`
 `;
 
 const SecurityText = styled.p`
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 5px;
+
   text-align: center;
 
   color: #999;
@@ -2915,9 +3519,11 @@ const LoadingContainer = styled.div`
   min-height: 70vh;
 
   display: flex;
+
   flex-direction: column;
 
   align-items: center;
+
   justify-content: center;
 
   background: #f8f8f8;
@@ -3031,6 +3637,12 @@ const RetryButton = styled.button`
   color: white;
 
   cursor: pointer;
+
+  transition: 0.2s;
+
+  &:hover {
+    background: #292929;
+  }
 `;
 
 const EmptyBox = styled.div`
@@ -3048,17 +3660,22 @@ const EmptyBox = styled.div`
 
   h3 {
     color: #222;
+
     margin: 15px 0 8px;
   }
 
   p {
     color: #888;
+
     font-size: 13px;
   }
 `;
 
 const EmptyIcon = styled.div`
-  font-size: 45px;
+  display: flex;
+
+  justify-content: center;
+
   color: #aaa;
 `;
 
@@ -3101,11 +3718,12 @@ const MediaModal = styled.div`
   display: flex;
 
   align-items: center;
+
   justify-content: center;
 
   padding: 75px 70px 95px;
 
-  animation: modalAppear 0.2s ease;
+  animation: modalAppear 0.22s ease;
 
   @keyframes modalAppear {
     from {
@@ -3141,9 +3759,13 @@ const ModalTopBar = styled.div`
 
   gap: 20px;
 
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.75), transparent);
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.78), transparent);
 
   z-index: 20;
+
+  @media (max-width: 600px) {
+    padding: 0 12px;
+  }
 `;
 
 const ModalCounter = styled.div`
@@ -3178,6 +3800,8 @@ const ModalCloseButton = styled.button`
   width: 40px;
   height: 40px;
 
+  flex: 0 0 40px;
+
   border: 1px solid rgba(255, 255, 255, 0.2);
 
   border-radius: 50%;
@@ -3186,22 +3810,19 @@ const ModalCloseButton = styled.button`
 
   color: white;
 
-  font-size: 27px;
-
-  line-height: 1;
-
   cursor: pointer;
 
   display: flex;
+
   align-items: center;
   justify-content: center;
 
-  transition: 0.2s;
+  transition: 0.2s ease;
 
   &:hover {
     background: rgba(255, 255, 255, 0.18);
 
-    transform: rotate(4deg);
+    transform: rotate(4deg) scale(1.04);
   }
 `;
 
@@ -3214,6 +3835,7 @@ const ModalContent = styled.div`
   display: flex;
 
   align-items: center;
+
   justify-content: center;
 
   z-index: 5;
@@ -3238,23 +3860,26 @@ const ModalImage = styled.img`
   @keyframes mediaAppear {
     from {
       opacity: 0;
+
       transform: scale(0.97);
     }
 
     to {
       opacity: 1;
+
       transform: scale(1);
     }
   }
 
   @media (max-width: 700px) {
     max-width: 96vw;
+
     max-height: 73vh;
   }
 `;
 
 /* ============================================================
-   CUSTOM VIDEO
+   CUSTOM VIDEO MODALE
 ============================================================ */
 
 const CustomVideoPlayer = styled.div`
@@ -3274,21 +3899,26 @@ const CustomVideoPlayer = styled.div`
 
   animation: mediaAppear 0.25s ease;
 
-  @media (max-width: 700px) {
-    width: 100%;
-    height: min(70vh, 650px);
-  }
-
   @keyframes mediaAppear {
     from {
       opacity: 0;
+
       transform: scale(0.97);
     }
 
     to {
       opacity: 1;
+
       transform: scale(1);
     }
+  }
+
+  @media (max-width: 700px) {
+    width: 100%;
+
+    height: min(70vh, 650px);
+
+    border-radius: 9px;
   }
 `;
 
@@ -3303,11 +3933,6 @@ const ModalVideo = styled.video`
   background: #050505;
 
   cursor: pointer;
-
-  /*
-    Aucun "controls" natif :
-    le lecteur est entièrement personnalisé.
-  */
 
   &::-webkit-media-controls {
     display: none !important;
@@ -3339,9 +3964,10 @@ const VideoOverlayPlay = styled.button`
 
   color: white;
 
-  font-size: 23px;
+  display: flex;
 
-  padding-left: ${(props) => (props.$visible ? "4px" : "0")};
+  align-items: center;
+  justify-content: center;
 
   cursor: pointer;
 
@@ -3351,7 +3977,8 @@ const VideoOverlayPlay = styled.button`
 
   transition:
     opacity 0.25s ease,
-    transform 0.25s ease;
+    transform 0.25s ease,
+    background 0.25s ease;
 
   z-index: 5;
 
@@ -3378,8 +4005,8 @@ const VideoControls = styled.div`
 
   background: linear-gradient(
     to top,
-    rgba(0, 0, 0, 0.82),
-    rgba(0, 0, 0, 0.25),
+    rgba(0, 0, 0, 0.88),
+    rgba(0, 0, 0, 0.3),
     transparent
   );
 
@@ -3408,7 +4035,7 @@ const VideoRange = styled.input`
   flex: 1;
 
   width: 100%;
-  font-size: 16px;
+
   height: 4px;
 
   appearance: none;
@@ -3421,8 +4048,22 @@ const VideoRange = styled.input`
 
   outline: none;
 
+  &::-webkit-slider-runnable-track {
+    height: 4px;
+
+    border-radius: 20px;
+
+    background: linear-gradient(
+      to right,
+      white ${(props) => props.value || 0}%,
+      rgba(255, 255, 255, 0.25) ${(props) => props.value || 0}%
+    );
+  }
+
   &::-webkit-slider-thumb {
     appearance: none;
+
+    margin-top: -4.5px;
 
     width: 13px;
     height: 13px;
@@ -3464,6 +4105,8 @@ const VideoControlButton = styled.button`
   width: 32px;
   height: 32px;
 
+  flex: 0 0 32px;
+
   border: none;
 
   border-radius: 50%;
@@ -3475,20 +4118,23 @@ const VideoControlButton = styled.button`
   cursor: pointer;
 
   display: flex;
+
   align-items: center;
   justify-content: center;
 
-  font-size: 12px;
-
-  transition: 0.2s;
+  transition: 0.2s ease;
 
   &:hover {
     background: rgba(255, 255, 255, 0.2);
+
+    transform: scale(1.05);
   }
 `;
 
 const VideoControlTitle = styled.div`
   flex: 1;
+
+  min-width: 0;
 
   color: rgba(255, 255, 255, 0.75);
 
@@ -3504,7 +4150,7 @@ const VideoControlTitle = styled.div`
 `;
 
 /* ============================================================
-   NAVIGATION MODAL
+   NAVIGATION MODALE
 ============================================================ */
 
 const ModalNavigation = styled.button`
@@ -3519,6 +4165,11 @@ const ModalNavigation = styled.button`
   width: 50px;
   height: 50px;
 
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
   border-radius: 50%;
 
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -3529,15 +4180,11 @@ const ModalNavigation = styled.button`
 
   color: white;
 
-  font-size: 37px;
-
-  line-height: 1;
-
   cursor: pointer;
 
   z-index: 30;
 
-  transition: 0.2s;
+  transition: 0.2s ease;
 
   &:hover {
     background: rgba(255, 255, 255, 0.18);
@@ -3548,8 +4195,6 @@ const ModalNavigation = styled.button`
   @media (max-width: 700px) {
     width: 42px;
     height: 42px;
-
-    font-size: 30px;
 
     ${(props) => (props.$left ? "left: 7px;" : "right: 7px;")}
   }
@@ -3605,10 +4250,14 @@ const ModalThumbnail = styled.button`
 
   opacity: ${(props) => (props.$active ? 1 : 0.65)};
 
-  transition: 0.2s;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
 
   &:hover {
     opacity: 1;
+
+    transform: translateY(-2px);
   }
 `;
 
@@ -3626,12 +4275,11 @@ const ThumbnailVideoIcon = styled.div`
   height: 100%;
 
   display: flex;
+
   align-items: center;
   justify-content: center;
 
   color: white;
-
-  font-size: 14px;
 
   background: radial-gradient(circle, #333, #111);
 `;
