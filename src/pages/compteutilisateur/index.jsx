@@ -256,7 +256,9 @@ export default function CompteClient() {
 
       setPrecommandes(
         Array.isArray(precommandeData?.precommandes)
-          ? precommandeData.precommandes
+          ? precommandeData.precommandes.filter(
+              (precommande) => precommande.statut !== "FINALIZED",
+            )
           : [],
       );
     } catch (error) {
@@ -1110,6 +1112,15 @@ export default function CompteClient() {
                                 Votre dépôt a été vérifié et votre précommande
                                 est confirmée.
                               </p>
+
+                              {precommande.adminComment?.trim() && (
+                                <p>
+                                  <strong>
+                                    Commentaire de l'administration :
+                                  </strong>{" "}
+                                  {precommande.adminComment}
+                                </p>
+                              )}
                             </div>
                           </PrecommandeMessage>
                         )}
