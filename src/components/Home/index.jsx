@@ -339,7 +339,133 @@ const PrecommandeBtn = styled(Link)`
     transform: translateX(5px);
   }
 `;
+const spin = keyframes`
+  from {
+    transform: rotate(0deg);
+  }
 
+  to {
+    transform: rotate(360deg);
+  }
+`;
+
+const PrecommandeBadge = styled(Link)`
+  position: relative;
+  width: 155px;
+  height: 155px;
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #ff69b4;
+  color: white;
+  text-decoration: none;
+
+  box-shadow:
+    0 12px 30px rgba(255, 105, 180, 0.35),
+    0 0 0 0 rgba(255, 105, 180, 0.5);
+
+  animation: ${candyPulse} 2s infinite;
+
+  transition:
+    transform 0.35s ease,
+    box-shadow 0.35s ease;
+
+  &:hover {
+    transform: scale(1.07);
+
+    box-shadow:
+      0 20px 45px rgba(255, 105, 180, 0.45),
+      0 0 35px rgba(255, 105, 180, 0.35);
+  }
+
+  .textCircle {
+    position: absolute;
+    inset: 0;
+
+    animation: ${spin} 14s linear infinite;
+  }
+
+  .letter {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+
+    transform-origin: 0 0;
+
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    white-space: pre;
+
+    color: white;
+  }
+
+  .innerCircle {
+    position: absolute;
+    inset: 9px;
+
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+  }
+
+  .center {
+    position: relative;
+    z-index: 3;
+
+    width: 58px;
+    height: 58px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: white;
+    color: #ff69b4;
+
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.12);
+
+    transition:
+      transform 0.35s ease,
+      box-shadow 0.35s ease;
+  }
+
+  &:hover .center {
+    transform: scale(1.12);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+  }
+
+  .center svg {
+    width: 20px;
+    height: 20px;
+
+    transition: transform 0.3s ease;
+  }
+
+  &:hover .center svg {
+    transform: translateX(4px);
+  }
+
+  @media (max-width: 768px) {
+    width: 125px;
+    height: 125px;
+
+    .letter {
+      font-size: 7px;
+      letter-spacing: 1px;
+    }
+
+    .center {
+      width: 48px;
+      height: 48px;
+    }
+  }
+`;
 /* =========================================================
    HERO
 ========================================================= */
@@ -1352,6 +1478,7 @@ export default function HomePremium() {
   const { theme } = useContext(ThemeContext);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
+  const [precommandeDisponible, setPrecommandeDisponible] = useState(false);
 
   const $isDark = theme === "light";
 
@@ -1401,6 +1528,61 @@ export default function HomePremium() {
       setIsMuted(videoRef.current.muted);
     }
   };
+
+  const CircularText = ({ text }) => {
+    const characters = [...text];
+
+    return (
+      <div className="textCircle" aria-hidden="true">
+        {characters.map((char, index) => {
+          const angle = (360 / characters.length) * index;
+
+          return (
+            <span
+              key={`${char}-${index}`}
+              className="letter"
+              style={{
+                transform: `
+                rotate(${angle}deg)
+                translateY(-68px)
+              `,
+              }}
+            >
+              {char}
+            </span>
+          );
+        })}
+      </div>
+    );
+  };
+
+  useEffect(() => {
+    const verifierPrecommande = async () => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/precommandes/modeles`,
+        );
+
+        if (!response.ok) {
+          setPrecommandeDisponible(false);
+          return;
+        }
+
+        const data = await response.json();
+
+        const modeles = Array.isArray(data)
+          ? data
+          : data.modeles || data.data || [];
+
+        setPrecommandeDisponible(modeles.length > 0);
+      } catch (error) {
+        console.error("Erreur vérification précommande :", error);
+        setPrecommandeDisponible(false);
+      }
+    };
+
+    verifierPrecommande();
+  }, []);
 
   // fetch video
 
@@ -1636,10 +1818,20 @@ export default function HomePremium() {
                 <FaArrowRight />
               </HeroBtn>
 
-              <PrecommandeBtn to="/precommande">
-                Précommander maintenant
-                <FaArrowRight />
-              </PrecommandeBtn>
+              {precommandeDisponible && (
+                <PrecommandeBadge
+                  to="/precommande"
+                  aria-label="Précommande disponible"
+                >
+                  <CircularText text="PRÉCOMMANDE • DISPONIBLE • " />
+
+                  <div className="innerCircle" />
+
+                  <div className="center">
+                    <FaArrowRight />
+                  </div>
+                </PrecommandeBadge>
+              )}
             </HeroActions>
           </HeroText>
         </HeroContent>
