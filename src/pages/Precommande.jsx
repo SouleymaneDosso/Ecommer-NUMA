@@ -2856,7 +2856,7 @@ const Input = styled.input`
   color: #17382d;
 
   font-family: inherit;
-  font-size: 12px;
+  font-size: 16px;
 
   transition:
     border-color 0.2s ease,

@@ -261,7 +261,7 @@ const EmailInput = styled.input`
   color: ${({ $isdark }) =>
     $isdark ? "#fff" : "#111"};
 
-  font-size: 15px;
+  font-size: 16px;
 
   &::placeholder {
     color: ${({ $isdark }) =>
