@@ -52,6 +52,10 @@ const Precommande = () => {
 
   const [mediaModalOuvert, setMediaModalOuvert] = useState(false);
 
+  /* =========================================================
+     INFORMATIONS CLIENT
+  ========================================================= */
+
   const [nom, setNom] = useState("");
   const [prenom, setPrenom] = useState("");
   const [adresse, setAdresse] = useState("");
@@ -65,10 +69,7 @@ const Precommande = () => {
      VIDÉOS
   ========================================================= */
 
-  // Vidéo dans la modale
   const videoRef = useRef(null);
-
-  // Vidéo de l'aperçu principal
   const previewVideoRef = useRef(null);
 
   const [videoPlaying, setVideoPlaying] = useState(false);
@@ -92,7 +93,7 @@ const Precommande = () => {
   };
 
   /* =========================================================
-     INFOS DEPOT
+     INFORMATIONS DEPOT
   ========================================================= */
 
   const chargerInformationsDepot = async () => {
@@ -128,6 +129,10 @@ const Precommande = () => {
       setLoadingDepot(false);
     }
   };
+
+  /* =========================================================
+     CHARGEMENT MODÈLES
+  ========================================================= */
 
   const chargerModeles = async () => {
     try {
@@ -205,10 +210,12 @@ const Precommande = () => {
 
     if (previewVideoRef.current) {
       previewVideoRef.current.pause();
+      previewVideoRef.current.currentTime = 0;
     }
 
     if (videoRef.current) {
       videoRef.current.pause();
+      videoRef.current.currentTime = 0;
     }
 
     setPreviewVideoPlaying(false);
@@ -224,9 +231,7 @@ const Precommande = () => {
 
     const liste = [];
 
-    /* -------------------------
-       IMAGE PRINCIPALE
-    ------------------------- */
+    /* IMAGE PRINCIPALE */
 
     if (typeof modeleSelectionne.image === "string") {
       if (modeleSelectionne.image.trim()) {
@@ -238,9 +243,7 @@ const Precommande = () => {
       }
     }
 
-    /* -------------------------
-       GALERIE
-    ------------------------- */
+    /* GALERIE */
 
     if (Array.isArray(modeleSelectionne.images)) {
       modeleSelectionne.images.forEach((image) => {
@@ -268,9 +271,7 @@ const Precommande = () => {
       });
     }
 
-    /* -------------------------
-       VIDÉO
-    ------------------------- */
+    /* VIDÉO */
 
     const video = modeleSelectionne.video;
 
@@ -306,7 +307,7 @@ const Precommande = () => {
   const mediaActuel = medias[mediaIndex];
 
   /* =========================================================
-     FERMER LE MODAL AVEC ESC + NAVIGATION CLAVIER
+     CLAVIER MODAL
   ========================================================= */
 
   useEffect(() => {
@@ -336,7 +337,7 @@ const Precommande = () => {
   }, [mediaModalOuvert, medias.length]);
 
   /* =========================================================
-     BLOQUER LE SCROLL QUAND LE MODAL EST OUVERT
+     BLOQUER LE SCROLL MODAL
   ========================================================= */
 
   useEffect(() => {
@@ -409,9 +410,7 @@ const Precommande = () => {
 
     const stockParVariation = modeleSelectionne.stockParVariation;
 
-    /* ---------------------------------------------------------
-       CAS 1 : COULEUR + TAILLE
-    --------------------------------------------------------- */
+    /* COULEUR + TAILLE */
 
     if (couleurSelectionnee && tailleSelectionnee) {
       const variationCouleur = trouverStockDansObjet(
@@ -433,9 +432,7 @@ const Precommande = () => {
       }
     }
 
-    /* ---------------------------------------------------------
-       CAS 2 : TAILLE + COULEUR INVERSÉ
-    --------------------------------------------------------- */
+    /* TAILLE + COULEUR INVERSÉ */
 
     if (tailleSelectionnee && couleurSelectionnee) {
       const variationTaille = trouverStockDansObjet(
@@ -457,9 +454,7 @@ const Precommande = () => {
       }
     }
 
-    /* ---------------------------------------------------------
-       CAS 3 : PRODUIT SANS COULEUR
-    --------------------------------------------------------- */
+    /* PRODUIT SANS COULEUR */
 
     if (tailleSelectionnee && !couleurSelectionnee) {
       const stockGlobal = Number(modeleSelectionne.stock);
@@ -469,9 +464,7 @@ const Precommande = () => {
       }
     }
 
-    /* ---------------------------------------------------------
-       CAS 4 : STOCK GLOBAL
-    --------------------------------------------------------- */
+    /* STOCK GLOBAL */
 
     const stockGlobal = Number(modeleSelectionne.stock);
 
@@ -497,7 +490,7 @@ const Precommande = () => {
   const montantDepotTotal = montantDepotUnitaire * quantite;
 
   /* =========================================================
-     CHANGEMENT TAILLE
+     TAILLE
   ========================================================= */
 
   const changerTaille = (taille) => {
@@ -507,7 +500,7 @@ const Precommande = () => {
   };
 
   /* =========================================================
-     CHANGEMENT COULEUR
+     COULEUR
   ========================================================= */
 
   const changerCouleur = (couleur) => {
@@ -533,7 +526,7 @@ const Precommande = () => {
   };
 
   /* =========================================================
-     VIDÉO PRINCIPALE
+     VIDÉO APERÇU
   ========================================================= */
 
   const togglePreviewVideo = async () => {
@@ -640,7 +633,6 @@ const Precommande = () => {
     }
 
     const minutes = Math.floor(secondes / 60);
-
     const seconds = Math.floor(secondes % 60);
 
     return `${String(minutes).padStart(
@@ -876,15 +868,56 @@ const Precommande = () => {
 
   return (
     <PageContainer>
+      {/* =====================================================
+          HEADER
+      ===================================================== */}
+
       <Header>
-        <SmallTitle>COLLECTION NUMA</SmallTitle>
+        <HeaderInner>
+          <SmallTitle>COLLECTION NUMA</SmallTitle>
 
-        <MainTitle>Précommandes</MainTitle>
+          <MainTitle>Précommandez votre prochain NUMA</MainTitle>
 
-        <Subtitle>
-          Découvrez nos modèles disponibles en précommande et choisissez votre
-          taille, votre couleur et votre quantité.
-        </Subtitle>
+          <Subtitle>
+            Découvrez nos modèles disponibles en précommande et choisissez votre
+            taille, votre couleur et votre quantité.
+          </Subtitle>
+
+          <HeaderFeatures>
+            <HeaderFeature>
+              <FeatureIcon>
+                <PackageCheck size={17} />
+              </FeatureIcon>
+
+              <div>
+                <strong>Accès prioritaire</strong>
+                <span>Réservez votre modèle dès maintenant</span>
+              </div>
+            </HeaderFeature>
+
+            <HeaderFeature>
+              <FeatureIcon>
+                <ShieldCheck size={17} />
+              </FeatureIcon>
+
+              <div>
+                <strong>Paiement sécurisé</strong>
+                <span>Votre commande est vérifiée par notre équipe</span>
+              </div>
+            </HeaderFeature>
+
+            <HeaderFeature>
+              <FeatureIcon>
+                <CalendarDays size={17} />
+              </FeatureIcon>
+
+              <div>
+                <strong>Livraison planifiée</strong>
+                <span>Selon la date de disponibilité du modèle</span>
+              </div>
+            </HeaderFeature>
+          </HeaderFeatures>
+        </HeaderInner>
       </Header>
 
       {message && (
@@ -904,131 +937,148 @@ const Precommande = () => {
       ===================================================== */}
 
       {!modeleSelectionne && (
-        <ModelesGrid>
-          {modeles.length === 0 ? (
-            <EmptyBox>
-              <EmptyIcon>
-                <PackageCheck size={42} />
-              </EmptyIcon>
+        <ModelsSection>
+          <SectionIntro>
+            <SectionEyebrow>LA COLLECTION</SectionEyebrow>
 
-              <h3>Aucune précommande disponible</h3>
+            <SectionTitle>Choisissez votre modèle</SectionTitle>
 
-              <p>Aucun modèle n'est actuellement disponible en précommande.</p>
-            </EmptyBox>
-          ) : (
-            modeles.map((modele) => {
-              const image =
-                modele.images?.find(
-                  (img) => typeof img === "object" && img?.isMain && img?.url,
-                )?.url ||
-                modele.images?.find(
-                  (img) => typeof img === "object" && img?.url,
-                )?.url ||
-                (typeof modele.image === "string" ? modele.image : "");
+            <SectionText>
+              Chaque modèle disponible ci-dessous peut être réservé en
+              précommande.
+            </SectionText>
+          </SectionIntro>
 
-              const stockGlobal = Number(modele.stock || 0);
+          <ModelesGrid>
+            {modeles.length === 0 ? (
+              <EmptyBox>
+                <EmptyIcon>
+                  <PackageCheck size={42} />
+                </EmptyIcon>
 
-              return (
-                <ModelCard key={modele._id}>
-                  <CardImageContainer>
-                    {image ? (
-                      <CardImage
-                        src={image}
-                        alt={modele.title}
-                        loading="lazy"
-                      />
-                    ) : (
-                      <NoImage>Aucune image</NoImage>
-                    )}
+                <h3>Aucune précommande disponible</h3>
 
-                    <PrecommandeBadge>PRÉCOMMANDE</PrecommandeBadge>
+                <p>
+                  Aucun modèle n'est actuellement disponible en précommande.
+                </p>
+              </EmptyBox>
+            ) : (
+              modeles.map((modele) => {
+                const image =
+                  modele.images?.find(
+                    (img) => typeof img === "object" && img?.isMain && img?.url,
+                  )?.url ||
+                  modele.images?.find(
+                    (img) => typeof img === "object" && img?.url,
+                  )?.url ||
+                  (typeof modele.image === "string" ? modele.image : "");
 
-                    {modele.video && (
-                      <VideoCardBadge>
-                        <VideoIcon size={13} strokeWidth={2.2} />
-                        Vidéo
-                      </VideoCardBadge>
-                    )}
-                  </CardImageContainer>
+                const stockGlobal = Number(modele.stock || 0);
 
-                  <CardContent>
-                    <CardTitle>{modele.title}</CardTitle>
-
-                    <CardDescription>
-                      {modele.description ||
-                        "Découvrez ce modèle en précommande."}
-                    </CardDescription>
-
-                    <CardInfo>
-                      <Price>
-                        {Number(modele.price || 0).toLocaleString("fr-FR")} FCFA
-                      </Price>
-
-                      <Deposit>
-                        Dépôt :{" "}
-                        {Number(
-                          modele.montantDepot ||
-                            Math.ceil(Number(modele.price || 0) * 0.3),
-                        ).toLocaleString("fr-FR")}{" "}
-                        FCFA
-                      </Deposit>
-                    </CardInfo>
-
-                    {modele.dateDisponibilite && (
-                      <Availability>
-                        Disponible à partir du{" "}
-                        {new Date(modele.dateDisponibilite).toLocaleDateString(
-                          "fr-FR",
-                        )}
-                      </Availability>
-                    )}
-
-                    <VariationSummary>
-                      {modele.tailles?.length > 0 && (
-                        <VariationLine>
-                          <VariationLabel>Tailles</VariationLabel>
-
-                          <VariationValues>
-                            {modele.tailles.join(" • ")}
-                          </VariationValues>
-                        </VariationLine>
-                      )}
-
-                      {modele.couleurs?.length > 0 && (
-                        <VariationLine>
-                          <VariationLabel>Couleurs</VariationLabel>
-
-                          <VariationValues>
-                            {modele.couleurs.join(" • ")}
-                          </VariationValues>
-                        </VariationLine>
-                      )}
-
-                      <StockMini>
-                        <StockMiniDot
-                          $available={
-                            stockGlobal > 0 ||
-                            Object.keys(modele.stockParVariation || {}).length >
-                              0
-                          }
+                return (
+                  <ModelCard key={modele._id}>
+                    <CardImageContainer>
+                      {image ? (
+                        <CardImage
+                          src={image}
+                          alt={modele.title}
+                          loading="lazy"
                         />
-                        Stock disponible
-                      </StockMini>
-                    </VariationSummary>
+                      ) : (
+                        <NoImage>Aucune image</NoImage>
+                      )}
 
-                    <ActionButton
-                      type="button"
-                      onClick={() => ouvrirModele(modele)}
-                    >
-                      Voir le modèle
-                      <ArrowRight size={17} strokeWidth={2.4} />
-                    </ActionButton>
-                  </CardContent>
-                </ModelCard>
-              );
-            })
-          )}
-        </ModelesGrid>
+                      <PrecommandeBadge>PRÉCOMMANDE</PrecommandeBadge>
+
+                      {modele.video && (
+                        <VideoCardBadge>
+                          <VideoIcon size={13} strokeWidth={2.2} />
+                          Vidéo
+                        </VideoCardBadge>
+                      )}
+                    </CardImageContainer>
+
+                    <CardContent>
+                      <CardTitle>{modele.title}</CardTitle>
+
+                      <CardDescription>
+                        {modele.description ||
+                          "Découvrez ce modèle en précommande."}
+                      </CardDescription>
+
+                      <CardInfo>
+                        <Price>
+                          {Number(modele.price || 0).toLocaleString("fr-FR")}{" "}
+                          FCFA
+                        </Price>
+
+                        <Deposit>
+                          Dépôt :{" "}
+                          {Number(
+                            modele.montantDepot ||
+                              Math.ceil(Number(modele.price || 0) * 0.3),
+                          ).toLocaleString("fr-FR")}{" "}
+                          FCFA
+                        </Deposit>
+                      </CardInfo>
+
+                      {modele.dateDisponibilite && (
+                        <Availability>
+                          <CalendarDays size={14} />
+                          Disponible à partir du{" "}
+                          {new Date(
+                            modele.dateDisponibilite,
+                          ).toLocaleDateString("fr-FR")}
+                        </Availability>
+                      )}
+
+                      <VariationSummary>
+                        {modele.tailles?.length > 0 && (
+                          <VariationLine>
+                            <VariationLabel>Tailles</VariationLabel>
+
+                            <VariationValues>
+                              {modele.tailles.join(" • ")}
+                            </VariationValues>
+                          </VariationLine>
+                        )}
+
+                        {modele.couleurs?.length > 0 && (
+                          <VariationLine>
+                            <VariationLabel>Couleurs</VariationLabel>
+
+                            <VariationValues>
+                              {modele.couleurs.join(" • ")}
+                            </VariationValues>
+                          </VariationLine>
+                        )}
+
+                        <StockMini>
+                          <StockMiniDot
+                            $available={
+                              stockGlobal > 0 ||
+                              Object.keys(modele.stockParVariation || {})
+                                .length > 0
+                            }
+                          />
+                          Stock disponible
+                        </StockMini>
+                      </VariationSummary>
+
+                      <ActionButton
+                        type="button"
+                        onClick={() => ouvrirModele(modele)}
+                      >
+                        Voir le modèle
+                        <ArrowRight size={17} strokeWidth={2.4} />
+                      </ActionButton>
+                    </CardContent>
+                  </ModelCard>
+                );
+              })
+            )}
+          </ModelesGrid>
+        </ModelsSection>
       )}
 
       {/* =====================================================
@@ -1067,7 +1117,6 @@ const Precommande = () => {
                           onClick={() => ouvrirMedia(mediaIndex)}
                         />
 
-                        {/* PLAY / PAUSE SUR LA VIDÉO PRINCIPALE */}
                         <PreviewVideoPlayButton
                           type="button"
                           onClick={(event) => {
@@ -1234,9 +1283,7 @@ const Precommande = () => {
                 </DateBox>
               )}
 
-              {/* =================================================
-                  TAILLES
-              ================================================= */}
+              {/* TAILLES */}
 
               {modeleSelectionne.tailles?.length > 0 && (
                 <FieldGroup>
@@ -1259,9 +1306,7 @@ const Precommande = () => {
                 </FieldGroup>
               )}
 
-              {/* =================================================
-                  COULEURS
-              ================================================= */}
+              {/* COULEURS */}
 
               {modeleSelectionne.couleurs?.length > 0 && (
                 <FieldGroup>
@@ -1286,9 +1331,7 @@ const Precommande = () => {
                 </FieldGroup>
               )}
 
-              {/* =================================================
-                  STOCK
-              ================================================= */}
+              {/* STOCK */}
 
               <StockCard $available={stockDisponible > 0}>
                 <StockTop>
@@ -1343,9 +1386,7 @@ const Precommande = () => {
                 )}
               </StockCard>
 
-              {/* =================================================
-                  QUANTITÉ
-              ================================================= */}
+              {/* QUANTITÉ */}
 
               <FieldGroup>
                 <FieldLabel>Quantité</FieldLabel>
@@ -1380,9 +1421,7 @@ const Precommande = () => {
                 )}
               </FieldGroup>
 
-              {/* =================================================
-                  RÉCAPITULATIF
-              ================================================= */}
+              {/* RÉCAPITULATIF */}
 
               <SummaryBox>
                 <SummaryRow>
@@ -1414,36 +1453,36 @@ const Precommande = () => {
                 </SummaryTotal>
               </SummaryBox>
 
-              {/* =================================================
-                  FORMULAIRE
-              ================================================= */}
+              {/* FORMULAIRE */}
 
               <Form onSubmit={envoyerPrecommande}>
                 <FormTitle>Informations de livraison</FormTitle>
 
-                <FieldGroup>
-                  <FieldLabel htmlFor="nom">Nom</FieldLabel>
+                <FormGrid>
+                  <FieldGroup>
+                    <FieldLabel htmlFor="nom">Nom</FieldLabel>
 
-                  <Input
-                    id="nom"
-                    type="text"
-                    placeholder="Votre nom"
-                    value={nom}
-                    onChange={(e) => setNom(e.target.value)}
-                  />
-                </FieldGroup>
+                    <Input
+                      id="nom"
+                      type="text"
+                      placeholder="Votre nom"
+                      value={nom}
+                      onChange={(e) => setNom(e.target.value)}
+                    />
+                  </FieldGroup>
 
-                <FieldGroup>
-                  <FieldLabel htmlFor="prenom">Prénom</FieldLabel>
+                  <FieldGroup>
+                    <FieldLabel htmlFor="prenom">Prénom</FieldLabel>
 
-                  <Input
-                    id="prenom"
-                    type="text"
-                    placeholder="Votre prénom"
-                    value={prenom}
-                    onChange={(e) => setPrenom(e.target.value)}
-                  />
-                </FieldGroup>
+                    <Input
+                      id="prenom"
+                      type="text"
+                      placeholder="Votre prénom"
+                      value={prenom}
+                      onChange={(e) => setPrenom(e.target.value)}
+                    />
+                  </FieldGroup>
+                </FormGrid>
 
                 <FieldGroup>
                   <FieldLabel htmlFor="adresse">Adresse</FieldLabel>
@@ -1491,17 +1530,19 @@ const Precommande = () => {
                   />
                 </FieldGroup>
 
-                <FieldGroup>
-                  <FieldLabel htmlFor="codePostal">Code postal</FieldLabel>
+                <FormGrid>
+                  <FieldGroup>
+                    <FieldLabel htmlFor="codePostal">Code postal</FieldLabel>
 
-                  <Input id="codePostal" value={codePostal} disabled />
-                </FieldGroup>
+                    <Input id="codePostal" value={codePostal} disabled />
+                  </FieldGroup>
 
-                <FieldGroup>
-                  <FieldLabel htmlFor="pays">Pays</FieldLabel>
+                  <FieldGroup>
+                    <FieldLabel htmlFor="pays">Pays</FieldLabel>
 
-                  <Input id="pays" value={pays} disabled />
-                </FieldGroup>
+                    <Input id="pays" value={pays} disabled />
+                  </FieldGroup>
+                </FormGrid>
 
                 <FormTitle>Informations du dépôt</FormTitle>
 
@@ -1850,97 +1891,155 @@ const Precommande = () => {
    STYLES — PAGE
 ============================================================ */
 
-const PageContainer = styled.div`
+const PageContainer = styled.main`
   min-height: 100vh;
+  padding: 0 24px 80px;
+  background:
+    radial-gradient(
+      circle at 10% 0%,
+      rgba(207, 224, 205, 0.35),
+      transparent 28%
+    ),
+    #f7f4ec;
+  color: #17382d;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
 
-  background: radial-gradient(
-    circle at 50% -10%,
-    rgba(255, 255, 255, 1) 0,
-    rgba(248, 248, 248, 0.98) 35%,
-    #f4f4f4 100%
-  );
-
-  padding: 50px 25px 90px;
-
-  @media (max-width: 600px) {
-    padding: 32px 14px 60px;
+  @media (max-width: 700px) {
+    padding: 0 15px 50px;
   }
 `;
 
-const Header = styled.div`
+const Header = styled.header`
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 72px 0 55px;
+`;
+
+const HeaderInner = styled.div`
   max-width: 900px;
-
-  margin: 0 auto 48px;
-
-  text-align: center;
 `;
 
 const SmallTitle = styled.div`
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-
-  padding: 7px 12px;
-
+  padding: 8px 13px;
   border-radius: 999px;
-
-  background: #111;
-  color: white;
-
-  font-size: 9px;
-  font-weight: 900;
-
-  letter-spacing: 2.5px;
-
-  margin-bottom: 15px;
+  background: #dfe9dc;
+  color: #285441;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
 `;
 
 const MainTitle = styled.h1`
-  margin: 0;
-
-  font-size: 46px;
-
-  color: #171717;
-
-  font-weight: 850;
-
-  letter-spacing: -1.8px;
-
-  @media (max-width: 600px) {
-    font-size: 34px;
-    letter-spacing: -1px;
-  }
+  margin: 18px 0 16px;
+  max-width: 850px;
+  color: #17382d;
+  font-size: clamp(42px, 6vw, 76px);
+  line-height: 0.98;
+  letter-spacing: -0.055em;
+  font-weight: 800;
 `;
 
 const Subtitle = styled.p`
-  max-width: 680px;
+  max-width: 690px;
+  margin: 0;
+  color: #64766e;
+  font-size: 17px;
+  line-height: 1.7;
+`;
 
-  margin: 16px auto 0;
+const HeaderFeatures = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 34px;
 
-  color: #777;
-
-  line-height: 1.8;
-
-  font-size: 14px;
-
-  @media (max-width: 600px) {
-    font-size: 13px;
+  @media (max-width: 800px) {
+    grid-template-columns: 1fr;
   }
 `;
 
-const ModelesGrid = styled.div`
-  max-width: 1220px;
+const HeaderFeature = styled.div`
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 15px;
+  border: 1px solid rgba(23, 56, 45, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.55);
 
-  margin: auto;
+  strong,
+  span {
+    display: block;
+  }
 
+  strong {
+    color: #17382d;
+    font-size: 13px;
+    margin-bottom: 3px;
+  }
+
+  span {
+    color: #7a8982;
+    font-size: 11px;
+    line-height: 1.4;
+  }
+`;
+
+const FeatureIcon = styled.div`
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
   display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: #17382d;
+  color: white;
+`;
 
-  grid-template-columns: repeat(3, 1fr);
+const ModelsSection = styled.section`
+  max-width: 1180px;
+  margin: 0 auto;
+`;
 
-  gap: 26px;
+const SectionIntro = styled.div`
+  margin-bottom: 28px;
+`;
+
+const SectionEyebrow = styled.div`
+  color: #527260;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+`;
+
+const SectionTitle = styled.h2`
+  margin: 8px 0 7px;
+  color: #17382d;
+  font-size: clamp(28px, 4vw, 42px);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+`;
+
+const SectionText = styled.p`
+  margin: 0;
+  color: #7a8982;
+  font-size: 14px;
+`;
+
+const ModelesGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
 
   @media (max-width: 1000px) {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   @media (max-width: 650px) {
@@ -1949,578 +2048,367 @@ const ModelesGrid = styled.div`
 `;
 
 const ModelCard = styled.article`
-  position: relative;
-
-  background: #fff;
-
-  border-radius: 22px;
-
   overflow: hidden;
-
-  border: 1px solid #e8e8e8;
-
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.025);
-
+  border: 1px solid rgba(23, 56, 45, 0.08);
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 12px 35px rgba(23, 56, 45, 0.06);
   transition:
-    transform 0.3s ease,
-    box-shadow 0.3s ease,
-    border-color 0.3s ease;
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
 
   &:hover {
-    transform: translateY(-6px);
-
-    border-color: #ddd;
-
-    box-shadow: 0 22px 55px rgba(0, 0, 0, 0.09);
+    transform: translateY(-5px);
+    box-shadow: 0 22px 50px rgba(23, 56, 45, 0.11);
   }
 `;
 
 const CardImageContainer = styled.div`
   position: relative;
-
-  height: 380px;
-
-  background: #ededed;
-
+  height: 330px;
   overflow: hidden;
+  background: #e9e5da;
 
   @media (max-width: 650px) {
-    height: 420px;
+    height: 310px;
   }
 `;
 
 const CardImage = styled.img`
   width: 100%;
   height: 100%;
-
-  object-fit: cover;
-
   display: block;
-
-  transition: transform 0.55s cubic-bezier(0.2, 0.7, 0.2, 1);
+  object-fit: cover;
+  transition: transform 0.5s ease;
 
   ${ModelCard}:hover & {
     transform: scale(1.035);
   }
 `;
 
-const NoImage = styled.div`
-  width: 100%;
-  height: 100%;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  color: #999;
-
-  background: #eeeeee;
-
-  font-size: 13px;
-`;
-
-const PrecommandeBadge = styled.div`
+const PrecommandeBadge = styled.span`
   position: absolute;
-
   top: 16px;
   left: 16px;
-
-  background: rgba(17, 17, 17, 0.94);
-
+  padding: 8px 11px;
+  border-radius: 999px;
+  background: #17382d;
   color: white;
-
-  padding: 8px 12px;
-
-  border-radius: 30px;
-
   font-size: 9px;
-
   font-weight: 800;
-
-  letter-spacing: 1.4px;
-
-  backdrop-filter: blur(10px);
-
-  box-shadow: 0 7px 20px rgba(0, 0, 0, 0.15);
+  letter-spacing: 0.12em;
 `;
 
-const VideoCardBadge = styled.div`
+const VideoCardBadge = styled.span`
   position: absolute;
-
   right: 16px;
-  top: 16px;
-
+  bottom: 16px;
   display: inline-flex;
-
   align-items: center;
-
   gap: 6px;
-
   padding: 8px 11px;
-
-  border-radius: 30px;
-
+  border-radius: 999px;
   background: rgba(255, 255, 255, 0.92);
-
-  color: #111;
-
-  font-size: 10px;
-
-  font-weight: 800;
-
-  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.12);
-
+  color: #17382d;
+  font-size: 11px;
+  font-weight: 700;
   backdrop-filter: blur(10px);
 `;
 
 const CardContent = styled.div`
-  padding: 24px;
+  padding: 22px;
 `;
 
-const CardTitle = styled.h2`
-  margin: 0 0 10px;
-
-  color: #222;
-
-  font-size: 21px;
-
-  font-weight: 800;
-
-  letter-spacing: -0.4px;
+const CardTitle = styled.h3`
+  margin: 0 0 8px;
+  color: #17382d;
+  font-size: 22px;
+  letter-spacing: -0.025em;
 `;
 
 const CardDescription = styled.p`
-  color: #777;
-
+  min-height: 48px;
+  margin: 0 0 18px;
+  color: #78877f;
   font-size: 13px;
-
-  line-height: 1.7;
-
-  min-height: 66px;
-
-  margin: 0;
+  line-height: 1.65;
 `;
 
 const CardInfo = styled.div`
-  margin-top: 19px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 13px;
 `;
 
-const Price = styled.div`
-  font-size: 21px;
-
-  font-weight: 800;
-
-  color: #111;
-
-  letter-spacing: -0.3px;
+const Price = styled.strong`
+  color: #17382d;
+  font-size: 20px;
+  letter-spacing: -0.03em;
 `;
 
-const Deposit = styled.div`
-  margin-top: 5px;
-
-  color: #777;
-
-  font-size: 12px;
+const Deposit = styled.span`
+  color: #7c8983;
+  font-size: 10px;
+  text-align: right;
 `;
 
 const Availability = styled.div`
-  margin-top: 13px;
-
-  padding: 11px 13px;
-
-  background: #f6f6f6;
-
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
   border-radius: 10px;
-
+  background: #f0f5ed;
+  color: #557061;
   font-size: 11px;
-
-  color: #555;
 `;
 
 const VariationSummary = styled.div`
-  margin-top: 17px;
-
-  display: flex;
-
-  flex-direction: column;
-
-  gap: 8px;
+  padding-top: 13px;
+  border-top: 1px solid #edf0eb;
 `;
 
 const VariationLine = styled.div`
   display: flex;
-
-  gap: 8px;
-
-  font-size: 12px;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 7px;
 `;
 
 const VariationLabel = styled.span`
-  font-weight: 800;
-
-  color: #333;
+  color: #9aa59f;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 `;
 
 const VariationValues = styled.span`
-  color: #777;
+  color: #42584e;
+  font-size: 11px;
+  text-align: right;
 `;
 
 const StockMini = styled.div`
   display: flex;
-
   align-items: center;
-
   gap: 7px;
-
-  margin-top: 2px;
-
-  color: #777;
-
+  margin-top: 10px;
+  color: #65756d;
   font-size: 11px;
 `;
 
 const StockMiniDot = styled.span`
   width: 7px;
   height: 7px;
-
-  flex: 0 0 7px;
-
   border-radius: 50%;
-
-  background: ${(props) => (props.$available ? "#32804a" : "#b33a3a")};
-
-  box-shadow: 0 0 0 3px
-    ${(props) =>
-      props.$available ? "rgba(50,128,74,0.08)" : "rgba(179,58,58,0.08)"};
+  background: ${({ $available }) => ($available ? "#5b896a" : "#b65d55")};
 `;
 
 const ActionButton = styled.button`
   width: 100%;
-
+  min-height: 48px;
   display: flex;
-
   align-items: center;
-  justify-content: center;
-
-  gap: 10px;
-
-  border: none;
-
-  background: #111;
-
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 19px;
+  padding: 0 17px;
+  border: 0;
+  border-radius: 13px;
+  background: #17382d;
   color: white;
-
-  padding: 15px;
-
-  border-radius: 11px;
-
-  margin-top: 21px;
-
-  font-weight: 800;
-
+  font-size: 12px;
+  font-weight: 750;
   cursor: pointer;
-
   transition:
     background 0.2s ease,
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-
-  svg {
-    transition: transform 0.2s ease;
-  }
+    transform 0.2s ease;
 
   &:hover {
-    background: #292929;
-
-    box-shadow: 0 9px 24px rgba(0, 0, 0, 0.14);
-
-    svg {
-      transform: translateX(4px);
-    }
-  }
-
-  &:active {
-    transform: scale(0.985);
+    background: #245440;
+    transform: translateY(-1px);
   }
 `;
 
-/* ============================================================
-   DÉTAIL
-============================================================ */
-
 const DetailContainer = styled.div`
-  max-width: 1260px;
-
-  margin: auto;
+  max-width: 1180px;
+  margin: 0 auto;
 `;
 
 const BackButton = styled.button`
   display: inline-flex;
-
   align-items: center;
-
-  gap: 9px;
-
-  border: none;
-
+  gap: 8px;
+  margin-bottom: 25px;
+  padding: 0;
+  border: 0;
   background: transparent;
-
-  color: #333;
-
+  color: #557064;
+  font-size: 13px;
   font-weight: 700;
-
   cursor: pointer;
 
-  margin-bottom: 25px;
-
-  padding: 8px 0;
-
-  transition: 0.2s;
-
-  svg {
-    transition: transform 0.2s ease;
-  }
-
   &:hover {
-    color: #000;
-
-    svg {
-      transform: translateX(-3px);
-    }
+    color: #17382d;
   }
 `;
 
 const DetailGrid = styled.div`
   display: grid;
-
-  grid-template-columns:
-    1.04fr
-    0.96fr;
-
-  gap: 45px;
-
+  grid-template-columns: minmax(0, 1.05fr) minmax(390px, 0.95fr);
+  gap: 46px;
   align-items: start;
 
   @media (max-width: 950px) {
     grid-template-columns: 1fr;
-
-    gap: 28px;
+    gap: 35px;
   }
 `;
 
-const MediaSection = styled.div`
+const MediaSection = styled.section`
   position: sticky;
-
   top: 20px;
 
   @media (max-width: 950px) {
-    position: static;
+    position: relative;
+    top: auto;
   }
 `;
 
 const MediaContainer = styled.div`
   position: relative;
-
-  width: 100%;
-
-  aspect-ratio: 4 / 5;
-
-  background: #111;
-
-  border-radius: 24px;
-
+  aspect-ratio: 1 / 1;
   overflow: hidden;
-
-  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.13);
-
-  isolation: isolate;
-
-  @media (max-width: 600px) {
-    border-radius: 19px;
-  }
+  border-radius: 28px;
+  background: #e9e5da;
+  box-shadow: 0 20px 55px rgba(23, 56, 45, 0.1);
 `;
 
 const MainImage = styled.img`
   width: 100%;
   height: 100%;
-
-  object-fit: cover;
-
   display: block;
-
+  object-fit: cover;
   cursor: zoom-in;
-
-  transition: transform 0.45s cubic-bezier(0.2, 0.7, 0.2, 1);
-
-  &:hover {
-    transform: scale(1.018);
-  }
 `;
 
 const PreviewVideoWrapper = styled.div`
   position: relative;
-
   width: 100%;
   height: 100%;
-
   overflow: hidden;
-
-  background: #080808;
 `;
 
 const VideoPreview = styled.video`
   width: 100%;
   height: 100%;
-
-  object-fit: cover;
-
   display: block;
-
+  object-fit: cover;
   cursor: zoom-in;
-
-  background: #080808;
 `;
 
 const PreviewVideoPlayButton = styled.button`
   position: absolute;
+  left: 22px;
+  bottom: 22px;
+  z-index: 5;
 
-  left: 20px;
-  bottom: 20px;
-
-  width: 50px;
-  height: 50px;
+  width: 52px;
+  height: 52px;
 
   display: flex;
-
   align-items: center;
   justify-content: center;
 
-  border: 1px solid rgba(255, 255, 255, 0.3);
-
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 50%;
 
-  background: rgba(0, 0, 0, 0.68);
-
+  background: rgba(23, 56, 45, 0.9);
   color: white;
-
-  backdrop-filter: blur(12px);
 
   cursor: pointer;
 
-  z-index: 7;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 
-  box-shadow: 0 9px 28px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
 
   transition:
-    transform 0.22s ease,
-    background 0.22s ease,
-    border-color 0.22s ease;
+    transform 0.2s ease,
+    background 0.2s ease;
 
   &:hover {
     transform: scale(1.08);
-
-    background: rgba(0, 0, 0, 0.85);
-
-    border-color: rgba(255, 255, 255, 0.55);
+    background: #17382d;
   }
 
   &:active {
-    transform: scale(0.94);
-  }
-
-  @media (max-width: 600px) {
-    left: 15px;
-    bottom: 15px;
-
-    width: 46px;
-    height: 46px;
+    transform: scale(0.96);
   }
 `;
 
 const PreviewVideoLabel = styled.div`
   position: absolute;
-
-  left: 20px;
-  top: 20px;
+  top: 18px;
+  left: 18px;
 
   display: inline-flex;
-
   align-items: center;
-
-  gap: 7px;
+  gap: 6px;
 
   padding: 8px 11px;
-
   border-radius: 999px;
 
-  background: rgba(0, 0, 0, 0.5);
-
-  color: rgba(255, 255, 255, 0.92);
-
-  border: 1px solid rgba(255, 255, 255, 0.14);
-
-  backdrop-filter: blur(10px);
+  background: rgba(23, 56, 45, 0.82);
+  color: white;
 
   font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
 
-  font-weight: 900;
-
-  letter-spacing: 1.2px;
-
-  z-index: 6;
-
-  pointer-events: none;
-
-  @media (max-width: 600px) {
-    left: 14px;
-    top: 14px;
-  }
+  backdrop-filter: blur(8px);
 `;
 
 const MediaExpandButton = styled.button`
   position: absolute;
+  right: 18px;
+  top: 18px;
+  z-index: 5;
 
-  top: 16px;
-  right: 16px;
-
-  width: 42px;
-  height: 42px;
+  width: 43px;
+  height: 43px;
 
   display: flex;
-
   align-items: center;
   justify-content: center;
 
-  border: 1px solid rgba(255, 255, 255, 0.25);
-
+  border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 50%;
 
-  background: rgba(0, 0, 0, 0.45);
-
-  color: white;
-
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.88);
+  color: #17382d;
 
   cursor: pointer;
+  backdrop-filter: blur(10px);
 
-  z-index: 8;
-
-  transition: 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
 
   &:hover {
-    background: rgba(0, 0, 0, 0.72);
-
     transform: scale(1.06);
+    background: white;
   }
 `;
 
 const MediaArrow = styled.button`
   position: absolute;
-
-  ${(props) => (props.$left ? "left: 15px;" : "right: 15px;")}
-
   top: 50%;
+  ${({ $left }) => ($left ? "left: 16px;" : "right: 16px;")}
+  z-index: 5;
 
   transform: translateY(-50%);
 
@@ -2528,747 +2416,555 @@ const MediaArrow = styled.button`
   height: 42px;
 
   display: flex;
-
   align-items: center;
   justify-content: center;
 
+  border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 50%;
 
-  border: 1px solid rgba(255, 255, 255, 0.22);
-
-  background: rgba(0, 0, 0, 0.42);
-
-  color: white;
-
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.9);
+  color: #17382d;
 
   cursor: pointer;
-
-  z-index: 8;
-
-  transition: 0.2s ease;
+  backdrop-filter: blur(10px);
 
   &:hover {
-    background: rgba(0, 0, 0, 0.72);
-
-    transform: translateY(-50%) scale(1.06);
+    background: white;
   }
 `;
 
 const DotsContainer = styled.div`
   position: absolute;
-
   bottom: 18px;
   left: 50%;
-
-  transform: translateX(-50%);
+  z-index: 5;
 
   display: flex;
-
   align-items: center;
-  justify-content: center;
+  gap: 6px;
 
-  gap: 9px;
+  transform: translateX(-50%);
+  padding: 7px 9px;
 
-  padding: 9px 13px;
-
-  background: rgba(0, 0, 0, 0.38);
+  border-radius: 999px;
+  background: rgba(23, 56, 45, 0.72);
 
   backdrop-filter: blur(10px);
-
-  border: 1px solid rgba(255, 255, 255, 0.1);
-
-  border-radius: 30px;
-
-  z-index: 8;
 `;
 
 const Dot = styled.button`
-  width: ${(props) => (props.$video ? "31px" : "9px")};
-
-  height: ${(props) => (props.$video ? "31px" : "9px")};
-
-  border-radius: 50%;
-
-  border: none;
-
-  background: ${(props) =>
-    props.$active
-      ? "#fff"
-      : props.$video
-        ? "rgba(255,255,255,0.75)"
-        : "rgba(255,255,255,0.48)"};
-
-  color: #111;
+  width: ${({ $active }) => ($active ? "22px" : "7px")};
+  height: 7px;
 
   display: flex;
-
   align-items: center;
   justify-content: center;
 
   padding: 0;
 
+  border: 0;
+  border-radius: 999px;
+
+  background: ${({ $active }) =>
+    $active ? "white" : "rgba(255,255,255,0.45)"};
+
+  color: #17382d;
+
   cursor: pointer;
 
   transition:
-    transform 0.2s ease,
+    width 0.2s ease,
     background 0.2s ease;
-
-  &:hover {
-    transform: scale(1.18);
-  }
 `;
 
 const MediaDescription = styled.div`
   display: flex;
-
-  justify-content: space-between;
-
   align-items: center;
-
+  justify-content: space-between;
   gap: 15px;
-
-  padding: 14px 5px;
+  margin-top: 13px;
 `;
 
-const MediaCurrent = styled.span`
+const MediaCurrent = styled.div`
   display: inline-flex;
-
   align-items: center;
-
-  gap: 6px;
-
-  font-weight: 800;
-
-  color: #333;
-
-  font-size: 12px;
+  gap: 7px;
+  color: #496358;
+  font-size: 11px;
+  font-weight: 700;
 `;
 
 const MediaHint = styled.span`
-  color: #999;
-
-  font-size: 11px;
-
-  text-align: right;
-
-  @media (max-width: 500px) {
-    display: none;
-  }
+  color: #9aa59f;
+  font-size: 10px;
 `;
 
-const InformationSection = styled.div`
-  background: white;
-
-  border-radius: 24px;
-
-  padding: 31px;
-
-  border: 1px solid #ececec;
-
-  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.04);
-
-  @media (max-width: 600px) {
-    padding: 22px;
-
-    border-radius: 20px;
-  }
+const InformationSection = styled.section`
+  padding-bottom: 50px;
 `;
 
 const PrecommandeLabel = styled.div`
   display: inline-flex;
-
-  background: #111;
-
-  color: white;
-
-  border-radius: 20px;
-
-  padding: 7px 12px;
-
+  align-items: center;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #dfe9dc;
+  color: #315943;
   font-size: 9px;
-
   font-weight: 800;
-
-  letter-spacing: 1.2px;
+  letter-spacing: 0.12em;
 `;
 
 const DetailTitle = styled.h2`
   margin: 15px 0 10px;
-
-  font-size: 33px;
-
-  line-height: 1.15;
-
-  color: #1d1d1d;
-
-  letter-spacing: -0.7px;
-
-  @media (max-width: 600px) {
-    font-size: 27px;
-  }
+  color: #17382d;
+  font-size: clamp(34px, 4vw, 52px);
+  line-height: 0.98;
+  letter-spacing: -0.05em;
 `;
 
 const DetailDescription = styled.p`
-  color: #777;
-
-  line-height: 1.75;
-
-  margin: 0 0 20px;
-
-  font-size: 13px;
+  margin: 0;
+  color: #738179;
+  font-size: 14px;
+  line-height: 1.7;
 `;
 
 const PriceBlock = styled.div`
-  padding: 19px 0;
-
-  border-top: 1px solid #eee;
-
-  border-bottom: 1px solid #eee;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 15px;
+  margin: 25px 0;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #e1e5df;
 `;
 
-const CurrentPrice = styled.div`
-  font-size: 28px;
-
-  font-weight: 900;
-
-  color: #111;
-
-  letter-spacing: -0.7px;
+const CurrentPrice = styled.strong`
+  color: #17382d;
+  font-size: 30px;
+  letter-spacing: -0.04em;
 `;
 
-const DepositText = styled.div`
-  margin-top: 7px;
-
-  color: #777;
-
-  font-size: 12px;
+const DepositText = styled.span`
+  color: #75837c;
+  font-size: 11px;
+  text-align: right;
 `;
 
 const DateBox = styled.div`
   display: flex;
-
   align-items: center;
-
   gap: 13px;
-
-  margin-top: 18px;
-
-  background: #f7f7f7;
-
-  padding: 15px;
-
-  border-radius: 13px;
+  margin-bottom: 25px;
+  padding: 14px;
+  border-radius: 15px;
+  background: #edf4ea;
 `;
 
 const DateIcon = styled.div`
   width: 39px;
   height: 39px;
-
-  flex: 0 0 39px;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 11px;
-
-  background: #111;
-
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: #17382d;
   color: white;
 `;
 
 const DateLabel = styled.div`
+  margin-bottom: 3px;
+  color: #809087;
   font-size: 9px;
-
-  font-weight: 900;
-
-  color: #888;
-
-  letter-spacing: 1px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
 `;
 
 const DateValue = styled.div`
-  margin-top: 4px;
-
-  font-weight: 800;
-
-  color: #333;
-
+  color: #294c3d;
   font-size: 13px;
+  font-weight: 700;
 `;
 
 const FieldGroup = styled.div`
-  margin-top: 23px;
+  margin-bottom: 18px;
 `;
 
 const FieldLabel = styled.label`
   display: block;
-
-  margin-bottom: 10px;
-
-  color: #222;
-
-  font-size: 12px;
-
-  font-weight: 800;
+  margin-bottom: 8px;
+  color: #314d41;
+  font-size: 11px;
+  font-weight: 750;
 `;
 
 const ChoiceGrid = styled.div`
   display: flex;
-
   flex-wrap: wrap;
-
-  gap: 9px;
+  gap: 8px;
 `;
 
 const ChoiceButton = styled.button`
-  border: 1px solid ${(props) => (props.$active ? "#111" : "#dddddd")};
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
 
-  background: ${(props) => (props.$active ? "#111" : "#fff")};
+  padding: 0 13px;
 
-  color: ${(props) => (props.$active ? "#fff" : "#333")};
+  border: 1px solid ${({ $active }) => ($active ? "#17382d" : "#dfe4df")};
+  border-radius: 11px;
 
-  padding: 11px 15px;
+  background: ${({ $active }) => ($active ? "#17382d" : "#fff")};
 
-  border-radius: 9px;
+  color: ${({ $active }) => ($active ? "#fff" : "#53665d")};
+
+  font-size: 12px;
+  font-weight: 700;
 
   cursor: pointer;
 
-  font-weight: 700;
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 8px;
-
-  transition: 0.2s ease;
+  transition:
+    background 0.2s ease,
+    border 0.2s ease,
+    color 0.2s ease;
 
   &:hover {
-    border-color: #111;
-  }
-
-  &:active {
-    transform: scale(0.97);
+    border-color: #17382d;
   }
 `;
 
 const ColorCircle = styled.span`
-  width: 9px;
-  height: 9px;
-
-  flex: 0 0 9px;
-
+  width: 13px;
+  height: 13px;
   border-radius: 50%;
-
-  background: currentColor;
-
-  border: 1px solid rgba(0, 0, 0, 0.15);
+  background: linear-gradient(135deg, #17231e, #9caa9e);
+  border: 1px solid rgba(23, 56, 45, 0.15);
 `;
 
 const StockCard = styled.div`
-  margin-top: 22px;
-
-  padding: 18px;
-
-  border-radius: 14px;
-
-  background: ${(props) => (props.$available ? "#f3f8f3" : "#fff2f2")};
-
-  border: 1px solid ${(props) => (props.$available ? "#dceadc" : "#f1d2d2")};
+  margin: 22px 0;
+  padding: 17px;
+  border: 1px solid ${({ $available }) => ($available ? "#d9e5d8" : "#ead8d6")};
+  border-radius: 17px;
+  background: ${({ $available }) => ($available ? "#f3f7f1" : "#faf1f0")};
 `;
 
 const StockTop = styled.div`
   display: flex;
-
-  justify-content: space-between;
-
   align-items: center;
+  justify-content: space-between;
 `;
 
-const StockLabel = styled.span`
-  display: block;
-
+const StockLabel = styled.div`
+  color: #8b9891;
   font-size: 9px;
-
-  font-weight: 900;
-
-  letter-spacing: 1px;
-
-  color: #777;
+  font-weight: 800;
+  letter-spacing: 0.1em;
 `;
 
 const StockVariationName = styled.div`
-  margin-top: 4px;
-
-  color: #999;
-
+  margin-top: 3px;
+  color: #496156;
   font-size: 11px;
 `;
 
-const StockNumber = styled.span`
-  font-size: 24px;
+const StockNumber = styled.div`
+  width: 43px;
+  height: 43px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
 
-  font-weight: 900;
+  background: ${({ $available }) => ($available ? "#17382d" : "#a85e58")};
 
-  color: ${(props) => (props.$available ? "#26733a" : "#b33a3a")};
+  color: white;
+  font-size: 14px;
+  font-weight: 800;
 `;
 
 const StockVariation = styled.div`
-  margin-top: 12px;
-
-  color: #777;
-
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(23, 56, 45, 0.08);
+  color: #738078;
   font-size: 11px;
 `;
 
 const StockVariationItem = styled.div`
   display: flex;
-
-  flex-wrap: wrap;
-
-  gap: 8px;
+  gap: 25px;
 
   span {
-    display: inline-flex;
-
-    align-items: center;
-
-    gap: 5px;
-
-    padding: 6px 9px;
-
-    background: rgba(255, 255, 255, 0.65);
-
-    border-radius: 7px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
   }
 
   strong {
-    color: #333;
+    color: #294c3d;
+    font-size: 12px;
   }
 `;
 
 const StockAvailableText = styled.div`
-  margin-top: 11px;
-
   display: flex;
-
   align-items: center;
-
-  gap: 5px;
-
-  color: #287038;
-
-  font-size: 11px;
-
+  gap: 6px;
+  margin-top: 12px;
+  color: #4d755a;
+  font-size: 10px;
   font-weight: 700;
 `;
 
 const StockUnavailableText = styled.div`
-  margin-top: 11px;
-
-  color: #b33131;
-
-  font-size: 11px;
-
+  margin-top: 12px;
+  color: #a55b55;
+  font-size: 10px;
   font-weight: 700;
 `;
 
 const QuantityContainer = styled.div`
   display: inline-flex;
-
   align-items: center;
-
-  border: 1px solid #ddd;
-
-  border-radius: 10px;
-
+  height: 44px;
   overflow: hidden;
+  border: 1px solid #dfe4df;
+  border-radius: 12px;
+  background: white;
 `;
 
 const QuantityButton = styled.button`
-  width: 43px;
-  height: 43px;
+  width: 44px;
+  height: 44px;
 
-  border: none;
+  border: 0;
+  background: transparent;
 
-  background: #f5f5f5;
-
-  font-size: 20px;
+  color: #17382d;
+  font-size: 22px;
 
   cursor: pointer;
 
-  transition: 0.2s;
-
-  &:disabled {
-    cursor: not-allowed;
-
-    opacity: 0.35;
+  &:hover:not(:disabled) {
+    background: #f0f4ef;
   }
 
-  &:hover:not(:disabled) {
-    background: #e9e9e9;
+  &:disabled {
+    color: #c7cfca;
+    cursor: not-allowed;
   }
 `;
 
 const QuantityValue = styled.div`
-  width: 58px;
-
-  text-align: center;
-
+  min-width: 45px;
+  color: #17382d;
+  font-size: 14px;
   font-weight: 800;
+  text-align: center;
 `;
 
 const QuantityHint = styled.div`
   margin-top: 7px;
-
-  color: #999;
-
+  color: #9aa49f;
   font-size: 10px;
 `;
 
 const SummaryBox = styled.div`
-  margin-top: 25px;
-
-  padding: 19px;
-
-  background: #f7f7f7;
-
-  border-radius: 14px;
-
-  border: 1px solid rgba(0, 0, 0, 0.035);
+  margin: 25px 0;
+  padding: 17px;
+  border-radius: 17px;
+  background: #17382d;
+  color: white;
 `;
 
 const SummaryRow = styled.div`
   display: flex;
-
+  align-items: center;
   justify-content: space-between;
-
   gap: 15px;
-
   padding: 7px 0;
 
-  font-size: 12px;
-
-  color: #666;
+  span {
+    color: rgba(255, 255, 255, 0.62);
+    font-size: 11px;
+  }
 
   strong {
-    color: #222;
-
-    text-align: right;
+    font-size: 12px;
   }
 `;
 
 const SummaryTotal = styled.div`
-  margin-top: 10px;
-
-  padding-top: 14px;
-
-  border-top: 1px solid #ddd;
-
   display: flex;
-
+  align-items: center;
   justify-content: space-between;
-
   gap: 15px;
 
-  font-size: 14px;
+  margin-top: 10px;
+  padding-top: 15px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
 
-  font-weight: 900;
-
-  color: #111;
+  span {
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+  }
 
   strong {
-    text-align: right;
+    color: white;
+    font-size: 19px;
   }
 `;
 
 const Form = styled.form`
   margin-top: 30px;
-
-  padding-top: 25px;
-
-  border-top: 1px solid #eee;
 `;
 
 const FormTitle = styled.h3`
-  margin: 0 0 17px;
+  margin: 28px 0 18px;
+  color: #17382d;
+  font-size: 19px;
+  letter-spacing: -0.025em;
+`;
 
-  font-size: 18px;
+const FormGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 13px;
 
-  color: #222;
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+`;
+
+const Input = styled.input`
+  width: 100%;
+  height: 47px;
+  box-sizing: border-box;
+
+  padding: 0 13px;
+
+  border: 1px solid #dfe4df;
+  border-radius: 11px;
+
+  outline: none;
+
+  background: white;
+  color: #17382d;
+
+  font-family: inherit;
+  font-size: 12px;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+
+  &::placeholder {
+    color: #a4aea9;
+  }
+
+  &:focus {
+    border-color: #527260;
+    box-shadow: 0 0 0 3px rgba(82, 114, 96, 0.1);
+  }
+
+  &:disabled {
+    background: #edf0ec;
+    color: #89958e;
+    cursor: not-allowed;
+  }
 `;
 
 const DepotInfoBox = styled.div`
-  margin-bottom: 25px;
-
-  padding: 20px;
-
-  border: 1px solid #e5e7eb;
-
-  border-radius: 15px;
-
-  background: linear-gradient(135deg, #f8fafc, #f3f5f7);
+  margin-bottom: 22px;
+  padding: 17px;
+  border: 1px solid #d9e5d8;
+  border-radius: 17px;
+  background: #f1f6ef;
 `;
 
 const DepotInfoHeader = styled.div`
   display: flex;
-
   gap: 12px;
-
-  align-items: flex-start;
 `;
 
 const DepotInfoIcon = styled.div`
-  width: 38px;
-  height: 38px;
+  width: 37px;
+  height: 37px;
+  flex: 0 0 37px;
 
-  flex: 0 0 38px;
+  display: grid;
+  place-items: center;
 
-  border-radius: 10px;
-
-  background: #111;
-
+  border-radius: 11px;
+  background: #17382d;
   color: white;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  font-weight: 900;
 `;
 
-const DepotInfoTitle = styled.h3`
-  margin: 0 0 6px;
-
-  font-size: 16px;
-
+const DepotInfoTitle = styled.div`
+  margin-bottom: 3px;
+  color: #244a39;
+  font-size: 13px;
   font-weight: 800;
-
-  color: #1f2937;
 `;
 
-const DepotInfoText = styled.p`
-  margin: 0;
-
-  font-size: 12px;
-
-  line-height: 1.6;
-
-  color: #6b7280;
+const DepotInfoText = styled.div`
+  color: #718078;
+  font-size: 11px;
+  line-height: 1.5;
 `;
 
 const DepotNumber = styled.div`
-  margin-top: 17px;
-
+  margin: 16px 0;
   padding: 15px;
-
   border-radius: 11px;
-
   background: white;
-
-  border: 1px solid #dbe3ea;
-
-  font-size: 23px;
-
-  font-weight: 900;
-
-  letter-spacing: 1.5px;
-
-  text-align: center;
-
-  color: #111827;
-
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.035);
-`;
-
-const SupportedServices = styled.div`
-  margin-top: 11px;
-
-  font-size: 10px;
-
-  color: #777;
-
+  color: #17382d;
+  font-size: 22px;
+  font-weight: 850;
+  letter-spacing: 0.05em;
   text-align: center;
 `;
 
 const DepotLoading = styled.div`
   display: flex;
-
   align-items: center;
-  justify-content: center;
-
   gap: 8px;
-
-  margin-top: 17px;
-
-  padding: 14px;
-
-  border-radius: 10px;
-
-  background: white;
-
-  color: #6b7280;
-
-  text-align: center;
-
-  font-size: 12px;
-`;
-
-const MiniSpinner = styled.span`
-  width: 14px;
-  height: 14px;
-
-  border: 2px solid #ddd;
-
-  border-top-color: #111;
-
-  border-radius: 50%;
-
-  animation: miniSpin 0.7s linear infinite;
-
-  @keyframes miniSpin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
+  margin: 16px 0;
+  color: #697a71;
+  font-size: 11px;
 `;
 
 const DepotError = styled.div`
-  margin-top: 17px;
-
-  padding: 14px;
-
-  border-radius: 10px;
-
-  background: #fef2f2;
-
-  color: #b91c1c;
-
-  font-size: 12px;
+  margin: 16px 0;
+  color: #a55c56;
+  font-size: 11px;
 `;
 
-const DepotWarning = styled.p`
-  margin: 13px 0 0;
+const SupportedServices = styled.div`
+  margin-bottom: 12px;
+  color: #557061;
+  font-size: 10px;
+  font-weight: 700;
+`;
 
-  font-size: 11px;
-
-  line-height: 1.65;
-
-  color: #6b7280;
+const DepotWarning = styled.div`
+  padding-top: 12px;
+  border-top: 1px solid rgba(23, 56, 45, 0.08);
+  color: #7c8982;
+  font-size: 10px;
+  line-height: 1.6;
 `;
 
 const PaymentGrid = styled.div`
   display: grid;
-
-  grid-template-columns: 1fr 1fr;
-
+  grid-template-columns: repeat(2, 1fr);
   gap: 10px;
 
-  @media (max-width: 500px) {
+  @media (max-width: 520px) {
     grid-template-columns: 1fr;
   }
 `;
@@ -3276,266 +2972,163 @@ const PaymentGrid = styled.div`
 const PaymentButton = styled.button`
   position: relative;
 
-  border: 1px solid ${(props) => (props.$active ? "#111" : "#ddd")};
-
-  background: ${(props) => (props.$active ? "#f4f4f4" : "#fff")};
-
-  border-radius: 12px;
-
-  padding: 13px;
-
   display: flex;
-
   align-items: center;
-
   gap: 10px;
+
+  min-height: 62px;
+  padding: 10px;
+
+  border: 1px solid ${({ $active }) => ($active ? "#17382d" : "#dfe4df")};
+
+  border-radius: 13px;
+
+  background: ${({ $active }) => ($active ? "#f0f5ed" : "white")};
+
+  color: #17382d;
+  text-align: left;
 
   cursor: pointer;
 
-  text-align: left;
-
-  transition: 0.2s ease;
-
   &:hover {
-    border-color: #111;
-  }
-
-  &:active {
-    transform: scale(0.985);
+    border-color: #17382d;
   }
 `;
 
 const PaymentLogo = styled.div`
-  width: 35px;
-  height: 35px;
+  width: 37px;
+  height: 37px;
+  flex: 0 0 37px;
 
-  flex: 0 0 35px;
+  display: grid;
+  place-items: center;
 
-  border-radius: 9px;
-
-  background: #111;
-
+  border-radius: 10px;
+  background: #17382d;
   color: white;
 
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  font-size: 10px;
-
+  font-size: 11px;
   font-weight: 900;
 `;
 
 const PaymentName = styled.div`
+  color: #294c3d;
   font-size: 12px;
-
   font-weight: 800;
-
-  color: #222;
 `;
 
 const PaymentSmall = styled.div`
   margin-top: 2px;
-
-  color: #999;
-
+  color: #87938d;
   font-size: 9px;
 `;
 
 const PaymentCheck = styled.div`
   position: absolute;
-
-  top: 9px;
-  right: 9px;
+  top: 7px;
+  right: 7px;
 
   width: 18px;
   height: 18px;
 
+  display: grid;
+  place-items: center;
+
   border-radius: 50%;
-
-  background: #111;
-
+  background: #17382d;
   color: white;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  font-size: 10px;
-
-  font-weight: 900;
-`;
-
-const Input = styled.input`
-  width: 100%;
-
-  box-sizing: border-box;
-
-  height: 48px;
-
-  padding: 0 14px;
-
-  border: 1px solid #ddd;
-
-  border-radius: 10px;
-
-  outline: none;
-
-  font-size: 16px;
-
-  background: white;
-
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease,
-    background 0.2s ease;
-
-  &:focus {
-    border-color: #111;
-
-    box-shadow: 0 0 0 3px rgba(17, 17, 17, 0.05);
-  }
-
-  &:disabled {
-    background: #f5f5f5;
-
-    color: #888;
-
-    cursor: not-allowed;
-  }
-
-  &::placeholder {
-    color: #aaa;
-  }
 `;
 
 const FormError = styled.div`
-  margin-top: 18px;
-
-  background: #fff1f1;
-
-  border: 1px solid #f0d0d0;
-
-  color: #b33131;
-
-  padding: 13px;
-
-  border-radius: 10px;
-
-  font-size: 12px;
-
+  margin: 15px 0;
+  padding: 13px 14px;
+  border-radius: 11px;
+  background: #faefee;
+  color: #a45a54;
+  font-size: 11px;
   line-height: 1.5;
 `;
 
 const FormSuccess = styled.div`
-  margin-top: 18px;
-
-  background: #eff9f0;
-
-  border: 1px solid #d5ead7;
-
-  color: #287038;
-
-  padding: 13px;
-
-  border-radius: 10px;
-
-  font-size: 12px;
+  margin: 15px 0;
+  padding: 13px 14px;
+  border-radius: 11px;
+  background: #edf5eb;
+  color: #4e755b;
+  font-size: 11px;
+  line-height: 1.5;
 `;
 
 const SubmitButton = styled.button`
   width: 100%;
+  min-height: 53px;
 
-  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
 
-  min-height: 54px;
+  border: 0;
+  border-radius: 13px;
 
-  border: none;
-
-  border-radius: 12px;
-
-  background: #111;
-
+  background: #17382d;
   color: white;
 
+  font-family: inherit;
+  font-size: 12px;
   font-weight: 800;
 
   cursor: pointer;
 
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  gap: 10px;
-
-  transition: 0.2s ease;
-
-  svg {
-    transition: transform 0.2s ease;
-  }
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
 
   &:hover:not(:disabled) {
-    background: #292929;
-
-    svg {
-      transform: translateX(4px);
-    }
-  }
-
-  &:active:not(:disabled) {
-    transform: scale(0.99);
+    background: #245440;
+    transform: translateY(-1px);
   }
 
   &:disabled {
-    opacity: 0.45;
-
+    opacity: 0.55;
     cursor: not-allowed;
   }
 `;
 
-const SecurityText = styled.p`
+const SecurityText = styled.div`
   display: flex;
-
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
+  gap: 6px;
 
-  gap: 5px;
+  margin-top: 12px;
 
-  text-align: center;
-
-  color: #999;
-
-  font-size: 10px;
-
+  color: #89958f;
+  font-size: 9px;
   line-height: 1.5;
-
-  margin: 13px 0 0;
+  text-align: center;
 `;
 
 const LoadingContainer = styled.div`
-  min-height: 70vh;
+  min-height: 100vh;
 
   display: flex;
-
   flex-direction: column;
-
   align-items: center;
-
   justify-content: center;
 
-  background: #f8f8f8;
+  gap: 14px;
+
+  background: #f7f4ec;
+  color: #17382d;
 `;
 
 const Spinner = styled.div`
-  width: 42px;
-  height: 42px;
+  width: 34px;
+  height: 34px;
 
-  border: 4px solid #ddd;
-
-  border-top-color: #111;
+  border: 3px solid #dbe4d9;
+  border-top-color: #17382d;
 
   border-radius: 50%;
 
@@ -3548,184 +3141,160 @@ const Spinner = styled.div`
   }
 `;
 
-const LoadingText = styled.p`
-  color: #777;
-
-  margin-top: 15px;
-
-  font-size: 13px;
+const LoadingText = styled.div`
+  color: #718078;
+  font-size: 12px;
 `;
 
-const ErrorBox = styled.div`
-  max-width: 800px;
+const MiniSpinner = styled.div`
+  width: 13px;
+  height: 13px;
 
-  margin: 0 auto 20px;
-
-  padding: 15px;
-
-  border-radius: 10px;
-
-  background: #fff1f1;
-
-  border: 1px solid #f0d0d0;
-
-  color: #b33131;
-
-  text-align: center;
-
-  font-size: 13px;
-`;
-
-const SuccessBox = styled.div`
-  max-width: 800px;
-
-  margin: 0 auto 25px;
-
-  padding: 16px;
-
-  border-radius: 12px;
-
-  background: #eff9f0;
-
-  border: 1px solid #d5ead7;
-
-  color: #287038;
-
-  display: flex;
-
-  gap: 10px;
-
-  align-items: center;
-
-  font-size: 13px;
-`;
-
-const SuccessIcon = styled.div`
-  width: 25px;
-  height: 25px;
-
-  flex: 0 0 25px;
+  border: 2px solid #cbd8c9;
+  border-top-color: #17382d;
 
   border-radius: 50%;
 
-  background: #287038;
+  animation: spinMini 0.7s linear infinite;
 
-  color: white;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  font-weight: 800;
-`;
-
-const RetryButton = styled.button`
-  display: block;
-
-  margin: auto;
-
-  padding: 12px 20px;
-
-  border: none;
-
-  border-radius: 8px;
-
-  background: #111;
-
-  color: white;
-
-  cursor: pointer;
-
-  transition: 0.2s;
-
-  &:hover {
-    background: #292929;
-  }
-`;
-
-const EmptyBox = styled.div`
-  grid-column: 1 / -1;
-
-  background: white;
-
-  border-radius: 18px;
-
-  padding: 60px 25px;
-
-  text-align: center;
-
-  border: 1px solid #eee;
-
-  h3 {
-    color: #222;
-
-    margin: 15px 0 8px;
-  }
-
-  p {
-    color: #888;
-
-    font-size: 13px;
-  }
-`;
-
-const EmptyIcon = styled.div`
-  display: flex;
-
-  justify-content: center;
-
-  color: #aaa;
-`;
-
-const ButtonSpinner = styled.span`
-  width: 18px;
-  height: 18px;
-
-  border: 2px solid rgba(255, 255, 255, 0.35);
-
-  border-top-color: white;
-
-  border-radius: 50%;
-
-  animation: buttonSpin 0.7s linear infinite;
-
-  @keyframes buttonSpin {
+  @keyframes spinMini {
     to {
       transform: rotate(360deg);
     }
   }
 `;
 
+const ButtonSpinner = styled.div`
+  width: 14px;
+  height: 14px;
+
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: white;
+
+  border-radius: 50%;
+
+  animation: spinButton 0.7s linear infinite;
+
+  @keyframes spinButton {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+`;
+
+const ErrorBox = styled.div`
+  max-width: 1180px;
+  margin: 0 auto 20px;
+  padding: 14px 16px;
+
+  border: 1px solid #ead8d6;
+  border-radius: 13px;
+
+  background: #faf1f0;
+  color: #a45a54;
+
+  font-size: 12px;
+  line-height: 1.5;
+`;
+
+const SuccessBox = styled.div`
+  max-width: 1180px;
+  margin: 0 auto 20px;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 14px 16px;
+
+  border: 1px solid #d5e5d4;
+  border-radius: 13px;
+
+  background: #edf5eb;
+  color: #4d7458;
+
+  font-size: 12px;
+  line-height: 1.5;
+`;
+
+const SuccessIcon = styled.div`
+  width: 27px;
+  height: 27px;
+
+  flex: 0 0 27px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 50%;
+  background: #17382d;
+  color: white;
+`;
+
+const RetryButton = styled.button`
+  display: block;
+  margin: 0 auto;
+  padding: 12px 20px;
+
+  border: 0;
+  border-radius: 10px;
+
+  background: #17382d;
+  color: white;
+
+  cursor: pointer;
+`;
+
+const EmptyBox = styled.div`
+  grid-column: 1 / -1;
+
+  padding: 70px 25px;
+
+  border: 1px dashed #ccd7ce;
+  border-radius: 22px;
+
+  background: rgba(255, 255, 255, 0.55);
+
+  text-align: center;
+
+  h3 {
+    margin: 18px 0 7px;
+    color: #294c3d;
+    font-size: 20px;
+  }
+
+  p {
+    margin: 0;
+    color: #829088;
+    font-size: 12px;
+  }
+`;
+
+const EmptyIcon = styled.div`
+  display: flex;
+  justify-content: center;
+  color: #6d8878;
+`;
+
 /* ============================================================
-   MODAL MÉDIA
+   MODAL
 ============================================================ */
 
 const MediaModal = styled.div`
   position: fixed;
-
   inset: 0;
-
-  z-index: 99999;
-
-  background: radial-gradient(
-    circle at center,
-    rgba(35, 35, 35, 0.98),
-    rgba(0, 0, 0, 0.99)
-  );
+  z-index: 9999;
 
   display: flex;
+  flex-direction: column;
 
-  align-items: center;
+  background: rgba(8, 18, 14, 0.96);
 
-  justify-content: center;
+  color: white;
 
-  padding: 75px 70px 95px;
+  animation: modalIn 0.2s ease;
 
-  animation: modalAppear 0.22s ease;
-
-  @keyframes modalAppear {
+  @keyframes modalIn {
     from {
       opacity: 0;
     }
@@ -3734,192 +3303,112 @@ const MediaModal = styled.div`
       opacity: 1;
     }
   }
-
-  @media (max-width: 700px) {
-    padding: 70px 12px 90px;
-  }
 `;
 
 const ModalTopBar = styled.div`
-  position: absolute;
+  min-height: 70px;
 
-  top: 0;
-  left: 0;
-  right: 0;
-
-  height: 65px;
-
-  padding: 0 22px;
-
-  display: flex;
-
+  display: grid;
+  grid-template-columns: 80px 1fr 80px;
   align-items: center;
 
-  justify-content: space-between;
+  gap: 15px;
 
-  gap: 20px;
-
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.78), transparent);
-
-  z-index: 20;
+  padding: 0 25px;
 
   @media (max-width: 600px) {
+    grid-template-columns: 55px 1fr 55px;
     padding: 0 12px;
   }
 `;
 
 const ModalCounter = styled.div`
-  min-width: 65px;
-
-  color: rgba(255, 255, 255, 0.7);
-
+  color: rgba(255, 255, 255, 0.55);
   font-size: 11px;
-
   font-weight: 700;
 `;
 
 const ModalTitle = styled.div`
-  flex: 1;
-
-  text-align: center;
-
-  color: white;
-
-  font-size: 13px;
-
-  font-weight: 700;
-
-  white-space: nowrap;
-
   overflow: hidden;
 
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+
+  text-align: center;
   text-overflow: ellipsis;
+  white-space: nowrap;
 `;
 
 const ModalCloseButton = styled.button`
-  width: 40px;
-  height: 40px;
+  justify-self: end;
 
-  flex: 0 0 40px;
+  width: 42px;
+  height: 42px;
 
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 50%;
 
   background: rgba(255, 255, 255, 0.08);
-
   color: white;
 
   cursor: pointer;
 
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  transition: 0.2s ease;
-
   &:hover {
-    background: rgba(255, 255, 255, 0.18);
-
-    transform: rotate(4deg) scale(1.04);
+    background: rgba(255, 255, 255, 0.15);
   }
 `;
 
 const ModalContent = styled.div`
   position: relative;
 
-  width: 100%;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
 
   display: flex;
-
   align-items: center;
-
   justify-content: center;
 
-  z-index: 5;
+  padding: 10px 100px 90px;
+
+  @media (max-width: 700px) {
+    padding: 10px 20px 90px;
+  }
 `;
 
 const ModalImage = styled.img`
-  max-width: min(94vw, 1200px);
+  max-width: 100%;
+  max-height: 100%;
 
-  max-height: 80vh;
-
-  width: auto;
-  height: auto;
+  display: block;
 
   object-fit: contain;
 
   border-radius: 8px;
 
-  user-select: none;
-
-  animation: mediaAppear 0.25s ease;
-
-  @keyframes mediaAppear {
-    from {
-      opacity: 0;
-
-      transform: scale(0.97);
-    }
-
-    to {
-      opacity: 1;
-
-      transform: scale(1);
-    }
-  }
-
-  @media (max-width: 700px) {
-    max-width: 96vw;
-
-    max-height: 73vh;
-  }
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.3);
 `;
-
-/* ============================================================
-   CUSTOM VIDEO MODALE
-============================================================ */
 
 const CustomVideoPlayer = styled.div`
   position: relative;
 
-  width: min(94vw, 1200px);
+  width: min(100%, 1000px);
+  height: min(100%, 650px);
 
-  height: min(76vh, 760px);
-
-  background: #050505;
-
-  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   overflow: hidden;
 
-  box-shadow: 0 35px 100px rgba(0, 0, 0, 0.55);
+  border-radius: 12px;
+  background: black;
 
-  animation: mediaAppear 0.25s ease;
-
-  @keyframes mediaAppear {
-    from {
-      opacity: 0;
-
-      transform: scale(0.97);
-    }
-
-    to {
-      opacity: 1;
-
-      transform: scale(1);
-    }
-  }
-
-  @media (max-width: 700px) {
-    width: 100%;
-
-    height: min(70vh, 650px);
-
-    border-radius: 9px;
-  }
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
 `;
 
 const ModalVideo = styled.video`
@@ -3929,300 +3418,183 @@ const ModalVideo = styled.video`
   display: block;
 
   object-fit: contain;
-
-  background: #050505;
+  background: black;
 
   cursor: pointer;
-
-  &::-webkit-media-controls {
-    display: none !important;
-  }
-
-  &::-webkit-media-controls-enclosure {
-    display: none !important;
-  }
 `;
 
 const VideoOverlayPlay = styled.button`
   position: absolute;
-
   left: 50%;
   top: 50%;
 
-  transform: translate(-50%, -50%);
-
-  width: 72px;
-  height: 72px;
-
-  border-radius: 50%;
-
-  border: 1px solid rgba(255, 255, 255, 0.3);
-
-  background: rgba(0, 0, 0, 0.45);
-
-  backdrop-filter: blur(12px);
-
-  color: white;
+  width: 76px;
+  height: 76px;
 
   display: flex;
-
   align-items: center;
   justify-content: center;
 
+  transform: translate(-50%, -50%)
+    scale(${({ $visible }) => ($visible ? "1" : "0.8")});
+
+  opacity: ${({ $visible }) => ($visible ? 1 : 0)};
+
+  pointer-events: ${({ $visible }) => ($visible ? "auto" : "none")};
+
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+
+  background: rgba(23, 56, 45, 0.9);
+  color: white;
+
   cursor: pointer;
 
-  opacity: ${(props) => (props.$visible ? 1 : 0)};
-
-  pointer-events: ${(props) => (props.$visible ? "auto" : "none")};
-
   transition:
-    opacity 0.25s ease,
-    transform 0.25s ease,
-    background 0.25s ease;
+    opacity 0.2s ease,
+    transform 0.2s ease;
 
-  z-index: 5;
-
-  &:hover {
-    transform: translate(-50%, -50%) scale(1.07);
-
-    background: rgba(0, 0, 0, 0.65);
-  }
-
-  @media (max-width: 600px) {
-    width: 62px;
-    height: 62px;
-  }
+  backdrop-filter: blur(8px);
 `;
 
 const VideoControls = styled.div`
   position: absolute;
-
   left: 0;
   right: 0;
   bottom: 0;
 
-  padding: 20px 18px 15px;
+  padding: 14px 17px;
 
   background: linear-gradient(
     to top,
     rgba(0, 0, 0, 0.88),
-    rgba(0, 0, 0, 0.3),
+    rgba(0, 0, 0, 0.15),
     transparent
   );
-
-  z-index: 10;
 `;
 
 const VideoProgressRow = styled.div`
-  display: flex;
-
+  display: grid;
+  grid-template-columns: 40px 1fr 40px;
   align-items: center;
-
   gap: 9px;
 `;
 
 const VideoTime = styled.span`
   color: rgba(255, 255, 255, 0.8);
-
   font-size: 9px;
-
-  min-width: 35px;
-
   font-variant-numeric: tabular-nums;
 `;
 
 const VideoRange = styled.input`
-  flex: 1;
-
   width: 100%;
+  height: 3px;
 
-  height: 4px;
-
-  appearance: none;
-
-  background: rgba(255, 255, 255, 0.25);
-
-  border-radius: 20px;
+  accent-color: white;
 
   cursor: pointer;
-
-  outline: none;
-
-  &::-webkit-slider-runnable-track {
-    height: 4px;
-
-    border-radius: 20px;
-
-    background: linear-gradient(
-      to right,
-      white ${(props) => props.value || 0}%,
-      rgba(255, 255, 255, 0.25) ${(props) => props.value || 0}%
-    );
-  }
-
-  &::-webkit-slider-thumb {
-    appearance: none;
-
-    margin-top: -4.5px;
-
-    width: 13px;
-    height: 13px;
-
-    border-radius: 50%;
-
-    background: white;
-
-    cursor: pointer;
-
-    box-shadow: 0 1px 7px rgba(0, 0, 0, 0.35);
-  }
-
-  &::-moz-range-thumb {
-    width: 13px;
-    height: 13px;
-
-    border-radius: 50%;
-
-    border: none;
-
-    background: white;
-
-    cursor: pointer;
-  }
 `;
 
 const VideoButtons = styled.div`
   display: flex;
-
   align-items: center;
-
   gap: 8px;
-
-  margin-top: 9px;
+  margin-top: 8px;
 `;
 
 const VideoControlButton = styled.button`
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
 
-  flex: 0 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-  border: none;
+  padding: 0;
 
+  border: 0;
   border-radius: 50%;
 
-  background: rgba(255, 255, 255, 0.1);
-
+  background: rgba(255, 255, 255, 0.12);
   color: white;
 
   cursor: pointer;
 
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  transition: 0.2s ease;
-
   &:hover {
     background: rgba(255, 255, 255, 0.2);
-
-    transform: scale(1.05);
   }
 `;
 
 const VideoControlTitle = styled.div`
   flex: 1;
 
-  min-width: 0;
-
-  color: rgba(255, 255, 255, 0.75);
-
-  font-size: 10px;
-
-  white-space: nowrap;
-
   overflow: hidden;
 
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 10px;
+
   text-overflow: ellipsis;
-
-  margin-left: 3px;
+  white-space: nowrap;
 `;
-
-/* ============================================================
-   NAVIGATION MODALE
-============================================================ */
 
 const ModalNavigation = styled.button`
   position: absolute;
-
-  ${(props) => (props.$left ? "left: 18px;" : "right: 18px;")}
-
   top: 50%;
+
+  ${({ $left }) => ($left ? "left: 25px;" : "right: 25px;")}
 
   transform: translateY(-50%);
 
-  width: 50px;
-  height: 50px;
+  width: 48px;
+  height: 48px;
 
   display: flex;
-
   align-items: center;
   justify-content: center;
 
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 50%;
 
-  border: 1px solid rgba(255, 255, 255, 0.2);
-
-  background: rgba(255, 255, 255, 0.08);
-
-  backdrop-filter: blur(12px);
-
+  background: rgba(255, 255, 255, 0.09);
   color: white;
 
   cursor: pointer;
 
-  z-index: 30;
-
-  transition: 0.2s ease;
+  backdrop-filter: blur(10px);
 
   &:hover {
-    background: rgba(255, 255, 255, 0.18);
-
-    transform: translateY(-50%) scale(1.05);
+    background: rgba(255, 255, 255, 0.17);
   }
 
   @media (max-width: 700px) {
-    width: 42px;
-    height: 42px;
+    ${({ $left }) => ($left ? "left: 8px;" : "right: 8px;")}
 
-    ${(props) => (props.$left ? "left: 7px;" : "right: 7px;")}
+    width: 40px;
+    height: 40px;
   }
 `;
 
 const ModalThumbnails = styled.div`
   position: absolute;
-
   left: 50%;
-  bottom: 32px;
+  bottom: 40px;
+
+  display: flex;
+  gap: 7px;
 
   transform: translateX(-50%);
 
-  display: flex;
-
-  align-items: center;
-
-  gap: 7px;
-
-  max-width: calc(100vw - 30px);
+  max-width: calc(100% - 80px);
 
   overflow-x: auto;
 
   padding: 5px;
 
-  z-index: 25;
+  border-radius: 11px;
 
-  scrollbar-width: none;
+  background: rgba(0, 0, 0, 0.45);
+
+  backdrop-filter: blur(10px);
 
   &::-webkit-scrollbar {
     display: none;
@@ -4230,44 +3602,41 @@ const ModalThumbnails = styled.div`
 `;
 
 const ModalThumbnail = styled.button`
-  width: 50px;
-  height: 58px;
+  position: relative;
 
-  flex: 0 0 auto;
+  width: 54px;
+  height: 40px;
 
-  padding: 0;
+  flex: 0 0 54px;
 
   overflow: hidden;
 
+  padding: 0;
+
+  border: 2px solid ${({ $active }) => ($active ? "white" : "transparent")};
+
   border-radius: 7px;
 
-  border: 2px solid
-    ${(props) => (props.$active ? "#fff" : "rgba(255,255,255,0.2)")};
-
-  background: #151515;
+  background: rgba(255, 255, 255, 0.08);
 
   cursor: pointer;
 
-  opacity: ${(props) => (props.$active ? 1 : 0.65)};
+  opacity: ${({ $active }) => ($active ? 1 : 0.6)};
 
   transition:
     opacity 0.2s ease,
-    transform 0.2s ease;
+    border 0.2s ease;
 
   &:hover {
     opacity: 1;
-
-    transform: translateY(-2px);
   }
 `;
 
 const ThumbnailImage = styled.img`
   width: 100%;
   height: 100%;
-
-  object-fit: cover;
-
   display: block;
+  object-fit: cover;
 `;
 
 const ThumbnailVideoIcon = styled.div`
@@ -4275,45 +3644,39 @@ const ThumbnailVideoIcon = styled.div`
   height: 100%;
 
   display: flex;
-
   align-items: center;
   justify-content: center;
 
+  background: #17382d;
   color: white;
-
-  background: radial-gradient(circle, #333, #111);
 `;
 
 const ModalKeyboardHint = styled.div`
   position: absolute;
+  right: 22px;
+  bottom: 16px;
 
-  bottom: 9px;
-
-  left: 50%;
-
-  transform: translateX(-50%);
-
-  color: rgba(255, 255, 255, 0.45);
-
+  color: rgba(255, 255, 255, 0.4);
   font-size: 9px;
-
-  white-space: nowrap;
-
-  z-index: 25;
 
   span {
     display: inline-flex;
+    align-items: center;
+    justify-content: center;
 
-    padding: 3px 5px;
-
-    border: 1px solid rgba(255, 255, 255, 0.18);
-
-    border-radius: 4px;
+    min-width: 25px;
+    height: 18px;
 
     margin-right: 4px;
+    padding: 0 4px;
+
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 4px;
+
+    font-size: 8px;
   }
 
-  @media (max-width: 600px) {
+  @media (max-width: 700px) {
     display: none;
   }
 `;
