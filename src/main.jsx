@@ -58,7 +58,7 @@ import AdminLivreurs from "./pages/AdminLivreurs";
 import "./i18n";
 import Precommande from "./pages/Precommande";
 import ReceptionPrecommande from "./pages/ReceptionPrecommande";
-
+import PageCommandeConfirmee from "./pages/PageCommandeConfirmee";
 const PublicLayout = ({ children }) => {
   const location = useLocation();
   const heroPage = location.pathname === "/";
@@ -138,6 +138,15 @@ createRoot(document.getElementById("root")).render(
                 </PublicLayout>
               }
             />
+            <Route
+              path="/merci"
+              element={
+                <PublicLayout>
+                  <PageCommandeConfirmee />
+                </PublicLayout>
+              }
+            />
+
             <Route
               path="/new"
               element={
