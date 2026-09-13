@@ -1316,6 +1316,15 @@ export default function CompteClient() {
 
                 const hasLivreur = Boolean(commande.livraison?.livreurId);
 
+                const canTrack =
+                  commande.modePaiement === "cod"
+                    ? ["CONFIRMED", "SHIPPED", "DELIVERED"].includes(
+                        commande.statusCommande,
+                      )
+                    : ["PAID", "SHIPPED", "DELIVERED"].includes(
+                        commande.statusCommande,
+                      );
+
                 return (
                   <OrderCard key={commande._id}>
                     <OrderHeader
@@ -1461,38 +1470,39 @@ export default function CompteClient() {
                           </InstallmentPaymentBox>
                         )}
 
-                        <TrackingAction>
-                          <TrackingActionInfo>
-                            <TrackingActionIcon $active={hasLivreur}>
-                              {hasLivreur ? <FiTruck /> : <FiMapPin />}
-                            </TrackingActionIcon>
+                        {canTrack && (
+                          <TrackingAction>
+                            <TrackingActionInfo>
+                              <TrackingActionIcon $active={hasLivreur}>
+                                {hasLivreur ? <FiTruck /> : <FiMapPin />}
+                              </TrackingActionIcon>
 
-                            <div>
-                              <TrackingActionTitle>
-                                {hasLivreur
-                                  ? "Votre livraison est en cours"
-                                  : "Suivre votre commande"}
-                              </TrackingActionTitle>
+                              <div>
+                                <TrackingActionTitle>
+                                  {hasLivreur
+                                    ? "Votre livraison est en cours"
+                                    : "Suivre votre commande"}
+                                </TrackingActionTitle>
 
-                              <TrackingActionText>
-                                {hasLivreur
-                                  ? "Consultez la position de votre livreur en temps réel."
-                                  : "Consultez l'état actuel de votre commande."}
-                              </TrackingActionText>
-                            </div>
-                          </TrackingActionInfo>
+                                <TrackingActionText>
+                                  {hasLivreur
+                                    ? "Consultez la position de votre livreur en temps réel."
+                                    : "Consultez l'état actuel de votre commande."}
+                                </TrackingActionText>
+                              </div>
+                            </TrackingActionInfo>
 
-                          <TrackButton
-                            type="button"
-                            onClick={() =>
-                              navigate(`/suivi-commande/${commande._id}`)
-                            }
-                          >
-                            {hasLivreur ? "Suivre" : "Voir le suivi"}
-
-                            <FiArrowRight />
-                          </TrackButton>
-                        </TrackingAction>
+                            <TrackButton
+                              type="button"
+                              onClick={() =>
+                                navigate(`/suivi-commande/${commande._id}`)
+                              }
+                            >
+                              {hasLivreur ? "Suivre" : "Voir le suivi"}
+                              <FiArrowRight />
+                            </TrackButton>
+                          </TrackingAction>
+                        )}
                       </OrderDetailsWrapper>
                     )}
                   </OrderCard>
