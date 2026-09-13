@@ -274,7 +274,7 @@ export default function PaiementSemiManuel() {
       }
 
       toutSupprimer();
-      navigate("/merci", { state: { commandeId: id } });
+      navigate(`/merci/${id}`);
     } catch (err) {
       console.error(err);
       alert("Erreur serveur");
