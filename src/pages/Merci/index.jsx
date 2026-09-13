@@ -1099,22 +1099,17 @@ const SecondaryModalButton = styled.button`
 
 export default function Merci() {
   const navigate = useNavigate();
-
   const { id } = useParams();
-
   const { theme } = useContext(ThemeContext);
 
   const $isdark = theme !== "light";
 
   const [commande, setCommande] = useState(null);
-
   const [loading, setLoading] = useState(true);
-
   const [showModal, setShowModal] = useState(false);
-
   const [token, setToken] = useState(null);
-
   const [rechercheLivreur, setRechercheLivreur] = useState(false);
+  const [actualisation, setActualisation] = useState(false);
 
   const API_URL = import.meta.env.VITE_API_URL;
 
@@ -1134,62 +1129,205 @@ export default function Merci() {
   }, [navigate]);
 
   /* =========================================================
-     FETCH COMMANDE
+     RECUPERER LA COMMANDE
+  ========================================================= */
+
+  const recupererCommande = async ({
+    afficherLoader = false,
+    ouvrirErreur = true,
+  } = {}) => {
+    if (!id || !token) return null;
+
+    if (afficherLoader) {
+      setActualisation(true);
+    }
+
+    try {
+      const res = await fetch(
+        `${API_URL}/api/commandes/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(
+          data.message || "Erreur serveur"
+        );
+      }
+
+      /*
+       * Compatible avec :
+       *
+       * res.json(commande)
+       *
+       * ou :
+       *
+       * res.json({ commande })
+       */
+      const commandeActualisee =
+        data.commande || data;
+
+      setCommande(commandeActualisee);
+
+      return commandeActualisee;
+    } catch (err) {
+      console.error(
+        "RECUPERATION COMMANDE ERROR:",
+        err
+      );
+
+      if (ouvrirErreur) {
+        alert(
+          err.message ||
+            "Impossible de récupérer la commande"
+        );
+      }
+
+      return null;
+    } finally {
+      if (afficherLoader) {
+        setActualisation(false);
+      }
+    }
+  };
+
+  /* =========================================================
+     PREMIER CHARGEMENT
   ========================================================= */
 
   useEffect(() => {
     if (!id || !token) return;
 
-    const fetchCommande = async () => {
-      try {
-        const res = await fetch(
-          `${API_URL}/api/commandes/${id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+    const charger = async () => {
+      const resultat = await recupererCommande({
+        afficherLoader: false,
+        ouvrirErreur: true,
+      });
 
-        const data = await res.json();
-
-        if (!res.ok) {
-          throw new Error(
-            data.message || "Erreur serveur"
-          );
-        }
-
-        /*
-         * Compatible avec :
-         * res.json(commande)
-         *
-         * ou :
-         * res.json({ commande })
-         */
-        setCommande(data.commande || data);
-      } catch (err) {
-        console.error(err);
-
-        alert(
-          err.message ||
-            "Impossible de récupérer la commande"
-        );
-
+      if (!resultat) {
         navigate("/");
-      } finally {
-        setLoading(false);
       }
+
+      setLoading(false);
     };
 
-    fetchCommande();
-  }, [id, token, navigate, API_URL]);
+    charger();
+  }, [id, token]);
+
+  /* =========================================================
+     ACTUALISATION AUTOMATIQUE
+     
+     IMPORTANT :
+     L'admin peut confirmer la commande pendant que
+     le client reste sur cette page.
+
+     Toutes les 5 secondes, on récupère donc l'état
+     réel depuis le serveur.
+  ========================================================= */
+
+  useEffect(() => {
+    if (!id || !token) return;
+
+    const interval = setInterval(async () => {
+      const commandeActualisee =
+        await recupererCommande({
+          afficherLoader: false,
+          ouvrirErreur: false,
+        });
+
+      /*
+       * Si l'administration vient de confirmer
+       * la commande, on ferme automatiquement
+       * le modal de validation.
+       */
+      if (commandeActualisee) {
+        const status =
+          commandeActualisee.statusCommande;
+
+        const confirmee =
+          status === "PAID" ||
+          status === "CONFIRMED";
+
+        if (confirmee) {
+          setShowModal(false);
+        }
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [id, token]);
+
+  /* =========================================================
+     STATUT DE CONFIRMATION
+  ========================================================= */
+
+  const estCommandeConfirmee = (commandeData) => {
+    if (!commandeData) return false;
+
+    /*
+     * Paiement total :
+     * PAID
+     *
+     * 3 tranches :
+     * PAID uniquement lorsque toutes les
+     * étapes ont été validées.
+     *
+     * Cash :
+     * CONFIRMED après confirmation admin.
+     */
+    return (
+      commandeData.statusCommande === "PAID" ||
+      commandeData.statusCommande === "CONFIRMED"
+    );
+  };
+
+  /* =========================================================
+     ACTUALISER MANUELLEMENT
+  ========================================================= */
+
+  const actualiserCommande = async () => {
+    const commandeActualisee =
+      await recupererCommande({
+        afficherLoader: true,
+        ouvrirErreur: true,
+      });
+
+    if (!commandeActualisee) {
+      return;
+    }
+
+    const confirmee =
+      estCommandeConfirmee(
+        commandeActualisee
+      );
+
+    if (confirmee) {
+      /*
+       * La commande vient d'être confirmée.
+       */
+      setShowModal(false);
+
+      return;
+    }
+
+    /*
+     * Elle n'est toujours pas confirmée.
+     * On garde le modal ouvert.
+     */
+    setShowModal(true);
+  };
 
   /* =========================================================
      RECHERCHER UN LIVREUR
   ========================================================= */
 
   const chercherLivreur = async () => {
-    if (!id || !token || !commande) {
+    if (!id || !token) {
       alert(
         "Commande introuvable ou utilisateur non authentifié."
       );
@@ -1199,32 +1337,42 @@ export default function Merci() {
     /*
      * IMPORTANT :
      *
-     * Paiement total :
-     * statusCommande = PAID
+     * On ne fait PAS confiance uniquement à l'état
+     * actuellement présent dans React.
      *
-     * Paiement 3 tranches :
-     * statusCommande = PAID uniquement
-     * lorsque toutes les tranches sont validées.
-     *
-     * Cash :
-     * statusCommande = CONFIRMED après
-     * confirmation par l'administration.
+     * On demande d'abord au serveur le statut
+     * le plus récent.
      */
-    const commandeConfirmee =
-      commande.statusCommande === "PAID" ||
-      commande.statusCommande === "CONFIRMED";
+    const commandeActualisee =
+      await recupererCommande({
+        afficherLoader: true,
+        ouvrirErreur: true,
+      });
+
+    if (!commandeActualisee) {
+      return;
+    }
 
     /*
-     * Si l'administration n'a pas encore confirmé,
-     * on ouvre simplement le modal.
-     *
-     * AUCUN appel à l'API livreur ici.
+     * On vérifie le statut fraîchement récupéré.
+     */
+    const commandeConfirmee =
+      estCommandeConfirmee(
+        commandeActualisee
+      );
+
+    /*
+     * L'admin n'a pas encore confirmé.
      */
     if (!commandeConfirmee) {
       setShowModal(true);
       return;
     }
 
+    /*
+     * Ici la commande est réellement confirmée
+     * côté serveur.
+     */
     setRechercheLivreur(true);
 
     try {
@@ -1232,7 +1380,6 @@ export default function Merci() {
         `${API_URL}/api/livreurs/commande/${id}/rechercher-livreur`,
         {
           method: "PUT",
-
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
@@ -1251,13 +1398,20 @@ export default function Merci() {
         return;
       }
 
-      setCommande(data.commande || data);
+      /*
+       * Mise à jour locale si le backend retourne
+       * la commande.
+       */
+      setCommande(
+        data.commande || data
+      );
 
       /*
-       * Une fois la recherche lancée,
-       * on va vers le suivi de commande.
+       * Redirection vers le suivi.
        */
-      navigate(`/suivi-commande/${id}`);
+      navigate(
+        `/suivi-commande/${id}`
+      );
     } catch (error) {
       console.error(
         "RECHERCHE LIVREUR ERROR:",
@@ -1304,11 +1458,15 @@ export default function Merci() {
      DATA
   ========================================================= */
 
-  const paiements = Array.isArray(commande.paiements)
+  const paiements = Array.isArray(
+    commande.paiements
+  )
     ? commande.paiements
     : [];
 
-  const panier = Array.isArray(commande.panier)
+  const panier = Array.isArray(
+    commande.panier
+  )
     ? commande.panier
     : [];
 
@@ -1322,34 +1480,35 @@ export default function Merci() {
   const totalSteps = paiements.length;
 
   /*
-   * Pour un paiement total :
-   * une seule étape = montant total.
-   *
-   * Pour 3 tranches :
-   * 3 étapes.
-   *
-   * Pour cash :
-   * aucune étape de paiement.
+   * Montant réellement confirmé.
    */
   const totalPaid = paiements
-    .filter((p) => p.status === "PAID")
+    .filter(
+      (p) => p.status === "PAID"
+    )
     .reduce(
       (acc, p) =>
-        acc + Number(p.amountExpected || 0),
+        acc +
+        Number(
+          p.amountExpected || 0
+        ),
       0
     );
 
   const remaining = Math.max(
     0,
-    Number(commande.total || 0) - totalPaid
+    Number(commande.total || 0) -
+      totalPaid
   );
 
   const progress =
     totalSteps > 0
       ? Math.round(
-          (paidSteps / totalSteps) * 100
+          (paidSteps / totalSteps) *
+            100
         )
-      : commande.statusCommande === "CONFIRMED"
+      : commande.statusCommande ===
+        "CONFIRMED"
         ? 100
         : 0;
 
@@ -1358,7 +1517,8 @@ export default function Merci() {
   ========================================================= */
 
   const statusCommande =
-    commande.statusCommande || "PENDING";
+    commande.statusCommande ||
+    "PENDING";
 
   const commandeConfirmee =
     statusCommande === "PAID" ||
@@ -1394,13 +1554,15 @@ export default function Merci() {
 
           <Subtitle $isdark={$isdark}>
             Votre commande est officiellement
-            enregistrée. Retrouvez ci-dessous son
-            récapitulatif ainsi que l'avancement
-            de votre commande.
+            enregistrée. Retrouvez ci-dessous
+            son récapitulatif ainsi que
+            l'avancement de votre commande.
           </Subtitle>
 
           {id && (
-            <OrderReference $isdark={$isdark}>
+            <OrderReference
+              $isdark={$isdark}
+            >
               <FaStar />
 
               COMMANDE #
@@ -1409,6 +1571,7 @@ export default function Merci() {
                 .toUpperCase()}
             </OrderReference>
           )}
+
         </Hero>
 
         {/* =================================================
@@ -1417,21 +1580,32 @@ export default function Merci() {
 
         <FindDriverButton
           onClick={chercherLivreur}
-          disabled={rechercheLivreur}
+          disabled={
+            rechercheLivreur ||
+            actualisation
+          }
         >
-          <FaLocationArrow />
+
+          {rechercheLivreur ||
+          actualisation ? (
+            <FaClock />
+          ) : (
+            <FaLocationArrow />
+          )}
 
           <span>
             {rechercheLivreur
               ? "Recherche en cours..."
-              : commandeConfirmee
-                ? "Chercher un livreur maintenant"
+              : actualisation
+                ? "Actualisation..."
                 : "Chercher un livreur maintenant"}
           </span>
 
-          {!rechercheLivreur && (
-            <FaArrowRight />
-          )}
+          {!rechercheLivreur &&
+            !actualisation && (
+              <FaArrowRight />
+            )}
+
         </FindDriverButton>
 
         {/* =================================================
@@ -1450,7 +1624,9 @@ export default function Merci() {
 
               <CardTop>
 
-                <CardIcon $isdark={$isdark}>
+                <CardIcon
+                  $isdark={$isdark}
+                >
                   <FaBox />
                 </CardIcon>
 
@@ -1460,7 +1636,9 @@ export default function Merci() {
                     Votre commande
                   </CardTitle>
 
-                  <CardLabel $isdark={$isdark}>
+                  <CardLabel
+                    $isdark={$isdark}
+                  >
                     Récapitulatif
                   </CardLabel>
 
@@ -1469,46 +1647,59 @@ export default function Merci() {
               </CardTop>
 
               {panier.length > 0 ? (
-                panier.map((item, index) => (
-                  <Line
-                    key={
-                      item.produitId ||
-                      item._id ||
-                      index
-                    }
-                    $isdark={$isdark}
-                  >
+                panier.map(
+                  (item, index) => (
+                    <Line
+                      key={
+                        item.produitId ||
+                        item._id ||
+                        index
+                      }
+                      $isdark={$isdark}
+                    >
 
-                    <ItemInfo>
+                      <ItemInfo>
 
-                      <ItemName>
-                        {item.nom ||
-                          item.produitId?.nom ||
-                          "Produit"}
-                      </ItemName>
+                        <ItemName>
+                          {item.nom ||
+                            item
+                              .produitId
+                              ?.nom ||
+                            "Produit"}
+                        </ItemName>
 
-                      <ItemQuantity
-                        $isdark={$isdark}
-                      >
-                        Quantité :{" "}
-                        {item.quantite || 0}
-                      </ItemQuantity>
+                        <ItemQuantity
+                          $isdark={$isdark}
+                        >
+                          Quantité :{" "}
+                          {item.quantite ||
+                            0}
+                        </ItemQuantity>
 
-                    </ItemInfo>
+                      </ItemInfo>
 
-                    <ItemPrice>
-                      {(
-                        Number(item.prix || 0) *
-                        Number(item.quantite || 0)
-                      ).toLocaleString()}{" "}
-                      FCFA
-                    </ItemPrice>
+                      <ItemPrice>
+                        {(
+                          Number(
+                            item.prix || 0
+                          ) *
+                          Number(
+                            item.quantite ||
+                              0
+                          )
+                        ).toLocaleString()}{" "}
+                        FCFA
+                      </ItemPrice>
 
-                  </Line>
-                ))
+                    </Line>
+                  )
+                )
               ) : (
-                <Line $isdark={$isdark}>
+                <Line
+                  $isdark={$isdark}
+                >
                   <ItemInfo>
+
                     <ItemName>
                       Commande enregistrée
                     </ItemName>
@@ -1516,14 +1707,17 @@ export default function Merci() {
                     <ItemQuantity
                       $isdark={$isdark}
                     >
-                      Votre commande a bien été
-                      enregistrée.
+                      Votre commande a
+                      bien été enregistrée.
                     </ItemQuantity>
+
                   </ItemInfo>
                 </Line>
               )}
 
-              <TotalBox $isdark={$isdark}>
+              <TotalBox
+                $isdark={$isdark}
+              >
 
                 <TotalLabel>
                   Total commande
@@ -1608,7 +1802,9 @@ export default function Merci() {
               {totalSteps > 0 && (
                 <ProgressBar>
                   <Progress
-                    $percent={progress}
+                    $percent={
+                      progress
+                    }
                   />
                 </ProgressBar>
               )}
@@ -1641,7 +1837,9 @@ export default function Merci() {
 
               <CardTop>
 
-                <CardIcon $isdark={$isdark}>
+                <CardIcon
+                  $isdark={$isdark}
+                >
                   <FaCheckCircle />
                 </CardIcon>
 
@@ -1651,7 +1849,9 @@ export default function Merci() {
                     Progression
                   </CardTitle>
 
-                  <CardLabel $isdark={$isdark}>
+                  <CardLabel
+                    $isdark={$isdark}
+                  >
                     Suivi du paiement
                   </CardLabel>
 
@@ -1662,67 +1862,82 @@ export default function Merci() {
               {paiements.length > 0 ? (
                 <Steps>
 
-                  {paiements.map((p, index) => {
+                  {paiements.map(
+                    (p, index) => {
 
-                    const paid =
-                      p.status === "PAID";
+                      const paid =
+                        p.status ===
+                        "PAID";
 
-                    const pending =
-                      p.status === "PENDING";
+                      const pending =
+                        p.status ===
+                        "PENDING";
 
-                    return (
-                      <Step
-                        key={
-                          p._id ||
-                          `${p.step}-${index}`
-                        }
-                        $isdark={$isdark}
-                      >
-
-                        <StepIcon
-                          $paid={paid}
-                          $isdark={$isdark}
+                      return (
+                        <Step
+                          key={
+                            p._id ||
+                            `${p.step}-${index}`
+                          }
+                          $isdark={
+                            $isdark
+                          }
                         >
-                          {paid ? (
-                            <FaCheckCircle />
-                          ) : pending ? (
-                            <FaClock />
-                          ) : (
-                            <FaRegCircle />
-                          )}
-                        </StepIcon>
 
-                        <StepInfo>
-
-                          <StepTitle>
-                            Étape {p.step}
-                          </StepTitle>
-
-                          <StepAmount
-                            $isdark={$isdark}
+                          <StepIcon
+                            $paid={
+                              paid
+                            }
+                            $isdark={
+                              $isdark
+                            }
                           >
-                            {Number(
-                              p.amountExpected ||
-                                0
-                            ).toLocaleString()}{" "}
-                            FCFA
-                          </StepAmount>
+                            {paid ? (
+                              <FaCheckCircle />
+                            ) : pending ? (
+                              <FaClock />
+                            ) : (
+                              <FaRegCircle />
+                            )}
+                          </StepIcon>
 
-                        </StepInfo>
+                          <StepInfo>
 
-                        <Badge
-                          $status={p.status}
-                        >
-                          {paid
-                            ? "PAYÉ"
-                            : pending
-                              ? "EN VÉRIFICATION"
-                              : "EN ATTENTE"}
-                        </Badge>
+                            <StepTitle>
+                              Étape{" "}
+                              {p.step}
+                            </StepTitle>
 
-                      </Step>
-                    );
-                  })}
+                            <StepAmount
+                              $isdark={
+                                $isdark
+                              }
+                            >
+                              {Number(
+                                p.amountExpected ||
+                                  0
+                              ).toLocaleString()}{" "}
+                              FCFA
+                            </StepAmount>
+
+                          </StepInfo>
+
+                          <Badge
+                            $status={
+                              p.status
+                            }
+                          >
+                            {paid
+                              ? "PAYÉ"
+                              : pending
+                                ? "EN VÉRIFICATION"
+                                : "EN ATTENTE"}
+                          </Badge>
+
+                        </Step>
+                      );
+                    }
+                  )}
 
                 </Steps>
               ) : (
@@ -1732,6 +1947,7 @@ export default function Merci() {
                     marginTop: 0,
                   }}
                 >
+
                   <FaClock />
 
                   <span>
@@ -1740,19 +1956,23 @@ export default function Merci() {
                       ? "Votre commande sera réglée à la livraison."
                       : "Les informations de paiement sont en cours de traitement."}
                   </span>
+
                 </Security>
               )}
 
-              <Security $isdark={$isdark}>
+              <Security
+                $isdark={$isdark}
+              >
 
                 <FaShieldAlt />
 
                 <span>
-                  Vos paiements sont suivis par
-                  notre équipe. Une étape affichée
-                  « EN VÉRIFICATION » doit encore
-                  être confirmée avant d'être
-                  considérée comme payée.
+                  Vos paiements sont suivis
+                  par notre équipe. Une étape
+                  affichée « EN VÉRIFICATION »
+                  doit encore être confirmée
+                  avant d'être considérée
+                  comme payée.
                 </span>
 
               </Security>
@@ -1765,7 +1985,9 @@ export default function Merci() {
 
             <Button
               $isdark={$isdark}
-              onClick={() => navigate("/compte")}
+              onClick={() =>
+                navigate("/compte")
+              }
             >
               Accéder à mon espace compte
 
@@ -1783,35 +2005,62 @@ export default function Merci() {
         {showModal && (
           <Modal>
 
-            <ModalContent $isdark={$isdark}>
+            <ModalContent
+              $isdark={$isdark}
+            >
 
               <ModalIcon>
                 <FaClock />
               </ModalIcon>
 
               <ModalTitle>
-                Commande en cours de vérification
+                Commande en cours de
+                vérification
               </ModalTitle>
 
-              <ModalText $isdark={$isdark}>
-                Votre commande est bien enregistrée.
-                Votre paiement doit encore être
-                vérifié et confirmé par notre équipe.
+              <ModalText
+                $isdark={$isdark}
+              >
+                Votre commande est bien
+                enregistrée, mais elle n'est
+                pas encore confirmée par
+                notre équipe.
                 <br />
                 <br />
-                Dès que votre commande sera confirmée,
-                vous pourrez lancer la recherche d'un
-                livreur.
+                La page vérifie
+                automatiquement votre
+                commande. Dès que
+                l'administration confirme
+                votre paiement, vous pourrez
+                rechercher un livreur.
               </ModalText>
 
+              {/* ACTUALISATION MANUELLE */}
+
               <CloseModal
+                $isdark={$isdark}
+                onClick={
+                  actualiserCommande
+                }
+                disabled={actualisation}
+              >
+                {actualisation
+                  ? "Actualisation..."
+                  : "Actualiser la commande"}
+              </CloseModal>
+
+              {/* COMPTE */}
+
+              <SecondaryModalButton
                 $isdark={$isdark}
                 onClick={() =>
                   navigate("/compte")
                 }
               >
                 Accéder à mon espace compte
-              </CloseModal>
+              </SecondaryModalButton>
+
+              {/* RESTER */}
 
               <SecondaryModalButton
                 $isdark={$isdark}
