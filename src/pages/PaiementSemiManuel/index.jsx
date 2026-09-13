@@ -18,7 +18,9 @@ const Page = styled.main`
   background: ${({ $isdark }) => ($isdark ? "#0f0f0f" : "#f7f7f7")};
   color: ${({ $isdark }) => ($isdark ? "#f5f5f5" : "#111")};
   min-height: 100vh;
-  transition: background 0.3s ease, color 0.3s ease;
+  transition:
+    background 0.3s ease,
+    color 0.3s ease;
 `;
 
 const LoaderWrapper = styled.div`
@@ -135,9 +137,17 @@ const Badge = styled.span`
   font-size: 0.8rem;
   font-weight: 600;
   background: ${({ status }) =>
-    status === "PAID" ? "#dcfce7" : status === "PENDING" ? "#fef3c7" : "#fee2e2"};
+    status === "PAID"
+      ? "#dcfce7"
+      : status === "PENDING"
+        ? "#fef3c7"
+        : "#fee2e2"};
   color: ${({ status }) =>
-    status === "PAID" ? "#166534" : status === "PENDING" ? "#92400e" : "#991b1b"};
+    status === "PAID"
+      ? "#166534"
+      : status === "PENDING"
+        ? "#92400e"
+        : "#991b1b"};
 `;
 
 const ProgressBar = styled.div`
@@ -193,6 +203,7 @@ export default function PaiementSemiManuel() {
   const [service, setService] = useState("orange");
   const [step, setStep] = useState(1);
   const [token, setToken] = useState(null);
+  const [sending, setSending] = useState(false);
 
   const { toutSupprimer } = useContext(PanierContext);
   const { theme } = useContext(ThemeContext);
@@ -234,6 +245,8 @@ export default function PaiementSemiManuel() {
   /* PAIEMENT */
   const handlePaiement = async (e) => {
     e.preventDefault();
+    if (sending) return;
+    setSending(true);
     if (!token) {
       navigate("/login");
       return;
@@ -252,6 +265,8 @@ export default function PaiementSemiManuel() {
     }
 
     try {
+      setSending(true);
+
       const res = await fetch(`${API_URL}/api/commandes/${id}/paiement-semi`, {
         method: "POST",
         headers: {
@@ -278,6 +293,9 @@ export default function PaiementSemiManuel() {
     } catch (err) {
       console.error(err);
       alert("Erreur serveur");
+
+    } finally {
+      setSending(false);
     }
   };
 
@@ -291,7 +309,9 @@ export default function PaiementSemiManuel() {
   if (!commande) return <Page $isdark={$isdark}>Commande introuvable</Page>;
 
   const totalSteps = commande.paiements.length || 1;
-  const paidSteps = commande.paiements.filter((p) => p.status === "PAID").length;
+  const paidSteps = commande.paiements.filter(
+    (p) => p.status === "PAID",
+  ).length;
   const progressPercent = (paidSteps / totalSteps) * 100;
 
   return (
@@ -307,7 +327,9 @@ export default function PaiementSemiManuel() {
             <PaymentLogo src="/logosorange.png" alt="Orange Money" />
             <div>
               <PaymentNumber>0700247693</PaymentNumber>
-              <small>Envoyez via <strong>Orange Money</strong></small>
+              <small>
+                Envoyez via <strong>Orange Money</strong>
+              </small>
             </div>
           </PaymentCard>
 
@@ -315,7 +337,9 @@ export default function PaiementSemiManuel() {
             <PaymentLogo src="/logoswave.jpg" alt="Wave" />
             <div>
               <PaymentNumber>0700247693</PaymentNumber>
-              <small>Paiement via <strong>Wave</strong></small>
+              <small>
+                Paiement via <strong>Wave</strong>
+              </small>
             </div>
           </PaymentCard>
         </PaymentCards>
@@ -340,9 +364,7 @@ export default function PaiementSemiManuel() {
 
         <Line>
           <strong>Total</strong>
-          <strong>
-            {(commande.total ).toLocaleString()} FCFA
-          </strong>
+          <strong>{commande.total.toLocaleString()} FCFA</strong>
         </Line>
       </Box>
 
@@ -437,7 +459,7 @@ export default function PaiementSemiManuel() {
               commande.paiements.find((p) => p.step === step)?.status === "PAID"
             }
           >
-            Envoyer pour validation
+            {sending ? "Envoi..." : "Soumettre le paiement"}
           </Button>
         </form>
       </Box>
