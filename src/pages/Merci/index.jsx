@@ -1,20 +1,44 @@
-import { useEffect, useState, useContext } from "react";
-import { useNavigate, useParams} from "react-router-dom";
+import React, { useContext, useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import styled, { keyframes } from "styled-components";
+
 import {
-  FaBox,
-  FaCheckCircle,
-  FaRegCircle,
   FaArrowRight,
-  FaShieldAlt,
-  FaStar,
+  FaBoxOpen,
+  FaCheck,
+  FaCheckCircle,
+  FaClock,
+  FaCreditCard,
+  FaExclamationCircle,
   FaLocationArrow,
+  FaLock,
+  FaMobileAlt,
+  FaReceipt,
+  FaShieldAlt,
+  FaShoppingBag,
+  FaTruck,
+  FaWallet,
+  FaWaveSquare,
 } from "react-icons/fa";
-import { ThemeContext } from "../../Utils/Context";
+
+// ⚠️ GARDE TON IMPORT ACTUEL DE ThemeContext SI LE CHEMIN EST DIFFÉRENT
+import { ThemeContext } from "../context/ThemeContext";
 
 /* =========================================================
    ANIMATIONS
 ========================================================= */
+
+const fadeUp = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
 
 const spin = keyframes`
   to {
@@ -22,102 +46,34 @@ const spin = keyframes`
   }
 `;
 
-const reveal = keyframes`
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-`;
-
-const scaleIn = keyframes`
-  from {
-    opacity: 0;
-    transform: scale(.75);
-  }
-  to {
-    opacity: 1;
+const pulse = keyframes`
+  0%,
+  100% {
     transform: scale(1);
   }
-`;
 
-const shimmer = keyframes`
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
+  50% {
+    transform: scale(1.05);
   }
 `;
 
 /* =========================================================
-   GLOBAL
+   PAGE
 ========================================================= */
 
-const Page = styled.main`
+const Page = styled.div`
   min-height: 100vh;
-  padding: 40px 22px 80px;
-  box-sizing: border-box;
+  padding: 35px 20px 80px;
 
-  background: ${({ $isdark }) =>
-    $isdark
-      ? `
-        radial-gradient(
-          circle at 50% -20%,
-          #29251d 0%,
-          #11100e 35%,
-          #080808 75%
-        )
-      `
-      : `
-        radial-gradient(
-          circle at 50% -20%,
-          #fffdf7 0%,
-          #f7f3ea 38%,
-          #eee9df 100%
-        )
-      `};
+  background: ${({ $isdark }) => ($isdark ? "#090909" : "#f5f4f1")};
 
-  color: ${({ $isdark }) => ($isdark ? "#f7f4ed" : "#171512")};
-
-  transition: 0.3s ease;
-
-  @media (max-width: 700px) {
-    padding: 20px 12px 50px;
-  }
+  color: ${({ $isdark }) => ($isdark ? "#ffffff" : "#111111")};
 `;
 
 const Container = styled.div`
   width: 100%;
   max-width: 1180px;
-  margin: auto;
-`;
-
-/* =========================================================
-   LOADER
-========================================================= */
-
-const LoaderWrapper = styled.div`
-  min-height: 100vh;
-  display: grid;
-  place-items: center;
-
-  background: ${({ $isdark }) => ($isdark ? "#080808" : "#f7f3ea")};
-`;
-
-const Loader = styled.div`
-  width: 44px;
-  height: 44px;
-
-  border-radius: 50%;
-  border: 3px solid ${({ $isdark }) => ($isdark ? "#2d2a25" : "#e1dcd1")};
-
-  border-top-color: #b89b5e;
-
-  animation: ${spin} 0.8s linear infinite;
+  margin: 0 auto;
 `;
 
 /* =========================================================
@@ -128,598 +84,993 @@ const Hero = styled.section`
   position: relative;
   overflow: hidden;
 
-  min-height: 330px;
+  padding: 42px;
 
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  margin-bottom: 22px;
 
-  text-align: center;
-
-  padding: 55px 25px;
-
-  border-radius: 34px;
+  border-radius: 30px;
 
   background: ${({ $isdark }) =>
     $isdark
-      ? "linear-gradient(145deg, #181713, #0d0d0c)"
-      : "linear-gradient(145deg, #fffdf8, #f3eee3)"};
+      ? "linear-gradient(135deg, #1c1c1c, #101010)"
+      : "linear-gradient(135deg, #ffffff, #efeee9)"};
 
-  border: 1px solid ${({ $isdark }) => ($isdark ? "#302d26" : "#e2dbcc")};
+  border: 1px solid
+    ${({ $isdark }) =>
+      $isdark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.07)"};
 
   box-shadow: ${({ $isdark }) =>
-    $isdark ? "0 30px 80px rgba(0,0,0,.45)" : "0 30px 80px rgba(77,61,31,.10)"};
+    $isdark ? "0 30px 80px rgba(0,0,0,0.35)" : "0 30px 80px rgba(0,0,0,0.08)"};
 
-  animation: ${reveal} 0.7s ease both;
-
-  &::before {
-    content: "";
-    position: absolute;
-
-    width: 420px;
-    height: 420px;
-
-    border-radius: 50%;
-
-    background: ${({ $isdark }) =>
-      $isdark ? "rgba(184,155,94,.06)" : "rgba(184,155,94,.09)"};
-
-    top: -260px;
-    left: 50%;
-
-    transform: translateX(-50%);
-  }
-
-  @media (max-width: 600px) {
-    min-height: 280px;
-    border-radius: 24px;
-    padding: 40px 18px;
-  }
-`;
-
-const LuxuryLine = styled.div`
-  width: 70px;
-  height: 1px;
-
-  margin-bottom: 22px;
-
-  background: #b89b5e;
-`;
-
-const SuccessIcon = styled.div`
-  position: relative;
-  z-index: 1;
-
-  width: 82px;
-  height: 82px;
-
-  display: grid;
-  place-items: center;
-
-  margin-bottom: 22px;
-
-  border-radius: 50%;
-
-  background: ${({ $isdark }) => ($isdark ? "#b89b5e" : "#171512")};
-
-  color: ${({ $isdark }) => ($isdark ? "#171512" : "#fffdf8")};
-
-  box-shadow:
-    0 0 0 8px
-      ${({ $isdark }) =>
-        $isdark ? "rgba(184,155,94,.10)" : "rgba(23,21,18,.06)"},
-    0 18px 45px rgba(0, 0, 0, 0.18);
-
-  animation: ${scaleIn} 0.7s 0.15s ease both;
-
-  svg {
-    font-size: 34px;
-  }
-
-  @media (max-width: 600px) {
-    width: 70px;
-    height: 70px;
-
-    svg {
-      font-size: 28px;
-    }
-  }
-`;
-
-const Eyebrow = styled.div`
-  position: relative;
-  z-index: 1;
-
-  color: #b89b5e;
-
-  font-size: 0.68rem;
-  font-weight: 800;
-
-  letter-spacing: 3px;
-  text-transform: uppercase;
-
-  margin-bottom: 13px;
-`;
-
-const Title = styled.h1`
-  position: relative;
-  z-index: 1;
-
-  margin: 0;
-
-  font-family: Georgia, "Times New Roman", serif;
-
-  font-size: clamp(2.3rem, 6vw, 4.7rem);
-
-  line-height: 0.95;
-
-  font-weight: 500;
-
-  letter-spacing: -2px;
-
-  @media (max-width: 600px) {
-    letter-spacing: -1px;
-  }
-`;
-
-const Subtitle = styled.p`
-  position: relative;
-  z-index: 1;
-
-  max-width: 620px;
-
-  margin: 20px auto 0;
-
-  font-size: 0.9rem;
-  line-height: 1.8;
-
-  color: ${({ $isdark }) => ($isdark ? "#aaa59a" : "#777168")};
-`;
-
-const OrderReference = styled.div`
-  position: relative;
-  z-index: 1;
-
-  margin-top: 22px;
-
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-
-  padding: 9px 16px;
-
-  border-radius: 100px;
-
-  background: ${({ $isdark }) => ($isdark ? "#211f1a" : "#fff")};
-
-  border: 1px solid ${({ $isdark }) => ($isdark ? "#39342a" : "#ded7c9")};
-
-  color: ${({ $isdark }) => ($isdark ? "#d8d1c4" : "#514b42")};
-
-  font-size: 0.7rem;
-  font-weight: 800;
-
-  letter-spacing: 1px;
-`;
-
-/* =========================================================
-   CONTENT
-========================================================= */
-
-const MainGrid = styled.div`
-  display: grid;
-
-  grid-template-columns: 1.35fr 0.85fr;
-
-  gap: 22px;
-
-  margin-top: 22px;
-
-  animation: ${reveal} 0.8s 0.15s ease both;
-
-  @media (max-width: 850px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-/* =========================================================
-   CARD
-========================================================= */
-
-const Card = styled.section`
-  position: relative;
-  overflow: hidden;
-
-  padding: 28px;
-
-  border-radius: 28px;
-
-  background: ${({ $isdark }) =>
-    $isdark ? "rgba(20,19,17,.94)" : "rgba(255,255,255,.88)"};
-
-  border: 1px solid ${({ $isdark }) => ($isdark ? "#302d26" : "#e2dbcf")};
-
-  box-shadow: ${({ $isdark }) =>
-    $isdark ? "0 25px 70px rgba(0,0,0,.28)" : "0 25px 70px rgba(55,42,20,.08)"};
-
-  backdrop-filter: blur(15px);
-
-  @media (max-width: 600px) {
-    padding: 20px 17px;
-    border-radius: 22px;
-  }
-`;
-
-const CardTop = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 13px;
-
-  margin-bottom: 25px;
-`;
-
-const CardIcon = styled.div`
-  width: 42px;
-  height: 42px;
-
-  display: grid;
-  place-items: center;
-
-  border-radius: 13px;
-
-  background: ${({ $isdark }) => ($isdark ? "#25221c" : "#f3eee3")};
-
-  color: #b89b5e;
-
-  svg {
-    font-size: 17px;
-  }
-`;
-
-const CardTitleBox = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-`;
-
-const CardTitle = styled.h2`
-  margin: 0;
-
-  font-size: 0.95rem;
-  font-weight: 800;
-`;
-
-const CardLabel = styled.span`
-  color: ${({ $isdark }) => ($isdark ? "#77736b" : "#999187")};
-
-  font-size: 0.58rem;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-`;
-
-/* =========================================================
-   PRODUCTS
-========================================================= */
-
-const Line = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  gap: 20px;
-
-  padding: 17px 0;
-
-  border-bottom: 1px solid ${({ $isdark }) => ($isdark ? "#292720" : "#eee9df")};
-
-  &:last-child {
-    border-bottom: none;
-  }
-`;
-
-const ItemInfo = styled.div`
-  min-width: 0;
-
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-`;
-
-const ItemName = styled.span`
-  font-size: 0.87rem;
-  font-weight: 700;
-
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-`;
-
-const ItemQuantity = styled.span`
-  color: ${({ $isdark }) => ($isdark ? "#77736b" : "#9b958b")};
-
-  font-size: 0.68rem;
-`;
-
-const ItemPrice = styled.span`
-  white-space: nowrap;
-
-  font-size: 0.83rem;
-  font-weight: 800;
-`;
-
-const TotalBox = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  margin-top: 20px;
-  padding-top: 22px;
-
-  border-top: 1px solid ${({ $isdark }) => ($isdark ? "#3a362d" : "#ddd6c8")};
-`;
-
-const TotalLabel = styled.span`
-  font-size: 0.82rem;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  font-weight: 800;
-`;
-
-const TotalPrice = styled.span`
-  font-family: Georgia, serif;
-
-  color: #b89b5e;
-
-  font-size: 1.55rem;
-`;
-
-/* =========================================================
-   PAYMENT SUMMARY
-========================================================= */
-
-const PaymentSummary = styled.div`
-  margin-top: 20px;
-
-  padding: 18px;
-
-  border-radius: 18px;
-
-  background: ${({ $isdark }) => ($isdark ? "#11100e" : "#f7f3ea")};
-`;
-
-const PaymentRow = styled.div`
-  display: flex;
-  justify-content: space-between;
-
-  padding: 8px 0;
-
-  span {
-    color: ${({ $isdark }) => ($isdark ? "#858078" : "#817a70")};
-
-    font-size: 0.72rem;
-  }
-
-  strong {
-    font-size: 0.76rem;
-  }
-`;
-
-const Remaining = styled(PaymentRow)`
-  margin-top: 8px;
-  padding-top: 15px;
-
-  border-top: 1px solid ${({ $isdark }) => ($isdark ? "#302d26" : "#e5dfd3")};
-
-  strong {
-    color: #b88a38;
-  }
-`;
-
-/* =========================================================
-   COFFRE
-========================================================= */
-
-const Coffre = styled.div`
-  position: relative;
-  overflow: hidden;
-
-  margin-top: 22px;
-
-  padding: 24px;
-
-  border-radius: 25px;
-
-  background: linear-gradient(135deg, #191713, #0c0c0b);
-
-  color: #fff;
-
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.22);
+  animation: ${fadeUp} 0.5s ease;
 
   &::after {
     content: "";
 
     position: absolute;
 
-    width: 180px;
-    height: 180px;
+    width: 300px;
+    height: 300px;
 
     border-radius: 50%;
 
-    border: 1px solid rgba(184, 155, 94, 0.18);
+    right: -150px;
+    top: -160px;
 
-    right: -70px;
-    top: -80px;
+    background: ${({ $isdark }) =>
+      $isdark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.035)"};
+  }
+
+  @media (max-width: 700px) {
+    padding: 28px 22px;
+    border-radius: 24px;
   }
 `;
 
-const CoffreTop = styled.div`
+const HeroTop = styled.div`
+  position: relative;
+  z-index: 2;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+`;
+
+const HeroBadge = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 9px 13px;
+
+  border-radius: 999px;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+
+  background: ${({ $isdark }) =>
+    $isdark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.05)"};
+`;
+
+const HeroIcon = styled.div`
+  width: 68px;
+  height: 68px;
+
   display: flex;
   align-items: center;
-  gap: 15px;
+  justify-content: center;
 
+  border-radius: 22px;
+
+  background: ${({ $isdark }) => ($isdark ? "#ffffff" : "#111111")};
+
+  color: ${({ $isdark }) => ($isdark ? "#111111" : "#ffffff")};
+
+  font-size: 25px;
+
+  animation: ${pulse} 3s ease-in-out infinite;
+
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.18);
+
+  @media (max-width: 600px) {
+    width: 55px;
+    height: 55px;
+    border-radius: 17px;
+  }
+`;
+
+const HeroContent = styled.div`
   position: relative;
-  z-index: 1;
+  z-index: 2;
+
+  max-width: 720px;
+
+  margin-top: 32px;
 `;
 
-const CoffreIcon = styled.div`
-  width: 50px;
-  height: 50px;
+const Eyebrow = styled.div`
+  margin-bottom: 10px;
 
-  display: grid;
-  place-items: center;
+  font-size: 11px;
+  font-weight: 800;
 
-  border-radius: 15px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
 
-  background: rgba(184, 155, 94, 0.14);
-
-  color: #c5a867;
-
-  svg {
-    font-size: 20px;
-  }
+  opacity: 0.45;
 `;
 
-const CoffreText = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
+const HeroTitle = styled.h1`
+  margin: 0;
 
-  span {
-    color: #8c877d;
+  font-size: clamp(38px, 6vw, 65px);
 
-    font-size: 0.58rem;
+  line-height: 0.98;
 
-    text-transform: uppercase;
-    letter-spacing: 2px;
-  }
+  letter-spacing: -0.05em;
 
-  strong {
-    font-family: Georgia, serif;
-
-    font-size: 1.1rem;
-    font-weight: 500;
-  }
+  font-weight: 850;
 `;
 
-const ProgressBar = styled.div`
-  position: relative;
-  z-index: 1;
+const HeroText = styled.p`
+  max-width: 650px;
 
-  width: 100%;
-  height: 4px;
+  margin: 20px 0 0;
 
-  margin-top: 22px;
+  font-size: 15px;
 
-  border-radius: 10px;
+  line-height: 1.7;
 
-  background: #2a2823;
-
-  overflow: hidden;
+  color: ${({ $isdark }) =>
+    $isdark ? "rgba(255,255,255,0.58)" : "rgba(0,0,0,0.55)"};
 `;
 
-const Progress = styled.div`
-  height: 100%;
+const OrderReference = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 
-  width: ${({ $percent }) => `${$percent}%`};
+  margin-top: 24px;
 
-  background: linear-gradient(90deg, #8d733d, #d0b56f);
+  padding: 10px 14px;
 
-  border-radius: inherit;
+  border-radius: 12px;
 
-  transition: width 0.6s ease;
+  background: ${({ $isdark }) =>
+    $isdark ? "rgba(255,255,255,0.055)" : "rgba(0,0,0,0.045)"};
+
+  font-size: 11px;
+  font-weight: 700;
 `;
 
 /* =========================================================
-   STEPS
+   STATUS
+========================================================= */
+
+const StatusCard = styled.div`
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 20px;
+
+  padding: 22px 25px;
+
+  margin-bottom: 22px;
+
+  border-radius: 22px;
+
+  background: ${({ $isdark }) => ($isdark ? "#151515" : "#ffffff")};
+
+  border: 1px solid
+    ${({ $isdark }) =>
+      $isdark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.06)"};
+
+  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.06);
+
+  @media (max-width: 700px) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+`;
+
+const StatusLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 14px;
+`;
+
+const StatusIcon = styled.div`
+  width: 50px;
+  height: 50px;
+
+  flex: 0 0 auto;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 16px;
+
+  background: ${({ $type }) =>
+    $type === "success" ? "rgba(34,197,94,0.12)" : "rgba(245,158,11,0.12)"};
+
+  color: ${({ $type }) => ($type === "success" ? "#22c55e" : "#f59e0b")};
+
+  font-size: 19px;
+`;
+
+const StatusTitle = styled.div`
+  font-weight: 800;
+  font-size: 15px;
+`;
+
+const StatusText = styled.div`
+  margin-top: 5px;
+
+  font-size: 12px;
+
+  line-height: 1.5;
+
+  color: ${({ $isdark }) =>
+    $isdark ? "rgba(255,255,255,0.48)" : "rgba(0,0,0,0.48)"};
+`;
+
+const StatusBadge = styled.div`
+  padding: 9px 12px;
+
+  border-radius: 999px;
+
+  font-size: 9px;
+
+  font-weight: 900;
+
+  letter-spacing: 0.08em;
+
+  color: ${({ $type }) => ($type === "success" ? "#22c55e" : "#f59e0b")};
+
+  background: ${({ $type }) =>
+    $type === "success" ? "rgba(34,197,94,0.11)" : "rgba(245,158,11,0.11)"};
+`;
+
+/* =========================================================
+   STATS
+========================================================= */
+
+const Stats = styled.div`
+  display: grid;
+
+  grid-template-columns: repeat(3, 1fr);
+
+  gap: 14px;
+
+  margin-bottom: 22px;
+
+  @media (max-width: 750px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const Stat = styled.div`
+  padding: 23px;
+
+  border-radius: 20px;
+
+  background: ${({ $isdark }) => ($isdark ? "#151515" : "#ffffff")};
+
+  border: 1px solid
+    ${({ $isdark }) =>
+      $isdark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.06)"};
+
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.05);
+`;
+
+const StatHeader = styled.div`
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  margin-bottom: 17px;
+`;
+
+const StatLabel = styled.span`
+  font-size: 10px;
+
+  font-weight: 800;
+
+  letter-spacing: 0.1em;
+
+  text-transform: uppercase;
+
+  opacity: 0.45;
+`;
+
+const StatIcon = styled.div`
+  width: 34px;
+  height: 34px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 11px;
+
+  background: ${({ $isdark }) =>
+    $isdark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.045)"};
+
+  font-size: 13px;
+`;
+
+const StatValue = styled.div`
+  font-size: 25px;
+
+  font-weight: 850;
+
+  letter-spacing: -0.04em;
+`;
+
+const StatHint = styled.div`
+  margin-top: 6px;
+
+  font-size: 11px;
+
+  opacity: 0.4;
+`;
+
+/* =========================================================
+   GRID
+========================================================= */
+
+const Grid = styled.div`
+  display: grid;
+
+  grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.75fr);
+
+  gap: 22px;
+
+  @media (max-width: 950px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const Column = styled.div`
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 22px;
+`;
+
+const Card = styled.section`
+  padding: 27px;
+
+  border-radius: 24px;
+
+  background: ${({ $isdark }) => ($isdark ? "#151515" : "#ffffff")};
+
+  border: 1px solid
+    ${({ $isdark }) =>
+      $isdark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.06)"};
+
+  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.05);
+
+  animation: ${fadeUp} 0.55s ease;
+
+  @media (max-width: 600px) {
+    padding: 21px;
+    border-radius: 21px;
+  }
+`;
+
+const CardHeader = styled.div`
+  display: flex;
+
+  justify-content: space-between;
+
+  gap: 15px;
+
+  margin-bottom: 25px;
+`;
+
+const CardTitleBox = styled.div`
+  display: flex;
+
+  align-items: center;
+
+  gap: 13px;
+`;
+
+const CardIcon = styled.div`
+  width: 44px;
+  height: 44px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 14px;
+
+  background: ${({ $isdark }) =>
+    $isdark ? "rgba(255,255,255,0.065)" : "rgba(0,0,0,0.045)"};
+`;
+
+const CardTitle = styled.h2`
+  margin: 0 0 4px;
+
+  font-size: 17px;
+
+  letter-spacing: -0.02em;
+`;
+
+const CardSubtitle = styled.div`
+  font-size: 11px;
+
+  color: ${({ $isdark }) =>
+    $isdark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.42)"};
+`;
+
+const Counter = styled.div`
+  padding: 7px 10px;
+
+  border-radius: 999px;
+
+  font-size: 10px;
+
+  font-weight: 800;
+
+  background: ${({ $isdark }) =>
+    $isdark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.045)"};
+`;
+
+/* =========================================================
+   PAYMENT STEPS
 ========================================================= */
 
 const Steps = styled.div`
-  display: flex;
-  flex-direction: column;
+  position: relative;
 `;
 
 const Step = styled.div`
   position: relative;
 
-  display: flex;
-  align-items: center;
+  display: grid;
+
+  grid-template-columns: 44px 1fr auto;
 
   gap: 14px;
 
-  padding: 15px 0;
+  min-height: 88px;
 
   &:not(:last-child)::after {
     content: "";
 
     position: absolute;
 
-    left: 11px;
-    top: 39px;
+    left: 21px;
+
+    top: 44px;
+
+    bottom: 0;
 
     width: 1px;
-    height: calc(100% - 10px);
 
-    background: ${({ $isdark }) => ($isdark ? "#302d26" : "#e2ddd4")};
+    background: ${({ $isdark }) =>
+      $isdark ? "rgba(255,255,255,0.09)" : "rgba(0,0,0,0.09)"};
+  }
+
+  @media (max-width: 600px) {
+    grid-template-columns: 40px 1fr;
   }
 `;
 
-const StepIcon = styled.div`
+const StepCircle = styled.div`
   position: relative;
+
   z-index: 2;
 
-  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
 
-  width: 24px;
-  height: 24px;
+  display: flex;
 
-  display: grid;
-  place-items: center;
+  align-items: center;
+
+  justify-content: center;
 
   border-radius: 50%;
 
-  background: ${({ $paid, $isdark }) =>
-    $paid ? "#b89b5e" : $isdark ? "#211f1a" : "#f1eee7"};
+  background: ${({ $status, $isdark }) => {
+    if ($status === "PAID") {
+      return $isdark ? "#ffffff" : "#111111";
+    }
 
-  color: ${({ $paid }) => ($paid ? "#fff" : "#a39a8b")};
+    if ($status === "PENDING") {
+      return "rgba(245,158,11,0.13)";
+    }
 
-  svg {
-    font-size: ${({ $paid }) => ($paid ? "12px" : "15px")};
-  }
+    return $isdark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.045)";
+  }};
+
+  color: ${({ $status, $isdark }) => {
+    if ($status === "PAID") {
+      return $isdark ? "#111111" : "#ffffff";
+    }
+
+    if ($status === "PENDING") {
+      return "#f59e0b";
+    }
+
+    return $isdark ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.45)";
+  }};
 `;
 
 const StepInfo = styled.div`
-  flex: 1;
-
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  padding-top: 2px;
 `;
 
-const StepTitle = styled.span`
-  font-size: 0.78rem;
+const StepTitle = styled.div`
+  font-size: 14px;
+
   font-weight: 800;
 `;
 
-const StepAmount = styled.span`
-  color: ${({ $isdark }) => ($isdark ? "#77736c" : "#999288")};
+const StepAmount = styled.div`
+  margin-top: 5px;
 
-  font-size: 0.65rem;
+  font-size: 12px;
+
+  opacity: 0.48;
 `;
 
-const Badge = styled.span`
-  padding: 6px 9px;
+const StepDescription = styled.div`
+  margin-top: 7px;
 
-  border-radius: 100px;
+  font-size: 10px;
 
-  font-size: 0.53rem;
+  line-height: 1.5;
+
+  opacity: 0.4;
+`;
+
+const StepBadge = styled.div`
+  align-self: start;
+
+  padding: 7px 9px;
+
+  border-radius: 999px;
+
+  font-size: 8px;
+
   font-weight: 900;
 
-  letter-spacing: 0.8px;
+  letter-spacing: 0.07em;
 
-  color: ${({ $paid }) => ($paid ? "#27613a" : "#876523")};
+  color: ${({ $status }) =>
+    $status === "PAID"
+      ? "#22c55e"
+      : $status === "PENDING"
+        ? "#f59e0b"
+        : "#888888"};
 
-  background: ${({ $paid }) => ($paid ? "#e5f3e8" : "#f6edda")};
+  background: ${({ $status }) =>
+    $status === "PAID"
+      ? "rgba(34,197,94,0.11)"
+      : $status === "PENDING"
+        ? "rgba(245,158,11,0.11)"
+        : "rgba(128,128,128,0.1)"};
+
+  @media (max-width: 600px) {
+    display: none;
+  }
+`;
+
+/* =========================================================
+   PROGRESS
+========================================================= */
+
+const ProgressBox = styled.div`
+  margin-top: 20px;
+
+  padding-top: 20px;
+
+  border-top: 1px solid
+    ${({ $isdark }) =>
+      $isdark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.06)"};
+`;
+
+const ProgressTop = styled.div`
+  display: flex;
+
+  justify-content: space-between;
+
+  margin-bottom: 10px;
+
+  font-size: 11px;
+
+  font-weight: 700;
+`;
+
+const ProgressTrack = styled.div`
+  height: 7px;
+
+  overflow: hidden;
+
+  border-radius: 999px;
+
+  background: ${({ $isdark }) =>
+    $isdark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.07)"};
+`;
+
+const ProgressFill = styled.div`
+  width: ${({ $percent }) => `${$percent}%`};
+
+  height: 100%;
+
+  border-radius: inherit;
+
+  background: ${({ $isdark }) => ($isdark ? "#ffffff" : "#111111")};
+
+  transition: width 0.7s ease;
+`;
+
+/* =========================================================
+   LAST PAYMENT
+========================================================= */
+
+const PaymentBox = styled.div`
+  padding: 20px;
+
+  border-radius: 18px;
+
+  background: ${({ $isdark }) =>
+    $isdark ? "rgba(255,255,255,0.045)" : "rgba(0,0,0,0.035)"};
+`;
+
+const PaymentTop = styled.div`
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  gap: 15px;
+`;
+
+const ServiceName = styled.div`
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  font-size: 13px;
+
+  font-weight: 800;
+`;
+
+const ServiceIcon = styled.div`
+  width: 38px;
+  height: 38px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  border-radius: 12px;
+
+  background: ${({ $isdark }) =>
+    $isdark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)"};
+`;
+
+const PaymentStatus = styled.div`
+  padding: 7px 10px;
+
+  border-radius: 999px;
+
+  font-size: 8px;
+
+  font-weight: 900;
+
+  color: ${({ $status }) =>
+    $status === "CONFIRMED"
+      ? "#22c55e"
+      : $status === "REJECTED"
+        ? "#ef4444"
+        : "#f59e0b"};
+
+  background: ${({ $status }) =>
+    $status === "CONFIRMED"
+      ? "rgba(34,197,94,0.11)"
+      : $status === "REJECTED"
+        ? "rgba(239,68,68,0.11)"
+        : "rgba(245,158,11,0.11)"};
+`;
+
+const PaymentDetails = styled.div`
+  display: grid;
+
+  grid-template-columns: repeat(2, 1fr);
+
+  gap: 10px;
+
+  margin-top: 17px;
+
+  @media (max-width: 500px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const Detail = styled.div`
+  padding: 12px;
+
+  border-radius: 12px;
+
+  background: ${({ $isdark }) =>
+    $isdark ? "rgba(0,0,0,0.13)" : "rgba(255,255,255,0.6)"};
+`;
+
+const DetailLabel = styled.div`
+  margin-bottom: 5px;
+
+  font-size: 9px;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.08em;
+
+  opacity: 0.4;
+`;
+
+const DetailValue = styled.div`
+  font-size: 12px;
+
+  font-weight: 750;
+
+  word-break: break-word;
+`;
+
+/* =========================================================
+   ORDER ITEMS
+========================================================= */
+
+const Item = styled.div`
+  display: flex;
+
+  justify-content: space-between;
+
+  gap: 15px;
+
+  padding: 16px 0;
+
+  border-bottom: 1px solid
+    ${({ $isdark }) =>
+      $isdark ? "rgba(255,255,255,0.055)" : "rgba(0,0,0,0.055)"};
+
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
+const ItemName = styled.div`
+  font-size: 13px;
+
+  font-weight: 750;
+`;
+
+const ItemMeta = styled.div`
+  margin-top: 5px;
+
+  font-size: 10px;
+
+  opacity: 0.42;
+`;
+
+const ItemPrice = styled.div`
+  flex-shrink: 0;
+
+  font-size: 12px;
+
+  font-weight: 800;
+`;
+
+const Totals = styled.div`
+  margin-top: 8px;
+
+  padding-top: 17px;
+
+  border-top: 1px solid
+    ${({ $isdark }) =>
+      $isdark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.07)"};
+`;
+
+const TotalLine = styled.div`
+  display: flex;
+
+  justify-content: space-between;
+
+  gap: 15px;
+
+  margin-bottom: 9px;
+
+  font-size: 12px;
+
+  opacity: 0.55;
+`;
+
+const GrandTotal = styled.div`
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  gap: 15px;
+
+  margin-top: 16px;
+`;
+
+const GrandLabel = styled.div`
+  font-size: 13px;
+
+  font-weight: 750;
+`;
+
+const GrandValue = styled.div`
+  font-size: 24px;
+
+  font-weight: 850;
+
+  letter-spacing: -0.04em;
+`;
+
+/* =========================================================
+   DELIVERY
+========================================================= */
+
+const DeliveryBox = styled.div`
+  padding: 23px;
+
+  border-radius: 20px;
+
+  background: ${({ $isdark }) =>
+    $isdark
+      ? "linear-gradient(145deg,#191919,#111111)"
+      : "linear-gradient(145deg,#f7f6f2,#ffffff)"};
+
+  border: 1px solid
+    ${({ $isdark }) =>
+      $isdark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.06)"};
+`;
+
+const DeliveryHeader = styled.div`
+  display: flex;
+
+  align-items: center;
+
+  gap: 13px;
+`;
+
+const DeliveryIcon = styled.div`
+  width: 47px;
+  height: 47px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  border-radius: 15px;
+
+  background: ${({ $isdark }) => ($isdark ? "#ffffff" : "#111111")};
+
+  color: ${({ $isdark }) => ($isdark ? "#111111" : "#ffffff")};
+`;
+
+const DeliveryTitle = styled.div`
+  font-size: 14px;
+
+  font-weight: 800;
+`;
+
+const DeliveryText = styled.div`
+  margin-top: 4px;
+
+  font-size: 11px;
+
+  line-height: 1.55;
+
+  color: ${({ $isdark }) =>
+    $isdark ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.48)"};
+`;
+
+const DeliveryButton = styled.button`
+  width: 100%;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 9px;
+
+  margin-top: 19px;
+
+  padding: 14px 16px;
+
+  border: none;
+
+  border-radius: 13px;
+
+  cursor: pointer;
+
+  background: ${({ $isdark }) => ($isdark ? "#ffffff" : "#111111")};
+
+  color: ${({ $isdark }) => ($isdark ? "#111111" : "#ffffff")};
+
+  font-size: 12px;
+
+  font-weight: 800;
+
+  transition: 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: wait;
+    transform: none;
+  }
+`;
+
+const AccountButton = styled.button`
+  width: 100%;
+
+  display: flex;
+
+  justify-content: center;
+
+  align-items: center;
+
+  gap: 9px;
+
+  padding: 14px 16px;
+
+  border-radius: 13px;
+
+  border: 1px solid
+    ${({ $isdark }) => ($isdark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.09)")};
+
+  background: transparent;
+
+  color: inherit;
+
+  cursor: pointer;
+
+  font-size: 12px;
+
+  font-weight: 800;
+
+  transition: 0.2s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+
+    background: ${({ $isdark }) =>
+      $isdark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)"};
+  }
 `;
 
 /* =========================================================
@@ -728,247 +1079,223 @@ const Badge = styled.span`
 
 const Security = styled.div`
   display: flex;
+
+  align-items: flex-start;
+
   gap: 10px;
 
-  margin-top: 22px;
+  margin-top: 18px;
 
-  padding: 15px;
+  padding: 13px;
 
-  border-radius: 15px;
+  border-radius: 13px;
 
-  background: ${({ $isdark }) => ($isdark ? "#171613" : "#f8f5ef")};
+  background: ${({ $isdark }) =>
+    $isdark ? "rgba(255,255,255,0.035)" : "rgba(0,0,0,0.035)"};
 
-  color: ${({ $isdark }) => ($isdark ? "#77736b" : "#858076")};
-
-  font-size: 0.65rem;
+  font-size: 10px;
 
   line-height: 1.6;
 
-  svg {
-    flex-shrink: 0;
-    color: #b89b5e;
-    margin-top: 2px;
-  }
-`;
-
-/* =========================================================
-   BUTTON
-========================================================= */
-
-const Button = styled.button`
-  width: 100%;
-
-  margin-top: 22px;
-
-  min-height: 58px;
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 12px;
-
-  border: 1px solid #b89b5e;
-  border-radius: 16px;
-
-  background: ${({ $isdark }) => ($isdark ? "#b89b5e" : "#171512")};
-
-  color: ${({ $isdark }) => ($isdark ? "#171512" : "#fff")};
-
-  font-size: 0.76rem;
-  font-weight: 900;
-
-  letter-spacing: 1px;
-  text-transform: uppercase;
-
-  cursor: pointer;
-
-  transition: 0.25s ease;
-
-  svg {
-    transition: transform 0.25s ease;
-  }
-
-  &:hover {
-    transform: translateY(-3px);
-
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.18);
-
-    svg {
-      transform: translateX(4px);
-    }
-  }
+  opacity: 0.65;
 `;
 
 /* =========================================================
    MODAL
 ========================================================= */
 
-const Modal = styled.div`
+const ModalOverlay = styled.div`
   position: fixed;
+
   inset: 0;
 
   z-index: 9999;
 
   display: flex;
+
   align-items: center;
+
   justify-content: center;
 
   padding: 20px;
 
-  background: rgba(7, 7, 6, 0.78);
+  background: rgba(0, 0, 0, 0.7);
 
-  backdrop-filter: blur(14px);
+  backdrop-filter: blur(12px);
+
+  -webkit-backdrop-filter: blur(12px);
 `;
 
-const ModalContent = styled.div`
-  position: relative;
-
+const Modal = styled.div`
   width: 100%;
-  max-width: 460px;
 
-  padding: 38px;
+  max-width: 470px;
 
-  border-radius: 28px;
+  padding: 32px;
 
-  text-align: center;
+  border-radius: 27px;
 
-  background: ${({ $isdark }) =>
-    $isdark
-      ? "linear-gradient(145deg,#1d1b17,#11100e)"
-      : "linear-gradient(145deg,#fffefa,#f5f0e7)"};
+  background: ${({ $isdark }) => ($isdark ? "#181818" : "#ffffff")};
 
-  border: 1px solid ${({ $isdark }) => ($isdark ? "#39342a" : "#e2dacb")};
+  border: 1px solid
+    ${({ $isdark }) =>
+      $isdark ? "rgba(255,255,255,0.09)" : "rgba(0,0,0,0.08)"};
 
-  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 35px 100px rgba(0, 0, 0, 0.35);
 
-  animation: ${reveal} 0.4s ease both;
+  animation: ${fadeUp} 0.3s ease;
 
-  @media (max-width: 500px) {
-    padding: 28px 20px;
-    border-radius: 22px;
+  @media (max-width: 550px) {
+    padding: 25px 21px;
   }
 `;
 
 const ModalIcon = styled.div`
-  width: 64px;
-  height: 64px;
+  width: 60px;
+  height: 60px;
 
-  display: grid;
-  place-items: center;
+  display: flex;
 
-  margin: 0 auto 20px;
+  align-items: center;
 
-  border-radius: 50%;
+  justify-content: center;
 
-  background: #b89b5e;
+  margin-bottom: 20px;
 
-  color: #171512;
+  border-radius: 19px;
 
-  box-shadow: 0 10px 30px rgba(184, 155, 94, 0.25);
+  background: rgba(245, 158, 11, 0.12);
 
-  svg {
-    font-size: 23px;
-  }
+  color: #f59e0b;
+
+  font-size: 23px;
 `;
 
-const ModalTitle = styled.h2`
-  margin: 0 0 10px;
+const ModalSmall = styled.div`
+  margin-bottom: 8px;
 
-  font-family: Georgia, serif;
+  font-size: 10px;
 
-  font-size: 1.5rem;
-  font-weight: 500;
+  font-weight: 900;
+
+  letter-spacing: 0.13em;
+
+  text-transform: uppercase;
+
+  color: #f59e0b;
+`;
+
+const ModalTitle = styled.h3`
+  margin: 0;
+
+  font-size: 27px;
+
+  line-height: 1.1;
+
+  letter-spacing: -0.035em;
 `;
 
 const ModalText = styled.p`
-  margin: 0;
+  margin: 14px 0 0;
 
-  color: ${({ $isdark }) => ($isdark ? "#969188" : "#716b61")};
+  font-size: 13px;
 
-  font-size: 0.78rem;
   line-height: 1.7;
+
+  color: ${({ $isdark }) =>
+    $isdark ? "rgba(255,255,255,0.52)" : "rgba(0,0,0,0.53)"};
 `;
 
-const CloseModal = styled.button`
-  width: 100%;
+const ModalButtons = styled.div`
+  display: grid;
+
+  grid-template-columns: 1fr 1fr;
+
+  gap: 10px;
 
   margin-top: 25px;
 
+  @media (max-width: 500px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const ModalPrimary = styled.button`
   padding: 14px;
 
   border: none;
+
   border-radius: 13px;
 
-  background: ${({ $isdark }) => ($isdark ? "#fff" : "#171512")};
+  cursor: pointer;
 
-  color: ${({ $isdark }) => ($isdark ? "#171512" : "#fff")};
+  background: ${({ $isdark }) => ($isdark ? "#ffffff" : "#111111")};
 
-  font-size: 0.7rem;
-  font-weight: 900;
+  color: ${({ $isdark }) => ($isdark ? "#111111" : "#ffffff")};
 
-  letter-spacing: 1px;
-  text-transform: uppercase;
+  font-size: 12px;
+
+  font-weight: 800;
+`;
+
+const ModalSecondary = styled.button`
+  padding: 14px;
+
+  border: 1px solid
+    ${({ $isdark }) => ($isdark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)")};
+
+  border-radius: 13px;
 
   cursor: pointer;
 
-  transition: 0.2s;
+  background: transparent;
 
-  &:hover {
-    opacity: 0.88;
-    transform: translateY(-1px);
-  }
+  color: inherit;
+
+  font-size: 12px;
+
+  font-weight: 800;
 `;
-const FindDriverButton = styled.button`
-  width: 100%;
-  max-width: 1180px;
 
-  margin: 22px auto 0;
+/* =========================================================
+   HELPERS
+========================================================= */
 
-  min-height: 72px;
+const money = (value) => {
+  return Number(value || 0).toLocaleString("fr-FR");
+};
 
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-
-  border: none;
-  border-radius: 20px;
-
-  background: linear-gradient(
-    135deg,
-    #22c55e,
-    #16a34a
-  );
-
-  color: white;
-
-  font-size: 15px;
-  font-weight: 900;
-
-  cursor: pointer;
-
-  box-shadow:
-    0 15px 40px rgba(34, 197, 94, 0.22);
-
-  transition:
-    transform .25s ease,
-    box-shadow .25s ease;
-
-  svg {
-    font-size: 20px;
+const getPaymentStatus = (payment) => {
+  if (payment.status === "PAID") {
+    return "PAID";
   }
 
-  &:hover {
-    transform: translateY(-3px);
-
-    box-shadow:
-      0 20px 50px rgba(34, 197, 94, 0.32);
+  if (payment.status === "PENDING") {
+    return "PENDING";
   }
 
-  &:active {
-    transform: translateY(0);
+  return "UNPAID";
+};
+
+const getStatusData = (status) => {
+  if (
+    status === "PAID" ||
+    status === "CONFIRMED" ||
+    status === "SHIPPED" ||
+    status === "DELIVERED"
+  ) {
+    return {
+      type: "success",
+      icon: <FaCheckCircle />,
+    };
   }
-`;
+
+  return {
+    type: "warning",
+    icon: <FaClock />,
+  };
+};
+
 /* =========================================================
    COMPONENT
 ========================================================= */
@@ -976,22 +1303,27 @@ const FindDriverButton = styled.button`
 export default function Merci() {
   const navigate = useNavigate();
 
+  const { id } = useParams();
+
   const { theme } = useContext(ThemeContext);
 
   const $isdark = theme !== "light";
 
- const { id } = useParams();
+  const API_URL = import.meta.env.VITE_API_URL;
+
+  const [token, setToken] = useState(null);
 
   const [commande, setCommande] = useState(null);
+
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(true);
-  const [token, setToken] = useState(null);
+
   const [rechercheLivreur, setRechercheLivreur] = useState(false);
 
-  const API_URL = import.meta.env.VITE_API_URL;
-  
+  const [showValidationModal, setShowValidationModal] = useState(false);
 
-  /* ================= AUTH ================= */
+  /* =======================================================
+     AUTH
+  ======================================================= */
 
   useEffect(() => {
     const savedToken = localStorage.getItem("token");
@@ -1004,51 +1336,172 @@ export default function Merci() {
     setToken(savedToken);
   }, [navigate]);
 
-  /* ================= FETCH ================= */
+  /* =======================================================
+     GET COMMANDE
+  ======================================================= */
 
   useEffect(() => {
-    if (!id || !token) return;
+    if (!token || !id) {
+      return;
+    }
 
     const fetchCommande = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/commandes/${id}`, {
+        setLoading(true);
+
+        const response = await fetch(`${API_URL}/api/commandes/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
-        const data = await res.json();
+        const data = await response.json();
 
-        if (!res.ok) {
-          throw new Error(data.message || "Erreur serveur");
+        if (!response.ok) {
+          throw new Error(
+            data.message || "Impossible de récupérer la commande.",
+          );
         }
 
         setCommande(data.commande || data);
-      } catch (err) {
-        console.error(err);
+      } catch (error) {
+        console.error(error);
 
-        alert("Impossible de récupérer la commande");
+        alert(error.message || "Impossible de récupérer la commande.");
 
-        navigate("/");
+        navigate("/compte");
       } finally {
         setLoading(false);
       }
     };
 
     fetchCommande();
-  }, [id, token, navigate, API_URL]);
+  }, [API_URL, id, navigate, token]);
+
+  /* =======================================================
+     LOADING
+  ======================================================= */
+
+  if (loading) {
+    return (
+      <Page $isdark={$isdark}>
+        <Container>
+          <div
+            style={{
+              minHeight: "70vh",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <div
+              style={{
+                textAlign: "center",
+                padding: "40px",
+              }}
+            >
+              <div
+                style={{
+                  width: "42px",
+                  height: "42px",
+                  borderRadius: "50%",
+                  border: "3px solid rgba(128,128,128,.2)",
+                  borderTopColor: "currentColor",
+                  animation: `${spin} .8s linear infinite`,
+                  margin: "0 auto 18px",
+                }}
+              />
+
+              <strong>Ouverture de votre coffre...</strong>
+
+              <div
+                style={{
+                  marginTop: "8px",
+                  fontSize: "12px",
+                  opacity: 0.5,
+                }}
+              >
+                Récupération de votre commande
+              </div>
+            </div>
+          </div>
+        </Container>
+      </Page>
+    );
+  }
+
+  if (!commande) {
+    return null;
+  }
+
+  /* =======================================================
+     DATA
+  ======================================================= */
+
+  const paiements = commande.paiements || [];
+
+  const panier = commande.panier || [];
+
+  const paiementsRecus = commande.paiementsRecus || [];
+
+  const totalSteps = paiements.length;
+
+  const paidSteps = paiements.filter((p) => p.status === "PAID").length;
+
+  const totalCommande = Number(commande.total || 0);
+
+  const totalPaid = paiements
+    .filter((p) => p.status === "PAID")
+    .reduce((total, p) => total + Number(p.amountExpected || 0), 0);
+
+  const remaining = Math.max(0, totalCommande - totalPaid);
+
+  const progress =
+    totalSteps > 0
+      ? Math.round((paidSteps / totalSteps) * 100)
+      : commande.statusCommande === "PAID"
+        ? 100
+        : 0;
+
+  const lastPayment =
+    paiementsRecus.length > 0
+      ? paiementsRecus[paiementsRecus.length - 1]
+      : null;
+
+  const driverAllowed = ["PAID", "CONFIRMED", "SHIPPED"].includes(
+    commande.statusCommande,
+  );
+
+  const statusData = getStatusData(commande.statusCommande);
+
+  /* =======================================================
+     SEARCH DRIVER
+  ======================================================= */
 
   const chercherLivreur = async () => {
-    if(!id || !token) {
-      alert("Commande introuvable ou utilisateur non authentifié.");
+    /*
+      Si l'admin n'a pas encore confirmé,
+      on affiche simplement le modal.
+    */
+
+    if (!driverAllowed) {
+      setShowValidationModal(true);
       return;
     }
+
+    if (!token || !id) {
+      navigate("/login");
+      return;
+    }
+
     setRechercheLivreur(true);
+
     try {
-      const res = await fetch(
+      const response = await fetch(
         `${API_URL}/api/livreurs/commande/${id}/rechercher-livreur`,
         {
           method: "PUT",
+
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
@@ -1056,64 +1509,29 @@ export default function Merci() {
         },
       );
 
-      const data = await res.json();
+      const data = await response.json();
 
-      if (!res.ok) {
+      if (!response.ok) {
         alert(data.message || "Impossible de rechercher un livreur.");
+
         return;
       }
 
       setCommande(data.commande || commande);
 
-      navigate(`/suivi-commande/${id}`)
+      navigate(`/suivi-commande/${id}`);
     } catch (error) {
-      console.error("RECHERCHE LIVREUR ERROR:", error);
+      console.error("RECHERCHE LIVREUR:", error);
 
       alert("Impossible de contacter le serveur.");
-    }finally {
-    setRechercheLivreur(false);
-  }
+    } finally {
+      setRechercheLivreur(false);
+    }
   };
 
-  /* ================= LOADING ================= */
-
-  if (loading) {
-    return (
-      <LoaderWrapper $isdark={$isdark}>
-        <Loader $isdark={$isdark} />
-      </LoaderWrapper>
-    );
-  }
-
-  if (!commande) {
-    return (
-      <Page $isdark={$isdark}>
-        <Container>
-          <Card $isdark={$isdark}>Commande introuvable</Card>
-        </Container>
-      </Page>
-    );
-  }
-
-  /* ================= DATA ================= */
-
-  const paiements = commande.paiements || [];
-  const panier = commande.panier || [];
-
-  const paidSteps = paiements.filter((p) => p.status === "PAID").length;
-
-  const totalSteps = paiements.length;
-
-  const totalPaid = paiements
-    .filter((p) => p.status === "PAID")
-    .reduce((acc, p) => acc + Number(p.amountExpected || 0), 0);
-
-  const remaining = Math.max(0, Number(commande.total || 0) - totalPaid);
-
-  const progress =
-    totalSteps > 0 ? Math.round((paidSteps / totalSteps) * 100) : 0;
-
-  /* ================= UI ================= */
+  /* =======================================================
+     RENDER
+  ======================================================= */
 
   return (
     <Page $isdark={$isdark}>
@@ -1121,205 +1539,560 @@ export default function Merci() {
         {/* ================= HERO ================= */}
 
         <Hero $isdark={$isdark}>
-          <LuxuryLine />
+          <HeroTop>
+            <HeroBadge $isdark={$isdark}>
+              <FaShieldAlt />
+              Coffre de commande
+            </HeroBadge>
 
-          <SuccessIcon $isdark={$isdark}>
-            <FaCheckCircle />
-          </SuccessIcon>
+            <HeroIcon $isdark={$isdark}>
+              <FaCheck />
+            </HeroIcon>
+          </HeroTop>
 
-          <Eyebrow>Confirmation de commande</Eyebrow>
+          <HeroContent>
+            <Eyebrow>Commande enregistrée</Eyebrow>
 
-          <Title>Merci pour votre confiance</Title>
+            <HeroTitle>Merci pour votre confiance.</HeroTitle>
 
-          <Subtitle $isdark={$isdark}>
-            Votre commande est officiellement enregistrée. Retrouvez ci-dessous
-            son récapitulatif ainsi que l'avancement de votre coffre.
-          </Subtitle>
+            <HeroText $isdark={$isdark}>
+              Votre commande est bien enregistrée. Retrouvez ici toutes les
+              informations importantes concernant votre paiement, votre commande
+              et sa prochaine étape.
+            </HeroText>
 
-          {id && (
             <OrderReference $isdark={$isdark}>
-              <FaStar />
+              <FaReceipt />
               COMMANDE #{String(id).slice(-8).toUpperCase()}
             </OrderReference>
-          )}
+          </HeroContent>
         </Hero>
 
-        <FindDriverButton $isdark={$isdark} onClick={chercherLivreur}
-        >
-          <FaLocationArrow />
+        {/* ================= STATUS ================= */}
 
-          <span>Chercher un livreur maintenant</span>
+        <StatusCard $isdark={$isdark}>
+          <StatusLeft>
+            <StatusIcon $type={statusData.type}>{statusData.icon}</StatusIcon>
 
-          <FaArrowRight />
-        </FindDriverButton>
+            <div>
+              <StatusTitle>
+                {commande.statusCommande === "PAID"
+                  ? "Paiement confirmé"
+                  : commande.statusCommande === "PARTIALLY_PAID"
+                    ? "Commande partiellement payée"
+                    : commande.statusCommande === "CONFIRMED"
+                      ? "Commande confirmée"
+                      : "Commande en cours de validation"}
+              </StatusTitle>
 
-        {/* ================= CONTENT ================= */}
+              <StatusText $isdark={$isdark}>
+                {commande.statusCommande === "PAID"
+                  ? "Votre paiement a été confirmé par notre équipe."
+                  : commande.statusCommande === "PARTIALLY_PAID"
+                    ? "Certaines étapes sont confirmées et d'autres restent à effectuer."
+                    : "Votre commande est enregistrée. La validation de votre paiement est en cours."}
+              </StatusText>
+            </div>
+          </StatusLeft>
 
-        <MainGrid>
+          <StatusBadge $type={statusData.type}>
+            {commande.statusCommande === "PAID"
+              ? "PAYÉ"
+              : commande.statusCommande === "PARTIALLY_PAID"
+                ? "PARTIEL"
+                : commande.statusCommande === "CONFIRMED"
+                  ? "CONFIRMÉ"
+                  : "EN VALIDATION"}
+          </StatusBadge>
+        </StatusCard>
+
+        {/* ================= STATS ================= */}
+
+        <Stats>
+          <Stat $isdark={$isdark}>
+            <StatHeader>
+              <StatLabel>Total commande</StatLabel>
+
+              <StatIcon $isdark={$isdark}>
+                <FaShoppingBag />
+              </StatIcon>
+            </StatHeader>
+
+            <StatValue>{money(totalCommande)} FCFA</StatValue>
+
+            <StatHint>Montant total</StatHint>
+          </Stat>
+
+          <Stat $isdark={$isdark}>
+            <StatHeader>
+              <StatLabel>Déjà payé</StatLabel>
+
+              <StatIcon $isdark={$isdark}>
+                <FaCheckCircle />
+              </StatIcon>
+            </StatHeader>
+
+            <StatValue>{money(totalPaid)} FCFA</StatValue>
+
+            <StatHint>Paiements confirmés</StatHint>
+          </Stat>
+
+          <Stat $isdark={$isdark}>
+            <StatHeader>
+              <StatLabel>Solde restant</StatLabel>
+
+              <StatIcon $isdark={$isdark}>
+                <FaWallet />
+              </StatIcon>
+            </StatHeader>
+
+            <StatValue>{money(remaining)} FCFA</StatValue>
+
+            <StatHint>À régler</StatHint>
+          </Stat>
+        </Stats>
+
+        {/* ================= MAIN GRID ================= */}
+
+        <Grid>
           {/* ================= LEFT ================= */}
 
-          <div>
+          <Column>
+            {/* PAYMENT STEPS */}
+
             <Card $isdark={$isdark}>
-              <CardTop>
-                <CardIcon $isdark={$isdark}>
-                  <FaBox />
-                </CardIcon>
-
+              <CardHeader>
                 <CardTitleBox>
-                  <CardTitle>Votre commande</CardTitle>
+                  <CardIcon $isdark={$isdark}>
+                    <FaCreditCard />
+                  </CardIcon>
 
-                  <CardLabel $isdark={$isdark}>Récapitulatif</CardLabel>
+                  <div>
+                    <CardTitle>Parcours de paiement</CardTitle>
+
+                    <CardSubtitle $isdark={$isdark}>
+                      Suivez chaque étape de votre paiement
+                    </CardSubtitle>
+                  </div>
                 </CardTitleBox>
-              </CardTop>
+
+                <Counter $isdark={$isdark}>
+                  {paidSteps}/{totalSteps || 1}
+                </Counter>
+              </CardHeader>
+
+              {totalSteps > 0 ? (
+                <>
+                  <Steps>
+                    {paiements.map((payment, index) => {
+                      const status = getPaymentStatus(payment);
+
+                      return (
+                        <Step
+                          key={payment._id || `step-${index}`}
+                          $isdark={$isdark}
+                        >
+                          <StepCircle $status={status} $isdark={$isdark}>
+                            {status === "PAID" ? (
+                              <FaCheck />
+                            ) : status === "PENDING" ? (
+                              <FaClock />
+                            ) : (
+                              payment.step
+                            )}
+                          </StepCircle>
+
+                          <StepInfo>
+                            <StepTitle>Étape {payment.step}</StepTitle>
+
+                            <StepAmount>
+                              {money(payment.amountExpected)} FCFA
+                            </StepAmount>
+
+                            <StepDescription>
+                              {status === "PAID"
+                                ? "Paiement confirmé par notre équipe."
+                                : status === "PENDING"
+                                  ? "Paiement envoyé — vérification en cours."
+                                  : "Cette étape est encore en attente."}
+                            </StepDescription>
+                          </StepInfo>
+
+                          <StepBadge $status={status}>
+                            {status === "PAID"
+                              ? "PAYÉ"
+                              : status === "PENDING"
+                                ? "EN VÉRIFICATION"
+                                : "EN ATTENTE"}
+                          </StepBadge>
+                        </Step>
+                      );
+                    })}
+                  </Steps>
+
+                  <ProgressBox $isdark={$isdark}>
+                    <ProgressTop>
+                      <span>Progression</span>
+
+                      <strong>{progress}%</strong>
+                    </ProgressTop>
+
+                    <ProgressTrack $isdark={$isdark}>
+                      <ProgressFill $percent={progress} $isdark={$isdark} />
+                    </ProgressTrack>
+                  </ProgressBox>
+                </>
+              ) : (
+                <Security $isdark={$isdark}>
+                  <FaMoneyBillWave />
+
+                  <span>
+                    Cette commande est traitée selon son mode de paiement et ne
+                    possède pas d'étapes de paiement en ligne.
+                  </span>
+                </Security>
+              )}
+            </Card>
+
+            {/* LAST PAYMENT */}
+
+            {lastPayment && (
+              <Card $isdark={$isdark}>
+                <CardHeader>
+                  <CardTitleBox>
+                    <CardIcon $isdark={$isdark}>
+                      <FaReceipt />
+                    </CardIcon>
+
+                    <div>
+                      <CardTitle>Dernier paiement</CardTitle>
+
+                      <CardSubtitle $isdark={$isdark}>
+                        Votre dernière opération enregistrée
+                      </CardSubtitle>
+                    </div>
+                  </CardTitleBox>
+                </CardHeader>
+
+                <PaymentBox $isdark={$isdark}>
+                  <PaymentTop>
+                    <ServiceName>
+                      <ServiceIcon $isdark={$isdark}>
+                        {lastPayment.service === "wave" ? (
+                          <FaWaveSquare />
+                        ) : (
+                          <FaMobileAlt />
+                        )}
+                      </ServiceIcon>
+
+                      {lastPayment.service === "wave" ? "Wave" : "Orange Money"}
+                    </ServiceName>
+
+                    <PaymentStatus $status={lastPayment.status}>
+                      {lastPayment.status === "CONFIRMED"
+                        ? "CONFIRMÉ"
+                        : lastPayment.status === "REJECTED"
+                          ? "REJETÉ"
+                          : "EN VÉRIFICATION"}
+                    </PaymentStatus>
+                  </PaymentTop>
+
+                  <PaymentDetails>
+                    <Detail $isdark={$isdark}>
+                      <DetailLabel>Montant envoyé</DetailLabel>
+
+                      <DetailValue>
+                        {money(lastPayment.montantEnvoye)} FCFA
+                      </DetailValue>
+                    </Detail>
+
+                    <Detail $isdark={$isdark}>
+                      <DetailLabel>Numéro</DetailLabel>
+
+                      <DetailValue>
+                        {lastPayment.numeroClient || "—"}
+                      </DetailValue>
+                    </Detail>
+
+                    <Detail $isdark={$isdark}>
+                      <DetailLabel>Référence</DetailLabel>
+
+                      <DetailValue>{lastPayment.reference || "—"}</DetailValue>
+                    </Detail>
+
+                    <Detail $isdark={$isdark}>
+                      <DetailLabel>Étape</DetailLabel>
+
+                      <DetailValue>Étape {lastPayment.step}</DetailValue>
+                    </Detail>
+                  </PaymentDetails>
+
+                  {lastPayment.status === "REJECTED" &&
+                    lastPayment.adminComment && (
+                      <Security $isdark={$isdark}>
+                        <FaExclamationCircle />
+
+                        <span>
+                          <strong>Motif du rejet :</strong>{" "}
+                          {lastPayment.adminComment}
+                        </span>
+                      </Security>
+                    )}
+                </PaymentBox>
+              </Card>
+            )}
+
+            {/* ORDER */}
+
+            <Card $isdark={$isdark}>
+              <CardHeader>
+                <CardTitleBox>
+                  <CardIcon $isdark={$isdark}>
+                    <FaBoxOpen />
+                  </CardIcon>
+
+                  <div>
+                    <CardTitle>Votre commande</CardTitle>
+
+                    <CardSubtitle $isdark={$isdark}>
+                      Articles commandés
+                    </CardSubtitle>
+                  </div>
+                </CardTitleBox>
+              </CardHeader>
 
               {panier.map((item, index) => (
-                <Line
+                <Item
                   key={item.produitId || item._id || index}
                   $isdark={$isdark}
                 >
-                  <ItemInfo>
+                  <div>
                     <ItemName>{item.nom}</ItemName>
 
-                    <ItemQuantity $isdark={$isdark}>
+                    <ItemMeta>
                       Quantité : {item.quantite}
-                    </ItemQuantity>
-                  </ItemInfo>
+                      {item.couleur ? ` • ${item.couleur}` : ""}
+                      {item.taille ? ` • ${item.taille}` : ""}
+                    </ItemMeta>
+                  </div>
 
                   <ItemPrice>
-                    {(
-                      Number(item.prix || 0) * Number(item.quantite || 0)
-                    ).toLocaleString()}{" "}
+                    {money(Number(item.prix || 0) * Number(item.quantite || 0))}{" "}
                     FCFA
                   </ItemPrice>
-                </Line>
+                </Item>
               ))}
 
-              <TotalBox $isdark={$isdark}>
-                <TotalLabel>Total commande</TotalLabel>
-
-                <TotalPrice>
-                  {Number(commande.total || 0).toLocaleString()} FCFA
-                </TotalPrice>
-              </TotalBox>
-
-              <PaymentSummary $isdark={$isdark}>
-                <PaymentRow $isdark={$isdark}>
-                  <span>Montant déjà payé</span>
-
-                  <strong>{totalPaid.toLocaleString()} FCFA</strong>
-                </PaymentRow>
-
-                <Remaining $isdark={$isdark}>
-                  <span>Solde restant</span>
-
-                  <strong>{remaining.toLocaleString()} FCFA</strong>
-                </Remaining>
-              </PaymentSummary>
-            </Card>
-
-            {/* COFFRE */}
-
-            <Coffre $isdark={$isdark}>
-              <CoffreTop>
-                <CoffreIcon>
-                  <FaBox />
-                </CoffreIcon>
-
-                <CoffreText>
-                  <span>Votre coffre</span>
+              <Totals $isdark={$isdark}>
+                <TotalLine>
+                  <span>Sous-total</span>
 
                   <strong>
-                    {paidSteps} / {totalSteps} étapes payées
+                    {money(commande.totalProduits || commande.total)} FCFA
                   </strong>
-                </CoffreText>
-              </CoffreTop>
+                </TotalLine>
 
-              <ProgressBar>
-                <Progress $percent={progress} />
-              </ProgressBar>
-            </Coffre>
-          </div>
+                <TotalLine>
+                  <span>Livraison</span>
+
+                  <strong>
+                    {Number(commande.fraisLivraison || 0) === 0
+                      ? "Gratuite"
+                      : `${money(commande.fraisLivraison)} FCFA`}
+                  </strong>
+                </TotalLine>
+
+                <GrandTotal>
+                  <GrandLabel>Total</GrandLabel>
+
+                  <GrandValue>{money(totalCommande)} FCFA</GrandValue>
+                </GrandTotal>
+              </Totals>
+            </Card>
+          </Column>
 
           {/* ================= RIGHT ================= */}
 
-          <div>
+          <Column>
+            {/* DELIVERY */}
+
+            <DeliveryBox $isdark={$isdark}>
+              <DeliveryHeader>
+                <DeliveryIcon $isdark={$isdark}>
+                  <FaTruck />
+                </DeliveryIcon>
+
+                <div>
+                  <DeliveryTitle>Livraison</DeliveryTitle>
+
+                  <DeliveryText $isdark={$isdark}>
+                    {driverAllowed
+                      ? "Votre commande peut maintenant passer à la recherche d'un livreur."
+                      : "La recherche du livreur sera disponible après validation de votre commande."}
+                  </DeliveryText>
+                </div>
+              </DeliveryHeader>
+
+              <DeliveryButton
+                $isdark={$isdark}
+                onClick={chercherLivreur}
+                disabled={rechercheLivreur}
+              >
+                {rechercheLivreur ? (
+                  <>Recherche...</>
+                ) : (
+                  <>
+                    <FaLocationArrow />
+                    Chercher un livreur
+                    <FaArrowRight />
+                  </>
+                )}
+              </DeliveryButton>
+            </DeliveryBox>
+
+            {/* ACCOUNT */}
+
             <Card $isdark={$isdark}>
-              <CardTop>
-                <CardIcon $isdark={$isdark}>
-                  <FaCheckCircle />
-                </CardIcon>
-
+              <CardHeader>
                 <CardTitleBox>
-                  <CardTitle>Progression</CardTitle>
+                  <CardIcon $isdark={$isdark}>
+                    <FaWallet />
+                  </CardIcon>
 
-                  <CardLabel $isdark={$isdark}>Suivi du paiement</CardLabel>
+                  <div>
+                    <CardTitle>Votre espace</CardTitle>
+
+                    <CardSubtitle $isdark={$isdark}>
+                      Gérez toutes vos commandes
+                    </CardSubtitle>
+                  </div>
                 </CardTitleBox>
-              </CardTop>
+              </CardHeader>
 
-              <Steps>
-                {paiements.map((p) => {
-                  const paid = p.status === "PAID";
+              <AccountButton
+                $isdark={$isdark}
+                onClick={() => navigate("/compte")}
+              >
+                Accéder à mon espace
+                <FaArrowRight />
+              </AccountButton>
+            </Card>
 
-                  return (
-                    <Step key={p._id} $isdark={$isdark}>
-                      <StepIcon $paid={paid} $isdark={$isdark}>
-                        {paid ? <FaCheckCircle /> : <FaRegCircle />}
-                      </StepIcon>
+            {/* DELIVERY INFO */}
 
-                      <StepInfo>
-                        <StepTitle>Étape {p.step}</StepTitle>
+            <Card $isdark={$isdark}>
+              <CardHeader>
+                <CardTitleBox>
+                  <CardIcon $isdark={$isdark}>
+                    <FaShoppingBag />
+                  </CardIcon>
 
-                        <StepAmount $isdark={$isdark}>
-                          {Number(p.amountExpected || 0).toLocaleString()} FCFA
-                        </StepAmount>
-                      </StepInfo>
+                  <div>
+                    <CardTitle>Livraison</CardTitle>
 
-                      <Badge $paid={paid}>{paid ? "PAYÉ" : "EN ATTENTE"}</Badge>
-                    </Step>
-                  );
-                })}
-              </Steps>
+                    <CardSubtitle $isdark={$isdark}>
+                      Informations client
+                    </CardSubtitle>
+                  </div>
+                </CardTitleBox>
+              </CardHeader>
+
+              <Detail $isdark={$isdark}>
+                <DetailLabel>Client</DetailLabel>
+
+                <DetailValue>
+                  {commande.client?.prenom} {commande.client?.nom}
+                </DetailValue>
+              </Detail>
+
+              <div style={{ height: "9px" }} />
+
+              <Detail $isdark={$isdark}>
+                <DetailLabel>Adresse</DetailLabel>
+
+                <DetailValue>{commande.client?.adresse || "—"}</DetailValue>
+              </Detail>
+
+              <div style={{ height: "9px" }} />
+
+              <Detail $isdark={$isdark}>
+                <DetailLabel>Ville</DetailLabel>
+
+                <DetailValue>{commande.client?.ville || "—"}</DetailValue>
+              </Detail>
+
+              <div style={{ height: "9px" }} />
+
+              <Detail $isdark={$isdark}>
+                <DetailLabel>Téléphone</DetailLabel>
+
+                <DetailValue>{commande.client?.numero || "—"}</DetailValue>
+              </Detail>
 
               <Security $isdark={$isdark}>
-                <FaShieldAlt />
+                <FaLock />
 
                 <span>
-                  Vos paiements sont suivis automatiquement. Consultez
-                  régulièrement votre coffre pour connaître l'état de votre
-                  commande.
+                  Vos informations sont protégées et accessibles depuis votre
+                  espace personnel.
                 </span>
               </Security>
             </Card>
+          </Column>
+        </Grid>
 
-            <Button $isdark={$isdark} onClick={() => navigate("/compte")}>
-              Accéder à mon coffre
-              <FaArrowRight />
-            </Button>
-          </div>
-        </MainGrid>
+        {/* =================================================
+            MODAL VALIDATION
+        ================================================= */}
 
-        {/* ================= MODAL ================= */}
-
-        {showModal && (
-          <Modal>
-            <ModalContent $isdark={$isdark}>
+        {showValidationModal && (
+          <ModalOverlay>
+            <Modal $isdark={$isdark}>
               <ModalIcon>
-                <FaBox />
+                <FaClock />
               </ModalIcon>
 
-              <ModalTitle>Commande en cours de validation</ModalTitle>
+              <ModalSmall>Validation en cours</ModalSmall>
+
+              <ModalTitle>Encore un petit instant</ModalTitle>
 
               <ModalText $isdark={$isdark}>
-                Votre commande est bien enregistrée. La validation de votre
-                commande peut prendre quelques instants. Vous pourrez suivre
-                chaque étape depuis votre coffre.
+                Votre commande est bien enregistrée, mais notre équipe doit
+                encore confirmer votre paiement avant de pouvoir lancer la
+                recherche d'un livreur.
               </ModalText>
 
-              <CloseModal $isdark={$isdark} onClick={() => setShowModal(false)}>
-                Compris
-              </CloseModal>
-            </ModalContent>
-          </Modal>
+              <ModalText $isdark={$isdark}>
+                Vous pouvez retrouver l'évolution de votre commande à tout
+                moment depuis votre espace personnel.
+              </ModalText>
+
+              <ModalButtons>
+                <ModalPrimary
+                  $isdark={$isdark}
+                  onClick={() => {
+                    setShowValidationModal(false);
+
+                    navigate("/compte");
+                  }}
+                >
+                  Aller à mon espace
+                  <FaArrowRight
+                    style={{
+                      marginLeft: 6,
+                    }}
+                  />
+                </ModalPrimary>
+
+                <ModalSecondary
+                  $isdark={$isdark}
+                  onClick={() => setShowValidationModal(false)}
+                >
+                  Rester sur la page
+                </ModalSecondary>
+              </ModalButtons>
+            </Modal>
+          </ModalOverlay>
         )}
       </Container>
     </Page>
