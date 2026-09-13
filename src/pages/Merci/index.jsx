@@ -21,8 +21,8 @@ import {
   FaWaveSquare,
 } from "react-icons/fa";
 
-// ⚠️ GARDE TON IMPORT ACTUEL DE ThemeContext SI LE CHEMIN EST DIFFÉRENT
-import { ThemeContext } from "../context/ThemeContext";
+
+import { ThemeContext } from "../../Utils/Context";
 
 /* =========================================================
    ANIMATIONS
