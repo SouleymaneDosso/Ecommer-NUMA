@@ -1429,6 +1429,8 @@ export default function CompteClient() {
                                     "⏳ En vérification"}
 
                                   {paiement.status === "UNPAID" && "À payer"}
+                                  {paiement.status === "REJECTED" &&
+                                    "❌ Rejeté"}
                                 </PaymentStatus>
                               </PaymentStep>
                             ))}
