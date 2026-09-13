@@ -1,5 +1,5 @@
 import { useEffect, useState, useContext } from "react";
-import { useNavigate, useParams} from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import styled, { keyframes } from "styled-components";
 import {
   FaBox,
@@ -9,6 +9,7 @@ import {
   FaShieldAlt,
   FaStar,
   FaLocationArrow,
+  FaClock,
 } from "react-icons/fa";
 import { ThemeContext } from "../../Utils/Context";
 
@@ -27,6 +28,7 @@ const reveal = keyframes`
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -36,20 +38,12 @@ const reveal = keyframes`
 const scaleIn = keyframes`
   from {
     opacity: 0;
-    transform: scale(.75);
+    transform: scale(0.75);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
-  }
-`;
-
-const shimmer = keyframes`
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
   }
 `;
 
@@ -102,6 +96,7 @@ const Container = styled.div`
 
 const LoaderWrapper = styled.div`
   min-height: 100vh;
+
   display: grid;
   place-items: center;
 
@@ -113,7 +108,9 @@ const Loader = styled.div`
   height: 44px;
 
   border-radius: 50%;
-  border: 3px solid ${({ $isdark }) => ($isdark ? "#2d2a25" : "#e1dcd1")};
+
+  border: 3px solid
+    ${({ $isdark }) => ($isdark ? "#2d2a25" : "#e1dcd1")};
 
   border-top-color: #b89b5e;
 
@@ -146,15 +143,19 @@ const Hero = styled.section`
       ? "linear-gradient(145deg, #181713, #0d0d0c)"
       : "linear-gradient(145deg, #fffdf8, #f3eee3)"};
 
-  border: 1px solid ${({ $isdark }) => ($isdark ? "#302d26" : "#e2dbcc")};
+  border: 1px solid
+    ${({ $isdark }) => ($isdark ? "#302d26" : "#e2dbcc")};
 
   box-shadow: ${({ $isdark }) =>
-    $isdark ? "0 30px 80px rgba(0,0,0,.45)" : "0 30px 80px rgba(77,61,31,.10)"};
+    $isdark
+      ? "0 30px 80px rgba(0,0,0,.45)"
+      : "0 30px 80px rgba(77,61,31,.10)"};
 
   animation: ${reveal} 0.7s ease both;
 
   &::before {
     content: "";
+
     position: absolute;
 
     width: 420px;
@@ -173,7 +174,9 @@ const Hero = styled.section`
 
   @media (max-width: 600px) {
     min-height: 280px;
+
     border-radius: 24px;
+
     padding: 40px 18px;
   }
 `;
@@ -293,7 +296,8 @@ const OrderReference = styled.div`
 
   background: ${({ $isdark }) => ($isdark ? "#211f1a" : "#fff")};
 
-  border: 1px solid ${({ $isdark }) => ($isdark ? "#39342a" : "#ded7c9")};
+  border: 1px solid
+    ${({ $isdark }) => ($isdark ? "#39342a" : "#ded7c9")};
 
   color: ${({ $isdark }) => ($isdark ? "#d8d1c4" : "#514b42")};
 
@@ -301,6 +305,63 @@ const OrderReference = styled.div`
   font-weight: 800;
 
   letter-spacing: 1px;
+`;
+
+/* =========================================================
+   FIND DRIVER BUTTON
+========================================================= */
+
+const FindDriverButton = styled.button`
+  width: 100%;
+  max-width: 1180px;
+
+  margin: 22px auto 0;
+
+  min-height: 72px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 14px;
+
+  border: none;
+  border-radius: 20px;
+
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+
+  color: white;
+
+  font-size: 15px;
+  font-weight: 900;
+
+  cursor: pointer;
+
+  box-shadow: 0 15px 40px rgba(34, 197, 94, 0.22);
+
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    opacity 0.25s ease;
+
+  svg {
+    font-size: 20px;
+  }
+
+  &:hover:not(:disabled) {
+    transform: translateY(-3px);
+
+    box-shadow: 0 20px 50px rgba(34, 197, 94, 0.32);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
 `;
 
 /* =========================================================
@@ -338,10 +399,13 @@ const Card = styled.section`
   background: ${({ $isdark }) =>
     $isdark ? "rgba(20,19,17,.94)" : "rgba(255,255,255,.88)"};
 
-  border: 1px solid ${({ $isdark }) => ($isdark ? "#302d26" : "#e2dbcf")};
+  border: 1px solid
+    ${({ $isdark }) => ($isdark ? "#302d26" : "#e2dbcf")};
 
   box-shadow: ${({ $isdark }) =>
-    $isdark ? "0 25px 70px rgba(0,0,0,.28)" : "0 25px 70px rgba(55,42,20,.08)"};
+    $isdark
+      ? "0 25px 70px rgba(0,0,0,.28)"
+      : "0 25px 70px rgba(55,42,20,.08)"};
 
   backdrop-filter: blur(15px);
 
@@ -394,7 +458,9 @@ const CardLabel = styled.span`
   color: ${({ $isdark }) => ($isdark ? "#77736b" : "#999187")};
 
   font-size: 0.58rem;
+
   letter-spacing: 1.5px;
+
   text-transform: uppercase;
 `;
 
@@ -404,6 +470,7 @@ const CardLabel = styled.span`
 
 const Line = styled.div`
   display: flex;
+
   justify-content: space-between;
   align-items: center;
 
@@ -411,7 +478,8 @@ const Line = styled.div`
 
   padding: 17px 0;
 
-  border-bottom: 1px solid ${({ $isdark }) => ($isdark ? "#292720" : "#eee9df")};
+  border-bottom: 1px solid
+    ${({ $isdark }) => ($isdark ? "#292720" : "#eee9df")};
 
   &:last-child {
     border-bottom: none;
@@ -423,6 +491,7 @@ const ItemInfo = styled.div`
 
   display: flex;
   flex-direction: column;
+
   gap: 5px;
 `;
 
@@ -450,19 +519,25 @@ const ItemPrice = styled.span`
 
 const TotalBox = styled.div`
   display: flex;
+
   justify-content: space-between;
   align-items: center;
 
   margin-top: 20px;
+
   padding-top: 22px;
 
-  border-top: 1px solid ${({ $isdark }) => ($isdark ? "#3a362d" : "#ddd6c8")};
+  border-top: 1px solid
+    ${({ $isdark }) => ($isdark ? "#3a362d" : "#ddd6c8")};
 `;
 
 const TotalLabel = styled.span`
   font-size: 0.82rem;
+
   text-transform: uppercase;
+
   letter-spacing: 1.5px;
+
   font-weight: 800;
 `;
 
@@ -490,7 +565,10 @@ const PaymentSummary = styled.div`
 
 const PaymentRow = styled.div`
   display: flex;
+
   justify-content: space-between;
+
+  gap: 15px;
 
   padding: 8px 0;
 
@@ -507,9 +585,11 @@ const PaymentRow = styled.div`
 
 const Remaining = styled(PaymentRow)`
   margin-top: 8px;
+
   padding-top: 15px;
 
-  border-top: 1px solid ${({ $isdark }) => ($isdark ? "#302d26" : "#e5dfd3")};
+  border-top: 1px solid
+    ${({ $isdark }) => ($isdark ? "#302d26" : "#e5dfd3")};
 
   strong {
     color: #b88a38;
@@ -522,6 +602,7 @@ const Remaining = styled(PaymentRow)`
 
 const Coffre = styled.div`
   position: relative;
+
   overflow: hidden;
 
   margin-top: 22px;
@@ -555,10 +636,13 @@ const Coffre = styled.div`
 
 const CoffreTop = styled.div`
   display: flex;
+
   align-items: center;
+
   gap: 15px;
 
   position: relative;
+
   z-index: 1;
 `;
 
@@ -582,7 +666,9 @@ const CoffreIcon = styled.div`
 
 const CoffreText = styled.div`
   display: flex;
+
   flex-direction: column;
+
   gap: 5px;
 
   span {
@@ -591,6 +677,7 @@ const CoffreText = styled.div`
     font-size: 0.58rem;
 
     text-transform: uppercase;
+
     letter-spacing: 2px;
   }
 
@@ -598,15 +685,18 @@ const CoffreText = styled.div`
     font-family: Georgia, serif;
 
     font-size: 1.1rem;
+
     font-weight: 500;
   }
 `;
 
 const ProgressBar = styled.div`
   position: relative;
+
   z-index: 1;
 
   width: 100%;
+
   height: 4px;
 
   margin-top: 22px;
@@ -636,6 +726,7 @@ const Progress = styled.div`
 
 const Steps = styled.div`
   display: flex;
+
   flex-direction: column;
 `;
 
@@ -643,6 +734,7 @@ const Step = styled.div`
   position: relative;
 
   display: flex;
+
   align-items: center;
 
   gap: 14px;
@@ -655,17 +747,21 @@ const Step = styled.div`
     position: absolute;
 
     left: 11px;
+
     top: 39px;
 
     width: 1px;
+
     height: calc(100% - 10px);
 
-    background: ${({ $isdark }) => ($isdark ? "#302d26" : "#e2ddd4")};
+    background: ${({ $isdark }) =>
+      $isdark ? "#302d26" : "#e2ddd4"};
   }
 `;
 
 const StepIcon = styled.div`
   position: relative;
+
   z-index: 2;
 
   flex-shrink: 0;
@@ -674,12 +770,17 @@ const StepIcon = styled.div`
   height: 24px;
 
   display: grid;
+
   place-items: center;
 
   border-radius: 50%;
 
   background: ${({ $paid, $isdark }) =>
-    $paid ? "#b89b5e" : $isdark ? "#211f1a" : "#f1eee7"};
+    $paid
+      ? "#b89b5e"
+      : $isdark
+        ? "#211f1a"
+        : "#f1eee7"};
 
   color: ${({ $paid }) => ($paid ? "#fff" : "#a39a8b")};
 
@@ -692,12 +793,15 @@ const StepInfo = styled.div`
   flex: 1;
 
   display: flex;
+
   flex-direction: column;
+
   gap: 4px;
 `;
 
 const StepTitle = styled.span`
   font-size: 0.78rem;
+
   font-weight: 800;
 `;
 
@@ -713,13 +817,22 @@ const Badge = styled.span`
   border-radius: 100px;
 
   font-size: 0.53rem;
+
   font-weight: 900;
 
   letter-spacing: 0.8px;
 
-  color: ${({ $paid }) => ($paid ? "#27613a" : "#876523")};
+  color: ${({ $status }) => {
+    if ($status === "PAID") return "#27613a";
+    if ($status === "PENDING") return "#876523";
+    return "#77736b";
+  }};
 
-  background: ${({ $paid }) => ($paid ? "#e5f3e8" : "#f6edda")};
+  background: ${({ $status }) => {
+    if ($status === "PAID") return "#e5f3e8";
+    if ($status === "PENDING") return "#f6edda";
+    return "#eceae5";
+  }};
 `;
 
 /* =========================================================
@@ -728,6 +841,7 @@ const Badge = styled.span`
 
 const Security = styled.div`
   display: flex;
+
   gap: 10px;
 
   margin-top: 22px;
@@ -746,13 +860,15 @@ const Security = styled.div`
 
   svg {
     flex-shrink: 0;
+
     color: #b89b5e;
+
     margin-top: 2px;
   }
 `;
 
 /* =========================================================
-   BUTTON
+   ACCOUNT BUTTON
 ========================================================= */
 
 const Button = styled.button`
@@ -763,21 +879,28 @@ const Button = styled.button`
   min-height: 58px;
 
   display: flex;
+
   justify-content: center;
+
   align-items: center;
+
   gap: 12px;
 
   border: 1px solid #b89b5e;
+
   border-radius: 16px;
 
-  background: ${({ $isdark }) => ($isdark ? "#b89b5e" : "#171512")};
+  background: ${({ $isdark }) =>
+    $isdark ? "#b89b5e" : "#171512"};
 
   color: ${({ $isdark }) => ($isdark ? "#171512" : "#fff")};
 
   font-size: 0.76rem;
+
   font-weight: 900;
 
   letter-spacing: 1px;
+
   text-transform: uppercase;
 
   cursor: pointer;
@@ -805,12 +928,15 @@ const Button = styled.button`
 
 const Modal = styled.div`
   position: fixed;
+
   inset: 0;
 
   z-index: 9999;
 
   display: flex;
+
   align-items: center;
+
   justify-content: center;
 
   padding: 20px;
@@ -824,6 +950,7 @@ const ModalContent = styled.div`
   position: relative;
 
   width: 100%;
+
   max-width: 460px;
 
   padding: 38px;
@@ -837,7 +964,8 @@ const ModalContent = styled.div`
       ? "linear-gradient(145deg,#1d1b17,#11100e)"
       : "linear-gradient(145deg,#fffefa,#f5f0e7)"};
 
-  border: 1px solid ${({ $isdark }) => ($isdark ? "#39342a" : "#e2dacb")};
+  border: 1px solid
+    ${({ $isdark }) => ($isdark ? "#39342a" : "#e2dacb")};
 
   box-shadow: 0 40px 100px rgba(0, 0, 0, 0.4);
 
@@ -845,15 +973,18 @@ const ModalContent = styled.div`
 
   @media (max-width: 500px) {
     padding: 28px 20px;
+
     border-radius: 22px;
   }
 `;
 
 const ModalIcon = styled.div`
   width: 64px;
+
   height: 64px;
 
   display: grid;
+
   place-items: center;
 
   margin: 0 auto 20px;
@@ -877,6 +1008,7 @@ const ModalTitle = styled.h2`
   font-family: Georgia, serif;
 
   font-size: 1.5rem;
+
   font-weight: 500;
 `;
 
@@ -886,6 +1018,7 @@ const ModalText = styled.p`
   color: ${({ $isdark }) => ($isdark ? "#969188" : "#716b61")};
 
   font-size: 0.78rem;
+
   line-height: 1.7;
 `;
 
@@ -897,16 +1030,21 @@ const CloseModal = styled.button`
   padding: 14px;
 
   border: none;
+
   border-radius: 13px;
 
-  background: ${({ $isdark }) => ($isdark ? "#fff" : "#171512")};
+  background: ${({ $isdark }) =>
+    $isdark ? "#fff" : "#171512"};
 
-  color: ${({ $isdark }) => ($isdark ? "#171512" : "#fff")};
+  color: ${({ $isdark }) =>
+    $isdark ? "#171512" : "#fff"};
 
   font-size: 0.7rem;
+
   font-weight: 900;
 
   letter-spacing: 1px;
+
   text-transform: uppercase;
 
   cursor: pointer;
@@ -915,60 +1053,46 @@ const CloseModal = styled.button`
 
   &:hover {
     opacity: 0.88;
+
     transform: translateY(-1px);
   }
 `;
-const FindDriverButton = styled.button`
+
+const SecondaryModalButton = styled.button`
   width: 100%;
-  max-width: 1180px;
 
-  margin: 22px auto 0;
+  margin-top: 10px;
 
-  min-height: 72px;
+  padding: 13px;
 
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
+  border: 1px solid
+    ${({ $isdark }) => ($isdark ? "#3a352c" : "#ddd5c7")};
 
-  border: none;
-  border-radius: 20px;
+  border-radius: 13px;
 
-  background: linear-gradient(
-    135deg,
-    #22c55e,
-    #16a34a
-  );
+  background: transparent;
 
-  color: white;
+  color: ${({ $isdark }) =>
+    $isdark ? "#bdb7ad" : "#696258"};
 
-  font-size: 15px;
-  font-weight: 900;
+  font-size: 0.68rem;
+
+  font-weight: 800;
+
+  letter-spacing: 0.7px;
+
+  text-transform: uppercase;
 
   cursor: pointer;
 
-  box-shadow:
-    0 15px 40px rgba(34, 197, 94, 0.22);
-
-  transition:
-    transform .25s ease,
-    box-shadow .25s ease;
-
-  svg {
-    font-size: 20px;
-  }
+  transition: 0.2s;
 
   &:hover {
-    transform: translateY(-3px);
-
-    box-shadow:
-      0 20px 50px rgba(34, 197, 94, 0.32);
-  }
-
-  &:active {
-    transform: translateY(0);
+    background: ${({ $isdark }) =>
+      $isdark ? "#211f1a" : "#f4efe6"};
   }
 `;
+
 /* =========================================================
    COMPONENT
 ========================================================= */
@@ -976,22 +1100,27 @@ const FindDriverButton = styled.button`
 export default function Merci() {
   const navigate = useNavigate();
 
+  const { id } = useParams();
+
   const { theme } = useContext(ThemeContext);
 
   const $isdark = theme !== "light";
 
- const { id } = useParams();
-
   const [commande, setCommande] = useState(null);
+
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(true);
+
+  const [showModal, setShowModal] = useState(false);
+
   const [token, setToken] = useState(null);
+
   const [rechercheLivreur, setRechercheLivreur] = useState(false);
 
   const API_URL = import.meta.env.VITE_API_URL;
-  
 
-  /* ================= AUTH ================= */
+  /* =========================================================
+     AUTH
+  ========================================================= */
 
   useEffect(() => {
     const savedToken = localStorage.getItem("token");
@@ -1004,30 +1133,47 @@ export default function Merci() {
     setToken(savedToken);
   }, [navigate]);
 
-  /* ================= FETCH ================= */
+  /* =========================================================
+     FETCH COMMANDE
+  ========================================================= */
 
   useEffect(() => {
     if (!id || !token) return;
 
     const fetchCommande = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/commandes/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const res = await fetch(
+          `${API_URL}/api/commandes/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
         const data = await res.json();
 
         if (!res.ok) {
-          throw new Error(data.message || "Erreur serveur");
+          throw new Error(
+            data.message || "Erreur serveur"
+          );
         }
 
+        /*
+         * Compatible avec :
+         * res.json(commande)
+         *
+         * ou :
+         * res.json({ commande })
+         */
         setCommande(data.commande || data);
       } catch (err) {
         console.error(err);
 
-        alert("Impossible de récupérer la commande");
+        alert(
+          err.message ||
+            "Impossible de récupérer la commande"
+        );
 
         navigate("/");
       } finally {
@@ -1038,44 +1184,97 @@ export default function Merci() {
     fetchCommande();
   }, [id, token, navigate, API_URL]);
 
+  /* =========================================================
+     RECHERCHER UN LIVREUR
+  ========================================================= */
+
   const chercherLivreur = async () => {
-    if(!id || !token) {
-      alert("Commande introuvable ou utilisateur non authentifié.");
+    if (!id || !token || !commande) {
+      alert(
+        "Commande introuvable ou utilisateur non authentifié."
+      );
       return;
     }
+
+    /*
+     * IMPORTANT :
+     *
+     * Paiement total :
+     * statusCommande = PAID
+     *
+     * Paiement 3 tranches :
+     * statusCommande = PAID uniquement
+     * lorsque toutes les tranches sont validées.
+     *
+     * Cash :
+     * statusCommande = CONFIRMED après
+     * confirmation par l'administration.
+     */
+    const commandeConfirmee =
+      commande.statusCommande === "PAID" ||
+      commande.statusCommande === "CONFIRMED";
+
+    /*
+     * Si l'administration n'a pas encore confirmé,
+     * on ouvre simplement le modal.
+     *
+     * AUCUN appel à l'API livreur ici.
+     */
+    if (!commandeConfirmee) {
+      setShowModal(true);
+      return;
+    }
+
     setRechercheLivreur(true);
+
     try {
       const res = await fetch(
         `${API_URL}/api/livreurs/commande/${id}/rechercher-livreur`,
         {
           method: "PUT",
+
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        },
+        }
       );
 
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.message || "Impossible de rechercher un livreur.");
+        alert(
+          data.message ||
+            "Impossible de rechercher un livreur."
+        );
+
         return;
       }
 
-      setCommande(data.commande || commande);
+      setCommande(data.commande || data);
 
-      navigate(`/suivi-commande/${id}`)
+      /*
+       * Une fois la recherche lancée,
+       * on va vers le suivi de commande.
+       */
+      navigate(`/suivi-commande/${id}`);
     } catch (error) {
-      console.error("RECHERCHE LIVREUR ERROR:", error);
+      console.error(
+        "RECHERCHE LIVREUR ERROR:",
+        error
+      );
 
-      alert("Impossible de contacter le serveur.");
-    }finally {
-    setRechercheLivreur(false);
-  }
+      alert(
+        "Impossible de contacter le serveur."
+      );
+    } finally {
+      setRechercheLivreur(false);
+    }
   };
 
-  /* ================= LOADING ================= */
+  /* =========================================================
+     LOADING
+  ========================================================= */
 
   if (loading) {
     return (
@@ -1085,242 +1284,549 @@ export default function Merci() {
     );
   }
 
+  /* =========================================================
+     COMMANDE INTROUVABLE
+  ========================================================= */
+
   if (!commande) {
     return (
       <Page $isdark={$isdark}>
         <Container>
-          <Card $isdark={$isdark}>Commande introuvable</Card>
+          <Card $isdark={$isdark}>
+            Commande introuvable
+          </Card>
         </Container>
       </Page>
     );
   }
 
-  /* ================= DATA ================= */
+  /* =========================================================
+     DATA
+  ========================================================= */
 
-  const paiements = commande.paiements || [];
-  const panier = commande.panier || [];
+  const paiements = Array.isArray(commande.paiements)
+    ? commande.paiements
+    : [];
 
-  const paidSteps = paiements.filter((p) => p.status === "PAID").length;
+  const panier = Array.isArray(commande.panier)
+    ? commande.panier
+    : [];
+
+  /*
+   * Étapes réellement confirmées par l'admin.
+   */
+  const paidSteps = paiements.filter(
+    (p) => p.status === "PAID"
+  ).length;
 
   const totalSteps = paiements.length;
 
+  /*
+   * Pour un paiement total :
+   * une seule étape = montant total.
+   *
+   * Pour 3 tranches :
+   * 3 étapes.
+   *
+   * Pour cash :
+   * aucune étape de paiement.
+   */
   const totalPaid = paiements
     .filter((p) => p.status === "PAID")
-    .reduce((acc, p) => acc + Number(p.amountExpected || 0), 0);
+    .reduce(
+      (acc, p) =>
+        acc + Number(p.amountExpected || 0),
+      0
+    );
 
-  const remaining = Math.max(0, Number(commande.total || 0) - totalPaid);
+  const remaining = Math.max(
+    0,
+    Number(commande.total || 0) - totalPaid
+  );
 
   const progress =
-    totalSteps > 0 ? Math.round((paidSteps / totalSteps) * 100) : 0;
+    totalSteps > 0
+      ? Math.round(
+          (paidSteps / totalSteps) * 100
+        )
+      : commande.statusCommande === "CONFIRMED"
+        ? 100
+        : 0;
 
-  /* ================= UI ================= */
+  /* =========================================================
+     STATUS
+  ========================================================= */
+
+  const statusCommande =
+    commande.statusCommande || "PENDING";
+
+  const commandeConfirmee =
+    statusCommande === "PAID" ||
+    statusCommande === "CONFIRMED";
+
+  /* =========================================================
+     UI
+  ========================================================= */
 
   return (
     <Page $isdark={$isdark}>
       <Container>
-        {/* ================= HERO ================= */}
+
+        {/* =================================================
+            HERO
+        ================================================= */}
 
         <Hero $isdark={$isdark}>
+
           <LuxuryLine />
 
           <SuccessIcon $isdark={$isdark}>
             <FaCheckCircle />
           </SuccessIcon>
 
-          <Eyebrow>Confirmation de commande</Eyebrow>
+          <Eyebrow>
+            Confirmation de commande
+          </Eyebrow>
 
-          <Title>Merci pour votre confiance</Title>
+          <Title>
+            Merci pour votre confiance
+          </Title>
 
           <Subtitle $isdark={$isdark}>
-            Votre commande est officiellement enregistrée. Retrouvez ci-dessous
-            son récapitulatif ainsi que l'avancement de votre coffre.
+            Votre commande est officiellement
+            enregistrée. Retrouvez ci-dessous son
+            récapitulatif ainsi que l'avancement
+            de votre commande.
           </Subtitle>
 
           {id && (
             <OrderReference $isdark={$isdark}>
               <FaStar />
-              COMMANDE #{String(id).slice(-8).toUpperCase()}
+
+              COMMANDE #
+              {String(id)
+                .slice(-8)
+                .toUpperCase()}
             </OrderReference>
           )}
         </Hero>
 
-        <FindDriverButton $isdark={$isdark} onClick={chercherLivreur}
+        {/* =================================================
+            FIND DRIVER
+        ================================================= */}
+
+        <FindDriverButton
+          onClick={chercherLivreur}
+          disabled={rechercheLivreur}
         >
           <FaLocationArrow />
 
-          <span>Chercher un livreur maintenant</span>
+          <span>
+            {rechercheLivreur
+              ? "Recherche en cours..."
+              : commandeConfirmee
+                ? "Chercher un livreur maintenant"
+                : "Chercher un livreur maintenant"}
+          </span>
 
-          <FaArrowRight />
+          {!rechercheLivreur && (
+            <FaArrowRight />
+          )}
         </FindDriverButton>
 
-        {/* ================= CONTENT ================= */}
+        {/* =================================================
+            CONTENT
+        ================================================= */}
 
         <MainGrid>
-          {/* ================= LEFT ================= */}
+
+          {/* =================================================
+              LEFT
+          ================================================= */}
 
           <div>
+
             <Card $isdark={$isdark}>
+
               <CardTop>
+
                 <CardIcon $isdark={$isdark}>
                   <FaBox />
                 </CardIcon>
 
                 <CardTitleBox>
-                  <CardTitle>Votre commande</CardTitle>
 
-                  <CardLabel $isdark={$isdark}>Récapitulatif</CardLabel>
+                  <CardTitle>
+                    Votre commande
+                  </CardTitle>
+
+                  <CardLabel $isdark={$isdark}>
+                    Récapitulatif
+                  </CardLabel>
+
                 </CardTitleBox>
+
               </CardTop>
 
-              {panier.map((item, index) => (
-                <Line
-                  key={item.produitId || item._id || index}
-                  $isdark={$isdark}
-                >
-                  <ItemInfo>
-                    <ItemName>{item.nom}</ItemName>
+              {panier.length > 0 ? (
+                panier.map((item, index) => (
+                  <Line
+                    key={
+                      item.produitId ||
+                      item._id ||
+                      index
+                    }
+                    $isdark={$isdark}
+                  >
 
-                    <ItemQuantity $isdark={$isdark}>
-                      Quantité : {item.quantite}
+                    <ItemInfo>
+
+                      <ItemName>
+                        {item.nom ||
+                          item.produitId?.nom ||
+                          "Produit"}
+                      </ItemName>
+
+                      <ItemQuantity
+                        $isdark={$isdark}
+                      >
+                        Quantité :{" "}
+                        {item.quantite || 0}
+                      </ItemQuantity>
+
+                    </ItemInfo>
+
+                    <ItemPrice>
+                      {(
+                        Number(item.prix || 0) *
+                        Number(item.quantite || 0)
+                      ).toLocaleString()}{" "}
+                      FCFA
+                    </ItemPrice>
+
+                  </Line>
+                ))
+              ) : (
+                <Line $isdark={$isdark}>
+                  <ItemInfo>
+                    <ItemName>
+                      Commande enregistrée
+                    </ItemName>
+
+                    <ItemQuantity
+                      $isdark={$isdark}
+                    >
+                      Votre commande a bien été
+                      enregistrée.
                     </ItemQuantity>
                   </ItemInfo>
-
-                  <ItemPrice>
-                    {(
-                      Number(item.prix || 0) * Number(item.quantite || 0)
-                    ).toLocaleString()}{" "}
-                    FCFA
-                  </ItemPrice>
                 </Line>
-              ))}
+              )}
 
               <TotalBox $isdark={$isdark}>
-                <TotalLabel>Total commande</TotalLabel>
+
+                <TotalLabel>
+                  Total commande
+                </TotalLabel>
 
                 <TotalPrice>
-                  {Number(commande.total || 0).toLocaleString()} FCFA
+                  {Number(
+                    commande.total || 0
+                  ).toLocaleString()}{" "}
+                  FCFA
                 </TotalPrice>
+
               </TotalBox>
 
-              <PaymentSummary $isdark={$isdark}>
-                <PaymentRow $isdark={$isdark}>
-                  <span>Montant déjà payé</span>
+              <PaymentSummary
+                $isdark={$isdark}
+              >
 
-                  <strong>{totalPaid.toLocaleString()} FCFA</strong>
+                <PaymentRow
+                  $isdark={$isdark}
+                >
+                  <span>
+                    Montant déjà confirmé
+                  </span>
+
+                  <strong>
+                    {totalPaid.toLocaleString()}{" "}
+                    FCFA
+                  </strong>
                 </PaymentRow>
 
-                <Remaining $isdark={$isdark}>
-                  <span>Solde restant</span>
+                <Remaining
+                  $isdark={$isdark}
+                >
+                  <span>
+                    Solde restant
+                  </span>
 
-                  <strong>{remaining.toLocaleString()} FCFA</strong>
+                  <strong>
+                    {remaining.toLocaleString()}{" "}
+                    FCFA
+                  </strong>
                 </Remaining>
+
               </PaymentSummary>
+
             </Card>
 
-            {/* COFFRE */}
+            {/* =================================================
+                COFFRE
+            ================================================= */}
 
-            <Coffre $isdark={$isdark}>
+            <Coffre>
+
               <CoffreTop>
+
                 <CoffreIcon>
                   <FaBox />
                 </CoffreIcon>
 
                 <CoffreText>
-                  <span>Votre coffre</span>
+
+                  <span>
+                    Votre coffre
+                  </span>
 
                   <strong>
-                    {paidSteps} / {totalSteps} étapes payées
+                    {totalSteps > 0
+                      ? `${paidSteps} / ${totalSteps} étapes payées`
+                      : commande.modePaiement ===
+                        "cod"
+                        ? "Paiement à la livraison"
+                        : commandeConfirmee
+                          ? "Paiement confirmé"
+                          : "Paiement en vérification"}
                   </strong>
+
                 </CoffreText>
+
               </CoffreTop>
 
-              <ProgressBar>
-                <Progress $percent={progress} />
-              </ProgressBar>
+              {totalSteps > 0 && (
+                <ProgressBar>
+                  <Progress
+                    $percent={progress}
+                  />
+                </ProgressBar>
+              )}
+
+              {totalSteps === 0 &&
+                commande.modePaiement ===
+                  "cod" && (
+                  <ProgressBar>
+                    <Progress
+                      $percent={
+                        commandeConfirmee
+                          ? 100
+                          : 0
+                      }
+                    />
+                  </ProgressBar>
+                )}
+
             </Coffre>
+
           </div>
 
-          {/* ================= RIGHT ================= */}
+          {/* =================================================
+              RIGHT
+          ================================================= */}
 
           <div>
+
             <Card $isdark={$isdark}>
+
               <CardTop>
+
                 <CardIcon $isdark={$isdark}>
                   <FaCheckCircle />
                 </CardIcon>
 
                 <CardTitleBox>
-                  <CardTitle>Progression</CardTitle>
 
-                  <CardLabel $isdark={$isdark}>Suivi du paiement</CardLabel>
+                  <CardTitle>
+                    Progression
+                  </CardTitle>
+
+                  <CardLabel $isdark={$isdark}>
+                    Suivi du paiement
+                  </CardLabel>
+
                 </CardTitleBox>
+
               </CardTop>
 
-              <Steps>
-                {paiements.map((p) => {
-                  const paid = p.status === "PAID";
+              {paiements.length > 0 ? (
+                <Steps>
 
-                  return (
-                    <Step key={p._id} $isdark={$isdark}>
-                      <StepIcon $paid={paid} $isdark={$isdark}>
-                        {paid ? <FaCheckCircle /> : <FaRegCircle />}
-                      </StepIcon>
+                  {paiements.map((p, index) => {
 
-                      <StepInfo>
-                        <StepTitle>Étape {p.step}</StepTitle>
+                    const paid =
+                      p.status === "PAID";
 
-                        <StepAmount $isdark={$isdark}>
-                          {Number(p.amountExpected || 0).toLocaleString()} FCFA
-                        </StepAmount>
-                      </StepInfo>
+                    const pending =
+                      p.status === "PENDING";
 
-                      <Badge $paid={paid}>{paid ? "PAYÉ" : "EN ATTENTE"}</Badge>
-                    </Step>
-                  );
-                })}
-              </Steps>
+                    return (
+                      <Step
+                        key={
+                          p._id ||
+                          `${p.step}-${index}`
+                        }
+                        $isdark={$isdark}
+                      >
+
+                        <StepIcon
+                          $paid={paid}
+                          $isdark={$isdark}
+                        >
+                          {paid ? (
+                            <FaCheckCircle />
+                          ) : pending ? (
+                            <FaClock />
+                          ) : (
+                            <FaRegCircle />
+                          )}
+                        </StepIcon>
+
+                        <StepInfo>
+
+                          <StepTitle>
+                            Étape {p.step}
+                          </StepTitle>
+
+                          <StepAmount
+                            $isdark={$isdark}
+                          >
+                            {Number(
+                              p.amountExpected ||
+                                0
+                            ).toLocaleString()}{" "}
+                            FCFA
+                          </StepAmount>
+
+                        </StepInfo>
+
+                        <Badge
+                          $status={p.status}
+                        >
+                          {paid
+                            ? "PAYÉ"
+                            : pending
+                              ? "EN VÉRIFICATION"
+                              : "EN ATTENTE"}
+                        </Badge>
+
+                      </Step>
+                    );
+                  })}
+
+                </Steps>
+              ) : (
+                <Security
+                  $isdark={$isdark}
+                  style={{
+                    marginTop: 0,
+                  }}
+                >
+                  <FaClock />
+
+                  <span>
+                    {commande.modePaiement ===
+                    "cod"
+                      ? "Votre commande sera réglée à la livraison."
+                      : "Les informations de paiement sont en cours de traitement."}
+                  </span>
+                </Security>
+              )}
 
               <Security $isdark={$isdark}>
+
                 <FaShieldAlt />
 
                 <span>
-                  Vos paiements sont suivis automatiquement. Consultez
-                  régulièrement votre coffre pour connaître l'état de votre
-                  commande.
+                  Vos paiements sont suivis par
+                  notre équipe. Une étape affichée
+                  « EN VÉRIFICATION » doit encore
+                  être confirmée avant d'être
+                  considérée comme payée.
                 </span>
+
               </Security>
+
             </Card>
 
-            <Button $isdark={$isdark} onClick={() => navigate("/compte")}>
-              Accéder à mon coffre
+            {/* =================================================
+                ACCOUNT
+            ================================================= */}
+
+            <Button
+              $isdark={$isdark}
+              onClick={() => navigate("/compte")}
+            >
+              Accéder à mon espace compte
+
               <FaArrowRight />
             </Button>
+
           </div>
+
         </MainGrid>
 
-        {/* ================= MODAL ================= */}
+        {/* =================================================
+            MODAL VALIDATION
+        ================================================= */}
 
         {showModal && (
           <Modal>
+
             <ModalContent $isdark={$isdark}>
+
               <ModalIcon>
-                <FaBox />
+                <FaClock />
               </ModalIcon>
 
-              <ModalTitle>Commande en cours de validation</ModalTitle>
+              <ModalTitle>
+                Commande en cours de vérification
+              </ModalTitle>
 
               <ModalText $isdark={$isdark}>
-                Votre commande est bien enregistrée. La validation de votre
-                commande peut prendre quelques instants. Vous pourrez suivre
-                chaque étape depuis votre coffre.
+                Votre commande est bien enregistrée.
+                Votre paiement doit encore être
+                vérifié et confirmé par notre équipe.
+                <br />
+                <br />
+                Dès que votre commande sera confirmée,
+                vous pourrez lancer la recherche d'un
+                livreur.
               </ModalText>
 
-              <CloseModal $isdark={$isdark} onClick={() => setShowModal(false)}>
-                Compris
+              <CloseModal
+                $isdark={$isdark}
+                onClick={() =>
+                  navigate("/compte")
+                }
+              >
+                Accéder à mon espace compte
               </CloseModal>
+
+              <SecondaryModalButton
+                $isdark={$isdark}
+                onClick={() =>
+                  setShowModal(false)
+                }
+              >
+                Rester sur cette page
+              </SecondaryModalButton>
+
             </ModalContent>
+
           </Modal>
         )}
+
       </Container>
     </Page>
   );
