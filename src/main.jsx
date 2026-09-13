@@ -55,9 +55,11 @@ import LivreurAdmin from "./pages/livreuradmin";
 import { Toaster } from "react-hot-toast";
 import SuiviCommande from "./pages/SuiviCommande";
 import AdminLivreurs from "./pages/AdminLivreurs";
+import PaiementSuite from "./pages/PaiementSuite";
 import "./i18n";
 import Precommande from "./pages/Precommande";
 import ReceptionPrecommande from "./pages/ReceptionPrecommande";
+
 const PublicLayout = ({ children }) => {
   const location = useLocation();
   const heroPage = location.pathname === "/";
@@ -120,7 +122,14 @@ createRoot(document.getElementById("root")).render(
                 </PublicLayout>
               }
             />
-
+            <Route
+              path="/paiement-suite/:id"
+              element={
+                <PublicLayout>
+                  <PaiementSuite />
+                </PublicLayout>
+              }
+            />
             <Route
               path="/collections"
               element={
@@ -360,7 +369,10 @@ createRoot(document.getElementById("root")).render(
               <Route path="paiement" element={<AdminPaiements />} />
               <Route path="livreurs" element={<AdminLivreurs />} />
               <Route path="precommandes" element={<AdminPrecommandes />} />
-              <Route path="reception-precommandes" element={<ReceptionPrecommande />} />
+              <Route
+                path="reception-precommandes"
+                element={<ReceptionPrecommande />}
+              />
             </Route>
           </Routes>
         </Panier>

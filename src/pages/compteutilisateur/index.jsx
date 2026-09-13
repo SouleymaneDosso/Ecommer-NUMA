@@ -1396,6 +1396,70 @@ export default function CompteClient() {
                             );
                           })}
                         </OrderDetails>
+                        {commande.modePaiement === "installments" && (
+                          <InstallmentPaymentBox>
+                            <h4>Paiement en 3 tranches</h4>
+
+                            {commande.paiements?.map((paiement) => (
+                              <PaymentStep key={paiement.step}>
+                                <div>
+                                  <strong>Tranche {paiement.step}</strong>
+
+                                  <span>
+                                    {Number(
+                                      paiement.amountExpected,
+                                    ).toLocaleString()}{" "}
+                                    FCFA
+                                  </span>
+                                </div>
+
+                                <PaymentStatus $status={paiement.status}>
+                                  {paiement.status === "PAID" && "✓ Payée"}
+
+                                  {paiement.status === "PENDING" &&
+                                    "⏳ En vérification"}
+
+                                  {paiement.status === "UNPAID" && "À payer"}
+                                </PaymentStatus>
+                              </PaymentStep>
+                            ))}
+
+                            {(() => {
+                              const prochaineTranche = commande.paiements?.find(
+                                (p) => p.status !== "PAID",
+                              );
+
+                              if (!prochaineTranche) {
+                                return (
+                                  <PaymentComplete>
+                                    ✓ Paiement entièrement confirmé
+                                  </PaymentComplete>
+                                );
+                              }
+
+                              if (prochaineTranche.status === "PENDING") {
+                                return (
+                                  <PaymentWaiting>
+                                    Votre paiement est en attente de validation
+                                    par notre équipe.
+                                  </PaymentWaiting>
+                                );
+                              }
+
+                              return (
+                                <PayNextButton
+                                  type="button"
+                                  onClick={() =>
+                                    navigate(`/paiement-suite/${commande._id}`)
+                                  }
+                                >
+                                  Payer la tranche {prochaineTranche.step}
+                                  <FiArrowRight />
+                                </PayNextButton>
+                              );
+                            })()}
+                          </InstallmentPaymentBox>
+                        )}
 
                         <TrackingAction>
                           <TrackingActionInfo>
@@ -2414,4 +2478,52 @@ const FinalizeButton = styled.button`
     opacity: 0.55;
     cursor: not-allowed;
   }
+`;
+const InstallmentPaymentBox = styled.div`
+  margin-top: 20px;
+  padding: 20px;
+  border-radius: 16px;
+  background: ${({ theme }) => theme.card || "#f5f5f5"};
+`;
+
+const PaymentStep = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+`;
+
+const PaymentStatus = styled.span`
+  font-weight: 600;
+`;
+
+const PaymentComplete = styled.div`
+  margin-top: 15px;
+  font-weight: 600;
+`;
+
+const PaymentWaiting = styled.div`
+  margin-top: 15px;
+  padding: 12px;
+  border-radius: 10px;
+`;
+
+const PayNextButton = styled.button`
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
 `;
