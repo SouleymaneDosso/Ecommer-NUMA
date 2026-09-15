@@ -2922,29 +2922,107 @@ export default function CompteClient() {
   // PAIEMENT REJETÉ
   // ======================================================
 
-  const getRejectedPayment = (commande) => {
-    const paiementsRecus = Array.isArray(commande?.paiementsRecus)
-      ? commande.paiementsRecus
-      : [];
+  
+const getRejectedPayment = (commande) => {
+  const paiementsRecus = Array.isArray(commande?.paiementsRecus)
+    ? commande.paiementsRecus
+    : [];
 
-    const rejectedPayment = [...paiementsRecus]
-      .reverse()
-      .find((paiement) => paiement?.status === "REJECTED");
+  const paiements = Array.isArray(commande?.paiements)
+    ? commande.paiements
+    : [];
 
-    if (rejectedPayment) {
-      return rejectedPayment;
-    }
+  // On combine les deux sources
+  const tousLesPaiements = [
+    ...paiementsRecus,
+    ...paiements,
+  ].filter(Boolean);
 
-    const paiements = Array.isArray(commande?.paiements)
-      ? commande.paiements
-      : [];
+  // Cherche les paiements rejetés
+  const paiementsRejetes = tousLesPaiements.filter(
+    (paiement) => paiement?.status === "REJECTED",
+  );
 
-    return (
-      [...paiements]
-        .reverse()
-        .find((paiement) => paiement?.status === "REJECTED") || null
-    );
-  };
+  if (paiementsRejetes.length === 0) {
+    return null;
+  }
+
+  // On prend le rejet le plus récent
+  const dernierRejet = [...paiementsRejetes].sort((a, b) => {
+    const dateA = new Date(a.createdAt || a.date || 0).getTime();
+    const dateB = new Date(b.createdAt || b.date || 0).getTime();
+
+    return dateB - dateA;
+  })[0];
+
+  /*
+   * Une nouvelle tentative de paiement peut avoir le même "step".
+   *
+   * Exemple :
+   *
+   * REJECTED step 1
+   * PENDING  step 1
+   *
+   * ou
+   *
+   * REJECTED step 1
+   * PAID    step 1
+   *
+   * Dans ces cas, l'ancien rejet ne doit plus être affiché.
+   */
+
+  const nouveauPaiement = tousLesPaiements
+    .filter((paiement) => {
+      // Même tranche si step existe
+      const memeStep =
+        dernierRejet?.step != null &&
+        paiement?.step != null &&
+        Number(paiement.step) === Number(dernierRejet.step);
+
+      // Pour les paiements sans step, on considère le type
+      const memeType =
+        !dernierRejet?.step &&
+        paiement?.type &&
+        paiement?.type === dernierRejet?.type;
+
+      if (!memeStep && !memeType) {
+        return false;
+      }
+
+      if (paiement === dernierRejet) {
+        return false;
+      }
+
+      const datePaiement = new Date(
+        paiement.createdAt || paiement.date || 0,
+      ).getTime();
+
+      const dateRejet = new Date(
+        dernierRejet.createdAt || dernierRejet.date || 0,
+      ).getTime();
+
+      return (
+        datePaiement > dateRejet &&
+        ["PENDING", "PAID", "CONFIRMED"].includes(paiement.status)
+      );
+    })
+    .sort((a, b) => {
+      const dateA = new Date(a.createdAt || a.date || 0).getTime();
+      const dateB = new Date(b.createdAt || b.date || 0).getTime();
+
+      return dateB - dateA;
+    })[0];
+
+  // Une nouvelle tentative existe :
+  // l'ancien REJECTED ne doit plus être considéré comme actif.
+  if (nouveauPaiement) {
+    return null;
+  }
+
+  return dernierRejet;
+};
+
+
 
   // ======================================================
   // REPAYER
