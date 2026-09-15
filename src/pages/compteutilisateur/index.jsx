@@ -2923,27 +2923,41 @@ export default function CompteClient() {
   // ======================================================
 
   const getRejectedPayment = (commande) => {
-    const paiementsRecus = Array.isArray(commande?.paiementsRecus)
-      ? commande.paiementsRecus
-      : [];
-
-    const rejectedPayment = [...paiementsRecus]
-      .reverse()
-      .find((paiement) => paiement?.status === "REJECTED");
-
-    if (rejectedPayment) {
-      return rejectedPayment;
-    }
-
     const paiements = Array.isArray(commande?.paiements)
       ? commande.paiements
       : [];
 
-    return (
-      [...paiements]
-        .reverse()
-        .find((paiement) => paiement?.status === "REJECTED") || null
+    const paiementsRecus = Array.isArray(commande?.paiementsRecus)
+      ? commande.paiementsRecus
+      : [];
+
+    const etapeRejetee = paiements.find(
+      (paiement) => paiement?.status === "UNPAID",
     );
+
+    if (!etapeRejetee) {
+      return null;
+    }
+
+    const tentatives = paiementsRecus
+      .filter(
+        (paiement) => Number(paiement?.step) === Number(etapeRejetee.step),
+      )
+      .sort((a, b) => {
+        const dateA = new Date(a.submittedAt || a.createdAt || 0).getTime();
+
+        const dateB = new Date(b.submittedAt || b.createdAt || 0).getTime();
+
+        return dateB - dateA;
+      });
+
+    const derniereTentative = tentatives[0];
+
+    if (derniereTentative?.status === "REJECTED") {
+      return derniereTentative;
+    }
+
+    return null;
   };
 
   // ======================================================
@@ -3570,9 +3584,7 @@ export default function CompteClient() {
                                   >
                                     <option value="">Sélectionner</option>
 
-                                    <option value="orange">
-                                      Orange Money
-                                    </option>
+                                    <option value="orange">Orange Money</option>
 
                                     <option value="wave">Wave</option>
                                   </select>
@@ -3891,8 +3903,7 @@ export default function CompteClient() {
               {commandes.map((commande) => {
                 const paiementRejete = getRejectedPayment(commande);
 
-                const statut =
-                  commande.livraison?.statut || "NOT_STARTED";
+                const statut = commande.livraison?.statut || "NOT_STARTED";
 
                 const status = paiementRejete
                   ? {
@@ -3973,8 +3984,7 @@ export default function CompteClient() {
                             return (
                               <OrderProduct
                                 key={
-                                  p.produitId?._id ||
-                                  `${commande._id}-${index}`
+                                  p.produitId?._id || `${commande._id}-${index}`
                                 }
                               >
                                 <OrderProductImage
@@ -4056,7 +4066,7 @@ export default function CompteClient() {
                             <h4>Paiement en 3 tranches</h4>
 
                             {commande.paiements?.map((paiement) => (
-                              <PaymentStep key={paiement.step}>
+                              <PaymentStep key={paiement._id || paiement.step}>
                                 <div>
                                   <strong>Tranche {paiement.step}</strong>
 
@@ -4083,10 +4093,9 @@ export default function CompteClient() {
                             ))}
 
                             {(() => {
-                              const prochaineTranche =
-                                commande.paiements?.find(
-                                  (p) => p.status !== "PAID",
-                                );
+                              const prochaineTranche = commande.paiements?.find(
+                                (p) => p.status !== "PAID",
+                              );
 
                               if (!prochaineTranche) {
                                 return (
@@ -4109,9 +4118,7 @@ export default function CompteClient() {
                                 <PayNextButton
                                   type="button"
                                   onClick={() =>
-                                    navigate(
-                                      `/paiement-suite/${commande._id}`,
-                                    )
+                                    navigate(`/paiement-suite/${commande._id}`)
                                   }
                                 >
                                   {paiementRejete?.step &&
@@ -4151,9 +4158,7 @@ export default function CompteClient() {
                             <TrackButton
                               type="button"
                               onClick={() =>
-                                navigate(
-                                  `/suivi-commande/${commande._id}`,
-                                )
+                                navigate(`/suivi-commande/${commande._id}`)
                               }
                             >
                               {hasLivreur ? "Suivre" : "Voir le suivi"}
