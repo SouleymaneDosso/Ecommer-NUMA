@@ -30,3 +30,24 @@ export const getSessionId = () => {
 
   return sessionId;
 };
+export const trackPage = async (page) => {
+  try {
+    await fetch(
+      `${import.meta.env.VITE_API_URL}/api/admin/statistiques/visite`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+        },
+        body: JSON.stringify({
+          visitorId: getVisitorId(),
+          sessionId: getSessionId(),
+          page,
+        }),
+      },
+    );
+  } catch (error) {
+    console.error("Erreur tracking visite :", error);
+  }
+};

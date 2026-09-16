@@ -12,7 +12,7 @@ import {
   FaStar,
 } from "react-icons/fa";
 import { ThemeContext } from "../../Utils/Context";
-import { getVisitorId, getSessionId } from "../../Utils/visitorTracking";
+
 
 /* =========================================================
    HELPER — PRÉCOMMANDE
@@ -1622,35 +1622,8 @@ export default function HomePremium() {
   const videoRef = useRef(null);
 
   const duration = 4200;
-  /* =======================================================
-     TRACKING VISITE
-  ======================================================= */
 
-  useEffect(() => {
-    const enregistrerVisite = async () => {
-      try {
-        await fetch(
-          `${import.meta.env.VITE_API_URL}/api/admin/statistiques/visite`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
-            },
-            body: JSON.stringify({
-              visitorId: getVisitorId(),
-              sessionId: getSessionId(),
-              page: "/",
-            }),
-          },
-        );
-      } catch (error) {
-        console.error("Erreur tracking visite :", error);
-      }
-    };
 
-    enregistrerVisite();
-  }, []);
   /* =======================================================
      VIDEO CONTROLS
   ======================================================= */

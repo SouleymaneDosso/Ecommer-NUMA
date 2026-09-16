@@ -59,6 +59,17 @@ import PaiementSuite from "./pages/PaiementSuite";
 import "./i18n";
 import Precommande from "./pages/Precommande";
 import ReceptionPrecommande from "./pages/ReceptionPrecommande";
+import { trackPage } from "./Utils/visitorTracking";
+
+const VisitorTracking = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    trackPage(location.pathname);
+  }, [location.pathname]);
+
+  return null;
+};
 
 const PublicLayout = ({ children }) => {
   const location = useLocation();
@@ -84,6 +95,7 @@ const SEO = () => {
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <Router>
+      <VisitorTracking />
       <ToggleTheme>
         <Panier>
           <GlobalStyle />
