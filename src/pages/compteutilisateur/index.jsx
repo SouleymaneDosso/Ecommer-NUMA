@@ -2671,7 +2671,9 @@ export default function CompteClient() {
     if (!user?._id) return;
 
     socket.connect();
-
+    socket.on("disconnect", (reason) => {
+      console.log("🔴 Client socket déconnecté :", reason);
+    });
     const handleConnect = () => {
       console.log("🟢 Client connecté au socket");
 
