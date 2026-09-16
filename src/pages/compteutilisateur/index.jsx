@@ -2689,6 +2689,7 @@ export default function CompteClient() {
 
           return {
             ...cmd,
+            statusCommande: data.statusCommande || cmd.statusCommande,
 
             livraison: {
               ...cmd.livraison,
@@ -3916,6 +3917,16 @@ export default function CompteClient() {
                 const isOpen = expanded[commande._id];
 
                 const hasLivreur = Boolean(commande.livraison?.livreurId);
+
+                // const canTrack =
+                //   !paiementRejete &&
+                //   (commande.modePaiement === "cod"
+                //     ? ["CONFIRMED", "SHIPPED", "DELIVERED"].includes(
+                //         commande.statusCommande,
+                //       )
+                //     : ["PAID", "SHIPPED", "DELIVERED"].includes(
+                //         commande.statusCommande,
+                //       ));
 
                 const canTrack =
                   !paiementRejete &&
