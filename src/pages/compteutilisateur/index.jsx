@@ -3919,13 +3919,9 @@ export default function CompteClient() {
 
                 const canTrack =
                   !paiementRejete &&
-                  (commande.modePaiement === "cod"
-                    ? ["CONFIRMED", "SHIPPED", "DELIVERED"].includes(
-                        commande.statusCommande,
-                      )
-                    : ["PAID", "SHIPPED", "DELIVERED"].includes(
-                        commande.statusCommande,
-                      ));
+                  ["CONFIRMED", "SHIPPED", "DELIVERED"].includes(
+                    commande.statusCommande,
+                  );
 
                 return (
                   <OrderCard key={commande._id}>
