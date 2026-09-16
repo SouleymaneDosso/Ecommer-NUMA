@@ -60,6 +60,7 @@ import "./i18n";
 import Precommande from "./pages/Precommande";
 import ReceptionPrecommande from "./pages/ReceptionPrecommande";
 import { trackPage } from "./Utils/visitorTracking";
+import AdminStatistiques from "./pages/AdminStatistiques";
 
 const VisitorTracking = () => {
   const location = useLocation();
@@ -385,6 +386,7 @@ createRoot(document.getElementById("root")).render(
                 path="reception-precommandes"
                 element={<ReceptionPrecommande />}
               />
+              <Route path="statistiques" element={<AdminStatistiques />} />
             </Route>
           </Routes>
         </Panier>

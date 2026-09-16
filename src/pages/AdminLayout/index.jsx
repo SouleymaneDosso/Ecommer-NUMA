@@ -237,6 +237,13 @@ function AdminLayout() {
           Réception Précommandes
         </SidebarItem>
 
+        <SidebarItem
+          $active={location.pathname.includes("statistiques")}
+          onClick={() => navigate("/admin/statistiques")}
+        >
+          Statistiques
+        </SidebarItem>
+
       </Sidebar>
 
 
