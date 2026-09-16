@@ -8,7 +8,7 @@ const AdminStatistiques = () => {
   useEffect(() => {
     const chargerResume = async () => {
       try {
-        const token = localStorage.getItem("token");
+         const token = localStorage.getItem("adminToken");
 
         const response = await fetch(
           `${import.meta.env.VITE_API_URL}/api/admin/statistiques/resume`,
