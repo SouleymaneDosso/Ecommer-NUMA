@@ -2690,6 +2690,14 @@ export default function CompteClient() {
           return {
             ...cmd,
             statusCommande: data.statusCommande || cmd.statusCommande,
+            paiementsRecus: data.paiementRejete
+              ? [
+                  ...(cmd.paiementsRecus || []).filter(
+                    (p) => p._id !== data.paiementRejete._id,
+                  ),
+                  data.paiementRejete,
+                ]
+              : cmd.paiementsRecus,
 
             livraison: {
               ...cmd.livraison,
