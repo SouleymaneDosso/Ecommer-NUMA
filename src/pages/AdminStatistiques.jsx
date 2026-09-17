@@ -169,7 +169,7 @@ const RevenueValue = styled(StatValue)`
 `;
 
 /* =====================================================
-   TABLE CLIENTS
+   TABLES
 ===================================================== */
 
 const TableCard = styled.div`
@@ -180,12 +180,37 @@ const TableCard = styled.div`
   overflow: hidden;
 `;
 
+const TableHeader = styled.div`
+  padding: 20px 22px;
+  border-bottom: 1px solid #edf0f2;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+
+  h3 {
+    margin: 0;
+    color: #2c3e50;
+    font-size: 17px;
+  }
+
+  span {
+    color: #95a5a6;
+    font-size: 12px;
+  }
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+`;
+
 const TableWrapper = styled.div`
   width: 100%;
   overflow-x: auto;
 `;
 
-const ClientsTable = styled.table`
+const DataTable = styled.table`
   width: 100%;
   min-width: 850px;
   border-collapse: collapse;
@@ -221,6 +246,10 @@ const ClientsTable = styled.table`
   }
 `;
 
+/* =====================================================
+   CLIENTS
+===================================================== */
+
 const ClientName = styled.div`
   font-weight: 700;
   color: #1f2a40;
@@ -254,6 +283,47 @@ const DateText = styled.span`
   color: #7f8c8d;
   font-size: 12px;
 `;
+
+/* =====================================================
+   PAGES
+===================================================== */
+
+const PagePath = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const PageIcon = styled.span`
+  font-size: 18px;
+`;
+
+const PageName = styled.span`
+  font-weight: 600;
+  color: #1f2a40;
+`;
+
+const VisitsBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 35px;
+  height: 28px;
+  padding: 0 9px;
+  border-radius: 7px;
+  background: #fef3e7;
+  color: #d35400;
+  font-weight: 700;
+`;
+
+const UniqueValue = styled.span`
+  font-weight: 600;
+  color: #34495e;
+`;
+
+/* =====================================================
+   EMPTY STATE
+===================================================== */
 
 const EmptyState = styled.div`
   padding: 50px 20px;
@@ -329,31 +399,6 @@ const ErrorBox = styled.div`
   }
 `;
 
-const TableHeader = styled.div`
-  padding: 20px 22px;
-  border-bottom: 1px solid #edf0f2;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 15px;
-
-  h3 {
-    margin: 0;
-    color: #2c3e50;
-    font-size: 17px;
-  }
-
-  span {
-    color: #95a5a6;
-    font-size: 12px;
-  }
-
-  @media (max-width: 600px) {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-`;
-
 /* =====================================================
    COMPOSANT
 ===================================================== */
@@ -361,11 +406,16 @@ const TableHeader = styled.div`
 const AdminStatistiques = () => {
   const [resume, setResume] = useState(null);
   const [clients, setClients] = useState([]);
+  const [pages, setPages] = useState([]);
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const [error, setError] = useState("");
+
+  /* =====================================================
+     CHARGEMENT DES STATISTIQUES
+  ===================================================== */
 
   const chargerStatistiques = async (isRefresh = false) => {
     try {
@@ -384,10 +434,14 @@ const AdminStatistiques = () => {
       };
 
       /* ================================================
-         CHARGEMENT DU RÉSUMÉ + CLIENTS
+         LES 3 ENDPOINTS
       ================================================ */
 
-      const [resumeResponse, clientsResponse] = await Promise.all([
+      const [
+        resumeResponse,
+        clientsResponse,
+        pagesResponse,
+      ] = await Promise.all([
         fetch(
           `${import.meta.env.VITE_API_URL}/api/admin/statistiques/resume`,
           {
@@ -401,10 +455,17 @@ const AdminStatistiques = () => {
             headers,
           },
         ),
+
+        fetch(
+          `${import.meta.env.VITE_API_URL}/api/admin/statistiques/pages`,
+          {
+            headers,
+          },
+        ),
       ]);
 
       /* ================================================
-         VÉRIFICATION RÉSUMÉ
+         RÉSUMÉ
       ================================================ */
 
       if (!resumeResponse.ok) {
@@ -421,7 +482,7 @@ const AdminStatistiques = () => {
       }
 
       /* ================================================
-         VÉRIFICATION CLIENTS
+         CLIENTS
       ================================================ */
 
       if (!clientsResponse.ok) {
@@ -437,11 +498,34 @@ const AdminStatistiques = () => {
         );
       }
 
+      /* ================================================
+         PAGES
+      ================================================ */
+
+      if (!pagesResponse.ok) {
+        const texte = await pagesResponse.text();
+
+        console.error("❌ ERREUR API PAGES :", {
+          status: pagesResponse.status,
+          response: texte,
+        });
+
+        throw new Error(
+          `Erreur API pages ${pagesResponse.status}`,
+        );
+      }
+
+      /* ================================================
+         RÉCUPÉRATION DES DONNÉES
+      ================================================ */
+
       const resumeData = await resumeResponse.json();
       const clientsData = await clientsResponse.json();
+      const pagesData = await pagesResponse.json();
 
       setResume(resumeData);
       setClients(clientsData.clients || []);
+      setPages(pagesData.pages || []);
     } catch (error) {
       console.error(
         "Erreur statistiques admin :",
@@ -456,6 +540,10 @@ const AdminStatistiques = () => {
       setRefreshing(false);
     }
   };
+
+  /* =====================================================
+     CHARGEMENT INITIAL
+  ===================================================== */
 
   useEffect(() => {
     chargerStatistiques();
@@ -584,8 +672,6 @@ const AdminStatistiques = () => {
         </SectionTitle>
 
         <StatsGrid>
-          {/* VISITEURS */}
-
           <StatCard>
             <StatTop>
               <StatLabel>
@@ -608,8 +694,6 @@ const AdminStatistiques = () => {
             </StatDescription>
           </StatCard>
 
-          {/* VISITES */}
-
           <StatCard>
             <StatTop>
               <StatLabel>Visites</StatLabel>
@@ -624,11 +708,9 @@ const AdminStatistiques = () => {
             </StatValue>
 
             <StatDescription>
-              Nombre total de visites enregistrées
+              Nombre total de visites
             </StatDescription>
           </StatCard>
-
-          {/* SESSIONS */}
 
           <StatCard>
             <StatTop>
@@ -647,8 +729,6 @@ const AdminStatistiques = () => {
               Sessions de navigation
             </StatDescription>
           </StatCard>
-
-          {/* UTILISATEURS */}
 
           <StatCard>
             <StatTop>
@@ -675,7 +755,7 @@ const AdminStatistiques = () => {
       </Section>
 
       {/* =================================================
-          COMMANDES
+          ACTIVITÉ COMMERCIALE
       ================================================= */}
 
       <Section>
@@ -688,8 +768,6 @@ const AdminStatistiques = () => {
         </SectionTitle>
 
         <StatsGrid>
-          {/* COMMANDES */}
-
           <StatCard>
             <StatTop>
               <StatLabel>Commandes</StatLabel>
@@ -707,8 +785,6 @@ const AdminStatistiques = () => {
               Nombre total de commandes
             </StatDescription>
           </StatCard>
-
-          {/* CLIENTS */}
 
           <StatCard>
             <StatTop>
@@ -732,8 +808,6 @@ const AdminStatistiques = () => {
             </StatDescription>
           </StatCard>
 
-          {/* LIVRÉES */}
-
           <StatCard>
             <StatTop>
               <StatLabel>
@@ -755,8 +829,6 @@ const AdminStatistiques = () => {
               Commandes avec statut livré
             </StatDescription>
           </StatCard>
-
-          {/* CA */}
 
           <RevenueCard>
             <StatTop>
@@ -811,9 +883,7 @@ const AdminStatistiques = () => {
 
           {clients.length === 0 ? (
             <EmptyState>
-              <div className="icon">
-                👥
-              </div>
+              <div className="icon">👥</div>
 
               <h3>
                 Aucun client ayant commandé
@@ -826,7 +896,7 @@ const AdminStatistiques = () => {
             </EmptyState>
           ) : (
             <TableWrapper>
-              <ClientsTable>
+              <DataTable>
                 <thead>
                   <tr>
                     <th>CLIENT</th>
@@ -885,7 +955,106 @@ const AdminStatistiques = () => {
                     </tr>
                   ))}
                 </tbody>
-              </ClientsTable>
+              </DataTable>
+            </TableWrapper>
+          )}
+        </TableCard>
+      </Section>
+
+      {/* =================================================
+          PAGES VISITÉES
+      ================================================= */}
+
+      <Section>
+        <SectionTitle>
+          <h2>Pages visitées</h2>
+
+          <p>
+            Pages les plus consultées par les visiteurs
+          </p>
+        </SectionTitle>
+
+        <TableCard>
+          <TableHeader>
+            <div>
+              <h3>
+                Activité par page
+              </h3>
+            </div>
+
+            <span>
+              {formatNombre(pages.length)} page
+              {pages.length > 1 ? "s" : ""}
+            </span>
+          </TableHeader>
+
+          {pages.length === 0 ? (
+            <EmptyState>
+              <div className="icon">📊</div>
+
+              <h3>
+                Aucune visite enregistrée
+              </h3>
+
+              <p>
+                Les pages apparaîtront ici dès que les
+                visiteurs navigueront sur le site.
+              </p>
+            </EmptyState>
+          ) : (
+            <TableWrapper>
+              <DataTable>
+                <thead>
+                  <tr>
+                    <th>PAGE</th>
+                    <th>VISITES</th>
+                    <th>VISITEURS UNIQUES</th>
+                    <th>SESSIONS UNIQUES</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {pages.map((page) => (
+                    <tr key={page.page}>
+                      <td>
+                        <PagePath>
+                          <PageIcon>
+                            📄
+                          </PageIcon>
+
+                          <PageName>
+                            {page.page}
+                          </PageName>
+                        </PagePath>
+                      </td>
+
+                      <td>
+                        <VisitsBadge>
+                          {formatNombre(
+                            page.visites,
+                          )}
+                        </VisitsBadge>
+                      </td>
+
+                      <td>
+                        <UniqueValue>
+                          {formatNombre(
+                            page.visiteursUniques,
+                          )}
+                        </UniqueValue>
+                      </td>
+
+                      <td>
+                        <UniqueValue>
+                          {formatNombre(
+                            page.sessionsUniques,
+                          )}
+                        </UniqueValue>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </DataTable>
             </TableWrapper>
           )}
         </TableCard>
