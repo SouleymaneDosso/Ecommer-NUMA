@@ -2,12 +2,16 @@ import { useEffect, useState } from "react";
 import styled from "styled-components";
 
 /* =====================================================
-   STYLES
+   PAGE
 ===================================================== */
 
 const Page = styled.div`
   width: 100%;
 `;
+
+/* =====================================================
+   HEADER
+===================================================== */
 
 const PageHeader = styled.div`
   display: flex;
@@ -107,9 +111,7 @@ const StatCard = styled.div`
   padding: 22px;
   box-shadow: 0 3px 12px rgba(31, 42, 64, 0.08);
   border: 1px solid #edf0f2;
-  transition:
-    transform 0.2s,
-    box-shadow 0.2s;
+  transition: 0.2s;
 
   &:hover {
     transform: translateY(-3px);
@@ -132,7 +134,8 @@ const StatIcon = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  background: ${(props) => props.$background || "#ecf0f1"};
+  background: ${(props) =>
+    props.$background || "#ecf0f1"};
   font-size: 21px;
 `;
 
@@ -166,6 +169,67 @@ const RevenueCard = styled(StatCard)`
 
 const RevenueValue = styled(StatValue)`
   font-size: 32px;
+`;
+
+/* =====================================================
+   FUNNEL
+===================================================== */
+
+const FunnelCard = styled.div`
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #edf0f2;
+  box-shadow: 0 3px 12px rgba(31, 42, 64, 0.08);
+  padding: 24px;
+`;
+
+const FunnelGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 15px;
+
+  @media (max-width: 1000px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const FunnelItem = styled.div`
+  position: relative;
+  padding: 20px;
+  border-radius: 10px;
+  background: #f8f9fa;
+  border: 1px solid #edf0f2;
+`;
+
+const FunnelNumber = styled.div`
+  color: #95a5a6;
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 8px;
+`;
+
+const FunnelTitle = styled.div`
+  color: #34495e;
+  font-size: 13px;
+  font-weight: 600;
+`;
+
+const FunnelValue = styled.div`
+  margin-top: 12px;
+  color: #1f2a40;
+  font-size: 28px;
+  font-weight: 700;
+`;
+
+const FunnelPercentage = styled.div`
+  margin-top: 6px;
+  color: #27ae60;
+  font-size: 12px;
+  font-weight: 600;
 `;
 
 /* =====================================================
@@ -231,10 +295,6 @@ const DataTable = styled.table`
     border-bottom: 1px solid #f0f2f3;
     color: #2c3e50;
     font-size: 13px;
-  }
-
-  tbody tr {
-    transition: background 0.2s;
   }
 
   tbody tr:hover {
@@ -322,7 +382,107 @@ const UniqueValue = styled.span`
 `;
 
 /* =====================================================
-   EMPTY STATE
+   VISITEURS
+===================================================== */
+
+const VisitorId = styled.span`
+  display: inline-block;
+  max-width: 230px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: monospace;
+  font-size: 11px;
+  color: #7f8c8d;
+`;
+
+const StatusBadge = styled.span`
+  display: inline-flex;
+  padding: 5px 9px;
+  border-radius: 7px;
+  background: ${(props) =>
+    props.$identified
+      ? "#eafaf1"
+      : "#f4f6f7"};
+  color: ${(props) =>
+    props.$identified
+      ? "#27ae60"
+      : "#7f8c8d"};
+  font-size: 11px;
+  font-weight: 700;
+`;
+
+/* =====================================================
+   UTILISATEURS
+===================================================== */
+
+const UserBadge = styled.span`
+  display: inline-flex;
+  padding: 5px 9px;
+  border-radius: 7px;
+  background: ${(props) =>
+    props.$hasOrder
+      ? "#e8f4fd"
+      : "#f4f6f7"};
+  color: ${(props) =>
+    props.$hasOrder
+      ? "#2980b9"
+      : "#7f8c8d"};
+  font-size: 11px;
+  font-weight: 700;
+`;
+
+/* =====================================================
+   ÉVOLUTION
+===================================================== */
+
+const EvolutionGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(180px, 1fr)
+  );
+  gap: 12px;
+`;
+
+const EvolutionItem = styled.div`
+  padding: 16px;
+  border: 1px solid #edf0f2;
+  border-radius: 10px;
+  background: #fafbfc;
+`;
+
+const EvolutionDate = styled.div`
+  color: #7f8c8d;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 12px;
+`;
+
+const EvolutionValue = styled.div`
+  color: #1f2a40;
+  font-size: 24px;
+  font-weight: 700;
+`;
+
+const EvolutionDetails = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+
+  span {
+    padding: 4px 7px;
+    border-radius: 6px;
+    background: #fff;
+    border: 1px solid #edf0f2;
+    color: #7f8c8d;
+    font-size: 10px;
+  }
+`;
+
+/* =====================================================
+   EMPTY
 ===================================================== */
 
 const EmptyState = styled.div`
@@ -407,17 +567,25 @@ const AdminStatistiques = () => {
   const [resume, setResume] = useState(null);
   const [clients, setClients] = useState([]);
   const [pages, setPages] = useState([]);
+  const [funnel, setFunnel] = useState(null);
+  const [evolution, setEvolution] = useState([]);
+  const [visiteurs, setVisiteurs] = useState([]);
+  const [utilisateurs, setUtilisateurs] = useState([]);
+  const [fidelite, setFidelite] = useState([]);
 
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const [refreshing, setRefreshing] =
+    useState(false);
 
   const [error, setError] = useState("");
 
   /* =====================================================
-     CHARGEMENT DES STATISTIQUES
+     CHARGEMENT
   ===================================================== */
 
-  const chargerStatistiques = async (isRefresh = false) => {
+  const chargerStatistiques = async (
+    isRefresh = false,
+  ) => {
     try {
       if (isRefresh) {
         setRefreshing(true);
@@ -427,108 +595,132 @@ const AdminStatistiques = () => {
 
       setError("");
 
-      const token = localStorage.getItem("adminToken");
+      const token =
+        localStorage.getItem("adminToken");
 
       const headers = {
         Authorization: `Bearer ${token}`,
       };
 
-      /* ================================================
-         LES 3 ENDPOINTS
-      ================================================ */
+      const baseUrl =
+        `${import.meta.env.VITE_API_URL}` +
+        `/api/admin/statistiques`;
 
-      const [
-        resumeResponse,
-        clientsResponse,
-        pagesResponse,
-      ] = await Promise.all([
-        fetch(
-          `${import.meta.env.VITE_API_URL}/api/admin/statistiques/resume`,
-          {
-            headers,
-          },
-        ),
+      const responses = await Promise.all([
+        fetch(`${baseUrl}/resume`, {
+          headers,
+        }),
 
-        fetch(
-          `${import.meta.env.VITE_API_URL}/api/admin/statistiques/clients`,
-          {
-            headers,
-          },
-        ),
+        fetch(`${baseUrl}/clients`, {
+          headers,
+        }),
 
-        fetch(
-          `${import.meta.env.VITE_API_URL}/api/admin/statistiques/pages`,
-          {
-            headers,
-          },
-        ),
+        fetch(`${baseUrl}/pages`, {
+          headers,
+        }),
+
+        fetch(`${baseUrl}/funnel`, {
+          headers,
+        }),
+
+        fetch(`${baseUrl}/evolution`, {
+          headers,
+        }),
+
+        fetch(`${baseUrl}/visiteurs`, {
+          headers,
+        }),
+
+        fetch(`${baseUrl}/utilisateurs`, {
+          headers,
+        }),
+
+        fetch(`${baseUrl}/fidelite`, {
+          headers,
+        }),
       ]);
 
-      /* ================================================
-         RÉSUMÉ
-      ================================================ */
+      const noms = [
+        "résumé",
+        "clients",
+        "pages",
+        "funnel",
+        "évolution",
+        "visiteurs",
+        "utilisateurs",
+        "fidélité",
+      ];
 
-      if (!resumeResponse.ok) {
-        const texte = await resumeResponse.text();
+      for (
+        let i = 0;
+        i < responses.length;
+        i++
+      ) {
+        if (!responses[i].ok) {
+          const texte =
+            await responses[i].text();
 
-        console.error("❌ ERREUR API RESUME :", {
-          status: resumeResponse.status,
-          response: texte,
-        });
+          console.error(
+            `❌ ERREUR API ${noms[i]} :`,
+            {
+              status:
+                responses[i].status,
+              response: texte,
+            },
+          );
 
-        throw new Error(
-          `Erreur API résumé ${resumeResponse.status}`,
-        );
+          throw new Error(
+            `Erreur API ${noms[i]} ${responses[i].status}`,
+          );
+        }
       }
 
-      /* ================================================
-         CLIENTS
-      ================================================ */
-
-      if (!clientsResponse.ok) {
-        const texte = await clientsResponse.text();
-
-        console.error("❌ ERREUR API CLIENTS :", {
-          status: clientsResponse.status,
-          response: texte,
-        });
-
-        throw new Error(
-          `Erreur API clients ${clientsResponse.status}`,
-        );
-      }
-
-      /* ================================================
-         PAGES
-      ================================================ */
-
-      if (!pagesResponse.ok) {
-        const texte = await pagesResponse.text();
-
-        console.error("❌ ERREUR API PAGES :", {
-          status: pagesResponse.status,
-          response: texte,
-        });
-
-        throw new Error(
-          `Erreur API pages ${pagesResponse.status}`,
-        );
-      }
-
-      /* ================================================
-         RÉCUPÉRATION DES DONNÉES
-      ================================================ */
-
-      const resumeData = await resumeResponse.json();
-      const clientsData = await clientsResponse.json();
-      const pagesData = await pagesResponse.json();
+      const [
+        resumeData,
+        clientsData,
+        pagesData,
+        funnelData,
+        evolutionData,
+        visiteursData,
+        utilisateursData,
+        fideliteData,
+      ] = await Promise.all(
+        responses.map((response) =>
+          response.json(),
+        ),
+      );
 
       setResume(resumeData);
-      setClients(clientsData.clients || []);
-      setPages(pagesData.pages || []);
+
+      setClients(
+        clientsData.clients || [],
+      );
+
+      setPages(
+        pagesData.pages || [],
+      );
+
+      setFunnel(funnelData);
+
+      setEvolution(
+        evolutionData.evolution || [],
+      );
+
+      setVisiteurs(
+        visiteursData.visiteurs || [],
+      );
+
+      setUtilisateurs(
+        utilisateursData.utilisateurs ||
+          [],
+      );
+
+      setFidelite(
+        fideliteData.clients || [],
+      );
     } catch (error) {
       console.error(
-        "Erreur statistiques admin :",
+        "❌ Erreur statistiques admin :",
         error,
       );
 
@@ -541,10 +733,6 @@ const AdminStatistiques = () => {
     }
   };
 
-  /* =====================================================
-     CHARGEMENT INITIAL
-  ===================================================== */
-
   useEffect(() => {
     chargerStatistiques();
   }, []);
@@ -554,15 +742,15 @@ const AdminStatistiques = () => {
   ===================================================== */
 
   const formatNombre = (nombre) => {
-    return new Intl.NumberFormat("fr-FR").format(
-      Number(nombre || 0),
-    );
+    return new Intl.NumberFormat(
+      "fr-FR",
+    ).format(Number(nombre || 0));
   };
 
   const formatMontant = (montant) => {
-    return `${new Intl.NumberFormat("fr-FR").format(
-      Number(montant || 0),
-    )} FCFA`;
+    return `${new Intl.NumberFormat(
+      "fr-FR",
+    ).format(Number(montant || 0))} FCFA`;
   };
 
   const formatDate = (date) => {
@@ -570,11 +758,57 @@ const AdminStatistiques = () => {
       return "—";
     }
 
-    return new Intl.DateTimeFormat("fr-FR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    }).format(new Date(date));
+    return new Intl.DateTimeFormat(
+      "fr-FR",
+      {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      },
+    ).format(new Date(date));
+  };
+
+  const formatDateComplete = (date) => {
+    if (!date) {
+      return "—";
+    }
+
+    return new Intl.DateTimeFormat(
+      "fr-FR",
+      {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      },
+    ).format(new Date(date));
+  };
+
+  const calculerPourcentage = (
+    valeur,
+    total,
+  ) => {
+    if (!total) {
+      return 0;
+    }
+
+    return Math.round(
+      (Number(valeur || 0) /
+        Number(total || 0)) *
+        100,
+    );
+  };
+
+  const formatDateEvolution = (date) => {
+    if (!date) {
+      return "—";
+    }
+
+    const [annee, mois, jour] =
+      date.split("-");
+
+    return `${jour}/${mois}`;
   };
 
   /* =====================================================
@@ -604,19 +838,24 @@ const AdminStatistiques = () => {
             <h1>Statistiques</h1>
 
             <p>
-              Vue globale de l'activité de votre boutique
+              Vue globale de l'activité de votre
+              boutique
             </p>
           </HeaderContent>
 
           <RefreshButton
-            onClick={() => chargerStatistiques(true)}
+            onClick={() =>
+              chargerStatistiques(true)
+            }
           >
             Réessayer
           </RefreshButton>
         </PageHeader>
 
         <ErrorBox>
-          <h3>Erreur de chargement</h3>
+          <h3>
+            Erreur de chargement
+          </h3>
 
           <p>{error}</p>
         </ErrorBox>
@@ -635,7 +874,7 @@ const AdminStatistiques = () => {
   return (
     <Page>
       {/* =================================================
-          EN-TÊTE
+          HEADER
       ================================================= */}
 
       <PageHeader>
@@ -643,13 +882,15 @@ const AdminStatistiques = () => {
           <h1>Statistiques</h1>
 
           <p>
-            Vue globale des visiteurs, utilisateurs et
-            commandes
+            Vue globale des visiteurs,
+            utilisateurs et commandes
           </p>
         </HeaderContent>
 
         <RefreshButton
-          onClick={() => chargerStatistiques(true)}
+          onClick={() =>
+            chargerStatistiques(true)
+          }
           disabled={refreshing}
         >
           {refreshing
@@ -667,7 +908,7 @@ const AdminStatistiques = () => {
           <h2>Audience</h2>
 
           <p>
-            Analyse de la fréquentation de votre boutique
+            Fréquentation globale de la boutique
           </p>
         </SectionTitle>
 
@@ -678,7 +919,9 @@ const AdminStatistiques = () => {
                 Visiteurs uniques
               </StatLabel>
 
-              <StatIcon $background="#e8f4fd">
+              <StatIcon
+                $background="#e8f4fd"
+              >
                 👥
               </StatIcon>
             </StatTop>
@@ -690,39 +933,51 @@ const AdminStatistiques = () => {
             </StatValue>
 
             <StatDescription>
-              Visiteurs distincts enregistrés
+              Visiteurs différents
             </StatDescription>
           </StatCard>
 
           <StatCard>
             <StatTop>
-              <StatLabel>Visites</StatLabel>
+              <StatLabel>
+                Visites
+              </StatLabel>
 
-              <StatIcon $background="#fef3e7">
+              <StatIcon
+                $background="#fef3e7"
+              >
                 👁️
               </StatIcon>
             </StatTop>
 
             <StatValue>
-              {formatNombre(resume.visites)}
+              {formatNombre(
+                resume.visites,
+              )}
             </StatValue>
 
             <StatDescription>
-              Nombre total de visites
+              Pages consultées
             </StatDescription>
           </StatCard>
 
           <StatCard>
             <StatTop>
-              <StatLabel>Sessions</StatLabel>
+              <StatLabel>
+                Sessions
+              </StatLabel>
 
-              <StatIcon $background="#eafaf1">
+              <StatIcon
+                $background="#eafaf1"
+              >
                 🕐
               </StatIcon>
             </StatTop>
 
             <StatValue>
-              {formatNombre(resume.sessions)}
+              {formatNombre(
+                resume.sessions,
+              )}
             </StatValue>
 
             <StatDescription>
@@ -736,7 +991,9 @@ const AdminStatistiques = () => {
                 Utilisateurs identifiés
               </StatLabel>
 
-              <StatIcon $background="#f4ecf7">
+              <StatIcon
+                $background="#f4ecf7"
+              >
                 👤
               </StatIcon>
             </StatTop>
@@ -755,34 +1012,42 @@ const AdminStatistiques = () => {
       </Section>
 
       {/* =================================================
-          ACTIVITÉ COMMERCIALE
+          COMMERCIAL
       ================================================= */}
 
       <Section>
         <SectionTitle>
-          <h2>Activité commerciale</h2>
+          <h2>
+            Activité commerciale
+          </h2>
 
           <p>
-            Suivi des commandes et du chiffre d'affaires
+            Commandes et chiffre d'affaires
           </p>
         </SectionTitle>
 
         <StatsGrid>
           <StatCard>
             <StatTop>
-              <StatLabel>Commandes</StatLabel>
+              <StatLabel>
+                Commandes
+              </StatLabel>
 
-              <StatIcon $background="#e8f4fd">
+              <StatIcon
+                $background="#e8f4fd"
+              >
                 🛒
               </StatIcon>
             </StatTop>
 
             <StatValue>
-              {formatNombre(resume.commandes)}
+              {formatNombre(
+                resume.commandes,
+              )}
             </StatValue>
 
             <StatDescription>
-              Nombre total de commandes
+              Commandes enregistrées
             </StatDescription>
           </StatCard>
 
@@ -792,7 +1057,9 @@ const AdminStatistiques = () => {
                 Clients ayant commandé
               </StatLabel>
 
-              <StatIcon $background="#eafaf1">
+              <StatIcon
+                $background="#eafaf1"
+              >
                 🤝
               </StatIcon>
             </StatTop>
@@ -804,7 +1071,7 @@ const AdminStatistiques = () => {
             </StatValue>
 
             <StatDescription>
-              Clients distincts ayant commandé
+              Clients distincts
             </StatDescription>
           </StatCard>
 
@@ -814,7 +1081,9 @@ const AdminStatistiques = () => {
                 Commandes livrées
               </StatLabel>
 
-              <StatIcon $background="#e8f8f5">
+              <StatIcon
+                $background="#e8f8f5"
+              >
                 📦
               </StatIcon>
             </StatTop>
@@ -826,7 +1095,7 @@ const AdminStatistiques = () => {
             </StatValue>
 
             <StatDescription>
-              Commandes avec statut livré
+              Commandes livrées
             </StatDescription>
           </StatCard>
 
@@ -836,7 +1105,9 @@ const AdminStatistiques = () => {
                 Chiffre d'affaires
               </StatLabel>
 
-              <StatIcon $background="#fff4e5">
+              <StatIcon
+                $background="#fff4e5"
+              >
                 💰
               </StatIcon>
             </StatTop>
@@ -848,50 +1119,236 @@ const AdminStatistiques = () => {
             </RevenueValue>
 
             <StatDescription>
-              Commandes confirmées, expédiées ou
-              livrées
+              Commandes confirmées,
+              expédiées ou livrées
             </StatDescription>
           </RevenueCard>
         </StatsGrid>
       </Section>
 
       {/* =================================================
-          CLIENTS
+          FUNNEL
       ================================================= */}
 
       <Section>
         <SectionTitle>
-          <h2>Clients</h2>
+          <h2>
+            Funnel visiteurs → clients
+          </h2>
 
           <p>
-            Activité et valeur des clients ayant passé
+            Parcours des visiteurs jusqu'à la
             commande
           </p>
         </SectionTitle>
 
+        <FunnelCard>
+          <FunnelGrid>
+            <FunnelItem>
+              <FunnelNumber>
+                ÉTAPE 01
+              </FunnelNumber>
+
+              <FunnelTitle>
+                Visiteurs
+              </FunnelTitle>
+
+              <FunnelValue>
+                {formatNombre(
+                  funnel?.visiteursUniques,
+                )}
+              </FunnelValue>
+
+              <FunnelPercentage>
+                100%
+              </FunnelPercentage>
+            </FunnelItem>
+
+            <FunnelItem>
+              <FunnelNumber>
+                ÉTAPE 02
+              </FunnelNumber>
+
+              <FunnelTitle>
+                Visiteurs identifiés
+              </FunnelTitle>
+
+              <FunnelValue>
+                {formatNombre(
+                  funnel?.visiteursIdentifies,
+                )}
+              </FunnelValue>
+
+              <FunnelPercentage>
+                {calculerPourcentage(
+                  funnel?.visiteursIdentifies,
+                  funnel?.visiteursUniques,
+                )}
+                % des visiteurs
+              </FunnelPercentage>
+            </FunnelItem>
+
+            <FunnelItem>
+              <FunnelNumber>
+                ÉTAPE 03
+              </FunnelNumber>
+
+              <FunnelTitle>
+                Utilisateurs inscrits
+              </FunnelTitle>
+
+              <FunnelValue>
+                {formatNombre(
+                  funnel?.utilisateursInscrits,
+                )}
+              </FunnelValue>
+
+              <FunnelPercentage>
+                Comptes enregistrés
+              </FunnelPercentage>
+            </FunnelItem>
+
+            <FunnelItem>
+              <FunnelNumber>
+                ÉTAPE 04
+              </FunnelNumber>
+
+              <FunnelTitle>
+                Clients avec commande
+              </FunnelTitle>
+
+              <FunnelValue>
+                {formatNombre(
+                  funnel?.clientsAvecCommande,
+                )}
+              </FunnelValue>
+
+              <FunnelPercentage>
+                {calculerPourcentage(
+                  funnel?.clientsAvecCommande,
+                  funnel?.utilisateursInscrits,
+                )}
+                % des comptes
+              </FunnelPercentage>
+            </FunnelItem>
+          </FunnelGrid>
+        </FunnelCard>
+      </Section>
+
+      {/* =================================================
+          ÉVOLUTION
+      ================================================= */}
+
+      <Section>
+        <SectionTitle>
+          <h2>
+            Évolution des visites
+          </h2>
+
+          <p>
+            Activité des 30 derniers jours
+          </p>
+        </SectionTitle>
+
         <TableCard>
-          <TableHeader>
-            <div>
-              <h3>Liste des clients</h3>
-            </div>
-
-            <span>
-              {formatNombre(clients.length)} client
-              {clients.length > 1 ? "s" : ""}
-            </span>
-          </TableHeader>
-
-          {clients.length === 0 ? (
+          {evolution.length === 0 ? (
             <EmptyState>
-              <div className="icon">👥</div>
+              <div className="icon">
+                📈
+              </div>
 
               <h3>
-                Aucun client ayant commandé
+                Pas encore de données
               </h3>
 
               <p>
-                Les clients apparaîtront ici dès qu'une
-                commande sera enregistrée.
+                Les données apparaîtront
+                automatiquement avec les
+                nouvelles visites.
+              </p>
+            </EmptyState>
+          ) : (
+            <EvolutionGrid
+              style={{
+                padding: "20px",
+              }}
+            >
+              {evolution.map((jour) => (
+                <EvolutionItem
+                  key={jour.date}
+                >
+                  <EvolutionDate>
+                    {formatDateEvolution(
+                      jour.date,
+                    )}
+                  </EvolutionDate>
+
+                  <EvolutionValue>
+                    {formatNombre(
+                      jour.visites,
+                    )}{" "}
+                    visites
+                  </EvolutionValue>
+
+                  <EvolutionDetails>
+                    <span>
+                      👥{" "}
+                      {formatNombre(
+                        jour.visiteursUniques,
+                      )}
+                    </span>
+
+                    <span>
+                      🕐{" "}
+                      {formatNombre(
+                        jour.sessionsUniques,
+                      )}
+                    </span>
+
+                    <span>
+                      👤{" "}
+                      {formatNombre(
+                        jour.utilisateursIdentifies,
+                      )}
+                    </span>
+                  </EvolutionDetails>
+                </EvolutionItem>
+              ))}
+            </EvolutionGrid>
+          )}
+        </TableCard>
+      </Section>
+
+      {/* =================================================
+          FIDÉLITÉ
+      ================================================= */}
+
+      <Section>
+        <SectionTitle>
+          <h2>
+            Fidélité des clients
+          </h2>
+
+          <p>
+            Indicateurs objectifs basés sur
+            l'historique des commandes
+          </p>
+        </SectionTitle>
+
+        <TableCard>
+          {fidelite.length === 0 ? (
+            <EmptyState>
+              <div className="icon">
+                ⭐
+              </div>
+
+              <h3>
+                Aucun historique client
+              </h3>
+
+              <p>
+                Les statistiques apparaîtront
+                après les premières commandes.
               </p>
             </EmptyState>
           ) : (
@@ -899,61 +1356,111 @@ const AdminStatistiques = () => {
               <DataTable>
                 <thead>
                   <tr>
-                    <th>CLIENT</th>
-                    <th>COMMANDES</th>
-                    <th>MONTANT TOTAL</th>
-                    <th>PREMIÈRE COMMANDE</th>
-                    <th>DERNIÈRE COMMANDE</th>
+                    <th>
+                      CLIENT
+                    </th>
+
+                    <th>
+                      COMMANDES
+                    </th>
+
+                    <th>
+                      MONTANT TOTAL
+                    </th>
+
+                    <th>
+                      PANIER MOYEN
+                    </th>
+
+                    <th>
+                      PREMIÈRE
+                    </th>
+
+                    <th>
+                      DERNIÈRE
+                    </th>
+
+                    <th>
+                      DURÉE CLIENT
+                    </th>
                   </tr>
                 </thead>
 
                 <tbody>
-                  {clients.map((client) => (
-                    <tr key={client.userId}>
-                      <td>
-                        <ClientName>
-                          {client.username ||
-                            "Utilisateur inconnu"}
-                        </ClientName>
+                  {fidelite.map(
+                    (client) => (
+                      <tr
+                        key={
+                          client.userId
+                        }
+                      >
+                        <td>
+                          <ClientName>
+                            {
+                              client.username
+                            }
+                          </ClientName>
 
-                        <ClientEmail>
-                          {client.email || "—"}
-                        </ClientEmail>
-                      </td>
+                          <ClientEmail>
+                            {
+                              client.email
+                            }
+                          </ClientEmail>
+                        </td>
 
-                      <td>
-                        <OrdersBadge>
-                          {formatNombre(
-                            client.nombreCommandes,
-                          )}
-                        </OrdersBadge>
-                      </td>
+                        <td>
+                          <OrdersBadge>
+                            {formatNombre(
+                              client.nombreCommandes,
+                            )}
+                          </OrdersBadge>
+                        </td>
 
-                      <td>
-                        <Amount>
+                        <td>
+                          <Amount>
+                            {formatMontant(
+                              client.montantTotal,
+                            )}
+                          </Amount>
+                        </td>
+
+                        <td>
                           {formatMontant(
-                            client.montantTotal,
+                            client.panierMoyen,
                           )}
-                        </Amount>
-                      </td>
+                        </td>
 
-                      <td>
-                        <DateText>
-                          {formatDate(
-                            client.premiereCommande,
-                          )}
-                        </DateText>
-                      </td>
+                        <td>
+                          <DateText>
+                            {formatDate(
+                              client.premiereCommande,
+                            )}
+                          </DateText>
+                        </td>
 
-                      <td>
-                        <DateText>
-                          {formatDate(
-                            client.derniereCommande,
-                          )}
-                        </DateText>
-                      </td>
-                    </tr>
-                  ))}
+                        <td>
+                          <DateText>
+                            {formatDate(
+                              client.derniereCommande,
+                            )}
+                          </DateText>
+                        </td>
+
+                        <td>
+                          <DateText>
+                            {
+                              client.joursClient
+                            }{" "}
+                            jour
+                            {client.joursClient >
+                            1
+                              ? "s"
+                              : ""}
+                          </DateText>
+                        </td>
+                      </tr>
+                    ),
+                  )}
                 </tbody>
               </DataTable>
             </TableWrapper>
@@ -962,43 +1469,51 @@ const AdminStatistiques = () => {
       </Section>
 
       {/* =================================================
-          PAGES VISITÉES
+          TOUS LES UTILISATEURS
       ================================================= */}
 
       <Section>
         <SectionTitle>
-          <h2>Pages visitées</h2>
+          <h2>
+            Utilisateurs inscrits
+          </h2>
 
           <p>
-            Pages les plus consultées par les visiteurs
+            Tous les comptes enregistrés sur
+            la plateforme
           </p>
         </SectionTitle>
 
         <TableCard>
           <TableHeader>
-            <div>
-              <h3>
-                Activité par page
-              </h3>
-            </div>
+            <h3>
+              Liste des utilisateurs
+            </h3>
 
             <span>
-              {formatNombre(pages.length)} page
-              {pages.length > 1 ? "s" : ""}
+              {formatNombre(
+                utilisateurs.length,
+              )}{" "}
+              utilisateur
+              {utilisateurs.length >
+              1
+                ? "s"
+                : ""}
             </span>
           </TableHeader>
 
-          {pages.length === 0 ? (
+          {utilisateurs.length === 0 ? (
             <EmptyState>
-              <div className="icon">📊</div>
+              <div className="icon">
+                👤
+              </div>
 
               <h3>
-                Aucune visite enregistrée
+                Aucun utilisateur
               </h3>
 
               <p>
-                Les pages apparaîtront ici dès que les
-                visiteurs navigueront sur le site.
+                Aucun compte enregistré.
               </p>
             </EmptyState>
           ) : (
@@ -1006,53 +1521,518 @@ const AdminStatistiques = () => {
               <DataTable>
                 <thead>
                   <tr>
-                    <th>PAGE</th>
-                    <th>VISITES</th>
-                    <th>VISITEURS UNIQUES</th>
-                    <th>SESSIONS UNIQUES</th>
+                    <th>
+                      UTILISATEUR
+                    </th>
+
+                    <th>
+                      INSCRIPTION
+                    </th>
+
+                    <th>
+                      COMMANDES
+                    </th>
+
+                    <th>
+                      MONTANT TOTAL
+                    </th>
+
+                    <th>
+                      DERNIÈRE COMMANDE
+                    </th>
+
+                    <th>
+                      STATUT
+                    </th>
                   </tr>
                 </thead>
 
                 <tbody>
-                  {pages.map((page) => (
-                    <tr key={page.page}>
-                      <td>
-                        <PagePath>
-                          <PageIcon>
-                            📄
-                          </PageIcon>
+                  {utilisateurs.map(
+                    (user) => (
+                      <tr
+                        key={
+                          user.userId
+                        }
+                      >
+                        <td>
+                          <ClientName>
+                            {
+                              user.username
+                            }
+                          </ClientName>
 
-                          <PageName>
-                            {page.page}
-                          </PageName>
-                        </PagePath>
-                      </td>
+                          <ClientEmail>
+                            {
+                              user.email
+                            }
+                          </ClientEmail>
+                        </td>
 
-                      <td>
-                        <VisitsBadge>
-                          {formatNombre(
-                            page.visites,
-                          )}
-                        </VisitsBadge>
-                      </td>
+                        <td>
+                          <DateText>
+                            {formatDate(
+                              user.createdAt,
+                            )}
+                          </DateText>
+                        </td>
 
-                      <td>
-                        <UniqueValue>
-                          {formatNombre(
-                            page.visiteursUniques,
-                          )}
-                        </UniqueValue>
-                      </td>
+                        <td>
+                          <OrdersBadge>
+                            {formatNombre(
+                              user.nombreCommandes,
+                            )}
+                          </OrdersBadge>
+                        </td>
 
-                      <td>
-                        <UniqueValue>
-                          {formatNombre(
-                            page.sessionsUniques,
-                          )}
-                        </UniqueValue>
-                      </td>
-                    </tr>
-                  ))}
+                        <td>
+                          <Amount>
+                            {formatMontant(
+                              user.montantTotal,
+                            )}
+                          </Amount>
+                        </td>
+
+                        <td>
+                          <DateText>
+                            {formatDate(
+                              user.derniereCommande,
+                            )}
+                          </DateText>
+                        </td>
+
+                        <td>
+                          <UserBadge
+                            $hasOrder={
+                              user.nombreCommandes >
+                              0
+                            }
+                          >
+                            {user.nombreCommandes >
+                            0
+                              ? "CLIENT"
+                              : "INSCRIT"}
+                          </UserBadge>
+                        </td>
+                      </tr>
+                    ),
+                  )}
+                </tbody>
+              </DataTable>
+            </TableWrapper>
+          )}
+        </TableCard>
+      </Section>
+
+      {/* =================================================
+          VISITEURS
+      ================================================= */}
+
+      <Section>
+        <SectionTitle>
+          <h2>
+            Visiteurs
+          </h2>
+
+          <p>
+            Visiteurs anonymes et visiteurs
+            identifiés
+          </p>
+        </SectionTitle>
+
+        <TableCard>
+          <TableHeader>
+            <h3>
+              Activité des visiteurs
+            </h3>
+
+            <span>
+              Jusqu'à 500 visiteurs
+              récents
+            </span>
+          </TableHeader>
+
+          {visiteurs.length === 0 ? (
+            <EmptyState>
+              <div className="icon">
+                👥
+              </div>
+
+              <h3>
+                Aucun visiteur
+              </h3>
+
+              <p>
+                Les visiteurs apparaîtront
+                automatiquement.
+              </p>
+            </EmptyState>
+          ) : (
+            <TableWrapper>
+              <DataTable>
+                <thead>
+                  <tr>
+                    <th>
+                      VISITEUR
+                    </th>
+
+                    <th>
+                      STATUT
+                    </th>
+
+                    <th>
+                      VISITES
+                    </th>
+
+                    <th>
+                      SESSIONS
+                    </th>
+
+                    <th>
+                      PAGES
+                    </th>
+
+                    <th>
+                      PREMIÈRE VISITE
+                    </th>
+
+                    <th>
+                      DERNIÈRE VISITE
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {visiteurs.map(
+                    (visiteur) => (
+                      <tr
+                        key={
+                          visiteur.visitorId
+                        }
+                      >
+                        <td>
+                          <VisitorId>
+                            {
+                              visiteur.visitorId
+                            }
+                          </VisitorId>
+                        </td>
+
+                        <td>
+                          <StatusBadge
+                            $identified={
+                              visiteur.identifie
+                            }
+                          >
+                            {visiteur.identifie
+                              ? "IDENTIFIÉ"
+                              : "ANONYME"}
+                          </StatusBadge>
+                        </td>
+
+                        <td>
+                          <VisitsBadge>
+                            {formatNombre(
+                              visiteur.nombreVisites,
+                            )}
+                          </VisitsBadge>
+                        </td>
+
+                        <td>
+                          <UniqueValue>
+                            {formatNombre(
+                              visiteur.sessions,
+                            )}
+                          </UniqueValue>
+                        </td>
+
+                        <td>
+                          <UniqueValue>
+                            {formatNombre(
+                              visiteur.pages,
+                            )}
+                          </UniqueValue>
+                        </td>
+
+                        <td>
+                          <DateText>
+                            {formatDateComplete(
+                              visiteur.premiereVisite,
+                            )}
+                          </DateText>
+                        </td>
+
+                        <td>
+                          <DateText>
+                            {formatDateComplete(
+                              visiteur.derniereVisite,
+                            )}
+                          </DateText>
+                        </td>
+                      </tr>
+                    ),
+                  )}
+                </tbody>
+              </DataTable>
+            </TableWrapper>
+          )}
+        </TableCard>
+      </Section>
+
+      {/* =================================================
+          PAGES
+      ================================================= */}
+
+      <Section>
+        <SectionTitle>
+          <h2>
+            Pages visitées
+          </h2>
+
+          <p>
+            Pages les plus consultées
+          </p>
+        </SectionTitle>
+
+        <TableCard>
+          <TableHeader>
+            <h3>
+              Activité par page
+            </h3>
+
+            <span>
+              {formatNombre(
+                pages.length,
+              )}{" "}
+              page
+              {pages.length > 1
+                ? "s"
+                : ""}
+            </span>
+          </TableHeader>
+
+          {pages.length === 0 ? (
+            <EmptyState>
+              <div className="icon">
+                📊
+              </div>
+
+              <h3>
+                Aucune visite
+              </h3>
+
+              <p>
+                Les pages apparaîtront ici
+                automatiquement.
+              </p>
+            </EmptyState>
+          ) : (
+            <TableWrapper>
+              <DataTable>
+                <thead>
+                  <tr>
+                    <th>
+                      PAGE
+                    </th>
+
+                    <th>
+                      VISITES
+                    </th>
+
+                    <th>
+                      VISITEURS UNIQUES
+                    </th>
+
+                    <th>
+                      SESSIONS UNIQUES
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {pages.map(
+                    (page) => (
+                      <tr
+                        key={page.page}
+                      >
+                        <td>
+                          <PagePath>
+                            <PageIcon>
+                              📄
+                            </PageIcon>
+
+                            <PageName>
+                              {
+                                page.page
+                              }
+                            </PageName>
+                          </PagePath>
+                        </td>
+
+                        <td>
+                          <VisitsBadge>
+                            {formatNombre(
+                              page.visites,
+                            )}
+                          </VisitsBadge>
+                        </td>
+
+                        <td>
+                          <UniqueValue>
+                            {formatNombre(
+                              page.visiteursUniques,
+                            )}
+                          </UniqueValue>
+                        </td>
+
+                        <td>
+                          <UniqueValue>
+                            {formatNombre(
+                              page.sessionsUniques,
+                            )}
+                          </UniqueValue>
+                        </td>
+                      </tr>
+                    ),
+                  )}
+                </tbody>
+              </DataTable>
+            </TableWrapper>
+          )}
+        </TableCard>
+      </Section>
+
+      {/* =================================================
+          CLIENTS
+      ================================================= */}
+
+      <Section>
+        <SectionTitle>
+          <h2>
+            Clients et commandes
+          </h2>
+
+          <p>
+            Vue détaillée des clients ayant
+            commandé
+          </p>
+        </SectionTitle>
+
+        <TableCard>
+          <TableHeader>
+            <h3>
+              Historique commercial
+            </h3>
+
+            <span>
+              {formatNombre(
+                clients.length,
+              )}{" "}
+              client
+              {clients.length > 1
+                ? "s"
+                : ""}
+            </span>
+          </TableHeader>
+
+          {clients.length === 0 ? (
+            <EmptyState>
+              <div className="icon">
+                🛒
+              </div>
+
+              <h3>
+                Aucun client ayant commandé
+              </h3>
+
+              <p>
+                Les statistiques apparaîtront
+                après les premières commandes.
+              </p>
+            </EmptyState>
+          ) : (
+            <TableWrapper>
+              <DataTable>
+                <thead>
+                  <tr>
+                    <th>
+                      CLIENT
+                    </th>
+
+                    <th>
+                      COMMANDES
+                    </th>
+
+                    <th>
+                      MONTANT TOTAL
+                    </th>
+
+                    <th>
+                      PREMIÈRE COMMANDE
+                    </th>
+
+                    <th>
+                      DERNIÈRE COMMANDE
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {clients.map(
+                    (client) => (
+                      <tr
+                        key={
+                          client.userId
+                        }
+                      >
+                        <td>
+                          <ClientName>
+                            {
+                              client.username
+                            }
+                          </ClientName>
+
+                          <ClientEmail>
+                            {
+                              client.email
+                            }
+                          </ClientEmail>
+                        </td>
+
+                        <td>
+                          <OrdersBadge>
+                            {formatNombre(
+                              client.nombreCommandes,
+                            )}
+                          </OrdersBadge>
+                        </td>
+
+                        <td>
+                          <Amount>
+                            {formatMontant(
+                              client.montantTotal,
+                            )}
+                          </Amount>
+                        </td>
+
+                        <td>
+                          <DateText>
+                            {formatDate(
+                              client.premiereCommande,
+                            )}
+                          </DateText>
+                        </td>
+
+                        <td>
+                          <DateText>
+                            {formatDate(
+                              client.derniereCommande,
+                            )}
+                          </DateText>
+                        </td>
+                      </tr>
+                    ),
+                  )}
                 </tbody>
               </DataTable>
             </TableWrapper>
