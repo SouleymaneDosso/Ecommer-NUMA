@@ -1,32 +1,446 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import styled from "styled-components";
+
+/* =====================================================
+   STYLES
+===================================================== */
+
+const Page = styled.div`
+  width: 100%;
+`;
+
+const PageHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 30px;
+
+  @media (max-width: 700px) {
+    flex-direction: column;
+  }
+`;
+
+const HeaderContent = styled.div`
+  h1 {
+    margin: 0 0 8px;
+    color: #1f2a40;
+    font-size: 30px;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 0;
+    color: #7f8c8d;
+    font-size: 14px;
+  }
+`;
+
+const RefreshButton = styled.button`
+  border: none;
+  border-radius: 8px;
+  padding: 10px 18px;
+  background: #1f2a40;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+
+  &:hover {
+    background: #34495e;
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+`;
+
+/* =====================================================
+   SECTIONS
+===================================================== */
+
+const Section = styled.section`
+  margin-bottom: 35px;
+`;
+
+const SectionTitle = styled.div`
+  margin-bottom: 18px;
+
+  h2 {
+    margin: 0 0 5px;
+    color: #2c3e50;
+    font-size: 20px;
+  }
+
+  p {
+    margin: 0;
+    color: #95a5a6;
+    font-size: 13px;
+  }
+`;
+
+/* =====================================================
+   KPI
+===================================================== */
+
+const StatsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const StatCard = styled.div`
+  background: #fff;
+  border-radius: 12px;
+  padding: 22px;
+  box-shadow: 0 3px 12px rgba(31, 42, 64, 0.08);
+  border: 1px solid #edf0f2;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 7px 20px rgba(31, 42, 64, 0.12);
+  }
+`;
+
+const StatTop = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 18px;
+`;
+
+const StatIcon = styled.div`
+  width: 46px;
+  height: 46px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: ${(props) => props.$background || "#ecf0f1"};
+  font-size: 21px;
+`;
+
+const StatLabel = styled.span`
+  color: #7f8c8d;
+  font-size: 13px;
+  font-weight: 600;
+`;
+
+const StatValue = styled.div`
+  color: #1f2a40;
+  font-size: 27px;
+  font-weight: 700;
+  line-height: 1.2;
+  word-break: break-word;
+`;
+
+const StatDescription = styled.div`
+  margin-top: 7px;
+  color: #95a5a6;
+  font-size: 12px;
+`;
+
+const RevenueCard = styled(StatCard)`
+  grid-column: span 2;
+
+  @media (max-width: 600px) {
+    grid-column: span 1;
+  }
+`;
+
+const RevenueValue = styled(StatValue)`
+  font-size: 32px;
+`;
+
+/* =====================================================
+   TABLES
+===================================================== */
+
+const TableCard = styled.div`
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #edf0f2;
+  box-shadow: 0 3px 12px rgba(31, 42, 64, 0.08);
+  overflow: hidden;
+`;
+
+const TableHeader = styled.div`
+  padding: 20px 22px;
+  border-bottom: 1px solid #edf0f2;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+
+  h3 {
+    margin: 0;
+    color: #2c3e50;
+    font-size: 17px;
+  }
+
+  span {
+    color: #95a5a6;
+    font-size: 12px;
+  }
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+`;
+
+const TableWrapper = styled.div`
+  width: 100%;
+  overflow-x: auto;
+`;
+
+const DataTable = styled.table`
+  width: 100%;
+  min-width: 850px;
+  border-collapse: collapse;
+
+  th {
+    background: #f8f9fa;
+    color: #5d6d7e;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: left;
+    padding: 15px 18px;
+    border-bottom: 1px solid #edf0f2;
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 16px 18px;
+    border-bottom: 1px solid #f0f2f3;
+    color: #2c3e50;
+    font-size: 13px;
+  }
+
+  tbody tr {
+    transition: background 0.2s;
+  }
+
+  tbody tr:hover {
+    background: #fafbfc;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+`;
+
+/* =====================================================
+   CLIENTS
+===================================================== */
+
+const ClientName = styled.div`
+  font-weight: 700;
+  color: #1f2a40;
+`;
+
+const ClientEmail = styled.div`
+  margin-top: 4px;
+  color: #95a5a6;
+  font-size: 12px;
+`;
+
+const OrdersBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 7px;
+  background: #eaf2f8;
+  color: #2c3e50;
+  font-weight: 700;
+`;
+
+const Amount = styled.span`
+  font-weight: 700;
+  color: #1f2a40;
+`;
+
+const DateText = styled.span`
+  color: #7f8c8d;
+  font-size: 12px;
+`;
+
+/* =====================================================
+   PAGES
+===================================================== */
+
+const PagePath = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const PageIcon = styled.span`
+  font-size: 18px;
+`;
+
+const PageName = styled.span`
+  font-weight: 600;
+  color: #1f2a40;
+`;
+
+const VisitsBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 35px;
+  height: 28px;
+  padding: 0 9px;
+  border-radius: 7px;
+  background: #fef3e7;
+  color: #d35400;
+  font-weight: 700;
+`;
+
+const UniqueValue = styled.span`
+  font-weight: 600;
+  color: #34495e;
+`;
+
+/* =====================================================
+   EMPTY STATE
+===================================================== */
+
+const EmptyState = styled.div`
+  padding: 50px 20px;
+  text-align: center;
+  color: #95a5a6;
+
+  .icon {
+    font-size: 35px;
+    margin-bottom: 12px;
+  }
+
+  h3 {
+    margin: 0 0 6px;
+    color: #5d6d7e;
+    font-size: 16px;
+  }
+
+  p {
+    margin: 0;
+    font-size: 13px;
+  }
+`;
+
+/* =====================================================
+   LOADING / ERROR
+===================================================== */
+
+const LoadingContainer = styled.div`
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #7f8c8d;
+  font-size: 15px;
+`;
+
+const LoadingBox = styled.div`
+  text-align: center;
+`;
+
+const Spinner = styled.div`
+  width: 35px;
+  height: 35px;
+  margin: 0 auto 15px;
+  border: 4px solid #ecf0f1;
+  border-top-color: #1f2a40;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+`;
+
+const ErrorBox = styled.div`
+  background: #fff;
+  border: 1px solid #f5c6cb;
+  border-left: 5px solid #e74c3c;
+  border-radius: 10px;
+  padding: 20px;
+  color: #721c24;
+
+  h3 {
+    margin: 0 0 7px;
+    font-size: 16px;
+  }
+
+  p {
+    margin: 0;
+    font-size: 14px;
+  }
+`;
+
+/* =====================================================
+   COMPOSANT
+===================================================== */
 
 const AdminStatistiques = () => {
   const [resume, setResume] = useState(null);
   const [clients, setClients] = useState([]);
   const [pages, setPages] = useState([]);
-  const [funnel, setFunnel] = useState(null);
 
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
   const [error, setError] = useState("");
 
-  const adminToken = localStorage.getItem("adminToken");
+  /* =====================================================
+     CHARGEMENT DES STATISTIQUES
+  ===================================================== */
 
-  const chargerStatistiques = async () => {
+  const chargerStatistiques = async (isRefresh = false) => {
     try {
-      setLoading(true);
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+
       setError("");
 
+      const token = localStorage.getItem("adminToken");
+
       const headers = {
-        Authorization: `Bearer ${adminToken}`,
-        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       };
+
+      /* ================================================
+         LES 3 ENDPOINTS
+      ================================================ */
 
       const [
         resumeResponse,
         clientsResponse,
         pagesResponse,
-        funnelResponse,
       ] = await Promise.all([
         fetch(
           `${import.meta.env.VITE_API_URL}/api/admin/statistiques/resume`,
@@ -48,187 +462,267 @@ const AdminStatistiques = () => {
             headers,
           },
         ),
-
-        fetch(
-          `${import.meta.env.VITE_API_URL}/api/admin/statistiques/funnel`,
-          {
-            headers,
-          },
-        ),
       ]);
 
-      if (
-        !resumeResponse.ok ||
-        !clientsResponse.ok ||
-        !pagesResponse.ok ||
-        !funnelResponse.ok
-      ) {
+      /* ================================================
+         RÉSUMÉ
+      ================================================ */
+
+      if (!resumeResponse.ok) {
+        const texte = await resumeResponse.text();
+
+        console.error("❌ ERREUR API RESUME :", {
+          status: resumeResponse.status,
+          response: texte,
+        });
+
         throw new Error(
-          "Impossible de récupérer les statistiques",
+          `Erreur API résumé ${resumeResponse.status}`,
         );
       }
 
-      const [
-        resumeData,
-        clientsData,
-        pagesData,
-        funnelData,
-      ] = await Promise.all([
-        resumeResponse.json(),
-        clientsResponse.json(),
-        pagesResponse.json(),
-        funnelResponse.json(),
-      ]);
+      /* ================================================
+         CLIENTS
+      ================================================ */
+
+      if (!clientsResponse.ok) {
+        const texte = await clientsResponse.text();
+
+        console.error("❌ ERREUR API CLIENTS :", {
+          status: clientsResponse.status,
+          response: texte,
+        });
+
+        throw new Error(
+          `Erreur API clients ${clientsResponse.status}`,
+        );
+      }
+
+      /* ================================================
+         PAGES
+      ================================================ */
+
+      if (!pagesResponse.ok) {
+        const texte = await pagesResponse.text();
+
+        console.error("❌ ERREUR API PAGES :", {
+          status: pagesResponse.status,
+          response: texte,
+        });
+
+        throw new Error(
+          `Erreur API pages ${pagesResponse.status}`,
+        );
+      }
+
+      /* ================================================
+         RÉCUPÉRATION DES DONNÉES
+      ================================================ */
+
+      const resumeData = await resumeResponse.json();
+      const clientsData = await clientsResponse.json();
+      const pagesData = await pagesResponse.json();
 
       setResume(resumeData);
       setClients(clientsData.clients || []);
       setPages(pagesData.pages || []);
-      setFunnel(funnelData);
     } catch (error) {
       console.error(
-        "❌ Erreur chargement statistiques :",
+        "Erreur statistiques admin :",
         error,
       );
 
       setError(
-        "Impossible de charger les statistiques.",
+        "Impossible de charger les statistiques. Vérifiez votre connexion puis réessayez.",
       );
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
+
+  /* =====================================================
+     CHARGEMENT INITIAL
+  ===================================================== */
 
   useEffect(() => {
     chargerStatistiques();
   }, []);
 
+  /* =====================================================
+     FORMATAGE
+  ===================================================== */
+
+  const formatNombre = (nombre) => {
+    return new Intl.NumberFormat("fr-FR").format(
+      Number(nombre || 0),
+    );
+  };
+
   const formatMontant = (montant) => {
-    return new Intl.NumberFormat("fr-FR", {
-      style: "currency",
-      currency: "XOF",
-      maximumFractionDigits: 0,
-    }).format(montant || 0);
+    return `${new Intl.NumberFormat("fr-FR").format(
+      Number(montant || 0),
+    )} FCFA`;
   };
 
   const formatDate = (date) => {
-    if (!date) return "-";
+    if (!date) {
+      return "—";
+    }
 
-    return new Date(date).toLocaleDateString("fr-FR", {
+    return new Intl.DateTimeFormat("fr-FR", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
-    });
+    }).format(new Date(date));
   };
 
-  const calculerPourcentage = (valeur, total) => {
-    if (!total || !valeur) return 0;
-
-    return Math.round((valeur / total) * 100);
-  };
+  /* =====================================================
+     LOADING
+  ===================================================== */
 
   if (loading) {
     return (
       <LoadingContainer>
         <LoadingBox>
           <Spinner />
-          <span>Chargement des statistiques...</span>
+          Chargement des statistiques...
         </LoadingBox>
       </LoadingContainer>
     );
   }
 
+  /* =====================================================
+     ERROR
+  ===================================================== */
+
   if (error) {
     return (
       <Page>
-        <ErrorBox>
-          <strong>Erreur</strong>
-          <span>{error}</span>
+        <PageHeader>
+          <HeaderContent>
+            <h1>Statistiques</h1>
 
-          <RetryButton onClick={chargerStatistiques}>
+            <p>
+              Vue globale de l'activité de votre boutique
+            </p>
+          </HeaderContent>
+
+          <RefreshButton
+            onClick={() => chargerStatistiques(true)}
+          >
             Réessayer
-          </RetryButton>
+          </RefreshButton>
+        </PageHeader>
+
+        <ErrorBox>
+          <h3>Erreur de chargement</h3>
+
+          <p>{error}</p>
         </ErrorBox>
       </Page>
     );
   }
 
+  if (!resume) {
+    return null;
+  }
+
+  /* =====================================================
+     RENDER
+  ===================================================== */
+
   return (
     <Page>
+      {/* =================================================
+          EN-TÊTE
+      ================================================= */}
+
       <PageHeader>
         <HeaderContent>
-          <div>
-            <PageTitle>
-              Statistiques
-            </PageTitle>
+          <h1>Statistiques</h1>
 
-            <PageSubtitle>
-              Vue globale de l'activité de votre boutique
-            </PageSubtitle>
-          </div>
-
-          <RefreshButton onClick={chargerStatistiques}>
-            ↻ Actualiser
-          </RefreshButton>
+          <p>
+            Vue globale des visiteurs, utilisateurs et
+            commandes
+          </p>
         </HeaderContent>
+
+        <RefreshButton
+          onClick={() => chargerStatistiques(true)}
+          disabled={refreshing}
+        >
+          {refreshing
+            ? "Actualisation..."
+            : "↻ Actualiser"}
+        </RefreshButton>
       </PageHeader>
 
-      {/* =====================================================
+      {/* =================================================
           AUDIENCE
-      ===================================================== */}
+      ================================================= */}
 
       <Section>
         <SectionTitle>
-          Audience
+          <h2>Audience</h2>
+
+          <p>
+            Analyse de la fréquentation de votre boutique
+          </p>
         </SectionTitle>
 
         <StatsGrid>
           <StatCard>
             <StatTop>
-              <StatIcon>👥</StatIcon>
-
               <StatLabel>
                 Visiteurs uniques
               </StatLabel>
+
+              <StatIcon $background="#e8f4fd">
+                👥
+              </StatIcon>
             </StatTop>
 
             <StatValue>
-              {resume?.visiteursUniques || 0}
+              {formatNombre(
+                resume.visiteursUniques,
+              )}
             </StatValue>
 
             <StatDescription>
-              Visiteurs différents détectés
+              Visiteurs distincts enregistrés
             </StatDescription>
           </StatCard>
 
           <StatCard>
             <StatTop>
-              <StatIcon>👁️</StatIcon>
+              <StatLabel>Visites</StatLabel>
 
-              <StatLabel>
-                Visites
-              </StatLabel>
+              <StatIcon $background="#fef3e7">
+                👁️
+              </StatIcon>
             </StatTop>
 
             <StatValue>
-              {resume?.visites || 0}
+              {formatNombre(resume.visites)}
             </StatValue>
 
             <StatDescription>
-              Pages consultées au total
+              Nombre total de visites
             </StatDescription>
           </StatCard>
 
           <StatCard>
             <StatTop>
-              <StatIcon>🔄</StatIcon>
+              <StatLabel>Sessions</StatLabel>
 
-              <StatLabel>
-                Sessions
-              </StatLabel>
+              <StatIcon $background="#eafaf1">
+                🕐
+              </StatIcon>
             </StatTop>
 
             <StatValue>
-              {resume?.sessions || 0}
+              {formatNombre(resume.sessions)}
             </StatValue>
 
             <StatDescription>
@@ -238,15 +732,19 @@ const AdminStatistiques = () => {
 
           <StatCard>
             <StatTop>
-              <StatIcon>🔐</StatIcon>
-
               <StatLabel>
                 Utilisateurs identifiés
               </StatLabel>
+
+              <StatIcon $background="#f4ecf7">
+                👤
+              </StatIcon>
             </StatTop>
 
             <StatValue>
-              {resume?.utilisateursIdentifies || 0}
+              {formatNombre(
+                resume.utilisateursIdentifies,
+              )}
             </StatValue>
 
             <StatDescription>
@@ -256,256 +754,156 @@ const AdminStatistiques = () => {
         </StatsGrid>
       </Section>
 
-      {/* =====================================================
-          COMMERCIAL
-      ===================================================== */}
+      {/* =================================================
+          ACTIVITÉ COMMERCIALE
+      ================================================= */}
 
       <Section>
         <SectionTitle>
-          Activité commerciale
+          <h2>Activité commerciale</h2>
+
+          <p>
+            Suivi des commandes et du chiffre d'affaires
+          </p>
         </SectionTitle>
 
         <StatsGrid>
           <StatCard>
             <StatTop>
-              <StatIcon>🛒</StatIcon>
+              <StatLabel>Commandes</StatLabel>
 
-              <StatLabel>
-                Commandes
-              </StatLabel>
+              <StatIcon $background="#e8f4fd">
+                🛒
+              </StatIcon>
             </StatTop>
 
             <StatValue>
-              {resume?.commandes || 0}
+              {formatNombre(resume.commandes)}
             </StatValue>
 
             <StatDescription>
-              Commandes enregistrées
+              Nombre total de commandes
             </StatDescription>
           </StatCard>
 
           <StatCard>
             <StatTop>
-              <StatIcon>🧑‍💼</StatIcon>
-
               <StatLabel>
                 Clients ayant commandé
               </StatLabel>
+
+              <StatIcon $background="#eafaf1">
+                🤝
+              </StatIcon>
             </StatTop>
 
             <StatValue>
-              {resume?.clientsAyantCommande || 0}
+              {formatNombre(
+                resume.clientsAyantCommande,
+              )}
             </StatValue>
 
             <StatDescription>
-              Utilisateurs ayant passé une commande
+              Clients distincts ayant commandé
             </StatDescription>
           </StatCard>
 
           <StatCard>
             <StatTop>
-              <StatIcon>📦</StatIcon>
-
               <StatLabel>
                 Commandes livrées
               </StatLabel>
+
+              <StatIcon $background="#e8f8f5">
+                📦
+              </StatIcon>
             </StatTop>
 
             <StatValue>
-              {resume?.commandesLivrees || 0}
+              {formatNombre(
+                resume.commandesLivrees,
+              )}
             </StatValue>
 
             <StatDescription>
-              Commandes avec statut DELIVERED
+              Commandes avec statut livré
             </StatDescription>
           </StatCard>
 
           <RevenueCard>
             <StatTop>
-              <StatIcon>💰</StatIcon>
-
               <StatLabel>
                 Chiffre d'affaires
               </StatLabel>
+
+              <StatIcon $background="#fff4e5">
+                💰
+              </StatIcon>
             </StatTop>
 
             <RevenueValue>
-              {formatMontant(resume?.chiffreAffaires)}
+              {formatMontant(
+                resume.chiffreAffaires,
+              )}
             </RevenueValue>
 
             <StatDescription>
-              Commandes CONFIRMED, SHIPPED ou DELIVERED
+              Commandes confirmées, expédiées ou
+              livrées
             </StatDescription>
           </RevenueCard>
         </StatsGrid>
       </Section>
 
-      {/* =====================================================
-          FUNNEL
-      ===================================================== */}
-
-      <Section>
-        <SectionTitle>
-          Funnel visiteurs → clients
-        </SectionTitle>
-
-        <FunnelCard>
-          <FunnelIntro>
-            <FunnelIntroTitle>
-              Parcours des visiteurs
-            </FunnelIntroTitle>
-
-            <FunnelIntroText>
-              Cette vue montre combien de visiteurs passent
-              progressivement de la visite du site à la commande.
-            </FunnelIntroText>
-          </FunnelIntro>
-
-          <FunnelSteps>
-            <FunnelStep>
-              <FunnelStepTop>
-                <FunnelStepNumber>
-                  1
-                </FunnelStepNumber>
-
-                <FunnelStepTitle>
-                  Visiteurs
-                </FunnelStepTitle>
-              </FunnelStepTop>
-
-              <FunnelStepValue>
-                {funnel?.visiteursUniques || 0}
-              </FunnelStepValue>
-
-              <FunnelStepDescription>
-                100% des visiteurs détectés
-              </FunnelStepDescription>
-            </FunnelStep>
-
-            <FunnelArrow>
-              →
-            </FunnelArrow>
-
-            <FunnelStep>
-              <FunnelStepTop>
-                <FunnelStepNumber>
-                  2
-                </FunnelStepNumber>
-
-                <FunnelStepTitle>
-                  Visiteurs identifiés
-                </FunnelStepTitle>
-              </FunnelStepTop>
-
-              <FunnelStepValue>
-                {funnel?.visiteursIdentifies || 0}
-              </FunnelStepValue>
-
-              <FunnelStepDescription>
-                {calculerPourcentage(
-                  funnel?.visiteursIdentifies,
-                  funnel?.visiteursUniques,
-                )}
-                % des visiteurs
-              </FunnelStepDescription>
-            </FunnelStep>
-
-            <FunnelArrow>
-              →
-            </FunnelArrow>
-
-            <FunnelStep>
-              <FunnelStepTop>
-                <FunnelStepNumber>
-                  3
-                </FunnelStepNumber>
-
-                <FunnelStepTitle>
-                  Utilisateurs inscrits
-                </FunnelStepTitle>
-              </FunnelStepTop>
-
-              <FunnelStepValue>
-                {funnel?.utilisateursInscrits || 0}
-              </FunnelStepValue>
-
-              <FunnelStepDescription>
-                Comptes enregistrés
-              </FunnelStepDescription>
-            </FunnelStep>
-
-            <FunnelArrow>
-              →
-            </FunnelArrow>
-
-            <FunnelStep>
-              <FunnelStepTop>
-                <FunnelStepNumber>
-                  4
-                </FunnelStepNumber>
-
-                <FunnelStepTitle>
-                  Clients avec commande
-                </FunnelStepTitle>
-              </FunnelStepTop>
-
-              <FunnelStepValue>
-                {funnel?.clientsAvecCommande || 0}
-              </FunnelStepValue>
-
-              <FunnelStepDescription>
-                {calculerPourcentage(
-                  funnel?.clientsAvecCommande,
-                  funnel?.utilisateursInscrits,
-                )}
-                % des comptes
-              </FunnelStepDescription>
-            </FunnelStep>
-          </FunnelSteps>
-        </FunnelCard>
-      </Section>
-
-      {/* =====================================================
+      {/* =================================================
           CLIENTS
-      ===================================================== */}
+      ================================================= */}
 
       <Section>
         <SectionTitle>
-          Clients
+          <h2>Clients</h2>
+
+          <p>
+            Activité et valeur des clients ayant passé
+            commande
+          </p>
         </SectionTitle>
 
         <TableCard>
           <TableHeader>
             <div>
-              <TableTitle>
-                Activité des clients
-              </TableTitle>
-
-              <TableSubtitle>
-                Commandes et montants cumulés
-              </TableSubtitle>
+              <h3>Liste des clients</h3>
             </div>
 
-            <TableCount>
-              {clients.length} client
+            <span>
+              {formatNombre(clients.length)} client
               {clients.length > 1 ? "s" : ""}
-            </TableCount>
+            </span>
           </TableHeader>
 
           {clients.length === 0 ? (
             <EmptyState>
-              Aucun client avec commande pour le moment.
+              <div className="icon">👥</div>
+
+              <h3>
+                Aucun client ayant commandé
+              </h3>
+
+              <p>
+                Les clients apparaîtront ici dès qu'une
+                commande sera enregistrée.
+              </p>
             </EmptyState>
           ) : (
             <TableWrapper>
               <DataTable>
                 <thead>
                   <tr>
-                    <th>Client</th>
-                    <th>Commandes</th>
-                    <th>Montant total</th>
-                    <th>Première commande</th>
-                    <th>Dernière commande</th>
+                    <th>CLIENT</th>
+                    <th>COMMANDES</th>
+                    <th>MONTANT TOTAL</th>
+                    <th>PREMIÈRE COMMANDE</th>
+                    <th>DERNIÈRE COMMANDE</th>
                   </tr>
                 </thead>
 
@@ -514,17 +912,20 @@ const AdminStatistiques = () => {
                     <tr key={client.userId}>
                       <td>
                         <ClientName>
-                          {client.username}
+                          {client.username ||
+                            "Utilisateur inconnu"}
                         </ClientName>
 
                         <ClientEmail>
-                          {client.email || "-"}
+                          {client.email || "—"}
                         </ClientEmail>
                       </td>
 
                       <td>
                         <OrdersBadge>
-                          {client.nombreCommandes}
+                          {formatNombre(
+                            client.nombreCommandes,
+                          )}
                         </OrdersBadge>
                       </td>
 
@@ -560,46 +961,55 @@ const AdminStatistiques = () => {
         </TableCard>
       </Section>
 
-      {/* =====================================================
-          PAGES
-      ===================================================== */}
+      {/* =================================================
+          PAGES VISITÉES
+      ================================================= */}
 
       <Section>
         <SectionTitle>
-          Pages les plus consultées
+          <h2>Pages visitées</h2>
+
+          <p>
+            Pages les plus consultées par les visiteurs
+          </p>
         </SectionTitle>
 
         <TableCard>
           <TableHeader>
             <div>
-              <TableTitle>
-                Navigation du site
-              </TableTitle>
-
-              <TableSubtitle>
-                Visites, visiteurs et sessions par page
-              </TableSubtitle>
+              <h3>
+                Activité par page
+              </h3>
             </div>
 
-            <TableCount>
-              {pages.length} page
+            <span>
+              {formatNombre(pages.length)} page
               {pages.length > 1 ? "s" : ""}
-            </TableCount>
+            </span>
           </TableHeader>
 
           {pages.length === 0 ? (
             <EmptyState>
-              Aucune visite enregistrée pour le moment.
+              <div className="icon">📊</div>
+
+              <h3>
+                Aucune visite enregistrée
+              </h3>
+
+              <p>
+                Les pages apparaîtront ici dès que les
+                visiteurs navigueront sur le site.
+              </p>
             </EmptyState>
           ) : (
             <TableWrapper>
               <DataTable>
                 <thead>
                   <tr>
-                    <th>Page</th>
-                    <th>Visites</th>
-                    <th>Visiteurs uniques</th>
-                    <th>Sessions uniques</th>
+                    <th>PAGE</th>
+                    <th>VISITES</th>
+                    <th>VISITEURS UNIQUES</th>
+                    <th>SESSIONS UNIQUES</th>
                   </tr>
                 </thead>
 
@@ -620,19 +1030,25 @@ const AdminStatistiques = () => {
 
                       <td>
                         <VisitsBadge>
-                          {page.visites}
+                          {formatNombre(
+                            page.visites,
+                          )}
                         </VisitsBadge>
                       </td>
 
                       <td>
                         <UniqueValue>
-                          {page.visiteursUniques}
+                          {formatNombre(
+                            page.visiteursUniques,
+                          )}
                         </UniqueValue>
                       </td>
 
                       <td>
                         <UniqueValue>
-                          {page.sessionsUniques}
+                          {formatNombre(
+                            page.sessionsUniques,
+                          )}
                         </UniqueValue>
                       </td>
                     </tr>
@@ -646,483 +1062,5 @@ const AdminStatistiques = () => {
     </Page>
   );
 };
-
-/* =========================================================
-   STYLES
-========================================================= */
-
-const Page = styled.div`
-  padding: 30px;
-  min-height: 100vh;
-  background: #f7f8fc;
-`;
-
-const PageHeader = styled.div`
-  margin-bottom: 32px;
-`;
-
-const HeaderContent = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-
-  @media (max-width: 700px) {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-`;
-
-const PageTitle = styled.h1`
-  margin: 0;
-  font-size: 32px;
-  font-weight: 800;
-  color: #171a21;
-`;
-
-const PageSubtitle = styled.p`
-  margin: 8px 0 0;
-  color: #747986;
-  font-size: 15px;
-`;
-
-const RefreshButton = styled.button`
-  border: none;
-  border-radius: 12px;
-  padding: 11px 17px;
-  background: #171a21;
-  color: white;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: 0.2s;
-
-  &:hover {
-    transform: translateY(-1px);
-    opacity: 0.9;
-  }
-`;
-
-const Section = styled.section`
-  margin-bottom: 34px;
-`;
-
-const SectionTitle = styled.h2`
-  margin: 0 0 16px;
-  font-size: 20px;
-  font-weight: 800;
-  color: #171a21;
-`;
-
-const StatsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 18px;
-
-  @media (max-width: 1100px) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  @media (max-width: 600px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const StatCard = styled.div`
-  background: white;
-  border: 1px solid #eceef3;
-  border-radius: 18px;
-  padding: 22px;
-  box-shadow: 0 5px 18px rgba(20, 25, 35, 0.04);
-`;
-
-const RevenueCard = styled(StatCard)`
-  background: #171a21;
-  border-color: #171a21;
-
-  ${StatLabel} {
-    color: #d8dbe2;
-  }
-
-  ${StatDescription} {
-    color: #9da3af;
-  }
-
-  ${StatIcon} {
-    background: #292d36;
-  }
-`;
-
-const StatTop = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-`;
-
-const StatIcon = styled.div`
-  width: 38px;
-  height: 38px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 11px;
-  background: #f1f3f7;
-  font-size: 18px;
-`;
-
-const StatLabel = styled.span`
-  color: #737985;
-  font-size: 14px;
-  font-weight: 700;
-`;
-
-const StatValue = styled.div`
-  margin-top: 20px;
-  font-size: 30px;
-  line-height: 1;
-  font-weight: 850;
-  color: #171a21;
-`;
-
-const RevenueValue = styled(StatValue)`
-  color: white;
-`;
-
-const StatDescription = styled.p`
-  margin: 10px 0 0;
-  color: #9297a2;
-  font-size: 12px;
-  line-height: 1.5;
-`;
-
-/* =========================================================
-   FUNNEL
-========================================================= */
-
-const FunnelCard = styled.div`
-  background: white;
-  border: 1px solid #eceef3;
-  border-radius: 20px;
-  padding: 24px;
-  box-shadow: 0 5px 18px rgba(20, 25, 35, 0.04);
-`;
-
-const FunnelIntro = styled.div`
-  margin-bottom: 24px;
-`;
-
-const FunnelIntroTitle = styled.h3`
-  margin: 0;
-  font-size: 17px;
-  font-weight: 800;
-  color: #171a21;
-`;
-
-const FunnelIntroText = styled.p`
-  margin: 7px 0 0;
-  color: #777d89;
-  font-size: 13px;
-  line-height: 1.6;
-`;
-
-const FunnelSteps = styled.div`
-  display: flex;
-  align-items: stretch;
-  gap: 12px;
-
-  @media (max-width: 900px) {
-    flex-direction: column;
-  }
-`;
-
-const FunnelStep = styled.div`
-  flex: 1;
-  min-width: 0;
-  border: 1px solid #e8eaf0;
-  border-radius: 16px;
-  padding: 18px;
-  background: #fafbfc;
-`;
-
-const FunnelStepTop = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 9px;
-`;
-
-const FunnelStepNumber = styled.div`
-  width: 27px;
-  height: 27px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: #171a21;
-  color: white;
-  font-size: 12px;
-  font-weight: 800;
-  flex-shrink: 0;
-`;
-
-const FunnelStepTitle = styled.div`
-  font-size: 13px;
-  font-weight: 750;
-  color: #555b66;
-`;
-
-const FunnelStepValue = styled.div`
-  margin-top: 17px;
-  font-size: 28px;
-  font-weight: 850;
-  color: #171a21;
-`;
-
-const FunnelStepDescription = styled.div`
-  margin-top: 7px;
-  color: #9297a2;
-  font-size: 12px;
-`;
-
-const FunnelArrow = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #a2a7b1;
-  font-size: 24px;
-  font-weight: 700;
-
-  @media (max-width: 900px) {
-    transform: rotate(90deg);
-  }
-`;
-
-/* =========================================================
-   TABLES
-========================================================= */
-
-const TableCard = styled.div`
-  overflow: hidden;
-  background: white;
-  border: 1px solid #eceef3;
-  border-radius: 18px;
-  box-shadow: 0 5px 18px rgba(20, 25, 35, 0.04);
-`;
-
-const TableHeader = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  padding: 20px 22px;
-  border-bottom: 1px solid #eceef3;
-
-  @media (max-width: 600px) {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-`;
-
-const TableTitle = styled.h3`
-  margin: 0;
-  font-size: 16px;
-  font-weight: 800;
-  color: #171a21;
-`;
-
-const TableSubtitle = styled.p`
-  margin: 5px 0 0;
-  color: #8a909b;
-  font-size: 12px;
-`;
-
-const TableCount = styled.div`
-  padding: 7px 11px;
-  border-radius: 10px;
-  background: #f1f3f7;
-  color: #5f6570;
-  font-size: 12px;
-  font-weight: 700;
-`;
-
-const TableWrapper = styled.div`
-  width: 100%;
-  overflow-x: auto;
-`;
-
-const DataTable = styled.table`
-  width: 100%;
-  min-width: 700px;
-  border-collapse: collapse;
-
-  th {
-    padding: 14px 22px;
-    background: #fafbfc;
-    color: #858b96;
-    font-size: 11px;
-    font-weight: 800;
-    text-align: left;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    white-space: nowrap;
-  }
-
-  td {
-    padding: 17px 22px;
-    border-top: 1px solid #f0f1f4;
-    color: #4d535e;
-    font-size: 13px;
-    vertical-align: middle;
-  }
-
-  tbody tr {
-    transition: background 0.15s;
-  }
-
-  tbody tr:hover {
-    background: #fafbfc;
-  }
-`;
-
-const ClientName = styled.div`
-  color: #20242c;
-  font-size: 14px;
-  font-weight: 750;
-`;
-
-const ClientEmail = styled.div`
-  margin-top: 4px;
-  color: #9499a3;
-  font-size: 12px;
-`;
-
-const OrdersBadge = styled.span`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 32px;
-  padding: 5px 9px;
-  border-radius: 8px;
-  background: #f1f3f7;
-  color: #3f454f;
-  font-size: 12px;
-  font-weight: 800;
-`;
-
-const Amount = styled.span`
-  color: #20242c;
-  font-weight: 800;
-`;
-
-const DateText = styled.span`
-  color: #747a85;
-  white-space: nowrap;
-`;
-
-const PagePath = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-`;
-
-const PageIcon = styled.span`
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 9px;
-  background: #f1f3f7;
-`;
-
-const PageName = styled.span`
-  color: #292e37;
-  font-weight: 700;
-`;
-
-const VisitsBadge = styled.span`
-  display: inline-flex;
-  padding: 6px 10px;
-  border-radius: 8px;
-  background: #f1f3f7;
-  color: #353b45;
-  font-weight: 800;
-`;
-
-const UniqueValue = styled.span`
-  color: #555b66;
-  font-weight: 700;
-`;
-
-const EmptyState = styled.div`
-  padding: 45px 20px;
-  text-align: center;
-  color: #969ba5;
-  font-size: 14px;
-`;
-
-const LoadingContainer = styled.div`
-  min-height: 70vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f7f8fc;
-`;
-
-const LoadingBox = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: #656b76;
-  font-size: 14px;
-  font-weight: 600;
-`;
-
-const Spinner = styled.div`
-  width: 22px;
-  height: 22px;
-  border: 3px solid #e1e4e9;
-  border-top-color: #171a21;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-`;
-
-const ErrorBox = styled.div`
-  max-width: 520px;
-  margin: 80px auto;
-  padding: 25px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  border: 1px solid #f0d4d4;
-  border-radius: 16px;
-  background: #fff7f7;
-  color: #7d4040;
-
-  strong {
-    font-size: 16px;
-  }
-
-  span {
-    font-size: 14px;
-  }
-`;
-
-const RetryButton = styled.button`
-  align-self: flex-start;
-  margin-top: 8px;
-  padding: 10px 15px;
-  border: none;
-  border-radius: 10px;
-  background: #171a21;
-  color: white;
-  font-weight: 700;
-  cursor: pointer;
-`;
 
 export default AdminStatistiques;
