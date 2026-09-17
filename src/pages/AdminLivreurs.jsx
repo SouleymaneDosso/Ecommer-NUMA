@@ -4,7 +4,6 @@ import {
   FaSearch,
   FaSyncAlt,
   FaUserCheck,
-  FaUserSlash,
   FaLock,
   FaLockOpen,
   FaBan,
@@ -17,6 +16,12 @@ import {
   FaTimes,
   FaSave,
   FaInfinity,
+  FaSearchLocation,
+  FaBoxOpen,
+  FaClock,
+  FaShippingFast,
+  FaHome,
+  FaChartBar,
 } from "react-icons/fa";
 
 // =====================================================
@@ -104,8 +109,25 @@ const getStatutClass = (statut) => {
 
 export default function AdminLivreur() {
   const [livreurs, setLivreurs] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  const [statsCommandes, setStatsCommandes] = useState({
+    totalCommandes: 0,
+    sansRecherche: 0,
+    rechercheEnCours: 0,
+    demandesEnvoyees: 0,
+    acceptees: 0,
+    recuperation: 0,
+    enLivraison: 0,
+    livrees: 0,
+    annulees: 0,
+  });
+
+  const [statsParLivreur, setStatsParLivreur] = useState([]);
+
+  const [loadingStats, setLoadingStats] = useState(true);
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("ALL");
@@ -173,9 +195,74 @@ export default function AdminLivreur() {
     }
   };
 
+  // =====================================================
+  // CHARGER LES STATISTIQUES COMMANDES
+  // =====================================================
+
+  const chargerStatistiquesCommandes = async () => {
+    try {
+      setLoadingStats(true);
+
+      const data = await apiRequest(
+        "/api/livreurs/admin/statistiques-commandes",
+      );
+
+      if (data?.statistiques) {
+        setStatsCommandes({
+          totalCommandes: data.statistiques.totalCommandes ?? 0,
+          sansRecherche: data.statistiques.sansRecherche ?? 0,
+          rechercheEnCours: data.statistiques.rechercheEnCours ?? 0,
+          demandesEnvoyees: data.statistiques.demandesEnvoyees ?? 0,
+          acceptees: data.statistiques.acceptees ?? 0,
+          recuperation: data.statistiques.recuperation ?? 0,
+          enLivraison: data.statistiques.enLivraison ?? 0,
+          livrees: data.statistiques.livrees ?? 0,
+          annulees: data.statistiques.annulees ?? 0,
+        });
+      }
+
+      setStatsParLivreur(
+        Array.isArray(data?.parLivreur) ? data.parLivreur : [],
+      );
+    } catch (err) {
+      console.error("ADMIN STATISTIQUES COMMANDES ERROR:", err);
+
+      setError(
+        err.message || "Impossible de charger les statistiques des commandes.",
+      );
+    } finally {
+      setLoadingStats(false);
+    }
+  };
+
+  // =====================================================
+  // CHARGEMENT INITIAL
+  // =====================================================
+
   useEffect(() => {
     chargerLivreurs();
+    chargerStatistiquesCommandes();
   }, []);
+
+  // =====================================================
+  // ACTUALISATION COMPLETE
+  // =====================================================
+
+  const actualiserTout = async () => {
+    try {
+      setRefreshing(true);
+      setError("");
+
+      await Promise.all([
+        chargerLivreurs(true),
+        chargerStatistiquesCommandes(),
+      ]);
+    } catch (err) {
+      console.error("ACTUALISATION ADMIN LIVREURS ERROR:", err);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   // =====================================================
   // MESSAGE
@@ -416,7 +503,7 @@ export default function AdminLivreur() {
   }, [livreurs, search, filter]);
 
   // =====================================================
-  // STATS
+  // STATS LIVREURS
   // =====================================================
 
   const stats = useMemo(() => {
@@ -454,13 +541,13 @@ export default function AdminLivreur() {
           <Title>Gestion des livreurs</Title>
 
           <Subtitle>
-            Administration des comptes et des limites de courses
+            Administration des comptes, des courses et du suivi des livraisons
           </Subtitle>
         </div>
 
         <RefreshButton
           type="button"
-          onClick={() => chargerLivreurs(true)}
+          onClick={actualiserTout}
           disabled={refreshing}
         >
           <FaSyncAlt className={refreshing ? "spin" : ""} />
@@ -489,6 +576,18 @@ export default function AdminLivreur() {
           </CloseAlert>
         </Alert>
       )}
+
+      {/* =====================================================
+          STATS LIVREURS
+          ===================================================== */}
+
+      <SectionTitle>
+        <FaTruck />
+        <div>
+          <h2>État des livreurs</h2>
+          <p>Situation actuelle des comptes livreurs.</p>
+        </div>
+      </SectionTitle>
 
       <StatsGrid>
         <StatCard>
@@ -547,6 +646,310 @@ export default function AdminLivreur() {
         </StatCard>
       </StatsGrid>
 
+      {/* =====================================================
+          STATS COMMANDES
+          ===================================================== */}
+
+      <SectionTitle>
+        <FaChartBar />
+        <div>
+          <h2>Suivi des commandes de livraison</h2>
+          <p>Suivi global des recherches, acceptations et livraisons.</p>
+        </div>
+      </SectionTitle>
+
+      {loadingStats ? (
+        <StatsLoading>
+          <FaSpinner className="spin" />
+          <span>Chargement des statistiques...</span>
+        </StatsLoading>
+      ) : (
+        <>
+          <CommandStatsGrid>
+            <CommandStatCard>
+              <CommandStatIcon>
+                <FaBoxOpen />
+              </CommandStatIcon>
+
+              <CommandStatContent>
+                <CommandStatNumber>
+                  {statsCommandes.totalCommandes}
+                </CommandStatNumber>
+
+                <CommandStatLabel>Total commandes</CommandStatLabel>
+
+                <CommandStatDescription>
+                  Toutes les commandes enregistrées
+                </CommandStatDescription>
+              </CommandStatContent>
+            </CommandStatCard>
+
+            <CommandStatCard>
+              <CommandStatIcon>
+                <FaClock />
+              </CommandStatIcon>
+
+              <CommandStatContent>
+                <CommandStatNumber>
+                  {statsCommandes.sansRecherche}
+                </CommandStatNumber>
+
+                <CommandStatLabel>Sans recherche</CommandStatLabel>
+
+                <CommandStatDescription>
+                  Aucun livreur recherché
+                </CommandStatDescription>
+              </CommandStatContent>
+            </CommandStatCard>
+
+            <CommandStatCard>
+              <CommandStatIcon>
+                <FaSearchLocation />
+              </CommandStatIcon>
+
+              <CommandStatContent>
+                <CommandStatNumber>
+                  {statsCommandes.rechercheEnCours}
+                </CommandStatNumber>
+
+                <CommandStatLabel>Recherche en cours</CommandStatLabel>
+
+                <CommandStatDescription>
+                  Recherche lancée, pas encore acceptée
+                </CommandStatDescription>
+              </CommandStatContent>
+            </CommandStatCard>
+
+            <CommandStatCard>
+              <CommandStatIcon>
+                <FaCheckCircle />
+              </CommandStatIcon>
+
+              <CommandStatContent>
+                <CommandStatNumber>
+                  {statsCommandes.acceptees}
+                </CommandStatNumber>
+
+                <CommandStatLabel>Commandes acceptées</CommandStatLabel>
+
+                <CommandStatDescription>
+                  Acceptées par un livreur
+                </CommandStatDescription>
+              </CommandStatContent>
+            </CommandStatCard>
+
+            <CommandStatCard>
+              <CommandStatIcon>
+                <FaTruck />
+              </CommandStatIcon>
+
+              <CommandStatContent>
+                <CommandStatNumber>
+                  {statsCommandes.recuperation}
+                </CommandStatNumber>
+
+                <CommandStatLabel>En récupération</CommandStatLabel>
+
+                <CommandStatDescription>
+                  Livreur en route pour récupérer
+                </CommandStatDescription>
+              </CommandStatContent>
+            </CommandStatCard>
+
+            <CommandStatCard>
+              <CommandStatIcon>
+                <FaShippingFast />
+              </CommandStatIcon>
+
+              <CommandStatContent>
+                <CommandStatNumber>
+                  {statsCommandes.enLivraison}
+                </CommandStatNumber>
+
+                <CommandStatLabel>En livraison</CommandStatLabel>
+
+                <CommandStatDescription>
+                  Commandes actuellement livrées
+                </CommandStatDescription>
+              </CommandStatContent>
+            </CommandStatCard>
+
+            <CommandStatCard>
+              <CommandStatIcon>
+                <FaHome />
+              </CommandStatIcon>
+
+              <CommandStatContent>
+                <CommandStatNumber>{statsCommandes.livrees}</CommandStatNumber>
+
+                <CommandStatLabel>Livrées</CommandStatLabel>
+
+                <CommandStatDescription>
+                  Livraison terminée
+                </CommandStatDescription>
+              </CommandStatContent>
+            </CommandStatCard>
+
+            <CommandStatCard>
+              <CommandStatIcon>
+                <FaBan />
+              </CommandStatIcon>
+
+              <CommandStatContent>
+                <CommandStatNumber>{statsCommandes.annulees}</CommandStatNumber>
+
+                <CommandStatLabel>Annulées</CommandStatLabel>
+
+                <CommandStatDescription>
+                  Commandes annulées
+                </CommandStatDescription>
+              </CommandStatContent>
+            </CommandStatCard>
+          </CommandStatsGrid>
+
+          {statsCommandes.demandesEnvoyees > 0 && (
+            <InfoNotice>
+              <FaSearchLocation />
+
+              <div>
+                <strong>
+                  Demandes envoyées : {statsCommandes.demandesEnvoyees}
+                </strong>
+
+                <span>
+                  Ce statut correspond aux commandes actuellement marquées comme
+                  REQUESTED.
+                </span>
+              </div>
+            </InfoNotice>
+          )}
+        </>
+      )}
+
+      {/* =====================================================
+          STATISTIQUES PAR LIVREUR
+          ===================================================== */}
+
+      <SectionTitle>
+        <FaUserCheck />
+        <div>
+          <h2>Activité des livreurs</h2>
+          <p>
+            Nombre de commandes attribuées et état des livraisons par livreur.
+          </p>
+        </div>
+      </SectionTitle>
+
+      {loadingStats ? (
+        <StatsLoading>
+          <FaSpinner className="spin" />
+          <span>Chargement de l'activité...</span>
+        </StatsLoading>
+      ) : statsParLivreur.length === 0 ? (
+        <NoDriverStats>
+          <FaTruck />
+          <strong>Aucune commande attribuée à un livreur</strong>
+          <span>
+            Les statistiques apparaîtront dès qu'une commande sera acceptée par
+            un livreur.
+          </span>
+        </NoDriverStats>
+      ) : (
+        <DriverStatsGrid>
+          {statsParLivreur.map((item) => (
+            <DriverStatsCard key={item.livreurId}>
+              <DriverStatsHeader>
+                <DriverStatsIdentity>
+                  <DriverStatsAvatar>
+                    {(item.username || "L").charAt(0).toUpperCase()}
+                  </DriverStatsAvatar>
+
+                  <div>
+                    <DriverStatsName>
+                      {item.username || "Livreur inconnu"}
+                    </DriverStatsName>
+
+                    <DriverStatsContact>
+                      {item.telephone || item.email || "Contact non renseigné"}
+                    </DriverStatsContact>
+                  </div>
+                </DriverStatsIdentity>
+
+                <DriverOperationalBadge className={getStatutClass(item.statut)}>
+                  <span />
+                  {getStatutLabel(item.statut)}
+                </DriverOperationalBadge>
+              </DriverStatsHeader>
+
+              <DriverStatsDivider />
+
+              <DriverMainStat>
+                <div>
+                  <DriverMainNumber>{item.acceptees ?? 0}</DriverMainNumber>
+
+                  <DriverMainLabel>Commandes acceptées</DriverMainLabel>
+                </div>
+
+                <DriverTotalBadge>
+                  {item.totalAttribuees ?? 0} attribuée
+                  {(item.totalAttribuees ?? 0) > 1 ? "s" : ""}
+                </DriverTotalBadge>
+              </DriverMainStat>
+
+              <DriverStatsList>
+                <DriverStatLine>
+                  <span>
+                    <FaTruck />
+                    Récupération
+                  </span>
+
+                  <strong>{item.recuperation ?? 0}</strong>
+                </DriverStatLine>
+
+                <DriverStatLine>
+                  <span>
+                    <FaShippingFast />
+                    En livraison
+                  </span>
+
+                  <strong>{item.enLivraison ?? 0}</strong>
+                </DriverStatLine>
+
+                <DriverStatLine>
+                  <span>
+                    <FaHome />
+                    Livrées
+                  </span>
+
+                  <strong>{item.livrees ?? 0}</strong>
+                </DriverStatLine>
+
+                <DriverStatLine>
+                  <span>
+                    <FaBan />
+                    Annulées
+                  </span>
+
+                  <strong>{item.annulees ?? 0}</strong>
+                </DriverStatLine>
+              </DriverStatsList>
+            </DriverStatsCard>
+          ))}
+        </DriverStatsGrid>
+      )}
+
+      {/* =====================================================
+          RECHERCHE / FILTRES
+          ===================================================== */}
+
+      <SectionTitle>
+        <FaTruck />
+        <div>
+          <h2>Gestion des comptes</h2>
+          <p>Rechercher et administrer les livreurs.</p>
+        </div>
+      </SectionTitle>
+
       <Toolbar>
         <SearchBox>
           <FaSearch />
@@ -571,6 +974,10 @@ export default function AdminLivreur() {
           <option value="OFFLINE">Hors ligne</option>
         </FilterSelect>
       </Toolbar>
+
+      {/* =====================================================
+          LIVREURS
+          ===================================================== */}
 
       {loading ? (
         <LoadingContainer>
@@ -604,6 +1011,10 @@ export default function AdminLivreur() {
               0;
 
             const hasLimit = limite !== null && limite !== undefined;
+
+            const statsLivreur = statsParLivreur.find(
+              (item) => String(item.livreurId) === String(livreur._id),
+            );
 
             return (
               <LivreurCard key={livreur._id}>
@@ -640,6 +1051,36 @@ export default function AdminLivreur() {
 
                 <Divider />
 
+                {/* =================================================
+                    STATS RAPIDES DU LIVREUR
+                    ================================================= */}
+
+                <QuickDriverStats>
+                  <QuickStat>
+                    <QuickStatNumber>
+                      {statsLivreur?.acceptees ?? 0}
+                    </QuickStatNumber>
+
+                    <QuickStatLabel>Acceptées</QuickStatLabel>
+                  </QuickStat>
+
+                  <QuickStat>
+                    <QuickStatNumber>
+                      {statsLivreur?.enLivraison ?? 0}
+                    </QuickStatNumber>
+
+                    <QuickStatLabel>En livraison</QuickStatLabel>
+                  </QuickStat>
+
+                  <QuickStat>
+                    <QuickStatNumber>
+                      {statsLivreur?.livrees ?? 0}
+                    </QuickStatNumber>
+
+                    <QuickStatLabel>Livrées</QuickStatLabel>
+                  </QuickStat>
+                </QuickDriverStats>
+
                 <InformationGrid>
                   <InfoItem>
                     <InfoIcon>
@@ -648,6 +1089,7 @@ export default function AdminLivreur() {
 
                     <div>
                       <InfoLabel>Téléphone</InfoLabel>
+
                       <InfoValue>
                         {livreur.telephone || "Non renseigné"}
                       </InfoValue>
@@ -710,6 +1152,10 @@ export default function AdminLivreur() {
                     </div>
                   </InfoItem>
                 </InformationGrid>
+
+                {/* =================================================
+                    LIMITES
+                    ================================================= */}
 
                 <LimitSection>
                   <LimitHeader>
@@ -809,6 +1255,10 @@ export default function AdminLivreur() {
                     )}
                   </LimitControls>
                 </LimitSection>
+
+                {/* =================================================
+                    GESTION COMPTE
+                    ================================================= */}
 
                 <ActionsSection>
                   <ActionTitle>Gestion du compte</ActionTitle>
@@ -981,11 +1431,47 @@ const CloseAlert = styled.button`
   cursor: pointer;
 `;
 
+const SectionTitle = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 28px 0 14px;
+
+  > svg {
+    width: 38px;
+    height: 38px;
+    padding: 9px;
+    box-sizing: border-box;
+    border-radius: 10px;
+    background: white;
+    border: 1px solid #e8ecf2;
+    color: #334155;
+    flex-shrink: 0;
+  }
+
+  h2 {
+    margin: 0;
+    color: #172033;
+    font-size: 18px;
+    font-weight: 800;
+  }
+
+  p {
+    margin: 3px 0 0;
+    color: #8a96a8;
+    font-size: 12px;
+  }
+`;
+
+// =====================================================
+// STATS LIVREURS
+// =====================================================
+
 const StatsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 15px;
-  margin-bottom: 24px;
+  margin-bottom: 10px;
 
   @media (max-width: 1100px) {
     grid-template-columns: repeat(3, 1fr);
@@ -1038,6 +1524,343 @@ const StatLabel = styled.div`
   color: #718096;
   font-size: 12px;
 `;
+
+// =====================================================
+// STATS COMMANDES
+// =====================================================
+
+const CommandStatsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const CommandStatCard = styled.div`
+  background: white;
+  border: 1px solid #e8ecf2;
+  border-radius: 15px;
+  padding: 17px;
+  display: flex;
+  gap: 13px;
+  box-shadow: 0 3px 14px rgba(16, 24, 40, 0.04);
+  min-width: 0;
+`;
+
+const CommandStatIcon = styled.div`
+  width: 43px;
+  height: 43px;
+  border-radius: 11px;
+  background: #f1f5f9;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+`;
+
+const CommandStatContent = styled.div`
+  min-width: 0;
+`;
+
+const CommandStatNumber = styled.div`
+  color: #172033;
+  font-size: 23px;
+  font-weight: 800;
+  line-height: 1;
+`;
+
+const CommandStatLabel = styled.div`
+  color: #334155;
+  font-size: 12px;
+  font-weight: 800;
+  margin-top: 6px;
+`;
+
+const CommandStatDescription = styled.div`
+  color: #94a3b8;
+  font-size: 10px;
+  line-height: 1.35;
+  margin-top: 4px;
+`;
+
+const StatsLoading = styled.div`
+  background: white;
+  border: 1px solid #e8ecf2;
+  border-radius: 15px;
+  min-height: 130px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #64748b;
+  font-size: 13px;
+
+  .spin {
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+`;
+
+const InfoNotice = styled.div`
+  margin-top: 15px;
+  padding: 13px 15px;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+
+  svg {
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  strong {
+    display: block;
+    font-size: 12px;
+    color: #334155;
+  }
+
+  span {
+    display: block;
+    margin-top: 3px;
+    font-size: 11px;
+    color: #94a3b8;
+  }
+`;
+
+// =====================================================
+// STATS PAR LIVREUR
+// =====================================================
+
+const DriverStatsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 15px;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 650px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const DriverStatsCard = styled.div`
+  background: white;
+  border: 1px solid #e8ecf2;
+  border-radius: 15px;
+  padding: 17px;
+  box-shadow: 0 3px 14px rgba(16, 24, 40, 0.04);
+`;
+
+const DriverStatsHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+`;
+
+const DriverStatsIdentity = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+`;
+
+const DriverStatsAvatar = styled.div`
+  width: 39px;
+  height: 39px;
+  border-radius: 50%;
+  background: #172033;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 14px;
+  flex-shrink: 0;
+`;
+
+const DriverStatsName = styled.div`
+  color: #172033;
+  font-size: 14px;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+const DriverStatsContact = styled.div`
+  color: #94a3b8;
+  font-size: 10px;
+  margin-top: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+const DriverOperationalBadge = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+
+  span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+
+  &.available {
+    color: #059669;
+
+    span {
+      background: #10b981;
+    }
+  }
+
+  &.busy {
+    color: #d97706;
+
+    span {
+      background: #f59e0b;
+    }
+  }
+
+  &.offline {
+    color: #64748b;
+
+    span {
+      background: #94a3b8;
+    }
+  }
+
+  &.unknown {
+    color: #64748b;
+
+    span {
+      background: #94a3b8;
+    }
+  }
+`;
+
+const DriverStatsDivider = styled.div`
+  height: 1px;
+  background: #edf0f4;
+  margin: 14px 0;
+`;
+
+const DriverMainStat = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+`;
+
+const DriverMainNumber = styled.div`
+  color: #172033;
+  font-size: 25px;
+  font-weight: 800;
+`;
+
+const DriverMainLabel = styled.div`
+  color: #718096;
+  font-size: 10px;
+  margin-top: 2px;
+`;
+
+const DriverTotalBadge = styled.div`
+  padding: 6px 9px;
+  background: #f1f5f9;
+  color: #475569;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+`;
+
+const DriverStatsList = styled.div`
+  display: grid;
+  gap: 8px;
+`;
+
+const DriverStatLine = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: #64748b;
+  font-size: 11px;
+
+  span {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  svg {
+    width: 12px;
+  }
+
+  strong {
+    color: #334155;
+    font-size: 12px;
+  }
+`;
+
+const NoDriverStats = styled.div`
+  background: white;
+  border: 1px solid #e8ecf2;
+  border-radius: 15px;
+  min-height: 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 25px;
+
+  > svg {
+    font-size: 28px;
+    color: #cbd5e1;
+    margin-bottom: 10px;
+  }
+
+  strong {
+    color: #334155;
+    font-size: 14px;
+  }
+
+  span {
+    color: #94a3b8;
+    font-size: 11px;
+    margin-top: 5px;
+  }
+`;
+
+// =====================================================
+// TOOLBAR
+// =====================================================
 
 const Toolbar = styled.div`
   background: white;
@@ -1092,6 +1915,10 @@ const FilterSelect = styled.select`
     width: 100%;
   }
 `;
+
+// =====================================================
+// LIVREURS
+// =====================================================
 
 const LivreursGrid = styled.div`
   display: grid;
@@ -1188,6 +2015,34 @@ const Divider = styled.div`
   background: #edf0f4;
 `;
 
+const QuickDriverStats = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin: 0 20px;
+  border-bottom: 1px solid #edf0f4;
+`;
+
+const QuickStat = styled.div`
+  padding: 13px 7px;
+  text-align: center;
+
+  &:not(:last-child) {
+    border-right: 1px solid #edf0f4;
+  }
+`;
+
+const QuickStatNumber = styled.div`
+  color: #172033;
+  font-size: 18px;
+  font-weight: 800;
+`;
+
+const QuickStatLabel = styled.div`
+  color: #94a3b8;
+  font-size: 9px;
+  margin-top: 3px;
+`;
+
 const InformationGrid = styled.div`
   padding: 18px 20px;
   display: grid;
@@ -1275,6 +2130,10 @@ const StatusBadge = styled.div`
     }
   }
 `;
+
+// =====================================================
+// LIMITES
+// =====================================================
 
 const LimitSection = styled.div`
   margin: 0 20px 18px;
@@ -1467,6 +2326,10 @@ const SmallDangerButton = styled.button`
   }
 `;
 
+// =====================================================
+// ACTIONS
+// =====================================================
+
 const ActionsSection = styled.div`
   padding: 0 20px 18px;
 `;
@@ -1511,16 +2374,6 @@ const ActionButton = styled.button`
     }
   }
 
-  &.warning {
-    background: #fffbeb;
-    color: #b45309;
-    border-color: #fde68a;
-
-    &:hover {
-      background: #fef3c7;
-    }
-  }
-
   &.success {
     background: #ecfdf5;
     color: #047857;
@@ -1547,6 +2400,10 @@ const ActionButton = styled.button`
   }
 `;
 
+// =====================================================
+// FOOTER
+// =====================================================
+
 const CardFooter = styled.div`
   border-top: 1px solid #edf0f4;
   padding: 12px 20px;
@@ -1563,6 +2420,10 @@ const FooterNote = styled.div`
     flex-shrink: 0;
   }
 `;
+
+// =====================================================
+// LOADING / EMPTY
+// =====================================================
 
 const LoadingContainer = styled.div`
   min-height: 350px;
