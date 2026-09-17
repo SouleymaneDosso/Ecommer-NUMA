@@ -59,6 +59,10 @@ const RefreshButton = styled.button`
   }
 `;
 
+/* =====================================================
+   SECTIONS
+===================================================== */
+
 const Section = styled.section`
   margin-bottom: 35px;
 `;
@@ -78,6 +82,10 @@ const SectionTitle = styled.div`
     font-size: 13px;
   }
 `;
+
+/* =====================================================
+   KPI
+===================================================== */
 
 const StatsGrid = styled.div`
   display: grid;
@@ -151,10 +159,6 @@ const StatDescription = styled.div`
 const RevenueCard = styled(StatCard)`
   grid-column: span 2;
 
-  @media (max-width: 1100px) {
-    grid-column: span 2;
-  }
-
   @media (max-width: 600px) {
     grid-column: span 1;
   }
@@ -163,6 +167,119 @@ const RevenueCard = styled(StatCard)`
 const RevenueValue = styled(StatValue)`
   font-size: 32px;
 `;
+
+/* =====================================================
+   TABLE CLIENTS
+===================================================== */
+
+const TableCard = styled.div`
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #edf0f2;
+  box-shadow: 0 3px 12px rgba(31, 42, 64, 0.08);
+  overflow: hidden;
+`;
+
+const TableWrapper = styled.div`
+  width: 100%;
+  overflow-x: auto;
+`;
+
+const ClientsTable = styled.table`
+  width: 100%;
+  min-width: 850px;
+  border-collapse: collapse;
+
+  th {
+    background: #f8f9fa;
+    color: #5d6d7e;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: left;
+    padding: 15px 18px;
+    border-bottom: 1px solid #edf0f2;
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 16px 18px;
+    border-bottom: 1px solid #f0f2f3;
+    color: #2c3e50;
+    font-size: 13px;
+  }
+
+  tbody tr {
+    transition: background 0.2s;
+  }
+
+  tbody tr:hover {
+    background: #fafbfc;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+`;
+
+const ClientName = styled.div`
+  font-weight: 700;
+  color: #1f2a40;
+`;
+
+const ClientEmail = styled.div`
+  margin-top: 4px;
+  color: #95a5a6;
+  font-size: 12px;
+`;
+
+const OrdersBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 7px;
+  background: #eaf2f8;
+  color: #2c3e50;
+  font-weight: 700;
+`;
+
+const Amount = styled.span`
+  font-weight: 700;
+  color: #1f2a40;
+`;
+
+const DateText = styled.span`
+  color: #7f8c8d;
+  font-size: 12px;
+`;
+
+const EmptyState = styled.div`
+  padding: 50px 20px;
+  text-align: center;
+  color: #95a5a6;
+
+  .icon {
+    font-size: 35px;
+    margin-bottom: 12px;
+  }
+
+  h3 {
+    margin: 0 0 6px;
+    color: #5d6d7e;
+    font-size: 16px;
+  }
+
+  p {
+    margin: 0;
+    font-size: 13px;
+  }
+`;
+
+/* =====================================================
+   LOADING / ERROR
+===================================================== */
 
 const LoadingContainer = styled.div`
   min-height: 300px;
@@ -212,17 +329,45 @@ const ErrorBox = styled.div`
   }
 `;
 
+const TableHeader = styled.div`
+  padding: 20px 22px;
+  border-bottom: 1px solid #edf0f2;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+
+  h3 {
+    margin: 0;
+    color: #2c3e50;
+    font-size: 17px;
+  }
+
+  span {
+    color: #95a5a6;
+    font-size: 12px;
+  }
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+`;
+
 /* =====================================================
    COMPOSANT
 ===================================================== */
 
 const AdminStatistiques = () => {
   const [resume, setResume] = useState(null);
+  const [clients, setClients] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
   const [error, setError] = useState("");
 
-  const chargerResume = async (isRefresh = false) => {
+  const chargerStatistiques = async (isRefresh = false) => {
     try {
       if (isRefresh) {
         setRefreshing(true);
@@ -234,32 +379,74 @@ const AdminStatistiques = () => {
 
       const token = localStorage.getItem("adminToken");
 
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/admin/statistiques/resume`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
+      const headers = {
+        Authorization: `Bearer ${token}`,
+      };
+
+      /* ================================================
+         CHARGEMENT DU RÉSUMÉ + CLIENTS
+      ================================================ */
+
+      const [resumeResponse, clientsResponse] = await Promise.all([
+        fetch(
+          `${import.meta.env.VITE_API_URL}/api/admin/statistiques/resume`,
+          {
+            headers,
           },
-        },
-      );
+        ),
 
-      if (!response.ok) {
-        const texte = await response.text();
+        fetch(
+          `${import.meta.env.VITE_API_URL}/api/admin/statistiques/clients`,
+          {
+            headers,
+          },
+        ),
+      ]);
 
-        console.error("❌ ERREUR API STATISTIQUES :", {
-          status: response.status,
-          statusText: response.statusText,
+      /* ================================================
+         VÉRIFICATION RÉSUMÉ
+      ================================================ */
+
+      if (!resumeResponse.ok) {
+        const texte = await resumeResponse.text();
+
+        console.error("❌ ERREUR API RESUME :", {
+          status: resumeResponse.status,
           response: texte,
         });
 
-        throw new Error(`Erreur API ${response.status}`);
+        throw new Error(
+          `Erreur API résumé ${resumeResponse.status}`,
+        );
       }
 
-      const data = await response.json();
+      /* ================================================
+         VÉRIFICATION CLIENTS
+      ================================================ */
 
-      setResume(data);
+      if (!clientsResponse.ok) {
+        const texte = await clientsResponse.text();
+
+        console.error("❌ ERREUR API CLIENTS :", {
+          status: clientsResponse.status,
+          response: texte,
+        });
+
+        throw new Error(
+          `Erreur API clients ${clientsResponse.status}`,
+        );
+      }
+
+      const resumeData = await resumeResponse.json();
+      const clientsData = await clientsResponse.json();
+
+      setResume(resumeData);
+      setClients(clientsData.clients || []);
     } catch (error) {
-      console.error("Erreur statistiques admin :", error);
+      console.error(
+        "Erreur statistiques admin :",
+        error,
+      );
 
       setError(
         "Impossible de charger les statistiques. Vérifiez votre connexion puis réessayez.",
@@ -271,11 +458,17 @@ const AdminStatistiques = () => {
   };
 
   useEffect(() => {
-    chargerResume();
+    chargerStatistiques();
   }, []);
 
+  /* =====================================================
+     FORMATAGE
+  ===================================================== */
+
   const formatNombre = (nombre) => {
-    return new Intl.NumberFormat("fr-FR").format(Number(nombre || 0));
+    return new Intl.NumberFormat("fr-FR").format(
+      Number(nombre || 0),
+    );
   };
 
   const formatMontant = (montant) => {
@@ -283,6 +476,22 @@ const AdminStatistiques = () => {
       Number(montant || 0),
     )} FCFA`;
   };
+
+  const formatDate = (date) => {
+    if (!date) {
+      return "—";
+    }
+
+    return new Intl.DateTimeFormat("fr-FR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    }).format(new Date(date));
+  };
+
+  /* =====================================================
+     LOADING
+  ===================================================== */
 
   if (loading) {
     return (
@@ -295,22 +504,32 @@ const AdminStatistiques = () => {
     );
   }
 
+  /* =====================================================
+     ERROR
+  ===================================================== */
+
   if (error) {
     return (
       <Page>
         <PageHeader>
           <HeaderContent>
             <h1>Statistiques</h1>
-            <p>Vue globale de l'activité de votre boutique</p>
+
+            <p>
+              Vue globale de l'activité de votre boutique
+            </p>
           </HeaderContent>
 
-          <RefreshButton onClick={() => chargerResume(true)}>
+          <RefreshButton
+            onClick={() => chargerStatistiques(true)}
+          >
             Réessayer
           </RefreshButton>
         </PageHeader>
 
         <ErrorBox>
           <h3>Erreur de chargement</h3>
+
           <p>{error}</p>
         </ErrorBox>
       </Page>
@@ -320,6 +539,10 @@ const AdminStatistiques = () => {
   if (!resume) {
     return null;
   }
+
+  /* =====================================================
+     RENDER
+  ===================================================== */
 
   return (
     <Page>
@@ -332,32 +555,42 @@ const AdminStatistiques = () => {
           <h1>Statistiques</h1>
 
           <p>
-            Vue globale des visiteurs, utilisateurs et commandes
+            Vue globale des visiteurs, utilisateurs et
+            commandes
           </p>
         </HeaderContent>
 
         <RefreshButton
-          onClick={() => chargerResume(true)}
+          onClick={() => chargerStatistiques(true)}
           disabled={refreshing}
         >
-          {refreshing ? "Actualisation..." : "↻ Actualiser"}
+          {refreshing
+            ? "Actualisation..."
+            : "↻ Actualiser"}
         </RefreshButton>
       </PageHeader>
 
       {/* =================================================
-          VISITEURS
+          AUDIENCE
       ================================================= */}
 
       <Section>
         <SectionTitle>
           <h2>Audience</h2>
-          <p>Analyse de la fréquentation de votre boutique</p>
+
+          <p>
+            Analyse de la fréquentation de votre boutique
+          </p>
         </SectionTitle>
 
         <StatsGrid>
+          {/* VISITEURS */}
+
           <StatCard>
             <StatTop>
-              <StatLabel>Visiteurs uniques</StatLabel>
+              <StatLabel>
+                Visiteurs uniques
+              </StatLabel>
 
               <StatIcon $background="#e8f4fd">
                 👥
@@ -365,13 +598,17 @@ const AdminStatistiques = () => {
             </StatTop>
 
             <StatValue>
-              {formatNombre(resume.visiteursUniques)}
+              {formatNombre(
+                resume.visiteursUniques,
+              )}
             </StatValue>
 
             <StatDescription>
-              Nombre de visiteurs distincts
+              Visiteurs distincts enregistrés
             </StatDescription>
           </StatCard>
+
+          {/* VISITES */}
 
           <StatCard>
             <StatTop>
@@ -387,9 +624,11 @@ const AdminStatistiques = () => {
             </StatValue>
 
             <StatDescription>
-              Nombre total de pages visitées
+              Nombre total de visites enregistrées
             </StatDescription>
           </StatCard>
+
+          {/* SESSIONS */}
 
           <StatCard>
             <StatTop>
@@ -405,13 +644,17 @@ const AdminStatistiques = () => {
             </StatValue>
 
             <StatDescription>
-              Sessions de navigation enregistrées
+              Sessions de navigation
             </StatDescription>
           </StatCard>
 
+          {/* UTILISATEURS */}
+
           <StatCard>
             <StatTop>
-              <StatLabel>Utilisateurs identifiés</StatLabel>
+              <StatLabel>
+                Utilisateurs identifiés
+              </StatLabel>
 
               <StatIcon $background="#f4ecf7">
                 👤
@@ -419,7 +662,9 @@ const AdminStatistiques = () => {
             </StatTop>
 
             <StatValue>
-              {formatNombre(resume.utilisateursIdentifies)}
+              {formatNombre(
+                resume.utilisateursIdentifies,
+              )}
             </StatValue>
 
             <StatDescription>
@@ -435,11 +680,16 @@ const AdminStatistiques = () => {
 
       <Section>
         <SectionTitle>
-          <h2>Commandes</h2>
-          <p>Suivi de l'activité commerciale</p>
+          <h2>Activité commerciale</h2>
+
+          <p>
+            Suivi des commandes et du chiffre d'affaires
+          </p>
         </SectionTitle>
 
         <StatsGrid>
+          {/* COMMANDES */}
+
           <StatCard>
             <StatTop>
               <StatLabel>Commandes</StatLabel>
@@ -458,9 +708,13 @@ const AdminStatistiques = () => {
             </StatDescription>
           </StatCard>
 
+          {/* CLIENTS */}
+
           <StatCard>
             <StatTop>
-              <StatLabel>Clients ayant commandé</StatLabel>
+              <StatLabel>
+                Clients ayant commandé
+              </StatLabel>
 
               <StatIcon $background="#eafaf1">
                 🤝
@@ -468,17 +722,23 @@ const AdminStatistiques = () => {
             </StatTop>
 
             <StatValue>
-              {formatNombre(resume.clientsAyantCommande)}
+              {formatNombre(
+                resume.clientsAyantCommande,
+              )}
             </StatValue>
 
             <StatDescription>
-              Clients distincts ayant passé commande
+              Clients distincts ayant commandé
             </StatDescription>
           </StatCard>
 
+          {/* LIVRÉES */}
+
           <StatCard>
             <StatTop>
-              <StatLabel>Commandes livrées</StatLabel>
+              <StatLabel>
+                Commandes livrées
+              </StatLabel>
 
               <StatIcon $background="#e8f8f5">
                 📦
@@ -486,7 +746,9 @@ const AdminStatistiques = () => {
             </StatTop>
 
             <StatValue>
-              {formatNombre(resume.commandesLivrees)}
+              {formatNombre(
+                resume.commandesLivrees,
+              )}
             </StatValue>
 
             <StatDescription>
@@ -494,9 +756,13 @@ const AdminStatistiques = () => {
             </StatDescription>
           </StatCard>
 
+          {/* CA */}
+
           <RevenueCard>
             <StatTop>
-              <StatLabel>Chiffre d'affaires</StatLabel>
+              <StatLabel>
+                Chiffre d'affaires
+              </StatLabel>
 
               <StatIcon $background="#fff4e5">
                 💰
@@ -504,15 +770,125 @@ const AdminStatistiques = () => {
             </StatTop>
 
             <RevenueValue>
-              {formatMontant(resume.chiffreAffaires)}
+              {formatMontant(
+                resume.chiffreAffaires,
+              )}
             </RevenueValue>
 
             <StatDescription>
-              Chiffre d'affaires des commandes confirmées,
-              expédiées ou livrées
+              Commandes confirmées, expédiées ou
+              livrées
             </StatDescription>
           </RevenueCard>
         </StatsGrid>
+      </Section>
+
+      {/* =================================================
+          CLIENTS
+      ================================================= */}
+
+      <Section>
+        <SectionTitle>
+          <h2>Clients</h2>
+
+          <p>
+            Activité et valeur des clients ayant passé
+            commande
+          </p>
+        </SectionTitle>
+
+        <TableCard>
+          <TableHeader>
+            <div>
+              <h3>Liste des clients</h3>
+            </div>
+
+            <span>
+              {formatNombre(clients.length)} client
+              {clients.length > 1 ? "s" : ""}
+            </span>
+          </TableHeader>
+
+          {clients.length === 0 ? (
+            <EmptyState>
+              <div className="icon">
+                👥
+              </div>
+
+              <h3>
+                Aucun client ayant commandé
+              </h3>
+
+              <p>
+                Les clients apparaîtront ici dès qu'une
+                commande sera enregistrée.
+              </p>
+            </EmptyState>
+          ) : (
+            <TableWrapper>
+              <ClientsTable>
+                <thead>
+                  <tr>
+                    <th>CLIENT</th>
+                    <th>COMMANDES</th>
+                    <th>MONTANT TOTAL</th>
+                    <th>PREMIÈRE COMMANDE</th>
+                    <th>DERNIÈRE COMMANDE</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {clients.map((client) => (
+                    <tr key={client.userId}>
+                      <td>
+                        <ClientName>
+                          {client.username ||
+                            "Utilisateur inconnu"}
+                        </ClientName>
+
+                        <ClientEmail>
+                          {client.email || "—"}
+                        </ClientEmail>
+                      </td>
+
+                      <td>
+                        <OrdersBadge>
+                          {formatNombre(
+                            client.nombreCommandes,
+                          )}
+                        </OrdersBadge>
+                      </td>
+
+                      <td>
+                        <Amount>
+                          {formatMontant(
+                            client.montantTotal,
+                          )}
+                        </Amount>
+                      </td>
+
+                      <td>
+                        <DateText>
+                          {formatDate(
+                            client.premiereCommande,
+                          )}
+                        </DateText>
+                      </td>
+
+                      <td>
+                        <DateText>
+                          {formatDate(
+                            client.derniereCommande,
+                          )}
+                        </DateText>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </ClientsTable>
+            </TableWrapper>
+          )}
+        </TableCard>
       </Section>
     </Page>
   );
