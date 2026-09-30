@@ -179,19 +179,12 @@ createRoot(document.getElementById("root")).render(
 
             <Route
               path="/conversation/:commandeId"
-              element={
-                <PublicLayout>
-                  <Conversation role="client" />
-                </PublicLayout>
-              }
+              element={<Conversation role="client" />}
             />
+
             <Route
               path="/conversation-livreur/:commandeId"
-              element={
-                <PublicLayout>
-                  <Conversation role="livreur" />
-                </PublicLayout>
-              }
+              element={<Conversation role="livreur" />}
             />
 
             <Route
