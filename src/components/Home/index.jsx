@@ -47,6 +47,57 @@ const fadeUp = keyframes`
   }
 `;
 
+
+const slowZoom = keyframes`
+  from {
+    transform: scale(1);
+  }
+
+  to {
+    transform: scale(1.08);
+  }
+`;
+
+
+
+const shimmer = keyframes`
+  0% {
+    transform: translateX(-120%);
+  }
+
+  100% {
+    transform: translateX(120%);
+  }
+`;
+
+const float = keyframes`
+  0% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-6px);
+  }
+
+  100% {
+    transform: translateY(0);
+  }
+`;
+
+const candyPulse = keyframes`
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 105, 180, 0.55);
+  }
+
+  70% {
+    box-shadow: 0 0 0 16px rgba(255, 105, 180, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 105, 180, 0);
+  }
+`;
+
 const WhatsAppButton = styled.a`
   position: fixed;
 
@@ -103,54 +154,6 @@ const WhatsAppButton = styled.a`
       width: 27px;
       height: 27px;
     }
-  }
-`;
-
-const slowZoom = keyframes`
-  from {
-    transform: scale(1);
-  }
-
-  to {
-    transform: scale(1.08);
-  }
-`;
-
-const shimmer = keyframes`
-  0% {
-    transform: translateX(-120%);
-  }
-
-  100% {
-    transform: translateX(120%);
-  }
-`;
-
-const float = keyframes`
-  0% {
-    transform: translateY(0);
-  }
-
-  50% {
-    transform: translateY(-6px);
-  }
-
-  100% {
-    transform: translateY(0);
-  }
-`;
-
-const candyPulse = keyframes`
-  0% {
-    box-shadow: 0 0 0 0 rgba(255, 105, 180, 0.55);
-  }
-
-  70% {
-    box-shadow: 0 0 0 16px rgba(255, 105, 180, 0);
-  }
-
-  100% {
-    box-shadow: 0 0 0 0 rgba(255, 105, 180, 0);
   }
 `;
 
