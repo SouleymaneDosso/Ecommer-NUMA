@@ -1209,7 +1209,9 @@ export default function SuiviCommande() {
                   )}
 
                   <DriverAction
-                    onClick={() => navigate(`/conversation/${commande._id}`)}
+                    onClick={() =>
+                      navigate(`/conversation/${currentCommandeId}`)
+                    }
                   >
                     <FaComments />
 

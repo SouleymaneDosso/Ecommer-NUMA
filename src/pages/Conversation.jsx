@@ -15,7 +15,20 @@ import {
 import styled from "styled-components";
 
 export default function Conversation() {
-  const { conversationId } = useParams();
+  // =====================================================
+  // PARAMÈTRES
+  // =====================================================
+
+  // IMPORTANT :
+  // L'URL contient le COMMANDE ID.
+  //
+  // Exemple :
+  // /conversation/66f123456789
+  //
+  // Ce n'est qu'après que le backend nous donne
+  // le vrai conversationId.
+  const { commandeId } = useParams();
+
   const navigate = useNavigate();
 
   const API_URL = import.meta.env.VITE_API_URL;
@@ -23,21 +36,26 @@ export default function Conversation() {
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
 
+  // =====================================================
+  // ÉTATS
+  // =====================================================
+
   const [conversation, setConversation] = useState(null);
+
   const [messages, setMessages] = useState([]);
 
   const [message, setMessage] = useState("");
 
   const [loading, setLoading] = useState(true);
+
   const [envoiEnCours, setEnvoiEnCours] = useState(false);
 
   const [erreur, setErreur] = useState("");
 
-  const [suppressionEnCours, setSuppressionEnCours] =
-    useState(null);
+  const [suppressionEnCours, setSuppressionEnCours] = useState(null);
 
   // =====================================================
-  // IDENTITÉ CONNECTÉE
+  // IDENTITÉ CLIENT
   // =====================================================
 
   const utilisateur = useMemo(() => {
@@ -49,22 +67,23 @@ export default function Conversation() {
 
     try {
       const payload = JSON.parse(
-        atob(
-          token
-            .split(".")[1]
-            .replace(/-/g, "+")
-            .replace(/_/g, "/"),
-        ),
+        atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")),
       );
 
       return {
         id: payload.userId,
         type: "client",
       };
-    } catch {
+    } catch (error) {
+      console.error("Erreur lecture token client :", error);
+
       return null;
     }
   }, []);
+
+  // =====================================================
+  // IDENTITÉ LIVREUR
+  // =====================================================
 
   const livreurUtilisateur = useMemo(() => {
     const token = localStorage.getItem("tokenLivreur");
@@ -75,25 +94,25 @@ export default function Conversation() {
 
     try {
       const payload = JSON.parse(
-        atob(
-          token
-            .split(".")[1]
-            .replace(/-/g, "+")
-            .replace(/_/g, "/"),
-        ),
+        atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")),
       );
 
       return {
         id: payload.userId,
         type: "livreur",
       };
-    } catch {
+    } catch (error) {
+      console.error("Erreur lecture token livreur :", error);
+
       return null;
     }
   }, []);
 
-  const utilisateurConnecte =
-    utilisateur || livreurUtilisateur;
+  // =====================================================
+  // UTILISATEUR CONNECTÉ
+  // =====================================================
+
+  const utilisateurConnecte = utilisateur || livreurUtilisateur;
 
   // =====================================================
   // MON MESSAGE ?
@@ -105,31 +124,37 @@ export default function Conversation() {
     }
 
     return (
-      msg.expediteur?.type ===
-        utilisateurConnecte.type &&
-      msg.expediteur?.id?.toString() ===
-        utilisateurConnecte.id?.toString()
+      msg.expediteur?.type === utilisateurConnecte.type &&
+      msg.expediteur?.id?.toString() === utilisateurConnecte.id?.toString()
     );
   };
 
   // =====================================================
-  // CORRESPONDANT
+  // TYPE DU CORRESPONDANT
   // =====================================================
 
   const typeCorrespondant =
-    utilisateurConnecte?.type === "client"
-      ? "livreur"
-      : "client";
+    utilisateurConnecte?.type === "client" ? "livreur" : "client";
 
   // =====================================================
-  // CHARGER LA CONVERSATION
+  // RÉCUPÉRER LE TOKEN
+  // =====================================================
+
+  const recupererToken = () => {
+    const tokenClient = localStorage.getItem("token");
+
+    const tokenLivreur = localStorage.getItem("tokenLivreur");
+
+    return tokenClient || tokenLivreur;
+  };
+
+  // =====================================================
+  // CHARGER / CRÉER LA CONVERSATION
   // =====================================================
 
   useEffect(() => {
-    if (!conversationId) {
-      setErreur(
-        "Identifiant de conversation manquant.",
-      );
+    if (!commandeId) {
+      setErreur("Identifiant de commande manquant.");
 
       setLoading(false);
 
@@ -139,28 +164,76 @@ export default function Conversation() {
     const chargerConversation = async () => {
       try {
         setLoading(true);
+
         setErreur("");
 
-        const tokenClient =
-          localStorage.getItem("token");
-
-        const tokenLivreur =
-          localStorage.getItem("tokenLivreur");
-
-        const token =
-          tokenClient || tokenLivreur;
+        const token = recupererToken();
 
         if (!token) {
           navigate("/login");
           return;
         }
 
-        // ---------------------------------------------
-        // RÉCUPÉRER LES MESSAGES
-        // ---------------------------------------------
+        if (!API_URL) {
+          throw new Error("VITE_API_URL n'est pas configuré.");
+        }
 
-        const response = await fetch(
-          `${API_URL}/api/conversations/${conversationId}/messages`,
+        // =================================================
+        // 1. RÉCUPÉRER OU CRÉER LA CONVERSATION
+        // =================================================
+
+        console.log("CHAT - commandeId :", commandeId);
+
+        const conversationResponse = await fetch(
+          `${API_URL}/api/conversations`,
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type": "application/json",
+
+              Authorization: `Bearer ${token}`,
+            },
+
+            body: JSON.stringify({
+              commandeId,
+            }),
+          },
+        );
+
+        const conversationData = await conversationResponse
+          .json()
+          .catch(() => ({}));
+
+        console.log("CHAT - réponse conversation :", conversationData);
+
+        if (!conversationResponse.ok) {
+          throw new Error(
+            conversationData.message ||
+              "Impossible de créer ou récupérer la conversation.",
+          );
+        }
+
+        const conversationRecuperee = conversationData.conversation;
+
+        if (!conversationRecuperee?._id) {
+          throw new Error(
+            "Le serveur n'a pas retourné l'identifiant de la conversation.",
+          );
+        }
+
+        setConversation(conversationRecuperee);
+
+        const vraiConversationId = conversationRecuperee._id;
+
+        console.log("CHAT - conversationId :", vraiConversationId);
+
+        // =================================================
+        // 2. RÉCUPÉRER LES MESSAGES
+        // =================================================
+
+        const messagesResponse = await fetch(
+          `${API_URL}/api/conversations/${vraiConversationId}/messages`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -168,53 +241,41 @@ export default function Conversation() {
           },
         );
 
-        const data = await response
-          .json()
-          .catch(() => ({}));
+        const messagesData = await messagesResponse.json().catch(() => ({}));
 
-        if (!response.ok) {
+        if (!messagesResponse.ok) {
           throw new Error(
-            data.message ||
-              "Impossible de récupérer la conversation.",
+            messagesData.message || "Impossible de récupérer les messages.",
           );
         }
 
-        setMessages(data.messages || []);
+        setMessages(messagesData.messages || []);
 
-        // ---------------------------------------------
-        // MARQUER COMME LU
-        // ---------------------------------------------
+        // =================================================
+        // 3. MARQUER LES MESSAGES COMME LUS
+        // =================================================
 
         await fetch(
-          `${API_URL}/api/conversations/${conversationId}/messages/read`,
+          `${API_URL}/api/conversations/${vraiConversationId}/messages/read`,
           {
             method: "PATCH",
+
             headers: {
               Authorization: `Bearer ${token}`,
             },
           },
         );
       } catch (error) {
-        console.error(
-          "CHARGEMENT CONVERSATION ERROR:",
-          error,
-        );
+        console.error("CHARGEMENT CONVERSATION ERROR :", error);
 
-        setErreur(
-          error.message ||
-            "Impossible de charger la conversation.",
-        );
+        setErreur(error.message || "Impossible de charger la conversation.");
       } finally {
         setLoading(false);
       }
     };
 
     chargerConversation();
-  }, [
-    API_URL,
-    conversationId,
-    navigate,
-  ]);
+  }, [API_URL, commandeId, navigate]);
 
   // =====================================================
   // SCROLL AUTOMATIQUE
@@ -227,39 +288,24 @@ export default function Conversation() {
   }, [messages]);
 
   // =====================================================
-  // RAFRAÎCHISSEMENT TEMPORAIRE
+  // RAFRAÎCHISSEMENT DES MESSAGES
   // =====================================================
-  //
-  // Pour l'instant pas de Socket.IO.
-  //
-  // On recharge donc périodiquement les messages.
-  //
-  // Plus tard :
-  // Socket.IO remplacera complètement cette partie.
-  //
 
   useEffect(() => {
-    if (!conversationId) {
+    if (!conversation?._id) {
       return;
     }
 
     const interval = setInterval(async () => {
       try {
-        const tokenClient =
-          localStorage.getItem("token");
-
-        const tokenLivreur =
-          localStorage.getItem("tokenLivreur");
-
-        const token =
-          tokenClient || tokenLivreur;
+        const token = recupererToken();
 
         if (!token) {
           return;
         }
 
         const response = await fetch(
-          `${API_URL}/api/conversations/${conversationId}/messages`,
+          `${API_URL}/api/conversations/${conversation._id}/messages`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -275,44 +321,44 @@ export default function Conversation() {
 
         setMessages(data.messages || []);
       } catch (error) {
-        console.error(
-          "REFRESH CHAT ERROR:",
-          error,
-        );
+        console.error("REFRESH CHAT ERROR :", error);
       }
     }, 5000);
 
-    return () => clearInterval(interval);
-  }, [
-    API_URL,
-    conversationId,
-  ]);
+    return () => {
+      clearInterval(interval);
+    };
+  }, [API_URL, conversation?._id]);
 
   // =====================================================
   // ENVOYER MESSAGE
   // =====================================================
 
   const envoyerMessage = async (event) => {
-    event.preventDefault();
+    event?.preventDefault();
 
     const texte = message.trim();
 
-    if (!texte || envoiEnCours) {
+    if (!texte) {
+      return;
+    }
+
+    if (envoiEnCours) {
+      return;
+    }
+
+    if (!conversation?._id) {
+      setErreur("Conversation introuvable.");
+
       return;
     }
 
     try {
       setEnvoiEnCours(true);
+
       setErreur("");
 
-      const tokenClient =
-        localStorage.getItem("token");
-
-      const tokenLivreur =
-        localStorage.getItem("tokenLivreur");
-
-      const token =
-        tokenClient || tokenLivreur;
+      const token = recupererToken();
 
       if (!token) {
         navigate("/login");
@@ -320,16 +366,14 @@ export default function Conversation() {
       }
 
       const response = await fetch(
-        `${API_URL}/api/conversations/${conversationId}/messages`,
+        `${API_URL}/api/conversations/${conversation._id}/messages`,
         {
           method: "POST",
 
           headers: {
-            "Content-Type":
-              "application/json",
+            "Content-Type": "application/json",
 
-            Authorization:
-              `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
 
           body: JSON.stringify({
@@ -338,46 +382,31 @@ export default function Conversation() {
         },
       );
 
-      const data = await response
-        .json()
-        .catch(() => ({}));
+      const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        throw new Error(
-          data.message ||
-            "Impossible d'envoyer le message.",
-        );
+        throw new Error(data.message || "Impossible d'envoyer le message.");
       }
 
-      // ---------------------------------------------
-      // AJOUTER UNIQUEMENT LE NOUVEAU MESSAGE
-      // ---------------------------------------------
+      // =================================================
+      // AJOUT DU NOUVEAU MESSAGE
+      // =================================================
 
       if (data.nouveauMessage) {
-        setMessages((prev) => [
-          ...prev,
-          data.nouveauMessage,
-        ]);
+        setMessages((prev) => [...prev, data.nouveauMessage]);
       } else if (data.conversation) {
-        setMessages(
-          data.conversation.messages || [],
-        );
+        setConversation(data.conversation);
+
+        setMessages(data.conversation.messages || []);
       }
 
       setMessage("");
 
-      // Remet le focus dans le champ
       textareaRef.current?.focus();
     } catch (error) {
-      console.error(
-        "ENVOYER MESSAGE ERROR:",
-        error,
-      );
+      console.error("ENVOYER MESSAGE ERROR :", error);
 
-      setErreur(
-        error.message ||
-          "Impossible d'envoyer le message.",
-      );
+      setErreur(error.message || "Impossible d'envoyer le message.");
     } finally {
       setEnvoiEnCours(false);
     }
@@ -387,28 +416,17 @@ export default function Conversation() {
   // SUPPRIMER MESSAGE
   // =====================================================
 
-  const supprimerMessage = async (
-    messageId,
-  ) => {
-    if (
-      suppressionEnCours ||
-      !conversationId
-    ) {
+  const supprimerMessage = async (messageId) => {
+    if (suppressionEnCours || !conversation?._id) {
       return;
     }
 
     try {
       setSuppressionEnCours(messageId);
+
       setErreur("");
 
-      const tokenClient =
-        localStorage.getItem("token");
-
-      const tokenLivreur =
-        localStorage.getItem("tokenLivreur");
-
-      const token =
-        tokenClient || tokenLivreur;
+      const token = recupererToken();
 
       if (!token) {
         navigate("/login");
@@ -416,49 +434,38 @@ export default function Conversation() {
       }
 
       const response = await fetch(
-        `${API_URL}/api/conversations/${conversationId}/messages/${messageId}`,
+        `${API_URL}/api/conversations/${conversation._id}/messages/${messageId}`,
         {
           method: "DELETE",
 
           headers: {
-            Authorization:
-              `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         },
       );
 
-      const data = await response
-        .json()
-        .catch(() => ({}));
+      const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        throw new Error(
-          data.message ||
-            "Impossible de supprimer le message.",
-        );
+        throw new Error(data.message || "Impossible de supprimer le message.");
       }
 
-      setMessages(
-        data.conversation?.messages ||
-          [],
-      );
-    } catch (error) {
-      console.error(
-        "SUPPRIMER MESSAGE ERROR:",
-        error,
-      );
+      if (data.conversation) {
+        setConversation(data.conversation);
 
-      setErreur(
-        error.message ||
-          "Impossible de supprimer le message.",
-      );
+        setMessages(data.conversation.messages || []);
+      }
+    } catch (error) {
+      console.error("SUPPRIMER MESSAGE ERROR :", error);
+
+      setErreur(error.message || "Impossible de supprimer le message.");
     } finally {
       setSuppressionEnCours(null);
     }
   };
 
   // =====================================================
-  // FORMATER DATE
+  // FORMATER HEURE
   // =====================================================
 
   const formaterHeure = (date) => {
@@ -466,69 +473,58 @@ export default function Conversation() {
       return "";
     }
 
-    return new Date(date).toLocaleTimeString(
-      "fr-FR",
-      {
-        hour: "2-digit",
-        minute: "2-digit",
-      },
-    );
+    return new Date(date).toLocaleTimeString("fr-FR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
+
+  // =====================================================
+  // FORMATER DATE
+  // =====================================================
 
   const formaterDateComplete = (date) => {
     if (!date) {
       return "";
     }
 
-    return new Date(date).toLocaleDateString(
-      "fr-FR",
-      {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-      },
-    );
+    return new Date(date).toLocaleDateString("fr-FR", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
   };
 
   // =====================================================
   // GROUPER LES MESSAGES PAR DATE
   // =====================================================
 
-  const messagesAvecSeparateurs =
-    useMemo(() => {
-      let derniereDate = null;
+  const messagesAvecSeparateurs = useMemo(() => {
+    let derniereDate = null;
 
-      return messages.map((msg) => {
-        const dateMessage = new Date(
-          msg.date,
-        );
+    return messages.map((msg) => {
+      const dateMessage = new Date(msg.date);
 
-        const cleDate =
-          dateMessage.toLocaleDateString(
-            "fr-FR",
-          );
+      const cleDate = dateMessage.toLocaleDateString("fr-FR");
 
-        const nouveauJour =
-          cleDate !== derniereDate;
+      const nouveauJour = cleDate !== derniereDate;
 
-        derniereDate = cleDate;
+      derniereDate = cleDate;
 
-        return {
-          ...msg,
-          nouveauJour,
-          cleDate,
-        };
-      });
-    }, [messages]);
+      return {
+        ...msg,
+        nouveauJour,
+        cleDate,
+      };
+    });
+  }, [messages]);
 
   // =====================================================
-  // COMPTEUR NON LUS
+  // NOMBRE DE MESSAGES NON LUS
   // =====================================================
 
   const nombreNonLus = messages.filter(
-    (msg) =>
-      !estMonMessage(msg) &&
-      msg.lu === false,
+    (msg) => !estMonMessage(msg) && msg.lu === false,
   ).length;
 
   // =====================================================
@@ -541,9 +537,7 @@ export default function Conversation() {
         <LoadingScreen>
           <LoadingSpinner />
 
-          <LoadingText>
-            Chargement de la conversation...
-          </LoadingText>
+          <LoadingText>Chargement de la conversation...</LoadingText>
         </LoadingScreen>
       </Page>
     );
@@ -559,15 +553,11 @@ export default function Conversation() {
         <ErrorBox>
           <ErrorIcon>!</ErrorIcon>
 
-          <h2>
-            Impossible d'ouvrir le chat
-          </h2>
+          <h2>Impossible d'ouvrir le chat</h2>
 
           <p>{erreur}</p>
 
-          <BackButton
-            onClick={() => navigate(-1)}
-          >
+          <BackButton onClick={() => navigate(-1)}>
             <FaArrowLeft />
             Retour
           </BackButton>
@@ -583,37 +573,22 @@ export default function Conversation() {
   return (
     <Page>
       <ChatContainer>
-        {/* =============================================
+        {/* =================================================
             HEADER
-        ============================================= */}
+        ================================================= */}
 
         <ChatHeader>
-          <BackButton
-            onClick={() => navigate(-1)}
-            title="Retour"
-          >
+          <BackButton onClick={() => navigate(-1)} title="Retour">
             <FaArrowLeft />
           </BackButton>
 
-          <Avatar
-            $type={
-              typeCorrespondant
-            }
-          >
-            {typeCorrespondant ===
-            "livreur" ? (
-              <FaMotorcycle />
-            ) : (
-              <FaUser />
-            )}
+          <Avatar $type={typeCorrespondant}>
+            {typeCorrespondant === "livreur" ? <FaMotorcycle /> : <FaUser />}
           </Avatar>
 
           <HeaderInfo>
             <ChatTitle>
-              {typeCorrespondant ===
-              "livreur"
-                ? "Votre livreur"
-                : "Client"}
+              {typeCorrespondant === "livreur" ? "Votre livreur" : "Client"}
             </ChatTitle>
 
             <ChatStatus>
@@ -622,14 +597,8 @@ export default function Conversation() {
               <span>
                 {nombreNonLus > 0
                   ? `${nombreNonLus} nouveau${
-                      nombreNonLus > 1
-                        ? "x"
-                        : ""
-                    } message${
-                      nombreNonLus > 1
-                        ? "s"
-                        : ""
-                    }`
+                      nombreNonLus > 1 ? "x" : ""
+                    } message${nombreNonLus > 1 ? "s" : ""}`
                   : "Conversation"}
               </span>
             </ChatStatus>
@@ -637,27 +606,20 @@ export default function Conversation() {
 
           <HeaderRight>
             <CommandeBadge>
-              Commande #
-              {conversationId
-                ?.slice(-8)
-                .toUpperCase()}
+              Commande #{commandeId?.slice(-8).toUpperCase()}
             </CommandeBadge>
           </HeaderRight>
         </ChatHeader>
 
-        {/* =============================================
+        {/* =================================================
             ERREUR NON BLOQUANTE
-        ============================================= */}
+        ================================================= */}
 
-        {erreur && (
-          <ErrorBanner>
-            {erreur}
-          </ErrorBanner>
-        )}
+        {erreur && <ErrorBanner>{erreur}</ErrorBanner>}
 
-        {/* =============================================
+        {/* =================================================
             MESSAGES
-        ============================================= */}
+        ================================================= */}
 
         <MessagesContainer>
           {messages.length === 0 ? (
@@ -666,179 +628,111 @@ export default function Conversation() {
                 <FaPaperPlane />
               </EmptyIcon>
 
-              <EmptyTitle>
-                Votre conversation commence ici
-              </EmptyTitle>
+              <EmptyTitle>Votre conversation commence ici</EmptyTitle>
 
               <EmptyText>
-                Envoyez un message pour
-                contacter{" "}
-                {typeCorrespondant ===
-                "livreur"
+                Envoyez un message pour contacter{" "}
+                {typeCorrespondant === "livreur"
                   ? "votre livreur"
-                  : "le client"}.
+                  : "le client"}
+                .
               </EmptyText>
             </EmptyMessages>
           ) : (
             <>
-              {messagesAvecSeparateurs.map(
-                (msg) => (
-                  <div
-                    key={msg._id}
-                  >
-                    {/* --------------------------------
+              {messagesAvecSeparateurs.map((msg) => (
+                <div key={msg._id}>
+                  {/* ====================================
                         SÉPARATEUR DE DATE
-                    -------------------------------- */}
+                    ==================================== */}
 
-                    {msg.nouveauJour && (
-                      <DateSeparator>
-                        <DateLine />
+                  {msg.nouveauJour && (
+                    <DateSeparator>
+                      <DateLine />
 
-                        <DateLabel>
-                          {formaterDateComplete(
-                            msg.date,
-                          )}
-                        </DateLabel>
+                      <DateLabel>{formaterDateComplete(msg.date)}</DateLabel>
 
-                        <DateLine />
-                      </DateSeparator>
-                    )}
+                      <DateLine />
+                    </DateSeparator>
+                  )}
 
-                    {/* --------------------------------
+                  {/* ====================================
                         MESSAGE
-                    -------------------------------- */}
+                    ==================================== */}
 
-                    <MessageItem
-                      $mine={estMonMessage(
-                        msg,
-                      )}
-                    >
-                      <MessageBubble
-                        $mine={estMonMessage(
-                          msg,
+                  <MessageItem $mine={estMonMessage(msg)}>
+                    <MessageBubble $mine={estMonMessage(msg)}>
+                      <MessageText>{msg.message}</MessageText>
+
+                      <MessageBottom>
+                        <MessageDate>{formaterHeure(msg.date)}</MessageDate>
+
+                        {/* =================================
+                              STATUT MESSAGE
+                          ================================= */}
+
+                        {estMonMessage(msg) && (
+                          <ReadStatus $read={msg.lu}>
+                            {msg.lu ? <FaCheckDouble /> : <FaCheck />}
+                          </ReadStatus>
                         )}
-                      >
-                        <MessageText>
-                          {msg.message}
-                        </MessageText>
 
-                        <MessageBottom>
-                          <MessageDate>
-                            {formaterHeure(
-                              msg.date,
-                            )}
-                          </MessageDate>
-
-                          {/* --------------------------------
-                              ÉTAT DU MESSAGE
-                          -------------------------------- */}
-
-                          {estMonMessage(
-                            msg,
-                          ) && (
-                            <ReadStatus
-                              $read={
-                                msg.lu
-                              }
-                            >
-                              {msg.lu ? (
-                                <FaCheckDouble />
-                              ) : (
-                                <FaCheck />
-                              )}
-                            </ReadStatus>
-                          )}
-
-                          {/* --------------------------------
+                        {/* =================================
                               SUPPRESSION
-                          -------------------------------- */}
+                          ================================= */}
 
-                          {estMonMessage(
-                            msg,
-                          ) && (
-                            <DeleteButton
-                              type="button"
-                              onClick={() =>
-                                supprimerMessage(
-                                  msg._id,
-                                )
-                              }
-                              disabled={
-                                suppressionEnCours ===
-                                msg._id
-                              }
-                              title="Supprimer le message"
-                            >
-                              <FaTrash />
-                            </DeleteButton>
-                          )}
-                        </MessageBottom>
-                      </MessageBubble>
-                    </MessageItem>
-                  </div>
-                ),
-              )}
+                        {estMonMessage(msg) && (
+                          <DeleteButton
+                            type="button"
+                            onClick={() => supprimerMessage(msg._id)}
+                            disabled={suppressionEnCours === msg._id}
+                            title="Supprimer le message"
+                          >
+                            <FaTrash />
+                          </DeleteButton>
+                        )}
+                      </MessageBottom>
+                    </MessageBubble>
+                  </MessageItem>
+                </div>
+              ))}
 
-              <div
-                ref={messagesEndRef}
-              />
+              <div ref={messagesEndRef} />
             </>
           )}
         </MessagesContainer>
 
-        {/* =============================================
-            INPUT
-        ============================================= */}
+        {/* =================================================
+            FORMULAIRE MESSAGE
+        ================================================= */}
 
-        <MessageForm
-          onSubmit={
-            envoyerMessage
-          }
-        >
+        <MessageForm onSubmit={envoyerMessage}>
           <MessageInputWrapper>
             <MessageInput
               ref={textareaRef}
               value={message}
-              onChange={(event) =>
-                setMessage(
-                  event.target.value,
-                )
-              }
+              onChange={(event) => setMessage(event.target.value)}
               onKeyDown={(event) => {
-                if (
-                  event.key === "Enter" &&
-                  !event.shiftKey
-                ) {
+                if (event.key === "Enter" && !event.shiftKey) {
                   event.preventDefault();
 
                   envoyerMessage(event);
                 }
               }}
               placeholder="Écrire un message..."
-              disabled={
-                envoiEnCours
-              }
+              disabled={envoiEnCours}
               maxLength={1000}
             />
 
-            <CharacterCounter>
-              {message.length}/1000
-            </CharacterCounter>
+            <CharacterCounter>{message.length}/1000</CharacterCounter>
           </MessageInputWrapper>
 
           <SendButton
             type="submit"
-            disabled={
-              envoiEnCours ||
-              !message.trim()
-            }
+            disabled={envoiEnCours || !message.trim()}
             title="Envoyer"
           >
-            {envoiEnCours ? (
-              <SmallSpinner />
-            ) : (
-              <FaPaperPlane />
-            )}
+            {envoiEnCours ? <SmallSpinner /> : <FaPaperPlane />}
           </SendButton>
         </MessageForm>
       </ChatContainer>
@@ -883,8 +777,7 @@ const ChatContainer = styled.div`
 
   overflow: hidden;
 
-  box-shadow:
-    0 0 50px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.08);
 `;
 
 // =====================================================
@@ -932,6 +825,7 @@ const BackButton = styled.button`
 
   &:hover {
     background: #f5f5f6;
+
     transform: translateX(-2px);
   }
 `;
@@ -1045,11 +939,10 @@ const MessagesContainer = styled.main`
 
   padding: 25px clamp(14px, 4vw, 45px);
 
-  background:
-    linear-gradient(
-      rgba(248, 249, 250, 0.96),
-      rgba(248, 249, 250, 0.96)
-    );
+  background: linear-gradient(
+    rgba(248, 249, 250, 0.96),
+    rgba(248, 249, 250, 0.96)
+  );
 
   scroll-behavior: smooth;
 
@@ -1111,10 +1004,7 @@ const DateLabel = styled.span`
 const MessageItem = styled.div`
   display: flex;
 
-  justify-content: ${({ $mine }) =>
-    $mine
-      ? "flex-end"
-      : "flex-start"};
+  justify-content: ${({ $mine }) => ($mine ? "flex-end" : "flex-start")};
 
   margin-bottom: 8px;
 `;
@@ -1127,25 +1017,16 @@ const MessageBubble = styled.div`
   padding: 10px 12px 8px;
 
   border-radius: ${({ $mine }) =>
-    $mine
-      ? "18px 18px 5px 18px"
-      : "18px 18px 18px 5px"};
+    $mine ? "18px 18px 5px 18px" : "18px 18px 18px 5px"};
 
-  background: ${({ $mine }) =>
-    $mine ? "#111111" : "#ffffff"};
+  background: ${({ $mine }) => ($mine ? "#111111" : "#ffffff")};
 
-  color: ${({ $mine }) =>
-    $mine ? "#ffffff" : "#171717"};
+  color: ${({ $mine }) => ($mine ? "#ffffff" : "#171717")};
 
-  border: ${({ $mine }) =>
-    $mine
-      ? "none"
-      : "1px solid #e7e7e9"};
+  border: ${({ $mine }) => ($mine ? "none" : "1px solid #e7e7e9")};
 
   box-shadow: ${({ $mine }) =>
-    $mine
-      ? "0 5px 15px rgba(0,0,0,0.12)"
-      : "0 3px 12px rgba(0,0,0,0.035)"};
+    $mine ? "0 5px 15px rgba(0,0,0,0.12)" : "0 3px 12px rgba(0,0,0,0.035)"};
 
   transition: transform 0.15s;
 
@@ -1191,13 +1072,9 @@ const ReadStatus = styled.span`
 
   align-items: center;
 
-  color: ${({ $read }) =>
-    $read
-      ? "#4da3ff"
-      : "currentColor"};
+  color: ${({ $read }) => ($read ? "#4da3ff" : "currentColor")};
 
-  opacity: ${({ $read }) =>
-    $read ? 1 : 0.55};
+  opacity: ${({ $read }) => ($read ? 1 : 0.55)};
 
   font-size: 9px;
 `;
@@ -1286,7 +1163,7 @@ const EmptyText = styled.span`
 `;
 
 // =====================================================
-// FORM
+// FORMULAIRE
 // =====================================================
 
 const MessageForm = styled.form`
@@ -1304,8 +1181,7 @@ const MessageForm = styled.form`
 
   border-top: 1px solid #e8e8ea;
 
-  box-shadow:
-    0 -5px 20px rgba(0, 0, 0, 0.025);
+  box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.025);
 `;
 
 const MessageInputWrapper = styled.div`
@@ -1349,13 +1225,7 @@ const MessageInput = styled.textarea`
 
     background: #ffffff;
 
-    box-shadow:
-      0 0 0 3px rgba(
-        17,
-        17,
-        17,
-        0.06
-      );
+    box-shadow: 0 0 0 3px rgba(17, 17, 17, 0.06);
   }
 
   &:disabled {
@@ -1367,6 +1237,7 @@ const CharacterCounter = styled.span`
   position: absolute;
 
   right: 12px;
+
   bottom: 7px;
 
   color: #aaa;
@@ -1397,8 +1268,7 @@ const SendButton = styled.button`
 
   cursor: pointer;
 
-  box-shadow:
-    0 5px 15px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
 
   transition:
     transform 0.2s,
@@ -1433,6 +1303,7 @@ const LoadingScreen = styled.div`
   flex-direction: column;
 
   align-items: center;
+
   justify-content: center;
 
   gap: 14px;
@@ -1463,8 +1334,7 @@ const SmallSpinner = styled.div`
   width: 15px;
   height: 15px;
 
-  border: 2px solid
-    rgba(255, 255, 255, 0.35);
+  border: 2px solid rgba(255, 255, 255, 0.35);
 
   border-top-color: white;
 
@@ -1488,10 +1358,7 @@ const LoadingText = styled.div`
 // =====================================================
 
 const ErrorBox = styled.div`
-  width: min(
-    450px,
-    calc(100% - 30px)
-  );
+  width: min(450px, calc(100% - 30px));
 
   margin: auto;
 
@@ -1503,8 +1370,7 @@ const ErrorBox = styled.div`
 
   text-align: center;
 
-  box-shadow:
-    0 20px 50px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
 
   h2 {
     margin: 15px 0 8px;
@@ -1538,7 +1404,9 @@ const ErrorIcon = styled.div`
   color: #d83b3b;
 
   display: flex;
+
   align-items: center;
+
   justify-content: center;
 
   font-weight: 900;
