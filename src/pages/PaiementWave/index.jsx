@@ -397,13 +397,6 @@ export default function PageCheckout() {
           ))}
 
           <div>
-            Livraison :{" "}
-            {fraisLivraison === 0
-              ? "Gratuite"
-              : `${fraisLivraison.toLocaleString()} FCFA`}
-          </div>
-
-          <div>
             <strong>Total : {total.toLocaleString()} FCFA</strong>
           </div>
         </Summary>
