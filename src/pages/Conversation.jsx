@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 export default function Conversation({ role = "client" }) {
@@ -18,6 +24,14 @@ export default function Conversation({ role = "client" }) {
   const token = localStorage.getItem(tokenKey);
 
   // =====================================================
+  // REFS
+  // =====================================================
+
+  const messagesContainerRef = useRef(null);
+
+  const premierChargementRef = useRef(true);
+
+  // =====================================================
   // ÉTATS
   // =====================================================
 
@@ -34,8 +48,14 @@ export default function Conversation({ role = "client" }) {
 
   const [suppressionEnCours, setSuppressionEnCours] = useState(null);
 
+  const [confirmationSuppression, setConfirmationSuppression] = useState(null);
+
+  const [estEnBas, setEstEnBas] = useState(true);
+
+  const [nouveauxMessages, setNouveauxMessages] = useState(0);
+
   // =====================================================
-  // IDENTITÉ DE L'UTILISATEUR
+  // IDENTITÉ
   // =====================================================
 
   const utilisateurConnecte = useMemo(() => {
@@ -69,7 +89,7 @@ export default function Conversation({ role = "client" }) {
   }, [token, typeUtilisateur]);
 
   // =====================================================
-  // UTILITAIRE FETCH
+  // FETCH API
   // =====================================================
 
   const fetchAPI = useCallback(
@@ -105,14 +125,70 @@ export default function Conversation({ role = "client" }) {
   );
 
   // =====================================================
-  // CRÉER / RÉCUPÉRER LA CONVERSATION
+  // SCROLL
+  // =====================================================
+
+  const scrollVersBas = useCallback((smooth = true) => {
+    const container = messagesContainerRef.current;
+
+    if (!container) {
+      return;
+    }
+
+    container.scrollTo({
+      top: container.scrollHeight,
+      behavior: smooth ? "smooth" : "auto",
+    });
+  }, []);
+
+  const verifierSiEnBas = useCallback(() => {
+    const container = messagesContainerRef.current;
+
+    if (!container) {
+      return true;
+    }
+
+    const distance =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
+
+    const procheDuBas = distance < 100;
+
+    setEstEnBas(procheDuBas);
+
+    if (procheDuBas) {
+      setNouveauxMessages(0);
+    }
+
+    return procheDuBas;
+  }, []);
+
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+
+    if (!container) {
+      return;
+    }
+
+    const handleScroll = () => {
+      verifierSiEnBas();
+    };
+
+    container.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+    };
+  }, [verifierSiEnBas]);
+
+  // =====================================================
+  // CRÉER / RÉCUPÉRER CONVERSATION
   // =====================================================
 
   const chargerConversation = useCallback(async () => {
     if (!commandeId) {
       setErreur("Identifiant de commande manquant.");
       setLoading(false);
-      return;
+      return null;
     }
 
     if (!token) {
@@ -121,8 +197,9 @@ export default function Conversation({ role = "client" }) {
           ? "Vous devez être connecté en tant que livreur."
           : "Vous devez être connecté en tant que client.",
       );
+
       setLoading(false);
-      return;
+      return null;
     }
 
     try {
@@ -160,7 +237,7 @@ export default function Conversation({ role = "client" }) {
   const chargerMessages = useCallback(
     async (conversationId, afficherErreur = true) => {
       if (!conversationId) {
-        return;
+        return null;
       }
 
       try {
@@ -171,9 +248,11 @@ export default function Conversation({ role = "client" }) {
           },
         );
 
-        setMessages(data?.messages || []);
+        const nouveaux = data?.messages || [];
 
-        return data?.messages || [];
+        setMessages(nouveaux);
+
+        return nouveaux;
       } catch (error) {
         console.error("ERREUR CHARGEMENT MESSAGES :", error);
 
@@ -188,7 +267,7 @@ export default function Conversation({ role = "client" }) {
   );
 
   // =====================================================
-  // MARQUER LES MESSAGES COMME LUS
+  // MARQUER COMME LU
   // =====================================================
 
   const marquerMessagesCommeLus = useCallback(
@@ -233,13 +312,31 @@ export default function Conversation({ role = "client" }) {
         return;
       }
 
-      await chargerMessages(conversationChargee._id, true);
+      const messagesCharges = await chargerMessages(
+        conversationChargee._id,
+        true,
+      );
 
       await marquerMessagesCommeLus(conversationChargee._id);
 
-      if (actif) {
-        setLoading(false);
+      if (!actif) {
+        return;
       }
+
+      setLoading(false);
+
+      // Premier affichage :
+      // on descend automatiquement tout en bas.
+      if (messagesCharges && messagesCharges.length > 0) {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            scrollVersBas(false);
+            verifierSiEnBas();
+          });
+        });
+      }
+
+      premierChargementRef.current = false;
     };
 
     initialiser();
@@ -247,10 +344,16 @@ export default function Conversation({ role = "client" }) {
     return () => {
       actif = false;
     };
-  }, [chargerConversation, chargerMessages, marquerMessagesCommeLus]);
+  }, [
+    chargerConversation,
+    chargerMessages,
+    marquerMessagesCommeLus,
+    scrollVersBas,
+    verifierSiEnBas,
+  ]);
 
   // =====================================================
-  // ACTUALISATION DES MESSAGES
+  // POLLING
   // =====================================================
 
   useEffect(() => {
@@ -259,18 +362,60 @@ export default function Conversation({ role = "client" }) {
     }
 
     const interval = setInterval(async () => {
-      await chargerMessages(conversation._id, false);
+      const container = messagesContainerRef.current;
+
+      const etaitEnBas = container
+        ? container.scrollHeight -
+            container.scrollTop -
+            container.clientHeight <
+          100
+        : true;
+
+      const anciensMessages = messages;
+
+      const messagesActualises = await chargerMessages(conversation._id, false);
+
+      if (!messagesActualises) {
+        return;
+      }
 
       await marquerMessagesCommeLus(conversation._id);
+
+      // Nombre de nouveaux messages reçus.
+      const anciensIds = new Set(anciensMessages.map((msg) => String(msg._id)));
+
+      const messagesNouveaux = messagesActualises.filter(
+        (msg) => !anciensIds.has(String(msg._id)) && !estMonMessage(msg),
+      );
+
+      if (messagesNouveaux.length > 0) {
+        if (etaitEnBas) {
+          requestAnimationFrame(() => {
+            scrollVersBas(true);
+          });
+
+          setNouveauxMessages(0);
+        } else {
+          setNouveauxMessages((nombre) => nombre + messagesNouveaux.length);
+        }
+      } else if (etaitEnBas) {
+        setNouveauxMessages(0);
+      }
     }, 5000);
 
     return () => {
       clearInterval(interval);
     };
-  }, [conversation?._id, chargerMessages, marquerMessagesCommeLus]);
+  }, [
+    conversation?._id,
+    chargerMessages,
+    marquerMessagesCommeLus,
+    messages,
+    scrollVersBas,
+  ]);
 
   // =====================================================
-  // ENVOYER UN MESSAGE
+  // ENVOYER
   // =====================================================
 
   const envoyerMessage = async (event) => {
@@ -328,6 +473,15 @@ export default function Conversation({ role = "client" }) {
       });
 
       setNouveauMessage("");
+
+      // Après envoi : toujours descendre.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          scrollVersBas(true);
+        });
+      });
+
+      setNouveauxMessages(0);
     } catch (error) {
       console.error("ERREUR ENVOI MESSAGE :", error);
 
@@ -338,8 +492,12 @@ export default function Conversation({ role = "client" }) {
   };
 
   // =====================================================
-  // SUPPRIMER UN MESSAGE
+  // SUPPRIMER
   // =====================================================
+
+  const demanderSuppression = (messageId) => {
+    setConfirmationSuppression(messageId);
+  };
 
   const supprimerMessage = async (messageId) => {
     if (!conversation?._id || !messageId) {
@@ -359,12 +517,19 @@ export default function Conversation({ role = "client" }) {
 
       if (data?.conversation) {
         setConversation(data.conversation);
+
         setMessages(data.conversation.messages || []);
       } else {
         await chargerMessages(conversation._id, false);
       }
 
+      setConfirmationSuppression(null);
+
       setMessageInfo("Message supprimé.");
+
+      setTimeout(() => {
+        setMessageInfo("");
+      }, 2500);
     } catch (error) {
       console.error("ERREUR SUPPRESSION MESSAGE :", error);
 
@@ -375,25 +540,28 @@ export default function Conversation({ role = "client" }) {
   };
 
   // =====================================================
-  // DÉTERMINER SI LE MESSAGE APPARTIENT À L'UTILISATEUR
+  // MESSAGE À MOI
   // =====================================================
 
-  const estMonMessage = (message) => {
-    if (!message?.expediteur || !utilisateurConnecte) {
-      return false;
-    }
+  const estMonMessage = useCallback(
+    (message) => {
+      if (!message?.expediteur || !utilisateurConnecte) {
+        return false;
+      }
 
-    return (
-      message.expediteur.type === utilisateurConnecte.type &&
-      String(message.expediteur.id) === String(utilisateurConnecte.id)
-    );
-  };
+      return (
+        message.expediteur.type === utilisateurConnecte.type &&
+        String(message.expediteur.id) === String(utilisateurConnecte.id)
+      );
+    },
+    [utilisateurConnecte],
+  );
 
   // =====================================================
-  // FORMAT DATE
+  // DATES
   // =====================================================
 
-  const formaterDate = (date) => {
+  const formaterHeure = (date) => {
     if (!date) {
       return "";
     }
@@ -422,14 +590,14 @@ export default function Conversation({ role = "client" }) {
     }
 
     return dateObj.toLocaleDateString("fr-FR", {
-      day: "2-digit",
+      day: "numeric",
       month: "long",
       year: "numeric",
     });
   };
 
   // =====================================================
-  // REGROUPER LES MESSAGES PAR JOUR
+  // GROUPEMENT PAR JOUR
   // =====================================================
 
   const messagesAvecSeparateurs = [];
@@ -456,20 +624,30 @@ export default function Conversation({ role = "client" }) {
   });
 
   // =====================================================
-  // RETOUR
+  // LOADING
   // =====================================================
 
   if (loading) {
     return (
       <div style={styles.page}>
-        <div style={styles.centerMessage}>Chargement de la conversation...</div>
+        <div style={styles.loadingCard}>
+          <div style={styles.loadingSpinner} />
+
+          <strong>Ouverture de la conversation</strong>
+
+          <span>Chargement des messages...</span>
+        </div>
       </div>
     );
   }
 
+  // =====================================================
+  // RENDU
+  // =====================================================
+
   return (
     <div style={styles.page}>
-      <div style={styles.container}>
+      <div style={styles.appShell}>
         {/* ================================================= */}
         {/* HEADER */}
         {/* ================================================= */}
@@ -479,137 +657,242 @@ export default function Conversation({ role = "client" }) {
             type="button"
             onClick={() => navigate(-1)}
             style={styles.backButton}
+            aria-label="Retour"
           >
             ←
           </button>
 
-          <div style={styles.headerContent}>
-            <h1 style={styles.title}>Discussion</h1>
+          <div style={styles.avatar}>
+            {typeUtilisateur === "livreur" ? "C" : "L"}
+          </div>
 
-            <span style={styles.role}>
+          <div style={styles.headerIdentity}>
+            <div style={styles.headerName}>
               {typeUtilisateur === "livreur" ? "Client" : "Livreur"}
-            </span>
+            </div>
+
+            <div style={styles.onlineStatus}>
+              <span style={styles.onlineDot} />
+              Conversation active
+            </div>
+          </div>
+
+          <div style={styles.headerRight}>
+            <span style={styles.orderLabel}>Commande</span>
+
+            <span style={styles.orderId}>#{String(commandeId).slice(-6)}</span>
           </div>
         </header>
 
         {/* ================================================= */}
-        {/* ERREUR */}
+        {/* ALERTES */}
         {/* ================================================= */}
 
-        {erreur && <div style={styles.errorBox}>{erreur}</div>}
+        {erreur && (
+          <div style={styles.errorBox}>
+            <span>⚠️</span>
+            <span>{erreur}</span>
+
+            <button
+              type="button"
+              onClick={() => setErreur("")}
+              style={styles.closeAlertButton}
+            >
+              ×
+            </button>
+          </div>
+        )}
+
+        {messageInfo && (
+          <div style={styles.successBox}>
+            <span>✓</span>
+            <span>{messageInfo}</span>
+          </div>
+        )}
 
         {/* ================================================= */}
-        {/* INFORMATION */}
-        {/* ================================================= */}
-
-        {messageInfo && <div style={styles.infoBox}>{messageInfo}</div>}
-
-        {/* ================================================= */}
-        {/* CONVERSATION */}
+        {/* CHAT */}
         {/* ================================================= */}
 
         <main style={styles.chatCard}>
-          {/* Messages */}
+          {/* Zone messages */}
 
-          <div style={styles.messagesContainer}>
+          <div ref={messagesContainerRef} style={styles.messagesContainer}>
             {messages.length === 0 ? (
-              <div style={styles.emptyMessage}>
-                <div style={styles.emptyIcon}>💬</div>
+              <div style={styles.emptyState}>
+                <div style={styles.emptyAvatar}>💬</div>
 
-                <strong>Aucun message</strong>
+                <h2 style={styles.emptyTitle}>Aucun message</h2>
 
-                <span>Commencez la conversation.</span>
+                <p style={styles.emptyText}>
+                  Envoyez un message pour commencer la conversation.
+                </p>
               </div>
             ) : (
-              messagesAvecSeparateurs.map((item) => {
-                if (item.type === "date") {
+              <div style={styles.messagesList}>
+                {messagesAvecSeparateurs.map((item) => {
+                  // -----------------------------
+                  // DATE
+                  // -----------------------------
+
+                  if (item.type === "date") {
+                    return (
+                      <div key={item.id} style={styles.dateSeparator}>
+                        <span style={styles.dateBadge}>
+                          {formaterJour(item.date)}
+                        </span>
+                      </div>
+                    );
+                  }
+
+                  // -----------------------------
+                  // MESSAGE
+                  // -----------------------------
+
+                  const monMessage = estMonMessage(item);
+
+                  const messageLu = item.lu === true;
+
                   return (
-                    <div key={item.id} style={styles.dateSeparator}>
-                      <span>{formaterJour(item.date)}</span>
-                    </div>
-                  );
-                }
-
-                const monMessage = estMonMessage(item);
-
-                return (
-                  <div
-                    key={item._id}
-                    style={{
-                      ...styles.messageRow,
-                      justifyContent: monMessage ? "flex-end" : "flex-start",
-                    }}
-                  >
                     <div
+                      key={item._id}
                       style={{
-                        ...styles.messageWrapper,
-                        alignItems: monMessage ? "flex-end" : "flex-start",
+                        ...styles.messageRow,
+                        justifyContent: monMessage ? "flex-end" : "flex-start",
                       }}
                     >
                       <div
                         style={{
-                          ...styles.bubble,
-                          ...(monMessage
-                            ? styles.myBubble
-                            : styles.otherBubble),
+                          ...styles.messageGroup,
+                          alignItems: monMessage ? "flex-end" : "flex-start",
                         }}
                       >
-                        <div style={styles.messageText}>{item.message}</div>
+                        {/* Bulle */}
 
                         <div
                           style={{
-                            ...styles.messageMeta,
-                            ...(monMessage ? styles.myMeta : {}),
+                            ...styles.bubble,
+                            ...(monMessage
+                              ? styles.myBubble
+                              : styles.otherBubble),
+
+                            ...(monMessage && messageLu
+                              ? styles.myBubbleRead
+                              : {}),
+
+                            ...(monMessage && !messageLu
+                              ? styles.myBubbleSent
+                              : {}),
                           }}
                         >
-                          <span>{formaterDate(item.date)}</span>
+                          <div style={styles.messageText}>{item.message}</div>
 
-                          {monMessage && <span>{item.lu ? "✓✓" : "✓"}</span>}
+                          <div
+                            style={{
+                              ...styles.messageMeta,
+
+                              ...(monMessage
+                                ? styles.myMessageMeta
+                                : styles.otherMessageMeta),
+                            }}
+                          >
+                            <span>{formaterHeure(item.date)}</span>
+
+                            {monMessage && (
+                              <span
+                                style={{
+                                  ...styles.checks,
+                                  ...(messageLu
+                                    ? styles.checksRead
+                                    : styles.checksSent),
+                                }}
+                                title={messageLu ? "Lu" : "Envoyé"}
+                              >
+                                {messageLu ? "✓✓" : "✓"}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </div>
 
-                      {monMessage && (
-                        <button
-                          type="button"
-                          onClick={() => supprimerMessage(item._id)}
-                          disabled={suppressionEnCours === item._id}
-                          style={styles.deleteButton}
-                        >
-                          {suppressionEnCours === item._id
-                            ? "Suppression..."
-                            : "Supprimer"}
-                        </button>
-                      )}
+                        {/* Suppression */}
+
+                        {monMessage && (
+                          <button
+                            type="button"
+                            onClick={() => demanderSuppression(item._id)}
+                            disabled={suppressionEnCours === item._id}
+                            style={styles.deleteButton}
+                          >
+                            {suppressionEnCours === item._id
+                              ? "Suppression..."
+                              : "Supprimer"}
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })
+                  );
+                })}
+              </div>
+            )}
+
+            {/* ================================================= */}
+            {/* NOUVEAUX MESSAGES */}
+            {/* ================================================= */}
+
+            {!estEnBas && nouveauxMessages > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  scrollVersBas(true);
+                  setNouveauxMessages(0);
+                }}
+                style={styles.newMessagesButton}
+              >
+                ↓ {nouveauxMessages} nouveau
+                {nouveauxMessages > 1 ? "x" : ""} message
+                {nouveauxMessages > 1 ? "s" : ""}
+              </button>
             )}
           </div>
 
           {/* ================================================= */}
-          {/* FORMULAIRE */}
+          {/* BARRE DE SAISIE */}
           {/* ================================================= */}
 
-          <form onSubmit={envoyerMessage} style={styles.form}>
-            <div style={styles.inputWrapper}>
+          <form onSubmit={envoyerMessage} style={styles.composer}>
+            <div style={styles.composerInner}>
               <textarea
                 value={nouveauMessage}
-                onChange={(event) => setNouveauMessage(event.target.value)}
+                onChange={(event) => {
+                  setNouveauMessage(event.target.value);
+                  setErreur("");
+                }}
+                onInput={(event) => {
+                  event.target.style.height = "auto";
+
+                  event.target.style.height = `${Math.min(
+                    event.target.scrollHeight,
+                    130,
+                  )}px`;
+                }}
                 onKeyDown={(event) => {
                   if (event.key === "Enter" && !event.shiftKey) {
                     event.preventDefault();
+
                     envoyerMessage(event);
                   }
                 }}
-                placeholder="Écrire un message..."
+                placeholder="Écrivez votre message..."
                 maxLength={1000}
                 rows={1}
                 disabled={envoiEnCours}
                 style={styles.textarea}
               />
 
-              <div style={styles.counter}>{nouveauMessage.length}/1000</div>
+              <div style={styles.characterCount}>
+                {nouveauMessage.length}
+                /1000
+              </div>
             </div>
 
             <button
@@ -617,16 +900,67 @@ export default function Conversation({ role = "client" }) {
               disabled={envoiEnCours || !nouveauMessage.trim() || !conversation}
               style={{
                 ...styles.sendButton,
+
                 ...(envoiEnCours || !nouveauMessage.trim() || !conversation
                   ? styles.sendButtonDisabled
                   : {}),
               }}
+              aria-label="Envoyer le message"
             >
-              {envoiEnCours ? "..." : "Envoyer"}
+              {envoiEnCours ? (
+                <span style={styles.buttonSpinner} />
+              ) : (
+                <>
+                  <span>Envoyer</span>
+                  <span style={styles.sendIcon}>➤</span>
+                </>
+              )}
             </button>
           </form>
+
+          <div style={styles.composerHint}>
+            Entrée pour envoyer · Maj + Entrée pour aller à la ligne
+          </div>
         </main>
       </div>
+
+      {/* =================================================== */}
+      {/* MODAL SUPPRESSION */}
+      {/* =================================================== */}
+
+      {confirmationSuppression && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modal}>
+            <div style={styles.modalIcon}>🗑️</div>
+
+            <h3 style={styles.modalTitle}>Supprimer ce message ?</h3>
+
+            <p style={styles.modalText}>
+              Cette action supprimera définitivement le message de la
+              conversation.
+            </p>
+
+            <div style={styles.modalActions}>
+              <button
+                type="button"
+                onClick={() => setConfirmationSuppression(null)}
+                style={styles.cancelButton}
+              >
+                Annuler
+              </button>
+
+              <button
+                type="button"
+                onClick={() => supprimerMessage(confirmationSuppression)}
+                style={styles.confirmDeleteButton}
+                disabled={suppressionEnCours !== null}
+              >
+                Supprimer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -636,242 +970,570 @@ export default function Conversation({ role = "client" }) {
 // =====================================================
 
 const styles = {
+  // -----------------------------------------------------
+  // PAGE
+  // -----------------------------------------------------
+
   page: {
     minHeight: "100vh",
-    background: "#f5f5f5",
+    background: "linear-gradient(135deg, #f5f7fb 0%, #eef2f7 100%)",
     padding: "20px",
     boxSizing: "border-box",
+    fontFamily:
+      "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
   },
 
-  container: {
+  appShell: {
     width: "100%",
-    maxWidth: "900px",
+    maxWidth: "980px",
+    height: "calc(100vh - 40px)",
+    minHeight: "620px",
     margin: "0 auto",
+    display: "flex",
+    flexDirection: "column",
   },
 
-  centerMessage: {
+  // -----------------------------------------------------
+  // LOADING
+  // -----------------------------------------------------
+
+  loadingCard: {
     minHeight: "70vh",
     display: "flex",
+    flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "16px",
-    color: "#555",
+    gap: "10px",
+    color: "#1f2937",
   },
 
+  loadingSpinner: {
+    width: "34px",
+    height: "34px",
+    borderRadius: "50%",
+    border: "3px solid #e5e7eb",
+    borderTopColor: "#111827",
+    animation: "conversationSpin 0.8s linear infinite",
+  },
+
+  // -----------------------------------------------------
+  // HEADER
+  // -----------------------------------------------------
+
   header: {
+    flexShrink: 0,
     display: "flex",
     alignItems: "center",
-    gap: "14px",
-    background: "#fff",
-    borderRadius: "16px",
-    padding: "16px",
-    marginBottom: "15px",
-    boxShadow: "0 2px 10px rgba(0,0,0,0.06)",
+    gap: "13px",
+    background: "#ffffff",
+    border: "1px solid #e6e9ef",
+    borderRadius: "18px 18px 0 0",
+    padding: "14px 18px",
+    boxShadow: "0 5px 20px rgba(15, 23, 42, 0.06)",
+    zIndex: 5,
   },
 
   backButton: {
     width: "42px",
     height: "42px",
-    border: "1px solid #ddd",
+    flexShrink: 0,
+    border: "1px solid #e4e7ec",
     borderRadius: "12px",
-    background: "#fff",
+    background: "#ffffff",
+    color: "#111827",
     cursor: "pointer",
     fontSize: "22px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    transition: "all 0.2s ease",
   },
 
-  headerContent: {
+  avatar: {
+    width: "44px",
+    height: "44px",
+    flexShrink: 0,
+    borderRadius: "50%",
+    background: "linear-gradient(135deg, #111827, #374151)",
+    color: "#ffffff",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: 800,
+    fontSize: "17px",
+    boxShadow: "0 4px 12px rgba(17, 24, 39, 0.18)",
+  },
+
+  headerIdentity: {
+    minWidth: 0,
+    flex: 1,
+  },
+
+  headerName: {
+    fontSize: "15px",
+    fontWeight: 800,
+    color: "#111827",
+    marginBottom: "3px",
+  },
+
+  onlineStatus: {
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+    fontSize: "12px",
+    color: "#6b7280",
+  },
+
+  onlineDot: {
+    width: "7px",
+    height: "7px",
+    borderRadius: "50%",
+    background: "#22c55e",
+    display: "inline-block",
+  },
+
+  headerRight: {
     display: "flex",
     flexDirection: "column",
+    alignItems: "flex-end",
     gap: "3px",
+    paddingLeft: "10px",
   },
 
-  title: {
-    margin: 0,
-    fontSize: "20px",
-    fontWeight: 800,
-    color: "#111",
+  orderLabel: {
+    fontSize: "10px",
+    color: "#9ca3af",
+    textTransform: "uppercase",
+    letterSpacing: "0.07em",
+    fontWeight: 700,
   },
 
-  role: {
+  orderId: {
     fontSize: "13px",
-    color: "#777",
+    color: "#374151",
+    fontWeight: 800,
   },
+
+  // -----------------------------------------------------
+  // ALERTES
+  // -----------------------------------------------------
 
   errorBox: {
-    background: "#fff0f0",
-    border: "1px solid #ffcaca",
-    color: "#b00020",
-    padding: "12px 14px",
+    flexShrink: 0,
+    marginTop: "10px",
+    background: "#fff5f5",
+    border: "1px solid #fecaca",
+    color: "#b91c1c",
     borderRadius: "12px",
-    marginBottom: "12px",
-    fontSize: "14px",
+    padding: "11px 13px",
+    display: "flex",
+    alignItems: "center",
+    gap: "9px",
+    fontSize: "13px",
   },
 
-  infoBox: {
-    background: "#f0fff4",
-    border: "1px solid #b8ebc6",
-    color: "#237a3b",
-    padding: "12px 14px",
+  successBox: {
+    flexShrink: 0,
+    marginTop: "10px",
+    background: "#f0fdf4",
+    border: "1px solid #bbf7d0",
+    color: "#166534",
     borderRadius: "12px",
-    marginBottom: "12px",
-    fontSize: "14px",
+    padding: "11px 13px",
+    display: "flex",
+    alignItems: "center",
+    gap: "9px",
+    fontSize: "13px",
   },
+
+  closeAlertButton: {
+    marginLeft: "auto",
+    border: "none",
+    background: "transparent",
+    color: "inherit",
+    cursor: "pointer",
+    fontSize: "20px",
+    lineHeight: 1,
+  },
+
+  // -----------------------------------------------------
+  // CHAT
+  // -----------------------------------------------------
 
   chatCard: {
-    background: "#fff",
-    borderRadius: "16px",
+    flex: 1,
+    minHeight: 0,
+    display: "flex",
+    flexDirection: "column",
+    background: "#ffffff",
+    border: "1px solid #e6e9ef",
+    borderTop: "none",
+    borderRadius: "0 0 18px 18px",
     overflow: "hidden",
-    boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
+    boxShadow: "0 8px 30px rgba(15, 23, 42, 0.08)",
   },
 
   messagesContainer: {
-    height: "60vh",
-    minHeight: "400px",
+    position: "relative",
+    flex: 1,
+    minHeight: 0,
     overflowY: "auto",
     WebkitOverflowScrolling: "touch",
     overscrollBehavior: "contain",
-    padding: "20px",
+    background:
+      "radial-gradient(circle at top left, rgba(17,24,39,0.025), transparent 35%), #fafbfc",
+    padding: "22px 20px",
     boxSizing: "border-box",
   },
 
-  emptyMessage: {
+  messagesList: {
+    display: "flex",
+    flexDirection: "column",
+  },
+
+  // -----------------------------------------------------
+  // EMPTY
+  // -----------------------------------------------------
+
+  emptyState: {
     height: "100%",
+    minHeight: "350px",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    gap: "8px",
-    color: "#777",
     textAlign: "center",
+    color: "#6b7280",
   },
 
-  emptyIcon: {
-    fontSize: "40px",
-    marginBottom: "5px",
+  emptyAvatar: {
+    width: "72px",
+    height: "72px",
+    borderRadius: "50%",
+    background: "#eef2f7",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "30px",
+    marginBottom: "16px",
   },
+
+  emptyTitle: {
+    margin: "0 0 7px",
+    fontSize: "17px",
+    color: "#1f2937",
+  },
+
+  emptyText: {
+    margin: 0,
+    fontSize: "13px",
+    color: "#9ca3af",
+  },
+
+  // -----------------------------------------------------
+  // DATES
+  // -----------------------------------------------------
 
   dateSeparator: {
     display: "flex",
     justifyContent: "center",
-    margin: "15px 0",
+    alignItems: "center",
+    margin: "12px 0 18px",
   },
 
-  dateSeparatorSpan: {
-    background: "#f1f1f1",
-    padding: "5px 10px",
+  dateBadge: {
+    padding: "6px 11px",
     borderRadius: "20px",
-    fontSize: "12px",
-    color: "#777",
+    background: "#eef1f5",
+    color: "#6b7280",
+    fontSize: "11px",
+    fontWeight: 700,
   },
+
+  // -----------------------------------------------------
+  // MESSAGES
+  // -----------------------------------------------------
 
   messageRow: {
-    display: "flex",
     width: "100%",
-    marginBottom: "10px",
+    display: "flex",
+    marginBottom: "7px",
   },
 
-  messageWrapper: {
+  messageGroup: {
+    maxWidth: "76%",
     display: "flex",
     flexDirection: "column",
-    maxWidth: "78%",
   },
 
   bubble: {
-    padding: "10px 13px",
-    borderRadius: "15px",
+    padding: "10px 13px 8px",
+    borderRadius: "17px",
     wordBreak: "break-word",
+    boxShadow: "0 1px 2px rgba(15, 23, 42, 0.06)",
   },
 
   myBubble: {
-    background: "#111",
-    color: "#fff",
-    borderBottomRightRadius: "4px",
+    color: "#ffffff",
+    borderBottomRightRadius: "5px",
+  },
+
+  myBubbleSent: {
+    background: "linear-gradient(135deg, #111827, #1f2937)",
+  },
+
+  myBubbleRead: {
+    background: "linear-gradient(135deg, #075985, #0369a1)",
   },
 
   otherBubble: {
-    background: "#f0f0f0",
-    color: "#111",
-    borderBottomLeftRadius: "4px",
+    background: "#ffffff",
+    color: "#1f2937",
+    border: "1px solid #e5e7eb",
+    borderBottomLeftRadius: "5px",
   },
 
   messageText: {
-    fontSize: "15px",
-    lineHeight: 1.45,
+    fontSize: "14px",
+    lineHeight: 1.5,
     whiteSpace: "pre-wrap",
   },
 
   messageMeta: {
     display: "flex",
     alignItems: "center",
+    justifyContent: "flex-end",
     gap: "5px",
     marginTop: "5px",
     fontSize: "10px",
-    color: "#777",
+    lineHeight: 1,
   },
 
-  myMeta: {
-    color: "#ccc",
+  myMessageMeta: {
+    color: "rgba(255,255,255,0.68)",
+  },
+
+  otherMessageMeta: {
+    color: "#9ca3af",
+  },
+
+  checks: {
+    fontSize: "11px",
+    fontWeight: 800,
+    letterSpacing: "-2px",
+  },
+
+  checksSent: {
+    color: "rgba(255,255,255,0.7)",
+  },
+
+  checksRead: {
+    color: "#7dd3fc",
   },
 
   deleteButton: {
     border: "none",
     background: "transparent",
-    color: "#999",
+    color: "#9ca3af",
     cursor: "pointer",
-    fontSize: "11px",
-    padding: "4px 0",
+    fontSize: "10px",
+    padding: "4px 2px",
+    opacity: 0.8,
   },
 
-  form: {
+  // -----------------------------------------------------
+  // NOUVEAUX MESSAGES
+  // -----------------------------------------------------
+
+  newMessagesButton: {
+    position: "sticky",
+    bottom: "12px",
+    alignSelf: "center",
+    margin: "-45px auto 0",
+    zIndex: 4,
+    border: "none",
+    borderRadius: "20px",
+    background: "#111827",
+    color: "#ffffff",
+    padding: "9px 15px",
+    fontSize: "12px",
+    fontWeight: 700,
+    cursor: "pointer",
+    boxShadow: "0 5px 15px rgba(15, 23, 42, 0.22)",
+  },
+
+  // -----------------------------------------------------
+  // COMPOSER
+  // -----------------------------------------------------
+
+  composer: {
+    flexShrink: 0,
     display: "flex",
-    gap: "10px",
-    padding: "14px",
-    borderTop: "1px solid #eee",
     alignItems: "flex-end",
+    gap: "10px",
+    padding: "13px 15px 8px",
+    background: "#ffffff",
+    borderTop: "1px solid #edf0f4",
   },
 
-  inputWrapper: {
-    flex: 1,
+  composerInner: {
     position: "relative",
+    flex: 1,
+    minWidth: 0,
   },
 
   textarea: {
     width: "100%",
+    minHeight: "46px",
+    maxHeight: "130px",
     boxSizing: "border-box",
     resize: "none",
-    border: "1px solid #ddd",
-    borderRadius: "12px",
-    padding: "12px 55px 12px 13px",
+    overflowY: "auto",
+    border: "1px solid #dfe3e8",
+    borderRadius: "15px",
+    outline: "none",
+    background: "#f8fafc",
+    color: "#111827",
+    padding: "12px 65px 11px 14px",
     fontSize: "16px",
     lineHeight: 1.4,
-    outline: "none",
-    minHeight: "46px",
-    maxHeight: "120px",
     fontFamily: "inherit",
+    transition: "border-color 0.2s ease, background 0.2s ease",
   },
 
-  counter: {
+  characterCount: {
     position: "absolute",
-    right: "10px",
+    right: "11px",
     bottom: "8px",
-    fontSize: "10px",
-    color: "#999",
+    fontSize: "9px",
+    color: "#9ca3af",
+    pointerEvents: "none",
   },
 
   sendButton: {
-    minWidth: "90px",
-    minHeight: "46px",
+    flexShrink: 0,
+    minWidth: "105px",
+    height: "46px",
     border: "none",
-    borderRadius: "12px",
-    background: "#111",
-    color: "#fff",
-    fontWeight: 700,
-    cursor: "pointer",
+    borderRadius: "14px",
+    background: "linear-gradient(135deg, #111827, #374151)",
+    color: "#ffffff",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "8px",
     padding: "0 15px",
+    fontSize: "13px",
+    fontWeight: 800,
+    cursor: "pointer",
+    boxShadow: "0 4px 12px rgba(17, 24, 39, 0.18)",
+    transition: "transform 0.15s ease, opacity 0.2s ease",
   },
 
   sendButtonDisabled: {
-    opacity: 0.5,
+    opacity: 0.45,
     cursor: "not-allowed",
+    boxShadow: "none",
+  },
+
+  sendIcon: {
+    fontSize: "14px",
+  },
+
+  buttonSpinner: {
+    width: "16px",
+    height: "16px",
+    borderRadius: "50%",
+    border: "2px solid rgba(255,255,255,0.35)",
+    borderTopColor: "#ffffff",
+    animation: "conversationSpin 0.7s linear infinite",
+  },
+
+  composerHint: {
+    flexShrink: 0,
+    textAlign: "right",
+    padding: "0 16px 10px",
+    color: "#a1a1aa",
+    fontSize: "9px",
+    background: "#ffffff",
+  },
+
+  // -----------------------------------------------------
+  // MODAL
+  // -----------------------------------------------------
+
+  modalOverlay: {
+    position: "fixed",
+    inset: 0,
+    zIndex: 1000,
+    background: "rgba(15, 23, 42, 0.45)",
+    backdropFilter: "blur(4px)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "20px",
+  },
+
+  modal: {
+    width: "100%",
+    maxWidth: "380px",
+    background: "#ffffff",
+    borderRadius: "20px",
+    padding: "24px",
+    boxSizing: "border-box",
+    boxShadow: "0 20px 50px rgba(15, 23, 42, 0.2)",
+    textAlign: "center",
+  },
+
+  modalIcon: {
+    width: "52px",
+    height: "52px",
+    margin: "0 auto 14px",
+    borderRadius: "50%",
+    background: "#fff1f2",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "22px",
+  },
+
+  modalTitle: {
+    margin: "0 0 8px",
+    fontSize: "18px",
+    color: "#111827",
+  },
+
+  modalText: {
+    margin: "0 0 22px",
+    color: "#6b7280",
+    fontSize: "13px",
+    lineHeight: 1.5,
+  },
+
+  modalActions: {
+    display: "flex",
+    gap: "10px",
+  },
+
+  cancelButton: {
+    flex: 1,
+    height: "44px",
+    border: "1px solid #e5e7eb",
+    borderRadius: "12px",
+    background: "#ffffff",
+    color: "#374151",
+    fontWeight: 700,
+    cursor: "pointer",
+  },
+
+  confirmDeleteButton: {
+    flex: 1,
+    height: "44px",
+    border: "none",
+    borderRadius: "12px",
+    background: "#dc2626",
+    color: "#ffffff",
+    fontWeight: 700,
+    cursor: "pointer",
   },
 };
