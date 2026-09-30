@@ -1,314 +1,341 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { FaArrowLeft, FaPaperPlane, FaTrash } from "react-icons/fa";
 
-const API_URL = "http://localhost:5000";
+import {
+  FaArrowLeft,
+  FaCheck,
+  FaCheckDouble,
+  FaPaperPlane,
+  FaTrash,
+  FaUser,
+  FaMotorcycle,
+  FaCircle,
+} from "react-icons/fa";
 
-export default function Conversation({ role = "client" }) {
+import styled from "styled-components";
+
+export default function Conversation() {
+  // =====================================================
+  // PARAMÈTRES
+  // =====================================================
+
+  // IMPORTANT :
+  // L'URL contient le COMMANDE ID.
+  //
+  // Exemple :
+  // /conversation/66f123456789
+  //
+  // Ce n'est qu'après que le backend nous donne
+  // le vrai conversationId.
   const { commandeId } = useParams();
+
   const navigate = useNavigate();
 
+  const API_URL = import.meta.env.VITE_API_URL;
+
+  const messagesEndRef = useRef(null);
+  const textareaRef = useRef(null);
+
+  // =====================================================
+  // ÉTATS
+  // =====================================================
+
   const [conversation, setConversation] = useState(null);
+
   const [messages, setMessages] = useState([]);
+
   const [message, setMessage] = useState("");
 
-  const [chargement, setChargement] = useState(true);
+  const [loading, setLoading] = useState(true);
+
   const [envoiEnCours, setEnvoiEnCours] = useState(false);
+
   const [erreur, setErreur] = useState("");
 
-  const messagesContainerRef = useRef(null);
+  const [suppressionEnCours, setSuppressionEnCours] = useState(null);
 
-  /*
-   * ============================================================
-   * UTILISATEUR CONNECTÉ
-   * ============================================================
-   *
-   * Client :
-   * localStorage.getItem("token")
-   *
-   * Livreur :
-   * localStorage.getItem("tokenLivreur")
-   *
-   * On utilise le rôle de la page pour éviter de prendre
-   * accidentellement le mauvais token si les deux existent.
-   */
+  // =====================================================
+  // IDENTITÉ CLIENT
+  // =====================================================
 
-  const utilisateurConnecte = useMemo(() => {
-    const tokenKey = role === "livreur" ? "tokenLivreur" : "token";
-
-    const token = localStorage.getItem(tokenKey);
+  const utilisateur = useMemo(() => {
+    const token = localStorage.getItem("token");
 
     if (!token) {
       return null;
     }
 
     try {
-      const parties = token.split(".");
-
-      if (parties.length !== 3) {
-        return null;
-      }
-
-      const base64 = parties[1].replace(/-/g, "+").replace(/_/g, "/");
-
-      const payload = JSON.parse(atob(base64));
+      const payload = JSON.parse(
+        atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")),
+      );
 
       return {
         id: payload.userId,
-        type: role === "livreur" ? "livreur" : "client",
+        type: "client",
       };
     } catch (error) {
-      console.error("Impossible de lire le token :", error);
+      console.error("Erreur lecture token client :", error);
 
       return null;
     }
-  }, [role]);
+  }, []);
 
-  const typeUtilisateur = utilisateurConnecte?.type || role;
+  // =====================================================
+  // IDENTITÉ LIVREUR
+  // =====================================================
 
-  const typeCorrespondant = typeUtilisateur === "client" ? "livreur" : "client";
-
-  /*
-   * ============================================================
-   * TOKEN
-   * ============================================================
-   */
-
-  const recupererToken = useCallback(() => {
-    const tokenKey = role === "livreur" ? "tokenLivreur" : "token";
-
-    return localStorage.getItem(tokenKey);
-  }, [role]);
-
-  /*
-   * ============================================================
-   * HEADERS
-   * ============================================================
-   */
-
-  const getHeaders = useCallback(() => {
-    const token = recupererToken();
-
-    return {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    };
-  }, [recupererToken]);
-
-  /*
-   * ============================================================
-   * CHARGER / CRÉER LA CONVERSATION
-   * ============================================================
-   */
-
-  const chargerConversation = useCallback(async () => {
-    if (!commandeId) {
-      setErreur("Commande introuvable.");
-      setChargement(false);
-      return null;
-    }
-
-    const token = recupererToken();
+  const livreurUtilisateur = useMemo(() => {
+    const token = localStorage.getItem("tokenLivreur");
 
     if (!token) {
-      setErreur("Vous devez être connecté pour accéder à la conversation.");
-
-      setChargement(false);
       return null;
     }
 
     try {
-      setErreur("");
+      const payload = JSON.parse(
+        atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")),
+      );
 
-      /*
-       * On envoie la commande.
-       *
-       * Le backend :
-       * - vérifie le client OU le livreur
-       * - récupère l'autre participant
-       * - trouve la conversation existante
-       * - ou la crée
-       */
-
-      const response = await fetch(`${API_URL}/api/conversations`, {
-        method: "POST",
-        headers: getHeaders(),
-        body: JSON.stringify({
-          commandeId,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Impossible d'ouvrir la conversation.");
-      }
-
-      if (!data.conversation) {
-        throw new Error("Conversation introuvable.");
-      }
-
-      setConversation(data.conversation);
-
-      return data.conversation;
+      return {
+        id: payload.userId,
+        type: "livreur",
+      };
     } catch (error) {
-      console.error("Erreur chargement conversation :", error);
-
-      setErreur(error.message || "Impossible d'ouvrir la conversation.");
+      console.error("Erreur lecture token livreur :", error);
 
       return null;
     }
-  }, [commandeId, getHeaders, recupererToken]);
+  }, []);
 
-  /*
-   * ============================================================
-   * CHARGER LES MESSAGES
-   * ============================================================
-   */
+  // =====================================================
+  // UTILISATEUR CONNECTÉ
+  // =====================================================
 
-  const chargerMessages = useCallback(
-    async (conversationId, afficherChargement = false) => {
-      if (!conversationId) {
-        return;
-      }
+  const utilisateurConnecte = utilisateur || livreurUtilisateur;
 
+  // =====================================================
+  // MON MESSAGE ?
+  // =====================================================
+
+  const estMonMessage = (msg) => {
+    if (!utilisateurConnecte) {
+      return false;
+    }
+
+    return (
+      msg.expediteur?.type === utilisateurConnecte.type &&
+      msg.expediteur?.id?.toString() === utilisateurConnecte.id?.toString()
+    );
+  };
+
+  // =====================================================
+  // TYPE DU CORRESPONDANT
+  // =====================================================
+
+  const typeCorrespondant =
+    utilisateurConnecte?.type === "client" ? "livreur" : "client";
+
+  // =====================================================
+  // RÉCUPÉRER LE TOKEN
+  // =====================================================
+
+  const recupererToken = () => {
+    const tokenClient = localStorage.getItem("token");
+
+    const tokenLivreur = localStorage.getItem("tokenLivreur");
+
+    return tokenClient || tokenLivreur;
+  };
+
+  // =====================================================
+  // CHARGER / CRÉER LA CONVERSATION
+  // =====================================================
+
+  useEffect(() => {
+    if (!commandeId) {
+      setErreur("Identifiant de commande manquant.");
+
+      setLoading(false);
+
+      return;
+    }
+
+    const chargerConversation = async () => {
       try {
-        if (afficherChargement) {
-          setChargement(true);
+        setLoading(true);
+
+        setErreur("");
+
+        const token = recupererToken();
+
+        if (!token) {
+          navigate("/login");
+          return;
         }
 
-        const response = await fetch(
-          `${API_URL}/api/conversations/${conversationId}/messages`,
+        if (!API_URL) {
+          throw new Error("VITE_API_URL n'est pas configuré.");
+        }
+
+        // =================================================
+        // 1. RÉCUPÉRER OU CRÉER LA CONVERSATION
+        // =================================================
+
+        console.log("CHAT - commandeId :", commandeId);
+
+        const conversationResponse = await fetch(
+          `${API_URL}/api/conversations`,
           {
-            method: "GET",
-            headers: getHeaders(),
+            method: "POST",
+
+            headers: {
+              "Content-Type": "application/json",
+
+              Authorization: `Bearer ${token}`,
+            },
+
+            body: JSON.stringify({
+              commandeId,
+            }),
           },
         );
 
-        const data = await response.json();
+        const conversationData = await conversationResponse
+          .json()
+          .catch(() => ({}));
 
-        if (!response.ok) {
+        console.log("CHAT - réponse conversation :", conversationData);
+
+        if (!conversationResponse.ok) {
           throw new Error(
-            data.message || "Impossible de récupérer les messages.",
+            conversationData.message ||
+              "Impossible de créer ou récupérer la conversation.",
           );
         }
 
-        /*
-         * IMPORTANT :
-         *
-         * On ne fait PAS :
-         *
-         * messagesContainer.scrollTop =
-         * messagesContainer.scrollHeight;
-         *
-         * Donc aucun scroll automatique.
-         */
+        const conversationRecuperee = conversationData.conversation;
 
-        setMessages(data.messages || []);
-      } catch (error) {
-        console.error("Erreur récupération messages :", error);
-
-        setErreur(error.message || "Impossible de récupérer les messages.");
-      } finally {
-        if (afficherChargement) {
-          setChargement(false);
+        if (!conversationRecuperee?._id) {
+          throw new Error(
+            "Le serveur n'a pas retourné l'identifiant de la conversation.",
+          );
         }
-      }
-    },
-    [getHeaders],
-  );
 
-  /*
-   * ============================================================
-   * MARQUER LES MESSAGES COMME LUS
-   * ============================================================
-   */
+        setConversation(conversationRecuperee);
 
-  const marquerCommeLus = useCallback(
-    async (conversationId) => {
-      if (!conversationId) {
-        return;
-      }
+        const vraiConversationId = conversationRecuperee._id;
 
-      try {
+        console.log("CHAT - conversationId :", vraiConversationId);
+
+        // =================================================
+        // 2. RÉCUPÉRER LES MESSAGES
+        // =================================================
+
+        const messagesResponse = await fetch(
+          `${API_URL}/api/conversations/${vraiConversationId}/messages`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        const messagesData = await messagesResponse.json().catch(() => ({}));
+
+        if (!messagesResponse.ok) {
+          throw new Error(
+            messagesData.message || "Impossible de récupérer les messages.",
+          );
+        }
+
+        setMessages(messagesData.messages || []);
+
+        // =================================================
+        // 3. MARQUER LES MESSAGES COMME LUS
+        // =================================================
+
         await fetch(
-          `${API_URL}/api/conversations/${conversationId}/messages/read`,
+          `${API_URL}/api/conversations/${vraiConversationId}/messages/read`,
           {
             method: "PATCH",
-            headers: getHeaders(),
+
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           },
         );
       } catch (error) {
-        console.error("Erreur marquage messages lus :", error);
-      }
-    },
-    [getHeaders],
-  );
+        console.error("CHARGEMENT CONVERSATION ERROR :", error);
 
-  /*
-   * ============================================================
-   * INITIALISATION
-   * ============================================================
-   */
+        setErreur(error.message || "Impossible de charger la conversation.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    chargerConversation();
+  }, [API_URL, commandeId, navigate]);
+
+  // =====================================================
+  // SCROLL AUTOMATIQUE
+  // =====================================================
 
   useEffect(() => {
-    let actif = true;
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
+  }, [messages]);
 
-    const initialiser = async () => {
-      const conv = await chargerConversation();
-
-      if (!actif || !conv?._id) {
-        return;
-      }
-
-      await chargerMessages(conv._id, true);
-
-      await marquerCommeLus(conv._id);
-    };
-
-    initialiser();
-
-    return () => {
-      actif = false;
-    };
-  }, [chargerConversation, chargerMessages, marquerCommeLus]);
-
-  /*
-   * ============================================================
-   * RAFRAÎCHISSEMENT DES MESSAGES
-   * ============================================================
-   *
-   * Pas de scroll automatique ici non plus.
-   */
+  // =====================================================
+  // RAFRAÎCHISSEMENT DES MESSAGES
+  // =====================================================
 
   useEffect(() => {
     if (!conversation?._id) {
       return;
     }
 
-    const interval = setInterval(() => {
-      chargerMessages(conversation._id, false);
+    const interval = setInterval(async () => {
+      try {
+        const token = recupererToken();
+
+        if (!token) {
+          return;
+        }
+
+        const response = await fetch(
+          `${API_URL}/api/conversations/${conversation._id}/messages`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+
+        setMessages(data.messages || []);
+      } catch (error) {
+        console.error("REFRESH CHAT ERROR :", error);
+      }
     }, 5000);
 
     return () => {
       clearInterval(interval);
     };
-  }, [conversation?._id, chargerMessages]);
+  }, [API_URL, conversation?._id]);
 
-  /*
-   * ============================================================
-   * ENVOYER UN MESSAGE
-   * ============================================================
-   */
+  // =====================================================
+  // ENVOYER MESSAGE
+  // =====================================================
 
   const envoyerMessage = async (event) => {
-    event.preventDefault();
+    event?.preventDefault();
 
     const texte = message.trim();
 
@@ -316,72 +343,68 @@ export default function Conversation({ role = "client" }) {
       return;
     }
 
-    if (!conversation?._id) {
-      setErreur("Conversation introuvable.");
+    if (envoiEnCours) {
       return;
     }
 
-    if (texte.length > 1000) {
-      setErreur("Le message ne peut pas dépasser 1000 caractères.");
+    if (!conversation?._id) {
+      setErreur("Conversation introuvable.");
+
       return;
     }
 
     try {
       setEnvoiEnCours(true);
+
       setErreur("");
+
+      const token = recupererToken();
+
+      if (!token) {
+        navigate("/login");
+        return;
+      }
 
       const response = await fetch(
         `${API_URL}/api/conversations/${conversation._id}/messages`,
         {
           method: "POST",
-          headers: getHeaders(),
+
+          headers: {
+            "Content-Type": "application/json",
+
+            Authorization: `Bearer ${token}`,
+          },
+
           body: JSON.stringify({
             message: texte,
           }),
         },
       );
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
         throw new Error(data.message || "Impossible d'envoyer le message.");
       }
 
-      /*
-       * Le backend renvoie normalement :
-       *
-       * {
-       *   nouveauMessage,
-       *   conversation
-       * }
-       */
+      // =================================================
+      // AJOUT DU NOUVEAU MESSAGE
+      // =================================================
 
       if (data.nouveauMessage) {
-        setMessages((anciensMessages) => [
-          ...anciensMessages,
-          data.nouveauMessage,
-        ]);
-      } else {
-        /*
-         * Sécurité :
-         * si le backend ne renvoie pas le message,
-         * on recharge simplement.
-         */
-        await chargerMessages(conversation._id, false);
-      }
-
-      if (data.conversation) {
+        setMessages((prev) => [...prev, data.nouveauMessage]);
+      } else if (data.conversation) {
         setConversation(data.conversation);
+
+        setMessages(data.conversation.messages || []);
       }
 
       setMessage("");
 
-      /*
-       * IMPORTANT :
-       * Aucun scroll forcé après l'envoi.
-       */
+      textareaRef.current?.focus();
     } catch (error) {
-      console.error("Erreur envoi message :", error);
+      console.error("ENVOYER MESSAGE ERROR :", error);
 
       setErreur(error.message || "Impossible d'envoyer le message.");
     } finally {
@@ -389,80 +412,61 @@ export default function Conversation({ role = "client" }) {
     }
   };
 
-  /*
-   * ============================================================
-   * SUPPRIMER UN MESSAGE
-   * ============================================================
-   */
+  // =====================================================
+  // SUPPRIMER MESSAGE
+  // =====================================================
 
   const supprimerMessage = async (messageId) => {
-    if (!conversation?._id || !messageId) {
-      return;
-    }
-
-    const confirmation = window.confirm(
-      "Voulez-vous vraiment supprimer ce message ?",
-    );
-
-    if (!confirmation) {
+    if (suppressionEnCours || !conversation?._id) {
       return;
     }
 
     try {
+      setSuppressionEnCours(messageId);
+
       setErreur("");
+
+      const token = recupererToken();
+
+      if (!token) {
+        navigate("/login");
+        return;
+      }
 
       const response = await fetch(
         `${API_URL}/api/conversations/${conversation._id}/messages/${messageId}`,
         {
           method: "DELETE",
-          headers: getHeaders(),
+
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
       );
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
         throw new Error(data.message || "Impossible de supprimer le message.");
       }
 
-      /*
-       * Le backend renvoie la conversation
-       * mise à jour.
-       */
-
       if (data.conversation) {
         setConversation(data.conversation);
 
         setMessages(data.conversation.messages || []);
-      } else {
-        await chargerMessages(conversation._id, false);
       }
     } catch (error) {
-      console.error("Erreur suppression message :", error);
+      console.error("SUPPRIMER MESSAGE ERROR :", error);
 
       setErreur(error.message || "Impossible de supprimer le message.");
+    } finally {
+      setSuppressionEnCours(null);
     }
   };
 
-  /*
-   * ============================================================
-   * TOUCHE ENTRÉE
-   * ============================================================
-   */
-
-  const gererTouche = (event) => {
-    if (event.key === "Enter" && !event.shiftKey) {
-      event.preventDefault();
-
-      envoyerMessage(event);
-    }
-  };
-
-  /*
-   * ============================================================
-   * FORMAT DATE
-   * ============================================================
-   */
+  // =====================================================
+  // FORMATER HEURE
+  // =====================================================
 
   const formaterHeure = (date) => {
     if (!date) {
@@ -475,605 +479,935 @@ export default function Conversation({ role = "client" }) {
     });
   };
 
-  const formaterDate = (date) => {
+  // =====================================================
+  // FORMATER DATE
+  // =====================================================
+
+  const formaterDateComplete = (date) => {
     if (!date) {
       return "";
     }
 
     return new Date(date).toLocaleDateString("fr-FR", {
-      day: "numeric",
+      day: "2-digit",
       month: "long",
       year: "numeric",
     });
   };
 
-  /*
-   * ============================================================
-   * REGROUPER LES MESSAGES PAR JOUR
-   * ============================================================
-   */
+  // =====================================================
+  // GROUPER LES MESSAGES PAR DATE
+  // =====================================================
 
-  const messagesAvecDate = useMemo(() => {
-    const resultat = [];
+  const messagesAvecSeparateurs = useMemo(() => {
     let derniereDate = null;
 
-    messages.forEach((msg) => {
-      const dateMessage = formaterDate(msg.date);
+    return messages.map((msg) => {
+      const dateMessage = new Date(msg.date);
 
-      if (dateMessage !== derniereDate) {
-        resultat.push({
-          type: "date",
-          id: `date-${dateMessage}`,
-          date: dateMessage,
-        });
+      const cleDate = dateMessage.toLocaleDateString("fr-FR");
 
-        derniereDate = dateMessage;
-      }
+      const nouveauJour = cleDate !== derniereDate;
 
-      resultat.push({
-        type: "message",
+      derniereDate = cleDate;
+
+      return {
         ...msg,
-      });
+        nouveauJour,
+        cleDate,
+      };
     });
-
-    return resultat;
   }, [messages]);
 
-  /*
-   * ============================================================
-   * RETOUR
-   * ============================================================
-   */
+  // =====================================================
+  // NOMBRE DE MESSAGES NON LUS
+  // =====================================================
 
-  const retour = () => {
-    navigate(-1);
-  };
+  const nombreNonLus = messages.filter(
+    (msg) => !estMonMessage(msg) && msg.lu === false,
+  ).length;
 
-  /*
-   * ============================================================
-   * ÉTAT ERREUR COMMANDE
-   * ============================================================
-   */
+  // =====================================================
+  // LOADING
+  // =====================================================
 
-  if (!commandeId) {
+  if (loading) {
     return (
-      <div style={styles.page}>
-        <div style={styles.erreurPage}>
-          <h2>Conversation introuvable</h2>
+      <Page>
+        <LoadingScreen>
+          <LoadingSpinner />
 
-          <button onClick={retour} style={styles.boutonRetour}>
-            Retour
-          </button>
-        </div>
-      </div>
+          <LoadingText>Chargement de la conversation...</LoadingText>
+        </LoadingScreen>
+      </Page>
     );
   }
 
-  /*
-   * ============================================================
-   * RENDU
-   * ============================================================
-   */
+  // =====================================================
+  // ERREUR
+  // =====================================================
+
+  if (erreur && !messages.length) {
+    return (
+      <Page>
+        <ErrorBox>
+          <ErrorIcon>!</ErrorIcon>
+
+          <h2>Impossible d'ouvrir le chat</h2>
+
+          <p>{erreur}</p>
+
+          <BackButton onClick={() => navigate(-1)}>
+            <FaArrowLeft />
+            Retour
+          </BackButton>
+        </ErrorBox>
+      </Page>
+    );
+  }
+
+  // =====================================================
+  // RENDU
+  // =====================================================
 
   return (
-    <div style={styles.page}>
-      <div style={styles.conversationWrapper}>
-        {/* =====================================================
+    <Page>
+      <ChatContainer>
+        {/* =================================================
             HEADER
-        ====================================================== */}
+        ================================================= */}
 
-        <header style={styles.header}>
-          <button
-            type="button"
-            onClick={retour}
-            style={styles.boutonBack}
-            aria-label="Retour"
-          >
+        <ChatHeader>
+          <BackButton onClick={() => navigate(-1)} title="Retour">
             <FaArrowLeft />
-          </button>
+          </BackButton>
 
-          <div style={styles.headerInfo}>
-            <div style={styles.avatar}>
-              {typeCorrespondant === "livreur" ? "L" : "C"}
-            </div>
+          <Avatar $type={typeCorrespondant}>
+            {typeCorrespondant === "livreur" ? <FaMotorcycle /> : <FaUser />}
+          </Avatar>
 
-            <div>
-              <div style={styles.titre}>
-                {typeCorrespondant === "livreur" ? "Livreur" : "Client"}
-              </div>
+          <HeaderInfo>
+            <ChatTitle>
+              {typeCorrespondant === "livreur" ? "Votre livreur" : "Client"}
+            </ChatTitle>
 
-              <div style={styles.sousTitre}>
-                Commande #{commandeId.slice(-6)}
-              </div>
-            </div>
-          </div>
-        </header>
+            <ChatStatus>
+              <StatusDot />
 
-        {/* =====================================================
-            ERREUR
-        ====================================================== */}
+              <span>
+                {nombreNonLus > 0
+                  ? `${nombreNonLus} nouveau${
+                      nombreNonLus > 1 ? "x" : ""
+                    } message${nombreNonLus > 1 ? "s" : ""}`
+                  : "Conversation"}
+              </span>
+            </ChatStatus>
+          </HeaderInfo>
 
-        {erreur && <div style={styles.erreur}>{erreur}</div>}
+          <HeaderRight>
+            <CommandeBadge>
+              Commande #{commandeId?.slice(-8).toUpperCase()}
+            </CommandeBadge>
+          </HeaderRight>
+        </ChatHeader>
 
-        {/* =====================================================
+        {/* =================================================
+            ERREUR NON BLOQUANTE
+        ================================================= */}
+
+        {erreur && <ErrorBanner>{erreur}</ErrorBanner>}
+
+        {/* =================================================
             MESSAGES
-        ====================================================== */}
+        ================================================= */}
 
-        <main ref={messagesContainerRef} style={styles.messages}>
-          {chargement ? (
-            <div style={styles.chargement}>Chargement des messages...</div>
-          ) : messagesAvecDate.length === 0 ? (
-            <div style={styles.vide}>
-              <div style={styles.videIcon}>💬</div>
+        <MessagesContainer>
+          {messages.length === 0 ? (
+            <EmptyMessages>
+              <EmptyIcon>
+                <FaPaperPlane />
+              </EmptyIcon>
 
-              <div style={styles.videTitre}>Aucun message</div>
+              <EmptyTitle>Votre conversation commence ici</EmptyTitle>
 
-              <div style={styles.videTexte}>Commencez la conversation.</div>
-            </div>
+              <EmptyText>
+                Envoyez un message pour contacter{" "}
+                {typeCorrespondant === "livreur"
+                  ? "votre livreur"
+                  : "le client"}
+                .
+              </EmptyText>
+            </EmptyMessages>
           ) : (
-            messagesAvecDate.map((element, index) => {
-              if (element.type === "date") {
-                return (
-                  <div
-                    key={`${element.id}-${index}`}
-                    style={styles.dateSeparator}
-                  >
-                    <span style={styles.dateSeparatorText}>{element.date}</span>
-                  </div>
-                );
-              }
+            <>
+              {messagesAvecSeparateurs.map((msg) => (
+                <div key={msg._id}>
+                  {/* ====================================
+                        SÉPARATEUR DE DATE
+                    ==================================== */}
 
-              const estMoi =
-                element.expediteur?.id?.toString() ===
-                utilisateurConnecte?.id?.toString();
+                  {msg.nouveauJour && (
+                    <DateSeparator>
+                      <DateLine />
 
-              return (
-                <div
-                  key={element._id || `message-${index}`}
-                  style={{
-                    ...styles.messageRow,
-                    ...(estMoi ? styles.messageRowMoi : styles.messageRowAutre),
-                  }}
-                >
-                  <div
-                    style={{
-                      ...styles.bulle,
-                      ...(estMoi ? styles.bulleMoi : styles.bulleAutre),
-                    }}
-                  >
-                    <div style={styles.messageTexte}>{element.message}</div>
+                      <DateLabel>{formaterDateComplete(msg.date)}</DateLabel>
 
-                    <div
-                      style={{
-                        ...styles.messageMeta,
-                        ...(estMoi ? styles.messageMetaMoi : {}),
-                      }}
-                    >
-                      <span>{formaterHeure(element.date)}</span>
+                      <DateLine />
+                    </DateSeparator>
+                  )}
 
-                      {estMoi && (
-                        <>
-                          <span>{element.lu ? "✓✓" : "✓"}</span>
+                  {/* ====================================
+                        MESSAGE
+                    ==================================== */}
 
-                          <button
+                  <MessageItem $mine={estMonMessage(msg)}>
+                    <MessageBubble $mine={estMonMessage(msg)}>
+                      <MessageText>{msg.message}</MessageText>
+
+                      <MessageBottom>
+                        <MessageDate>{formaterHeure(msg.date)}</MessageDate>
+
+                        {/* =================================
+                              STATUT MESSAGE
+                          ================================= */}
+
+                        {estMonMessage(msg) && (
+                          <ReadStatus $read={msg.lu}>
+                            {msg.lu ? <FaCheckDouble /> : <FaCheck />}
+                          </ReadStatus>
+                        )}
+
+                        {/* =================================
+                              SUPPRESSION
+                          ================================= */}
+
+                        {estMonMessage(msg) && (
+                          <DeleteButton
                             type="button"
-                            onClick={() => supprimerMessage(element._id)}
-                            style={styles.boutonSupprimer}
-                            title="Supprimer"
-                            aria-label="Supprimer le message"
+                            onClick={() => supprimerMessage(msg._id)}
+                            disabled={suppressionEnCours === msg._id}
+                            title="Supprimer le message"
                           >
                             <FaTrash />
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
+                          </DeleteButton>
+                        )}
+                      </MessageBottom>
+                    </MessageBubble>
+                  </MessageItem>
                 </div>
-              );
-            })
+              ))}
+
+              <div ref={messagesEndRef} />
+            </>
           )}
-        </main>
+        </MessagesContainer>
 
-        {/* =====================================================
-            INPUT
-        ====================================================== */}
+        {/* =================================================
+            FORMULAIRE MESSAGE
+        ================================================= */}
 
-        <form onSubmit={envoyerMessage} style={styles.form}>
-          <div style={styles.inputWrapper}>
-            <textarea
+        <MessageForm onSubmit={envoyerMessage}>
+          <MessageInputWrapper>
+            <MessageInput
+              ref={textareaRef}
               value={message}
-              onChange={(event) => {
-                if (event.target.value.length <= 1000) {
-                  setMessage(event.target.value);
+              onChange={(event) => setMessage(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && !event.shiftKey) {
+                  event.preventDefault();
+
+                  envoyerMessage(event);
                 }
               }}
-              onKeyDown={gererTouche}
               placeholder="Écrire un message..."
-              rows={1}
-              maxLength={1000}
               disabled={envoiEnCours}
-              style={styles.input}
+              maxLength={1000}
             />
 
-            <div style={styles.compteur}>{message.length}/1000</div>
-          </div>
+            <CharacterCounter>{message.length}/1000</CharacterCounter>
+          </MessageInputWrapper>
 
-          <button
+          <SendButton
             type="submit"
-            disabled={!message.trim() || envoiEnCours}
-            style={{
-              ...styles.boutonEnvoyer,
-              ...(message.trim() && !envoiEnCours
-                ? styles.boutonEnvoyerActif
-                : styles.boutonEnvoyerDesactive),
-            }}
-            aria-label="Envoyer"
+            disabled={envoiEnCours || !message.trim()}
+            title="Envoyer"
           >
-            {envoiEnCours ? (
-              <span style={styles.spinner}>⏳</span>
-            ) : (
-              <FaPaperPlane />
-            )}
-          </button>
-        </form>
-      </div>
-    </div>
+            {envoiEnCours ? <SmallSpinner /> : <FaPaperPlane />}
+          </SendButton>
+        </MessageForm>
+      </ChatContainer>
+    </Page>
   );
 }
 
-/*
- * ==============================================================
- * STYLES
- * ==============================================================
- */
+// =====================================================
+// PAGE
+// =====================================================
 
-const styles = {
-  page: {
-    minHeight: "100dvh",
-    width: "100%",
-    backgroundColor: "#f5f6f8",
-    display: "flex",
-    justifyContent: "center",
-    boxSizing: "border-box",
-  },
+const Page = styled.div`
+  min-height: 100vh;
 
-  conversationWrapper: {
-    width: "100%",
-    maxWidth: "900px",
-    height: "100dvh",
-    display: "flex",
-    flexDirection: "column",
-    backgroundColor: "#ffffff",
-    overflow: "hidden",
-  },
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(17, 17, 17, 0.04),
+      transparent 35%
+    ),
+    #f3f4f6;
 
-  /*
-   * HEADER
-   */
+  display: flex;
+  justify-content: center;
+`;
 
-  header: {
-    flexShrink: 0,
-    height: "64px",
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-    padding: "0 16px",
-    borderBottom: "1px solid #e5e7eb",
-    backgroundColor: "#ffffff",
-    boxSizing: "border-box",
-  },
+// =====================================================
+// CONTAINER
+// =====================================================
 
-  boutonBack: {
-    width: "40px",
-    height: "40px",
-    border: "none",
-    borderRadius: "50%",
-    backgroundColor: "#f3f4f6",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    cursor: "pointer",
-    flexShrink: 0,
-  },
+const ChatContainer = styled.div`
+  width: 100%;
+  max-width: 1050px;
 
-  headerInfo: {
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-    minWidth: 0,
-  },
+  height: 100vh;
+  height: 100dvh;
 
-  avatar: {
-    width: "40px",
-    height: "40px",
-    borderRadius: "50%",
-    backgroundColor: "#111827",
-    color: "#ffffff",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontWeight: "700",
-    flexShrink: 0,
-  },
+  background: #ffffff;
 
-  titre: {
-    fontSize: "16px",
-    fontWeight: "700",
-    color: "#111827",
-  },
+  display: flex;
+  flex-direction: column;
 
-  sousTitre: {
-    marginTop: "2px",
-    fontSize: "12px",
-    color: "#6b7280",
-  },
+  overflow: hidden;
 
-  /*
-   * ERREUR
-   */
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.08);
+`;
 
-  erreur: {
-    flexShrink: 0,
-    margin: "10px 16px 0",
-    padding: "10px 12px",
-    borderRadius: "8px",
-    backgroundColor: "#fef2f2",
-    color: "#b91c1c",
-    fontSize: "13px",
-  },
+// =====================================================
+// HEADER
+// =====================================================
 
-  erreurPage: {
-    width: "100%",
-    maxWidth: "500px",
-    margin: "auto",
-    padding: "24px",
-    textAlign: "center",
-  },
+const ChatHeader = styled.header`
+  min-height: 78px;
 
-  boutonRetour: {
-    marginTop: "15px",
-    padding: "10px 16px",
-    border: "none",
-    borderRadius: "8px",
-    backgroundColor: "#111827",
-    color: "#ffffff",
-    cursor: "pointer",
-  },
+  padding: 0 22px;
 
-  /*
-   * MESSAGES
-   *
-   * IMPORTANT :
-   *
-   * overflowY: auto
-   * MAIS aucun scrollTop n'est utilisé.
-   */
+  display: flex;
+  align-items: center;
 
-  messages: {
-    flex: 1,
-    minHeight: 0,
-    overflowY: "auto",
-    overflowX: "hidden",
-    padding: "16px",
-    boxSizing: "border-box",
-    WebkitOverflowScrolling: "touch",
-    overscrollBehavior: "contain",
-  },
+  gap: 13px;
 
-  chargement: {
-    minHeight: "100%",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: "#6b7280",
-    fontSize: "14px",
-  },
+  background: #ffffff;
 
-  vide: {
-    minHeight: "100%",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    textAlign: "center",
-    color: "#6b7280",
-  },
+  border-bottom: 1px solid #ececef;
 
-  videIcon: {
-    fontSize: "40px",
-    marginBottom: "10px",
-  },
+  z-index: 10;
+`;
 
-  videTitre: {
-    fontSize: "16px",
-    fontWeight: "700",
-    color: "#374151",
-  },
+const BackButton = styled.button`
+  width: 42px;
+  height: 42px;
 
-  videTexte: {
-    marginTop: "5px",
-    fontSize: "13px",
-  },
+  flex-shrink: 0;
 
-  /*
-   * DATES
-   */
+  border: 1px solid #e5e5e8;
 
-  dateSeparator: {
-    display: "flex",
-    justifyContent: "center",
-    margin: "16px 0",
-  },
+  border-radius: 13px;
 
-  dateSeparatorText: {
-    padding: "5px 10px",
-    borderRadius: "20px",
-    backgroundColor: "#f3f4f6",
-    color: "#6b7280",
-    fontSize: "11px",
-  },
+  background: #ffffff;
 
-  /*
-   * MESSAGES
-   */
+  color: #171717;
 
-  messageRow: {
-    width: "100%",
-    display: "flex",
-    marginBottom: "8px",
-    boxSizing: "border-box",
-  },
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-  messageRowMoi: {
-    justifyContent: "flex-end",
-  },
+  cursor: pointer;
 
-  messageRowAutre: {
-    justifyContent: "flex-start",
-  },
+  transition: 0.2s;
 
-  bulle: {
-    maxWidth: "75%",
-    padding: "9px 12px 7px",
-    borderRadius: "14px",
-    boxSizing: "border-box",
-    overflowWrap: "anywhere",
-  },
+  &:hover {
+    background: #f5f5f6;
 
-  bulleMoi: {
-    backgroundColor: "#111827",
-    color: "#ffffff",
-    borderBottomRightRadius: "4px",
-  },
+    transform: translateX(-2px);
+  }
+`;
 
-  bulleAutre: {
-    backgroundColor: "#f3f4f6",
-    color: "#111827",
-    borderBottomLeftRadius: "4px",
-  },
+const Avatar = styled.div`
+  width: 45px;
+  height: 45px;
 
-  messageTexte: {
-    whiteSpace: "pre-wrap",
-    wordBreak: "break-word",
-    fontSize: "14px",
-    lineHeight: "1.45",
-  },
+  flex-shrink: 0;
 
-  messageMeta: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "flex-end",
-    gap: "6px",
-    marginTop: "4px",
-    fontSize: "10px",
-    color: "#6b7280",
-  },
+  border-radius: 50%;
 
-  messageMetaMoi: {
-    color: "#d1d5db",
-  },
+  background: #111111;
 
-  boutonSupprimer: {
-    border: "none",
-    background: "transparent",
-    color: "inherit",
-    padding: "2px",
-    margin: 0,
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "10px",
-  },
+  color: white;
 
-  /*
-   * FORMULAIRE
-   */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-  form: {
-    flexShrink: 0,
-    display: "flex",
-    alignItems: "flex-end",
-    gap: "8px",
-    padding: "10px 12px",
-    paddingBottom: "calc(10px + env(safe-area-inset-bottom))",
-    borderTop: "1px solid #e5e7eb",
-    backgroundColor: "#ffffff",
-    boxSizing: "border-box",
-  },
+  font-size: 17px;
+`;
 
-  inputWrapper: {
-    flex: 1,
-    minWidth: 0,
-    position: "relative",
-  },
+const HeaderInfo = styled.div`
+  min-width: 0;
 
-  /*
-   * IMPORTANT MOBILE :
-   *
-   * fontSize: 16px
-   *
-   * Cela évite le zoom automatique d'iOS/Safari
-   * lorsque l'utilisateur touche le champ.
-   */
+  display: flex;
+  flex-direction: column;
 
-  input: {
-    width: "100%",
-    minHeight: "44px",
-    maxHeight: "120px",
-    resize: "none",
-    border: "1px solid #d1d5db",
-    borderRadius: "22px",
-    outline: "none",
-    padding: "11px 50px 11px 14px",
-    boxSizing: "border-box",
+  gap: 4px;
+`;
 
-    fontSize: "16px",
-    lineHeight: "1.4",
-    fontFamily: "inherit",
+const ChatTitle = styled.div`
+  font-size: 15px;
 
-    backgroundColor: "#ffffff",
-    color: "#111827",
+  font-weight: 800;
 
-    overflowY: "auto",
-    WebkitAppearance: "none",
-  },
+  color: #151515;
+`;
 
-  compteur: {
-    position: "absolute",
-    right: "14px",
-    bottom: "5px",
-    fontSize: "9px",
-    color: "#9ca3af",
-    pointerEvents: "none",
-  },
+const ChatStatus = styled.div`
+  display: flex;
+  align-items: center;
 
-  boutonEnvoyer: {
-    width: "44px",
-    height: "44px",
-    minWidth: "44px",
-    border: "none",
-    borderRadius: "50%",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-    transition: "0.2s",
-  },
+  gap: 5px;
 
-  boutonEnvoyerActif: {
-    backgroundColor: "#111827",
-    color: "#ffffff",
-    cursor: "pointer",
-  },
+  color: #8a8a8f;
 
-  boutonEnvoyerDesactive: {
-    backgroundColor: "#e5e7eb",
-    color: "#9ca3af",
-    cursor: "not-allowed",
-  },
+  font-size: 10px;
+`;
 
-  spinner: {
-    fontSize: "15px",
-  },
-};
+const StatusDot = styled(FaCircle)`
+  color: #25b56f;
+
+  font-size: 7px;
+`;
+
+const HeaderRight = styled.div`
+  margin-left: auto;
+
+  display: flex;
+  align-items: center;
+
+  @media (max-width: 650px) {
+    display: none;
+  }
+`;
+
+const CommandeBadge = styled.div`
+  padding: 8px 11px;
+
+  border-radius: 10px;
+
+  background: #f5f5f6;
+
+  color: #777;
+
+  font-size: 9px;
+
+  font-weight: 700;
+
+  letter-spacing: 0.3px;
+`;
+
+// =====================================================
+// ERROR
+// =====================================================
+
+const ErrorBanner = styled.div`
+  padding: 9px 18px;
+
+  background: #fff1f1;
+
+  color: #c53535;
+
+  border-bottom: 1px solid #ffdada;
+
+  font-size: 11px;
+
+  text-align: center;
+`;
+
+// =====================================================
+// MESSAGES
+// =====================================================
+
+const MessagesContainer = styled.main`
+  flex: 1;
+
+  overflow-y: auto;
+
+  padding: 25px clamp(14px, 4vw, 45px);
+
+  background: linear-gradient(
+    rgba(248, 249, 250, 0.96),
+    rgba(248, 249, 250, 0.96)
+  );
+
+  scroll-behavior: smooth;
+
+  scrollbar-width: thin;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #d4d4d7;
+
+    border-radius: 20px;
+  }
+`;
+
+// =====================================================
+// DATE
+// =====================================================
+
+const DateSeparator = styled.div`
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+  margin: 12px 0 20px;
+`;
+
+const DateLine = styled.div`
+  flex: 1;
+
+  height: 1px;
+
+  background: #e1e1e4;
+`;
+
+const DateLabel = styled.span`
+  flex-shrink: 0;
+
+  padding: 5px 9px;
+
+  border-radius: 20px;
+
+  background: #e8e8eb;
+
+  color: #777;
+
+  font-size: 9px;
+
+  font-weight: 700;
+`;
+
+// =====================================================
+// MESSAGE
+// =====================================================
+
+const MessageItem = styled.div`
+  display: flex;
+
+  justify-content: ${({ $mine }) => ($mine ? "flex-end" : "flex-start")};
+
+  margin-bottom: 8px;
+`;
+
+const MessageBubble = styled.div`
+  position: relative;
+
+  max-width: min(72%, 570px);
+
+  padding: 10px 12px 8px;
+
+  border-radius: ${({ $mine }) =>
+    $mine ? "18px 18px 5px 18px" : "18px 18px 18px 5px"};
+
+  background: ${({ $mine }) => ($mine ? "#111111" : "#ffffff")};
+
+  color: ${({ $mine }) => ($mine ? "#ffffff" : "#171717")};
+
+  border: ${({ $mine }) => ($mine ? "none" : "1px solid #e7e7e9")};
+
+  box-shadow: ${({ $mine }) =>
+    $mine ? "0 5px 15px rgba(0,0,0,0.12)" : "0 3px 12px rgba(0,0,0,0.035)"};
+
+  transition: transform 0.15s;
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+
+  @media (max-width: 600px) {
+    max-width: 82%;
+  }
+`;
+
+const MessageText = styled.div`
+  font-size: 13px;
+
+  line-height: 1.55;
+
+  white-space: pre-wrap;
+
+  overflow-wrap: anywhere;
+`;
+
+const MessageBottom = styled.div`
+  margin-top: 5px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: flex-end;
+
+  gap: 7px;
+`;
+
+const MessageDate = styled.span`
+  font-size: 8px;
+
+  opacity: 0.55;
+`;
+
+const ReadStatus = styled.span`
+  display: flex;
+
+  align-items: center;
+
+  color: ${({ $read }) => ($read ? "#4da3ff" : "currentColor")};
+
+  opacity: ${({ $read }) => ($read ? 1 : 0.55)};
+
+  font-size: 9px;
+`;
+
+const DeleteButton = styled.button`
+  padding: 2px;
+
+  border: 0;
+
+  background: transparent;
+
+  color: inherit;
+
+  opacity: 0.4;
+
+  cursor: pointer;
+
+  font-size: 9px;
+
+  transition: 0.2s;
+
+  &:hover {
+    opacity: 1;
+  }
+
+  &:disabled {
+    cursor: wait;
+
+    opacity: 0.2;
+  }
+`;
+
+// =====================================================
+// EMPTY
+// =====================================================
+
+const EmptyMessages = styled.div`
+  min-height: 100%;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+
+  text-align: center;
+
+  padding: 30px;
+`;
+
+const EmptyIcon = styled.div`
+  width: 65px;
+  height: 65px;
+
+  margin-bottom: 15px;
+
+  border-radius: 50%;
+
+  background: #eeeeef;
+
+  color: #111;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 21px;
+
+  transform: rotate(-10deg);
+`;
+
+const EmptyTitle = styled.strong`
+  color: #222;
+
+  font-size: 14px;
+`;
+
+const EmptyText = styled.span`
+  margin-top: 6px;
+
+  color: #999;
+
+  font-size: 11px;
+`;
+
+// =====================================================
+// FORMULAIRE
+// =====================================================
+
+const MessageForm = styled.form`
+  min-height: 78px;
+
+  padding: 12px 18px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  background: #ffffff;
+
+  border-top: 1px solid #e8e8ea;
+
+  box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.025);
+`;
+
+const MessageInputWrapper = styled.div`
+  position: relative;
+
+  flex: 1;
+`;
+
+const MessageInput = styled.textarea`
+  width: 100%;
+
+  min-height: 46px;
+  max-height: 120px;
+
+  padding: 13px 55px 13px 15px;
+
+  resize: none;
+
+  border: 1px solid #dedee1;
+
+  border-radius: 15px;
+
+  outline: none;
+
+  background: #fafafa;
+
+  color: #151515;
+
+  font-family: inherit;
+
+  font-size: 13px;
+
+  line-height: 1.4;
+
+  transition: 0.2s;
+
+  box-sizing: border-box;
+
+  &:focus {
+    border-color: #111;
+
+    background: #ffffff;
+
+    box-shadow: 0 0 0 3px rgba(17, 17, 17, 0.06);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+  }
+`;
+
+const CharacterCounter = styled.span`
+  position: absolute;
+
+  right: 12px;
+
+  bottom: 7px;
+
+  color: #aaa;
+
+  font-size: 8px;
+
+  pointer-events: none;
+`;
+
+const SendButton = styled.button`
+  width: 47px;
+  height: 47px;
+
+  flex-shrink: 0;
+
+  border: 0;
+
+  border-radius: 14px;
+
+  background: #111111;
+
+  color: #ffffff;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+
+  transition:
+    transform 0.2s,
+    opacity 0.2s;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.35;
+
+    cursor: not-allowed;
+
+    box-shadow: none;
+  }
+`;
+
+// =====================================================
+// LOADING
+// =====================================================
+
+const LoadingScreen = styled.div`
+  min-height: 100vh;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 14px;
+
+  color: #777;
+`;
+
+const LoadingSpinner = styled.div`
+  width: 28px;
+  height: 28px;
+
+  border: 3px solid #e3e3e5;
+
+  border-top-color: #111;
+
+  border-radius: 50%;
+
+  animation: spin 0.7s linear infinite;
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+`;
+
+const SmallSpinner = styled.div`
+  width: 15px;
+  height: 15px;
+
+  border: 2px solid rgba(255, 255, 255, 0.35);
+
+  border-top-color: white;
+
+  border-radius: 50%;
+
+  animation: spin 0.7s linear infinite;
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+`;
+
+const LoadingText = styled.div`
+  font-size: 12px;
+`;
+
+// =====================================================
+// ERROR SCREEN
+// =====================================================
+
+const ErrorBox = styled.div`
+  width: min(450px, calc(100% - 30px));
+
+  margin: auto;
+
+  padding: 35px;
+
+  background: white;
+
+  border-radius: 22px;
+
+  text-align: center;
+
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
+
+  h2 {
+    margin: 15px 0 8px;
+
+    color: #222;
+
+    font-size: 18px;
+  }
+
+  p {
+    margin-bottom: 22px;
+
+    color: #777;
+
+    font-size: 12px;
+
+    line-height: 1.5;
+  }
+`;
+
+const ErrorIcon = styled.div`
+  width: 45px;
+  height: 45px;
+
+  margin: auto;
+
+  border-radius: 50%;
+
+  background: #fff0f0;
+
+  color: #d83b3b;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  font-weight: 900;
+`;
