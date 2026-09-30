@@ -178,7 +178,7 @@ createRoot(document.getElementById("root")).render(
             />
 
             <Route
-              path="/conversation/:commandeId"
+              path="/conversation/:conversationId"
               element={
                 <PublicLayout>
                   <Conversation />
