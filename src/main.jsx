@@ -181,7 +181,15 @@ createRoot(document.getElementById("root")).render(
               path="/conversation/:commandeId"
               element={
                 <PublicLayout>
-                  <Conversation />
+                  <Conversation role="client" />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/conversation-livreur/:commandeId"
+              element={
+                <PublicLayout>
+                  <Conversation role="livreur" />
                 </PublicLayout>
               }
             />
