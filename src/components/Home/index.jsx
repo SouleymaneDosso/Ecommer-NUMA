@@ -10,9 +10,9 @@ import {
   FaChevronLeft,
   FaChevronRight,
   FaStar,
+  FaWhatsapp,
 } from "react-icons/fa";
 import { ThemeContext } from "../../Utils/Context";
-
 
 /* =========================================================
    HELPER — PRÉCOMMANDE
@@ -44,6 +44,65 @@ const fadeUp = keyframes`
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+`;
+
+const WhatsAppButton = styled.a`
+  position: fixed;
+
+  right: 24px;
+  bottom: 24px;
+
+  z-index: 9999;
+
+  width: 60px;
+  height: 60px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #25d366;
+  color: white;
+
+  text-decoration: none;
+
+  box-shadow:
+    0 8px 25px rgba(0, 0, 0, 0.2),
+    0 0 0 0 rgba(37, 211, 102, 0.5);
+
+  animation: ${candyPulse} 2.5s infinite;
+
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+
+  &:hover {
+    transform: scale(1.1);
+
+    box-shadow:
+      0 12px 30px rgba(0, 0, 0, 0.25),
+      0 0 25px rgba(37, 211, 102, 0.35);
+  }
+
+  svg {
+    width: 30px;
+    height: 30px;
+  }
+
+  @media (max-width: 600px) {
+    right: 16px;
+    bottom: 16px;
+
+    width: 54px;
+    height: 54px;
+
+    svg {
+      width: 27px;
+      height: 27px;
+    }
   }
 `;
 
@@ -1623,7 +1682,6 @@ export default function HomePremium() {
 
   const duration = 4200;
 
-
   /* =======================================================
      VIDEO CONTROLS
   ======================================================= */
@@ -2437,6 +2495,14 @@ export default function HomePremium() {
           </Container>
         </RevealOnScroll>
       </Section>
+      <WhatsAppButton
+        href="https://wa.me/2250700247693"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Contacter Numa sur WhatsApp"
+      >
+        <FaWhatsapp />
+      </WhatsAppButton>
     </Wrapper>
   );
 }
