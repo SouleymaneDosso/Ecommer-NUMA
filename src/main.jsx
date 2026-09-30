@@ -61,6 +61,7 @@ import Precommande from "./pages/Precommande";
 import ReceptionPrecommande from "./pages/ReceptionPrecommande";
 import { trackPage } from "./Utils/visitorTracking";
 import AdminStatistiques from "./pages/AdminStatistiques";
+import Conversation from "./pages/Conversation";
 
 const VisitorTracking = () => {
   const location = useLocation();
@@ -172,6 +173,15 @@ createRoot(document.getElementById("root")).render(
               element={
                 <PublicLayout>
                   <Promo />
+                </PublicLayout>
+              }
+            />
+
+            <Route
+              path="/conversation/:commandeId"
+              element={
+                <PublicLayout>
+                  <Conversation />
                 </PublicLayout>
               }
             />
