@@ -1168,56 +1168,61 @@ export default function SuiviCommande() {
 
           <SideColumn>
             {/* LIVREUR */}
-            {/* {livreurDisponible && ( */}
-            <DriverCard>
-              <DriverCardHeader>
-                <DriverLabel>VOTRE LIVREUR</DriverLabel>
 
-                <OnlineBadge>
-                  <LiveDot />
-                  EN LIGNE
-                </OnlineBadge>
-              </DriverCardHeader>
+            {livreurDisponible && (
+              <DriverCard>
+                <DriverCardHeader>
+                  <DriverLabel>VOTRE LIVREUR</DriverLabel>
 
-              <DriverMain>
-                <DriverAvatar>
-                  {livreur.username?.charAt(0)?.toUpperCase() || "L"}
-                </DriverAvatar>
+                  <OnlineBadge>
+                    <LiveDot />
+                    EN LIGNE
+                  </OnlineBadge>
+                </DriverCardHeader>
 
-                <DriverIdentity>
-                  <DriverName>{livreur.username}</DriverName>
+                <DriverMain>
+                  <DriverAvatar>
+                    {livreur.username?.charAt(0)?.toUpperCase() || "L"}
+                  </DriverAvatar>
 
-                  <DriverRole>Livreur partenaire</DriverRole>
+                  <DriverIdentity>
+                    <DriverName>{livreur.username}</DriverName>
 
-                  {positionLivreur && (
-                    <DriverLocation>
-                      <FaLocationArrow />
-                      Position active
-                    </DriverLocation>
+                    <DriverRole>Livreur partenaire</DriverRole>
+
+                    {positionLivreur && (
+                      <DriverLocation>
+                        <FaLocationArrow />
+                        Position active
+                      </DriverLocation>
+                    )}
+                  </DriverIdentity>
+                </DriverMain>
+
+                <DriverActions>
+                  {livreur.telephone && (
+                    <DriverAction as="a" href={`tel:${livreur.telephone}`}>
+                      <FaPhone />
+
+                      <span>Appeler</span>
+                    </DriverAction>
                   )}
-                </DriverIdentity>
-              </DriverMain>
 
-              <DriverActions>
-                {livreur.telephone && (
-                  <DriverAction as="a" href={`tel:${livreur.telephone}`}>
-                    <FaPhone />
+                  <DriverAction
+                    onClick={() =>
+                      navigate(`/conversation/${currentCommandeId}`)
+                    }
+                  >
+                    <FaComments />
 
-                    <span>Appeler</span>
+                    <span>Discuter</span>
                   </DriverAction>
-                )}
+                </DriverActions>
+              </DriverCard>
+            )}
 
-                <DriverAction
-                  onClick={() => navigate(`/conversation/${currentCommandeId}`)}
-                >
-                  <FaComments />
-
-                  <span>Discuter</span>
-                </DriverAction>
-              </DriverActions>
-            </DriverCard>
-            // )}
             {/* DESTINATION */}
+
             <DestinationCard>
               <DestinationIcon>
                 <FaMapMarkerAlt />
@@ -1235,7 +1240,9 @@ export default function SuiviCommande() {
                 )}
               </div>
             </DestinationCard>
+
             {/* SÉCURITÉ */}
+
             <SecurityCard>
               <SecurityIcon>
                 <FaShieldAlt />
@@ -1250,7 +1257,9 @@ export default function SuiviCommande() {
                 </SecurityText>
               </div>
             </SecurityCard>
+
             {/* TEMPS RÉEL */}
+
             <RealtimeCard>
               <RealtimeIcon>
                 <FaClock />
