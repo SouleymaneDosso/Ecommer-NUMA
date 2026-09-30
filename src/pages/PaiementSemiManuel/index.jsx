@@ -357,10 +357,7 @@ export default function PaiementSemiManuel() {
           </Line>
         ))}
 
-        <Line>
-          <span>Frais de livraison</span>
-          <span>{(commande.fraisLivraison || 0).toLocaleString()} FCFA</span>
-        </Line>
+       
 
         <Line>
           <strong>Total</strong>
