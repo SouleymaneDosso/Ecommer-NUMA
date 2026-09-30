@@ -417,6 +417,8 @@ export default function SuiviCommande() {
 
         if (commandeData.livraison?.livreur) {
           setLivreur(commandeData.livraison.livreur);
+        } else {
+          setLivreur(null);
         }
 
         // ==============================================
