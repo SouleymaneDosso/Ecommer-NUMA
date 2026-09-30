@@ -1,294 +1,256 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import {
-  FaArrowLeft,
-  FaCheck,
-  FaCheckDouble,
-  FaPaperPlane,
-  FaTrash,
-  FaUser,
-  FaMotorcycle,
-  FaCircle,
-} from "react-icons/fa";
-
-import styled from "styled-components";
-
-export default function Conversation() {
-  // =====================================================
-  // PARAMÈTRES
-  // =====================================================
-
-  // IMPORTANT :
-  // L'URL contient le COMMANDE ID.
-  //
-  // Exemple :
-  // /conversation/66f123456789
-  //
-  // Ce n'est qu'après que le backend nous donne
-  // le vrai conversationId.
+export default function Conversation({ role = "client" }) {
+  const navigate = useNavigate();
   const { commandeId } = useParams();
 
-  const navigate = useNavigate();
+  const API_URL = import.meta.env.VITE_API_URL || "";
 
-  const API_URL = import.meta.env.VITE_API_URL;
+  // =====================================================
+  // AUTHENTIFICATION
+  // =====================================================
 
-  const messagesEndRef = useRef(null);
-  const textareaRef = useRef(null);
+  const typeUtilisateur = role === "livreur" ? "livreur" : "client";
+
+  const tokenKey = typeUtilisateur === "livreur" ? "tokenLivreur" : "token";
+
+  const token = localStorage.getItem(tokenKey);
 
   // =====================================================
   // ÉTATS
   // =====================================================
 
   const [conversation, setConversation] = useState(null);
-
   const [messages, setMessages] = useState([]);
 
-  const [message, setMessage] = useState("");
+  const [nouveauMessage, setNouveauMessage] = useState("");
 
   const [loading, setLoading] = useState(true);
-
   const [envoiEnCours, setEnvoiEnCours] = useState(false);
 
   const [erreur, setErreur] = useState("");
+  const [messageInfo, setMessageInfo] = useState("");
 
   const [suppressionEnCours, setSuppressionEnCours] = useState(null);
 
   // =====================================================
-  // IDENTITÉ CLIENT
+  // IDENTITÉ DE L'UTILISATEUR
   // =====================================================
 
-  const utilisateur = useMemo(() => {
-    const token = localStorage.getItem("token");
-
+  const utilisateurConnecte = useMemo(() => {
     if (!token) {
       return null;
     }
 
     try {
-      const payload = JSON.parse(
-        atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")),
-      );
+      const parties = token.split(".");
+
+      if (parties.length !== 3) {
+        return null;
+      }
+
+      const base64 = parties[1].replace(/-/g, "+").replace(/_/g, "/");
+
+      const payload = JSON.parse(atob(base64));
+
+      if (!payload.userId) {
+        return null;
+      }
 
       return {
         id: payload.userId,
-        type: "client",
+        type: typeUtilisateur,
       };
     } catch (error) {
-      console.error("Erreur lecture token client :", error);
-
+      console.error("Erreur lecture token :", error);
       return null;
     }
-  }, []);
+  }, [token, typeUtilisateur]);
 
   // =====================================================
-  // IDENTITÉ LIVREUR
+  // UTILITAIRE FETCH
   // =====================================================
 
-  const livreurUtilisateur = useMemo(() => {
-    const token = localStorage.getItem("tokenLivreur");
+  const fetchAPI = useCallback(
+    async (url, options = {}) => {
+      if (!token) {
+        throw new Error("Token d'authentification manquant.");
+      }
 
-    if (!token) {
-      return null;
-    }
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          ...(options.headers || {}),
+        },
+      });
 
-    try {
-      const payload = JSON.parse(
-        atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")),
-      );
+      let data = null;
 
-      return {
-        id: payload.userId,
-        type: "livreur",
-      };
-    } catch (error) {
-      console.error("Erreur lecture token livreur :", error);
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
 
-      return null;
-    }
-  }, []);
+      if (!response.ok) {
+        throw new Error(data?.message || `Erreur HTTP ${response.status}`);
+      }
 
-  // =====================================================
-  // UTILISATEUR CONNECTÉ
-  // =====================================================
-
-  const utilisateurConnecte = utilisateur || livreurUtilisateur;
-
-  // =====================================================
-  // MON MESSAGE ?
-  // =====================================================
-
-  const estMonMessage = (msg) => {
-    if (!utilisateurConnecte) {
-      return false;
-    }
-
-    return (
-      msg.expediteur?.type === utilisateurConnecte.type &&
-      msg.expediteur?.id?.toString() === utilisateurConnecte.id?.toString()
-    );
-  };
+      return data;
+    },
+    [token],
+  );
 
   // =====================================================
-  // TYPE DU CORRESPONDANT
+  // CRÉER / RÉCUPÉRER LA CONVERSATION
   // =====================================================
 
-  const typeCorrespondant =
-    utilisateurConnecte?.type === "client" ? "livreur" : "client";
-
-  // =====================================================
-  // RÉCUPÉRER LE TOKEN
-  // =====================================================
-
-  const recupererToken = () => {
-    const tokenClient = localStorage.getItem("token");
-
-    const tokenLivreur = localStorage.getItem("tokenLivreur");
-
-    return tokenClient || tokenLivreur;
-  };
-
-  // =====================================================
-  // CHARGER / CRÉER LA CONVERSATION
-  // =====================================================
-
-  useEffect(() => {
+  const chargerConversation = useCallback(async () => {
     if (!commandeId) {
       setErreur("Identifiant de commande manquant.");
-
       setLoading(false);
-
       return;
     }
 
-    const chargerConversation = async () => {
+    if (!token) {
+      setErreur(
+        typeUtilisateur === "livreur"
+          ? "Vous devez être connecté en tant que livreur."
+          : "Vous devez être connecté en tant que client.",
+      );
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setErreur("");
+
+      const data = await fetchAPI(`${API_URL}/api/conversations`, {
+        method: "POST",
+        body: JSON.stringify({
+          commandeId,
+        }),
+      });
+
+      if (!data?.conversation?._id) {
+        throw new Error(
+          "La conversation n'a pas été retournée par le serveur.",
+        );
+      }
+
+      setConversation(data.conversation);
+
+      return data.conversation;
+    } catch (error) {
+      console.error("ERREUR CHARGEMENT CONVERSATION :", error);
+
+      setErreur(error.message || "Impossible de charger la conversation.");
+
+      return null;
+    }
+  }, [API_URL, commandeId, fetchAPI, token, typeUtilisateur]);
+
+  // =====================================================
+  // RÉCUPÉRER LES MESSAGES
+  // =====================================================
+
+  const chargerMessages = useCallback(
+    async (conversationId, afficherErreur = true) => {
+      if (!conversationId) {
+        return;
+      }
+
       try {
-        setLoading(true);
-
-        setErreur("");
-
-        const token = recupererToken();
-
-        if (!token) {
-          navigate("/login");
-          return;
-        }
-
-        if (!API_URL) {
-          throw new Error("VITE_API_URL n'est pas configuré.");
-        }
-
-        // =================================================
-        // 1. RÉCUPÉRER OU CRÉER LA CONVERSATION
-        // =================================================
-
-        console.log("CHAT - commandeId :", commandeId);
-
-        const conversationResponse = await fetch(
-          `${API_URL}/api/conversations`,
+        const data = await fetchAPI(
+          `${API_URL}/api/conversations/${conversationId}/messages`,
           {
-            method: "POST",
-
-            headers: {
-              "Content-Type": "application/json",
-
-              Authorization: `Bearer ${token}`,
-            },
-
-            body: JSON.stringify({
-              commandeId,
-            }),
+            method: "GET",
           },
         );
 
-        const conversationData = await conversationResponse
-          .json()
-          .catch(() => ({}));
+        setMessages(data?.messages || []);
 
-        console.log("CHAT - réponse conversation :", conversationData);
+        return data?.messages || [];
+      } catch (error) {
+        console.error("ERREUR CHARGEMENT MESSAGES :", error);
 
-        if (!conversationResponse.ok) {
-          throw new Error(
-            conversationData.message ||
-              "Impossible de créer ou récupérer la conversation.",
-          );
+        if (afficherErreur) {
+          setErreur(error.message || "Impossible de récupérer les messages.");
         }
 
-        const conversationRecuperee = conversationData.conversation;
+        return null;
+      }
+    },
+    [API_URL, fetchAPI],
+  );
 
-        if (!conversationRecuperee?._id) {
-          throw new Error(
-            "Le serveur n'a pas retourné l'identifiant de la conversation.",
-          );
-        }
+  // =====================================================
+  // MARQUER LES MESSAGES COMME LUS
+  // =====================================================
 
-        setConversation(conversationRecuperee);
+  const marquerMessagesCommeLus = useCallback(
+    async (conversationId) => {
+      if (!conversationId) {
+        return;
+      }
 
-        const vraiConversationId = conversationRecuperee._id;
-
-        console.log("CHAT - conversationId :", vraiConversationId);
-
-        // =================================================
-        // 2. RÉCUPÉRER LES MESSAGES
-        // =================================================
-
-        const messagesResponse = await fetch(
-          `${API_URL}/api/conversations/${vraiConversationId}/messages`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
-
-        const messagesData = await messagesResponse.json().catch(() => ({}));
-
-        if (!messagesResponse.ok) {
-          throw new Error(
-            messagesData.message || "Impossible de récupérer les messages.",
-          );
-        }
-
-        setMessages(messagesData.messages || []);
-
-        // =================================================
-        // 3. MARQUER LES MESSAGES COMME LUS
-        // =================================================
-
-        await fetch(
-          `${API_URL}/api/conversations/${vraiConversationId}/messages/read`,
+      try {
+        await fetchAPI(
+          `${API_URL}/api/conversations/${conversationId}/messages/read`,
           {
             method: "PATCH",
-
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
           },
         );
       } catch (error) {
-        console.error("CHARGEMENT CONVERSATION ERROR :", error);
+        console.error("ERREUR MARQUAGE MESSAGES LUS :", error);
+      }
+    },
+    [API_URL, fetchAPI],
+  );
 
-        setErreur(error.message || "Impossible de charger la conversation.");
-      } finally {
+  // =====================================================
+  // INITIALISATION
+  // =====================================================
+
+  useEffect(() => {
+    let actif = true;
+
+    const initialiser = async () => {
+      setLoading(true);
+      setErreur("");
+
+      const conversationChargee = await chargerConversation();
+
+      if (!actif) {
+        return;
+      }
+
+      if (!conversationChargee?._id) {
+        setLoading(false);
+        return;
+      }
+
+      await chargerMessages(conversationChargee._id, true);
+
+      await marquerMessagesCommeLus(conversationChargee._id);
+
+      if (actif) {
         setLoading(false);
       }
     };
 
-    chargerConversation();
-  }, [API_URL, commandeId, navigate]);
+    initialiser();
+
+    return () => {
+      actif = false;
+    };
+  }, [chargerConversation, chargerMessages, marquerMessagesCommeLus]);
 
   // =====================================================
-  // SCROLL AUTOMATIQUE
-  // =====================================================
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({
-      behavior: "smooth",
-    });
-  }, [messages]);
-
-  // =====================================================
-  // RAFRAÎCHISSEMENT DES MESSAGES
+  // ACTUALISATION DES MESSAGES
   // =====================================================
 
   useEffect(() => {
@@ -297,114 +259,77 @@ export default function Conversation() {
     }
 
     const interval = setInterval(async () => {
-      try {
-        const token = recupererToken();
+      await chargerMessages(conversation._id, false);
 
-        if (!token) {
-          return;
-        }
-
-        const response = await fetch(
-          `${API_URL}/api/conversations/${conversation._id}/messages`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
-
-        if (!response.ok) {
-          return;
-        }
-
-        const data = await response.json();
-
-        setMessages(data.messages || []);
-      } catch (error) {
-        console.error("REFRESH CHAT ERROR :", error);
-      }
+      await marquerMessagesCommeLus(conversation._id);
     }, 5000);
 
     return () => {
       clearInterval(interval);
     };
-  }, [API_URL, conversation?._id]);
+  }, [conversation?._id, chargerMessages, marquerMessagesCommeLus]);
 
   // =====================================================
-  // ENVOYER MESSAGE
+  // ENVOYER UN MESSAGE
   // =====================================================
 
   const envoyerMessage = async (event) => {
     event?.preventDefault();
 
-    const texte = message.trim();
+    const texte = nouveauMessage.trim();
 
     if (!texte) {
       return;
     }
 
-    if (envoiEnCours) {
+    if (!conversation?._id) {
+      setErreur("Conversation introuvable.");
       return;
     }
 
-    if (!conversation?._id) {
-      setErreur("Conversation introuvable.");
-
+    if (texte.length > 1000) {
+      setErreur("Le message ne peut pas dépasser 1000 caractères.");
       return;
     }
 
     try {
       setEnvoiEnCours(true);
-
       setErreur("");
+      setMessageInfo("");
 
-      const token = recupererToken();
-
-      if (!token) {
-        navigate("/login");
-        return;
-      }
-
-      const response = await fetch(
+      const data = await fetchAPI(
         `${API_URL}/api/conversations/${conversation._id}/messages`,
         {
           method: "POST",
-
-          headers: {
-            "Content-Type": "application/json",
-
-            Authorization: `Bearer ${token}`,
-          },
-
           body: JSON.stringify({
             message: texte,
           }),
         },
       );
 
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        throw new Error(data.message || "Impossible d'envoyer le message.");
+      if (data?.nouveauMessage) {
+        setMessages((anciensMessages) => [
+          ...anciensMessages,
+          data.nouveauMessage,
+        ]);
+      } else {
+        await chargerMessages(conversation._id, false);
       }
 
-      // =================================================
-      // AJOUT DU NOUVEAU MESSAGE
-      // =================================================
+      setConversation((ancienneConversation) => {
+        if (!ancienneConversation) {
+          return ancienneConversation;
+        }
 
-      if (data.nouveauMessage) {
-        setMessages((prev) => [...prev, data.nouveauMessage]);
-      } else if (data.conversation) {
-        setConversation(data.conversation);
+        return {
+          ...ancienneConversation,
+          derniermessage: texte,
+        };
+      });
 
-        setMessages(data.conversation.messages || []);
-      }
-
-      setMessage("");
-
-      textareaRef.current?.focus();
+      setNouveauMessage("");
     } catch (error) {
-      console.error("ENVOYER MESSAGE ERROR :", error);
+      console.error("ERREUR ENVOI MESSAGE :", error);
 
       setErreur(error.message || "Impossible d'envoyer le message.");
     } finally {
@@ -413,50 +338,35 @@ export default function Conversation() {
   };
 
   // =====================================================
-  // SUPPRIMER MESSAGE
+  // SUPPRIMER UN MESSAGE
   // =====================================================
 
   const supprimerMessage = async (messageId) => {
-    if (suppressionEnCours || !conversation?._id) {
+    if (!conversation?._id || !messageId) {
       return;
     }
 
     try {
       setSuppressionEnCours(messageId);
-
       setErreur("");
 
-      const token = recupererToken();
-
-      if (!token) {
-        navigate("/login");
-        return;
-      }
-
-      const response = await fetch(
+      const data = await fetchAPI(
         `${API_URL}/api/conversations/${conversation._id}/messages/${messageId}`,
         {
           method: "DELETE",
-
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
         },
       );
 
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        throw new Error(data.message || "Impossible de supprimer le message.");
-      }
-
-      if (data.conversation) {
+      if (data?.conversation) {
         setConversation(data.conversation);
-
         setMessages(data.conversation.messages || []);
+      } else {
+        await chargerMessages(conversation._id, false);
       }
+
+      setMessageInfo("Message supprimé.");
     } catch (error) {
-      console.error("SUPPRIMER MESSAGE ERROR :", error);
+      console.error("ERREUR SUPPRESSION MESSAGE :", error);
 
       setErreur(error.message || "Impossible de supprimer le message.");
     } finally {
@@ -465,30 +375,53 @@ export default function Conversation() {
   };
 
   // =====================================================
-  // FORMATER HEURE
+  // DÉTERMINER SI LE MESSAGE APPARTIENT À L'UTILISATEUR
   // =====================================================
 
-  const formaterHeure = (date) => {
+  const estMonMessage = (message) => {
+    if (!message?.expediteur || !utilisateurConnecte) {
+      return false;
+    }
+
+    return (
+      message.expediteur.type === utilisateurConnecte.type &&
+      String(message.expediteur.id) === String(utilisateurConnecte.id)
+    );
+  };
+
+  // =====================================================
+  // FORMAT DATE
+  // =====================================================
+
+  const formaterDate = (date) => {
     if (!date) {
       return "";
     }
 
-    return new Date(date).toLocaleTimeString("fr-FR", {
+    const dateObj = new Date(date);
+
+    if (Number.isNaN(dateObj.getTime())) {
+      return "";
+    }
+
+    return dateObj.toLocaleTimeString("fr-FR", {
       hour: "2-digit",
       minute: "2-digit",
     });
   };
 
-  // =====================================================
-  // FORMATER DATE
-  // =====================================================
-
-  const formaterDateComplete = (date) => {
+  const formaterJour = (date) => {
     if (!date) {
       return "";
     }
 
-    return new Date(date).toLocaleDateString("fr-FR", {
+    const dateObj = new Date(date);
+
+    if (Number.isNaN(dateObj.getTime())) {
+      return "";
+    }
+
+    return dateObj.toLocaleDateString("fr-FR", {
       day: "2-digit",
       month: "long",
       year: "numeric",
@@ -496,918 +429,449 @@ export default function Conversation() {
   };
 
   // =====================================================
-  // GROUPER LES MESSAGES PAR DATE
+  // REGROUPER LES MESSAGES PAR JOUR
   // =====================================================
 
-  const messagesAvecSeparateurs = useMemo(() => {
-    let derniereDate = null;
+  const messagesAvecSeparateurs = [];
 
-    return messages.map((msg) => {
-      const dateMessage = new Date(msg.date);
+  let dernierJour = null;
 
-      const cleDate = dateMessage.toLocaleDateString("fr-FR");
+  messages.forEach((message) => {
+    const jour = new Date(message.date).toLocaleDateString("fr-FR");
 
-      const nouveauJour = cleDate !== derniereDate;
+    if (jour !== dernierJour) {
+      messagesAvecSeparateurs.push({
+        type: "date",
+        id: `date-${jour}`,
+        date: message.date,
+      });
 
-      derniereDate = cleDate;
+      dernierJour = jour;
+    }
 
-      return {
-        ...msg,
-        nouveauJour,
-        cleDate,
-      };
+    messagesAvecSeparateurs.push({
+      type: "message",
+      ...message,
     });
-  }, [messages]);
+  });
 
   // =====================================================
-  // NOMBRE DE MESSAGES NON LUS
-  // =====================================================
-
-  const nombreNonLus = messages.filter(
-    (msg) => !estMonMessage(msg) && msg.lu === false,
-  ).length;
-
-  // =====================================================
-  // LOADING
+  // RETOUR
   // =====================================================
 
   if (loading) {
     return (
-      <Page>
-        <LoadingScreen>
-          <LoadingSpinner />
-
-          <LoadingText>Chargement de la conversation...</LoadingText>
-        </LoadingScreen>
-      </Page>
+      <div style={styles.page}>
+        <div style={styles.centerMessage}>Chargement de la conversation...</div>
+      </div>
     );
   }
-
-  // =====================================================
-  // ERREUR
-  // =====================================================
-
-  if (erreur && !messages.length) {
-    return (
-      <Page>
-        <ErrorBox>
-          <ErrorIcon>!</ErrorIcon>
-
-          <h2>Impossible d'ouvrir le chat</h2>
-
-          <p>{erreur}</p>
-
-          <BackButton onClick={() => navigate(-1)}>
-            <FaArrowLeft />
-            Retour
-          </BackButton>
-        </ErrorBox>
-      </Page>
-    );
-  }
-
-  // =====================================================
-  // RENDU
-  // =====================================================
 
   return (
-    <Page>
-      <ChatContainer>
-        {/* =================================================
-            HEADER
-        ================================================= */}
+    <div style={styles.page}>
+      <div style={styles.container}>
+        {/* ================================================= */}
+        {/* HEADER */}
+        {/* ================================================= */}
 
-        <ChatHeader>
-          <BackButton onClick={() => navigate(-1)} title="Retour">
-            <FaArrowLeft />
-          </BackButton>
-
-          <Avatar $type={typeCorrespondant}>
-            {typeCorrespondant === "livreur" ? <FaMotorcycle /> : <FaUser />}
-          </Avatar>
-
-          <HeaderInfo>
-            <ChatTitle>
-              {typeCorrespondant === "livreur" ? "Votre livreur" : "Client"}
-            </ChatTitle>
-
-            <ChatStatus>
-              <StatusDot />
-
-              <span>
-                {nombreNonLus > 0
-                  ? `${nombreNonLus} nouveau${
-                      nombreNonLus > 1 ? "x" : ""
-                    } message${nombreNonLus > 1 ? "s" : ""}`
-                  : "Conversation"}
-              </span>
-            </ChatStatus>
-          </HeaderInfo>
-
-          <HeaderRight>
-            <CommandeBadge>
-              Commande #{commandeId?.slice(-8).toUpperCase()}
-            </CommandeBadge>
-          </HeaderRight>
-        </ChatHeader>
-
-        {/* =================================================
-            ERREUR NON BLOQUANTE
-        ================================================= */}
-
-        {erreur && <ErrorBanner>{erreur}</ErrorBanner>}
-
-        {/* =================================================
-            MESSAGES
-        ================================================= */}
-
-        <MessagesContainer>
-          {messages.length === 0 ? (
-            <EmptyMessages>
-              <EmptyIcon>
-                <FaPaperPlane />
-              </EmptyIcon>
-
-              <EmptyTitle>Votre conversation commence ici</EmptyTitle>
-
-              <EmptyText>
-                Envoyez un message pour contacter{" "}
-                {typeCorrespondant === "livreur"
-                  ? "votre livreur"
-                  : "le client"}
-                .
-              </EmptyText>
-            </EmptyMessages>
-          ) : (
-            <>
-              {messagesAvecSeparateurs.map((msg) => (
-                <div key={msg._id}>
-                  {/* ====================================
-                        SÉPARATEUR DE DATE
-                    ==================================== */}
-
-                  {msg.nouveauJour && (
-                    <DateSeparator>
-                      <DateLine />
-
-                      <DateLabel>{formaterDateComplete(msg.date)}</DateLabel>
-
-                      <DateLine />
-                    </DateSeparator>
-                  )}
-
-                  {/* ====================================
-                        MESSAGE
-                    ==================================== */}
-
-                  <MessageItem $mine={estMonMessage(msg)}>
-                    <MessageBubble $mine={estMonMessage(msg)}>
-                      <MessageText>{msg.message}</MessageText>
-
-                      <MessageBottom>
-                        <MessageDate>{formaterHeure(msg.date)}</MessageDate>
-
-                        {/* =================================
-                              STATUT MESSAGE
-                          ================================= */}
-
-                        {estMonMessage(msg) && (
-                          <ReadStatus $read={msg.lu}>
-                            {msg.lu ? <FaCheckDouble /> : <FaCheck />}
-                          </ReadStatus>
-                        )}
-
-                        {/* =================================
-                              SUPPRESSION
-                          ================================= */}
-
-                        {estMonMessage(msg) && (
-                          <DeleteButton
-                            type="button"
-                            onClick={() => supprimerMessage(msg._id)}
-                            disabled={suppressionEnCours === msg._id}
-                            title="Supprimer le message"
-                          >
-                            <FaTrash />
-                          </DeleteButton>
-                        )}
-                      </MessageBottom>
-                    </MessageBubble>
-                  </MessageItem>
-                </div>
-              ))}
-
-              <div ref={messagesEndRef} />
-            </>
-          )}
-        </MessagesContainer>
-
-        {/* =================================================
-            FORMULAIRE MESSAGE
-        ================================================= */}
-
-        <MessageForm onSubmit={envoyerMessage}>
-          <MessageInputWrapper>
-            <MessageInput
-              ref={textareaRef}
-              value={message}
-              onChange={(event) => setMessage(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && !event.shiftKey) {
-                  event.preventDefault();
-
-                  envoyerMessage(event);
-                }
-              }}
-              placeholder="Écrire un message..."
-              disabled={envoiEnCours}
-              maxLength={1000}
-            />
-
-            <CharacterCounter>{message.length}/1000</CharacterCounter>
-          </MessageInputWrapper>
-
-          <SendButton
-            type="submit"
-            disabled={envoiEnCours || !message.trim()}
-            title="Envoyer"
+        <header style={styles.header}>
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            style={styles.backButton}
           >
-            {envoiEnCours ? <SmallSpinner /> : <FaPaperPlane />}
-          </SendButton>
-        </MessageForm>
-      </ChatContainer>
-    </Page>
+            ←
+          </button>
+
+          <div style={styles.headerContent}>
+            <h1 style={styles.title}>Discussion</h1>
+
+            <span style={styles.role}>
+              {typeUtilisateur === "livreur" ? "Client" : "Livreur"}
+            </span>
+          </div>
+        </header>
+
+        {/* ================================================= */}
+        {/* ERREUR */}
+        {/* ================================================= */}
+
+        {erreur && <div style={styles.errorBox}>{erreur}</div>}
+
+        {/* ================================================= */}
+        {/* INFORMATION */}
+        {/* ================================================= */}
+
+        {messageInfo && <div style={styles.infoBox}>{messageInfo}</div>}
+
+        {/* ================================================= */}
+        {/* CONVERSATION */}
+        {/* ================================================= */}
+
+        <main style={styles.chatCard}>
+          {/* Messages */}
+
+          <div style={styles.messagesContainer}>
+            {messages.length === 0 ? (
+              <div style={styles.emptyMessage}>
+                <div style={styles.emptyIcon}>💬</div>
+
+                <strong>Aucun message</strong>
+
+                <span>Commencez la conversation.</span>
+              </div>
+            ) : (
+              messagesAvecSeparateurs.map((item) => {
+                if (item.type === "date") {
+                  return (
+                    <div key={item.id} style={styles.dateSeparator}>
+                      <span>{formaterJour(item.date)}</span>
+                    </div>
+                  );
+                }
+
+                const monMessage = estMonMessage(item);
+
+                return (
+                  <div
+                    key={item._id}
+                    style={{
+                      ...styles.messageRow,
+                      justifyContent: monMessage ? "flex-end" : "flex-start",
+                    }}
+                  >
+                    <div
+                      style={{
+                        ...styles.messageWrapper,
+                        alignItems: monMessage ? "flex-end" : "flex-start",
+                      }}
+                    >
+                      <div
+                        style={{
+                          ...styles.bubble,
+                          ...(monMessage
+                            ? styles.myBubble
+                            : styles.otherBubble),
+                        }}
+                      >
+                        <div style={styles.messageText}>{item.message}</div>
+
+                        <div
+                          style={{
+                            ...styles.messageMeta,
+                            ...(monMessage ? styles.myMeta : {}),
+                          }}
+                        >
+                          <span>{formaterDate(item.date)}</span>
+
+                          {monMessage && <span>{item.lu ? "✓✓" : "✓"}</span>}
+                        </div>
+                      </div>
+
+                      {monMessage && (
+                        <button
+                          type="button"
+                          onClick={() => supprimerMessage(item._id)}
+                          disabled={suppressionEnCours === item._id}
+                          style={styles.deleteButton}
+                        >
+                          {suppressionEnCours === item._id
+                            ? "Suppression..."
+                            : "Supprimer"}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* ================================================= */}
+          {/* FORMULAIRE */}
+          {/* ================================================= */}
+
+          <form onSubmit={envoyerMessage} style={styles.form}>
+            <div style={styles.inputWrapper}>
+              <textarea
+                value={nouveauMessage}
+                onChange={(event) => setNouveauMessage(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && !event.shiftKey) {
+                    event.preventDefault();
+                    envoyerMessage(event);
+                  }
+                }}
+                placeholder="Écrire un message..."
+                maxLength={1000}
+                rows={1}
+                disabled={envoiEnCours}
+                style={styles.textarea}
+              />
+
+              <div style={styles.counter}>{nouveauMessage.length}/1000</div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={envoiEnCours || !nouveauMessage.trim() || !conversation}
+              style={{
+                ...styles.sendButton,
+                ...(envoiEnCours || !nouveauMessage.trim() || !conversation
+                  ? styles.sendButtonDisabled
+                  : {}),
+              }}
+            >
+              {envoiEnCours ? "..." : "Envoyer"}
+            </button>
+          </form>
+        </main>
+      </div>
+    </div>
   );
 }
 
 // =====================================================
-// PAGE
+// STYLES
 // =====================================================
 
-const Page = styled.div`
-  min-height: 100vh;
-
-  background:
-    radial-gradient(
-      circle at top left,
-      rgba(17, 17, 17, 0.04),
-      transparent 35%
-    ),
-    #f3f4f6;
-
-  display: flex;
-  justify-content: center;
-`;
-
-// =====================================================
-// CONTAINER
-// =====================================================
-
-const ChatContainer = styled.div`
-  width: 100%;
-  max-width: 1050px;
-
-  height: 100vh;
-  height: 100dvh;
-
-  background: #ffffff;
-
-  display: flex;
-  flex-direction: column;
-
-  overflow: hidden;
-
-  box-shadow: 0 0 50px rgba(0, 0, 0, 0.08);
-`;
-
-// =====================================================
-// HEADER
-// =====================================================
-
-const ChatHeader = styled.header`
-  min-height: 78px;
-
-  padding: 0 22px;
-
-  display: flex;
-  align-items: center;
-
-  gap: 13px;
-
-  background: #ffffff;
-
-  border-bottom: 1px solid #ececef;
-
-  z-index: 10;
-`;
-
-const BackButton = styled.button`
-  width: 42px;
-  height: 42px;
-
-  flex-shrink: 0;
-
-  border: 1px solid #e5e5e8;
-
-  border-radius: 13px;
-
-  background: #ffffff;
-
-  color: #171717;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  cursor: pointer;
-
-  transition: 0.2s;
-
-  &:hover {
-    background: #f5f5f6;
-
-    transform: translateX(-2px);
-  }
-`;
-
-const Avatar = styled.div`
-  width: 45px;
-  height: 45px;
-
-  flex-shrink: 0;
-
-  border-radius: 50%;
-
-  background: #111111;
-
-  color: white;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  font-size: 17px;
-`;
-
-const HeaderInfo = styled.div`
-  min-width: 0;
-
-  display: flex;
-  flex-direction: column;
-
-  gap: 4px;
-`;
-
-const ChatTitle = styled.div`
-  font-size: 15px;
-
-  font-weight: 800;
-
-  color: #151515;
-`;
-
-const ChatStatus = styled.div`
-  display: flex;
-  align-items: center;
-
-  gap: 5px;
-
-  color: #8a8a8f;
-
-  font-size: 10px;
-`;
-
-const StatusDot = styled(FaCircle)`
-  color: #25b56f;
-
-  font-size: 7px;
-`;
-
-const HeaderRight = styled.div`
-  margin-left: auto;
-
-  display: flex;
-  align-items: center;
-
-  @media (max-width: 650px) {
-    display: none;
-  }
-`;
-
-const CommandeBadge = styled.div`
-  padding: 8px 11px;
-
-  border-radius: 10px;
-
-  background: #f5f5f6;
-
-  color: #777;
-
-  font-size: 9px;
-
-  font-weight: 700;
-
-  letter-spacing: 0.3px;
-`;
-
-// =====================================================
-// ERROR
-// =====================================================
-
-const ErrorBanner = styled.div`
-  padding: 9px 18px;
-
-  background: #fff1f1;
-
-  color: #c53535;
-
-  border-bottom: 1px solid #ffdada;
-
-  font-size: 11px;
-
-  text-align: center;
-`;
-
-// =====================================================
-// MESSAGES
-// =====================================================
-
-const MessagesContainer = styled.main`
-  flex: 1;
-
-  overflow-y: auto;
-
-  padding: 25px clamp(14px, 4vw, 45px);
-
-  background: linear-gradient(
-    rgba(248, 249, 250, 0.96),
-    rgba(248, 249, 250, 0.96)
-  );
-
-  scroll-behavior: smooth;
-
-  scrollbar-width: thin;
-
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: #d4d4d7;
-
-    border-radius: 20px;
-  }
-`;
-
-// =====================================================
-// DATE
-// =====================================================
-
-const DateSeparator = styled.div`
-  display: flex;
-
-  align-items: center;
-
-  gap: 12px;
-
-  margin: 12px 0 20px;
-`;
-
-const DateLine = styled.div`
-  flex: 1;
-
-  height: 1px;
-
-  background: #e1e1e4;
-`;
-
-const DateLabel = styled.span`
-  flex-shrink: 0;
-
-  padding: 5px 9px;
-
-  border-radius: 20px;
-
-  background: #e8e8eb;
-
-  color: #777;
-
-  font-size: 9px;
-
-  font-weight: 700;
-`;
-
-// =====================================================
-// MESSAGE
-// =====================================================
-
-const MessageItem = styled.div`
-  display: flex;
-
-  justify-content: ${({ $mine }) => ($mine ? "flex-end" : "flex-start")};
-
-  margin-bottom: 8px;
-`;
-
-const MessageBubble = styled.div`
-  position: relative;
-
-  max-width: min(72%, 570px);
-
-  padding: 10px 12px 8px;
-
-  border-radius: ${({ $mine }) =>
-    $mine ? "18px 18px 5px 18px" : "18px 18px 18px 5px"};
-
-  background: ${({ $mine }) => ($mine ? "#111111" : "#ffffff")};
-
-  color: ${({ $mine }) => ($mine ? "#ffffff" : "#171717")};
-
-  border: ${({ $mine }) => ($mine ? "none" : "1px solid #e7e7e9")};
-
-  box-shadow: ${({ $mine }) =>
-    $mine ? "0 5px 15px rgba(0,0,0,0.12)" : "0 3px 12px rgba(0,0,0,0.035)"};
-
-  transition: transform 0.15s;
-
-  &:hover {
-    transform: translateY(-1px);
-  }
-
-  @media (max-width: 600px) {
-    max-width: 82%;
-  }
-`;
-
-const MessageText = styled.div`
-  font-size: 13px;
-
-  line-height: 1.55;
-
-  white-space: pre-wrap;
-
-  overflow-wrap: anywhere;
-`;
-
-const MessageBottom = styled.div`
-  margin-top: 5px;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: flex-end;
-
-  gap: 7px;
-`;
-
-const MessageDate = styled.span`
-  font-size: 8px;
-
-  opacity: 0.55;
-`;
-
-const ReadStatus = styled.span`
-  display: flex;
-
-  align-items: center;
-
-  color: ${({ $read }) => ($read ? "#4da3ff" : "currentColor")};
-
-  opacity: ${({ $read }) => ($read ? 1 : 0.55)};
-
-  font-size: 9px;
-`;
-
-const DeleteButton = styled.button`
-  padding: 2px;
-
-  border: 0;
-
-  background: transparent;
-
-  color: inherit;
-
-  opacity: 0.4;
-
-  cursor: pointer;
-
-  font-size: 9px;
-
-  transition: 0.2s;
-
-  &:hover {
-    opacity: 1;
-  }
-
-  &:disabled {
-    cursor: wait;
-
-    opacity: 0.2;
-  }
-`;
-
-// =====================================================
-// EMPTY
-// =====================================================
-
-const EmptyMessages = styled.div`
-  min-height: 100%;
-
-  display: flex;
-
-  flex-direction: column;
-
-  align-items: center;
-
-  justify-content: center;
-
-  text-align: center;
-
-  padding: 30px;
-`;
-
-const EmptyIcon = styled.div`
-  width: 65px;
-  height: 65px;
-
-  margin-bottom: 15px;
-
-  border-radius: 50%;
-
-  background: #eeeeef;
-
-  color: #111;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  font-size: 21px;
-
-  transform: rotate(-10deg);
-`;
-
-const EmptyTitle = styled.strong`
-  color: #222;
-
-  font-size: 14px;
-`;
-
-const EmptyText = styled.span`
-  margin-top: 6px;
-
-  color: #999;
-
-  font-size: 11px;
-`;
-
-// =====================================================
-// FORMULAIRE
-// =====================================================
-
-const MessageForm = styled.form`
-  min-height: 78px;
-
-  padding: 12px 18px;
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 10px;
-
-  background: #ffffff;
-
-  border-top: 1px solid #e8e8ea;
-
-  box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.025);
-`;
-
-const MessageInputWrapper = styled.div`
-  position: relative;
-
-  flex: 1;
-`;
-
-const MessageInput = styled.textarea`
-  width: 100%;
-
-  min-height: 46px;
-  max-height: 120px;
-
-  padding: 13px 55px 13px 15px;
-
-  resize: none;
-
-  border: 1px solid #dedee1;
-
-  border-radius: 15px;
-
-  outline: none;
-
-  background: #fafafa;
-
-  color: #151515;
-
-  font-family: inherit;
-
-  font-size: 13px;
-
-  line-height: 1.4;
-
-  transition: 0.2s;
-
-  box-sizing: border-box;
-
-  &:focus {
-    border-color: #111;
-
-    background: #ffffff;
-
-    box-shadow: 0 0 0 3px rgba(17, 17, 17, 0.06);
-  }
-
-  &:disabled {
-    opacity: 0.6;
-  }
-`;
-
-const CharacterCounter = styled.span`
-  position: absolute;
-
-  right: 12px;
-
-  bottom: 7px;
-
-  color: #aaa;
-
-  font-size: 8px;
-
-  pointer-events: none;
-`;
-
-const SendButton = styled.button`
-  width: 47px;
-  height: 47px;
-
-  flex-shrink: 0;
-
-  border: 0;
-
-  border-radius: 14px;
-
-  background: #111111;
-
-  color: #ffffff;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  cursor: pointer;
-
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
-
-  transition:
-    transform 0.2s,
-    opacity 0.2s;
-
-  &:hover:not(:disabled) {
-    transform: translateY(-2px);
-  }
-
-  &:active:not(:disabled) {
-    transform: translateY(0);
-  }
-
-  &:disabled {
-    opacity: 0.35;
-
-    cursor: not-allowed;
-
-    box-shadow: none;
-  }
-`;
-
-// =====================================================
-// LOADING
-// =====================================================
-
-const LoadingScreen = styled.div`
-  min-height: 100vh;
-
-  display: flex;
-
-  flex-direction: column;
-
-  align-items: center;
-
-  justify-content: center;
-
-  gap: 14px;
-
-  color: #777;
-`;
-
-const LoadingSpinner = styled.div`
-  width: 28px;
-  height: 28px;
-
-  border: 3px solid #e3e3e5;
-
-  border-top-color: #111;
-
-  border-radius: 50%;
-
-  animation: spin 0.7s linear infinite;
-
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-`;
-
-const SmallSpinner = styled.div`
-  width: 15px;
-  height: 15px;
-
-  border: 2px solid rgba(255, 255, 255, 0.35);
-
-  border-top-color: white;
-
-  border-radius: 50%;
-
-  animation: spin 0.7s linear infinite;
-
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-`;
-
-const LoadingText = styled.div`
-  font-size: 12px;
-`;
-
-// =====================================================
-// ERROR SCREEN
-// =====================================================
-
-const ErrorBox = styled.div`
-  width: min(450px, calc(100% - 30px));
-
-  margin: auto;
-
-  padding: 35px;
-
-  background: white;
-
-  border-radius: 22px;
-
-  text-align: center;
-
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
-
-  h2 {
-    margin: 15px 0 8px;
-
-    color: #222;
-
-    font-size: 18px;
-  }
-
-  p {
-    margin-bottom: 22px;
-
-    color: #777;
-
-    font-size: 12px;
-
-    line-height: 1.5;
-  }
-`;
-
-const ErrorIcon = styled.div`
-  width: 45px;
-  height: 45px;
-
-  margin: auto;
-
-  border-radius: 50%;
-
-  background: #fff0f0;
-
-  color: #d83b3b;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  font-weight: 900;
-`;
+const styles = {
+  page: {
+    minHeight: "100vh",
+    background: "#f5f5f5",
+    padding: "20px",
+    boxSizing: "border-box",
+  },
+
+  container: {
+    width: "100%",
+    maxWidth: "900px",
+    margin: "0 auto",
+  },
+
+  centerMessage: {
+    minHeight: "70vh",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "16px",
+    color: "#555",
+  },
+
+  header: {
+    display: "flex",
+    alignItems: "center",
+    gap: "14px",
+    background: "#fff",
+    borderRadius: "16px",
+    padding: "16px",
+    marginBottom: "15px",
+    boxShadow: "0 2px 10px rgba(0,0,0,0.06)",
+  },
+
+  backButton: {
+    width: "42px",
+    height: "42px",
+    border: "1px solid #ddd",
+    borderRadius: "12px",
+    background: "#fff",
+    cursor: "pointer",
+    fontSize: "22px",
+  },
+
+  headerContent: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "3px",
+  },
+
+  title: {
+    margin: 0,
+    fontSize: "20px",
+    fontWeight: 800,
+    color: "#111",
+  },
+
+  role: {
+    fontSize: "13px",
+    color: "#777",
+  },
+
+  errorBox: {
+    background: "#fff0f0",
+    border: "1px solid #ffcaca",
+    color: "#b00020",
+    padding: "12px 14px",
+    borderRadius: "12px",
+    marginBottom: "12px",
+    fontSize: "14px",
+  },
+
+  infoBox: {
+    background: "#f0fff4",
+    border: "1px solid #b8ebc6",
+    color: "#237a3b",
+    padding: "12px 14px",
+    borderRadius: "12px",
+    marginBottom: "12px",
+    fontSize: "14px",
+  },
+
+  chatCard: {
+    background: "#fff",
+    borderRadius: "16px",
+    overflow: "hidden",
+    boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
+  },
+
+  messagesContainer: {
+    height: "60vh",
+    minHeight: "400px",
+    overflowY: "auto",
+    WebkitOverflowScrolling: "touch",
+    overscrollBehavior: "contain",
+    padding: "20px",
+    boxSizing: "border-box",
+  },
+
+  emptyMessage: {
+    height: "100%",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "8px",
+    color: "#777",
+    textAlign: "center",
+  },
+
+  emptyIcon: {
+    fontSize: "40px",
+    marginBottom: "5px",
+  },
+
+  dateSeparator: {
+    display: "flex",
+    justifyContent: "center",
+    margin: "15px 0",
+  },
+
+  dateSeparatorSpan: {
+    background: "#f1f1f1",
+    padding: "5px 10px",
+    borderRadius: "20px",
+    fontSize: "12px",
+    color: "#777",
+  },
+
+  messageRow: {
+    display: "flex",
+    width: "100%",
+    marginBottom: "10px",
+  },
+
+  messageWrapper: {
+    display: "flex",
+    flexDirection: "column",
+    maxWidth: "78%",
+  },
+
+  bubble: {
+    padding: "10px 13px",
+    borderRadius: "15px",
+    wordBreak: "break-word",
+  },
+
+  myBubble: {
+    background: "#111",
+    color: "#fff",
+    borderBottomRightRadius: "4px",
+  },
+
+  otherBubble: {
+    background: "#f0f0f0",
+    color: "#111",
+    borderBottomLeftRadius: "4px",
+  },
+
+  messageText: {
+    fontSize: "15px",
+    lineHeight: 1.45,
+    whiteSpace: "pre-wrap",
+  },
+
+  messageMeta: {
+    display: "flex",
+    alignItems: "center",
+    gap: "5px",
+    marginTop: "5px",
+    fontSize: "10px",
+    color: "#777",
+  },
+
+  myMeta: {
+    color: "#ccc",
+  },
+
+  deleteButton: {
+    border: "none",
+    background: "transparent",
+    color: "#999",
+    cursor: "pointer",
+    fontSize: "11px",
+    padding: "4px 0",
+  },
+
+  form: {
+    display: "flex",
+    gap: "10px",
+    padding: "14px",
+    borderTop: "1px solid #eee",
+    alignItems: "flex-end",
+  },
+
+  inputWrapper: {
+    flex: 1,
+    position: "relative",
+  },
+
+  textarea: {
+    width: "100%",
+    boxSizing: "border-box",
+    resize: "none",
+    border: "1px solid #ddd",
+    borderRadius: "12px",
+    padding: "12px 55px 12px 13px",
+    fontSize: "16px",
+    lineHeight: 1.4,
+    outline: "none",
+    minHeight: "46px",
+    maxHeight: "120px",
+    fontFamily: "inherit",
+  },
+
+  counter: {
+    position: "absolute",
+    right: "10px",
+    bottom: "8px",
+    fontSize: "10px",
+    color: "#999",
+  },
+
+  sendButton: {
+    minWidth: "90px",
+    minHeight: "46px",
+    border: "none",
+    borderRadius: "12px",
+    background: "#111",
+    color: "#fff",
+    fontWeight: 700,
+    cursor: "pointer",
+    padding: "0 15px",
+  },
+
+  sendButtonDisabled: {
+    opacity: 0.5,
+    cursor: "not-allowed",
+  },
+};
