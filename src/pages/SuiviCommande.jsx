@@ -786,9 +786,7 @@ export default function SuiviCommande() {
 
   const statutInfo = statutConfig[statut] || statutConfig.NOT_STARTED;
 
-  const livreurDisponible = Boolean(
-  livreur || commande.livraison?.livreurId
-);
+  const livreurDisponible = Boolean(livreur);
 
   const peutRechercherLivreur =
     commande.statusCommande === "CONFIRMED" &&
