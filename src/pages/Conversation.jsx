@@ -7,6 +7,21 @@ import React, {
 } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
+import {
+  FiArrowLeft,
+  FiCheck,
+  FiCheckCircle,
+  FiChevronDown,
+  FiMessageCircle,
+  FiSend,
+  FiTrash2,
+  FiAlertCircle,
+  FiX,
+  FiUser,
+  FiTruck,
+  FiClock,
+} from "react-icons/fi";
+
 export default function Conversation({ role = "client" }) {
   const navigate = useNavigate();
   const { commandeId } = useParams();
@@ -173,7 +188,9 @@ export default function Conversation({ role = "client" }) {
       verifierSiEnBas();
     };
 
-    container.addEventListener("scroll", handleScroll, { passive: true });
+    container.addEventListener("scroll", handleScroll, {
+      passive: true,
+    });
 
     return () => {
       container.removeEventListener("scroll", handleScroll);
@@ -257,7 +274,9 @@ export default function Conversation({ role = "client" }) {
         console.error("ERREUR CHARGEMENT MESSAGES :", error);
 
         if (afficherErreur) {
-          setErreur(error.message || "Impossible de récupérer les messages.");
+          setErreur(
+            error.message || "Impossible de récupérer les messages.",
+          );
         }
 
         return null;
@@ -288,6 +307,24 @@ export default function Conversation({ role = "client" }) {
       }
     },
     [API_URL, fetchAPI],
+  );
+
+  // =====================================================
+  // MESSAGE À MOI
+  // =====================================================
+
+  const estMonMessage = useCallback(
+    (message) => {
+      if (!message?.expediteur || !utilisateurConnecte) {
+        return false;
+      }
+
+      return (
+        message.expediteur.type === utilisateurConnecte.type &&
+        String(message.expediteur.id) === String(utilisateurConnecte.id)
+      );
+    },
+    [utilisateurConnecte],
   );
 
   // =====================================================
@@ -325,8 +362,6 @@ export default function Conversation({ role = "client" }) {
 
       setLoading(false);
 
-      // Premier affichage :
-      // on descend automatiquement tout en bas.
       if (messagesCharges && messagesCharges.length > 0) {
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
@@ -373,7 +408,10 @@ export default function Conversation({ role = "client" }) {
 
       const anciensMessages = messages;
 
-      const messagesActualises = await chargerMessages(conversation._id, false);
+      const messagesActualises = await chargerMessages(
+        conversation._id,
+        false,
+      );
 
       if (!messagesActualises) {
         return;
@@ -381,11 +419,13 @@ export default function Conversation({ role = "client" }) {
 
       await marquerMessagesCommeLus(conversation._id);
 
-      // Nombre de nouveaux messages reçus.
-      const anciensIds = new Set(anciensMessages.map((msg) => String(msg._id)));
+      const anciensIds = new Set(
+        anciensMessages.map((msg) => String(msg._id)),
+      );
 
       const messagesNouveaux = messagesActualises.filter(
-        (msg) => !anciensIds.has(String(msg._id)) && !estMonMessage(msg),
+        (msg) =>
+          !anciensIds.has(String(msg._id)) && !estMonMessage(msg),
       );
 
       if (messagesNouveaux.length > 0) {
@@ -396,7 +436,9 @@ export default function Conversation({ role = "client" }) {
 
           setNouveauxMessages(0);
         } else {
-          setNouveauxMessages((nombre) => nombre + messagesNouveaux.length);
+          setNouveauxMessages(
+            (nombre) => nombre + messagesNouveaux.length,
+          );
         }
       } else if (etaitEnBas) {
         setNouveauxMessages(0);
@@ -412,6 +454,7 @@ export default function Conversation({ role = "client" }) {
     marquerMessagesCommeLus,
     messages,
     scrollVersBas,
+    estMonMessage,
   ]);
 
   // =====================================================
@@ -474,7 +517,6 @@ export default function Conversation({ role = "client" }) {
 
       setNouveauMessage("");
 
-      // Après envoi : toujours descendre.
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           scrollVersBas(true);
@@ -538,24 +580,6 @@ export default function Conversation({ role = "client" }) {
       setSuppressionEnCours(null);
     }
   };
-
-  // =====================================================
-  // MESSAGE À MOI
-  // =====================================================
-
-  const estMonMessage = useCallback(
-    (message) => {
-      if (!message?.expediteur || !utilisateurConnecte) {
-        return false;
-      }
-
-      return (
-        message.expediteur.type === utilisateurConnecte.type &&
-        String(message.expediteur.id) === String(utilisateurConnecte.id)
-      );
-    },
-    [utilisateurConnecte],
-  );
 
   // =====================================================
   // DATES
@@ -645,11 +669,13 @@ export default function Conversation({ role = "client" }) {
   // RENDU
   // =====================================================
 
+  const interlocuteurEstLivreur = typeUtilisateur === "client";
+
   return (
     <div style={styles.page}>
       <div style={styles.appShell}>
         {/* ================================================= */}
-        {/* HEADER */}
+        {/* HEADER DU CHAT */}
         {/* ================================================= */}
 
         <header style={styles.header}>
@@ -658,17 +684,22 @@ export default function Conversation({ role = "client" }) {
             onClick={() => navigate(-1)}
             style={styles.backButton}
             aria-label="Retour"
+            title="Retour"
           >
-            ←
+            <FiArrowLeft size={21} />
           </button>
 
           <div style={styles.avatar}>
-            {typeUtilisateur === "livreur" ? "C" : "L"}
+            {interlocuteurEstLivreur ? (
+              <FiTruck size={21} />
+            ) : (
+              <FiUser size={21} />
+            )}
           </div>
 
           <div style={styles.headerIdentity}>
             <div style={styles.headerName}>
-              {typeUtilisateur === "livreur" ? "Client" : "Livreur"}
+              {interlocuteurEstLivreur ? "Livreur" : "Client"}
             </div>
 
             <div style={styles.onlineStatus}>
@@ -678,9 +709,14 @@ export default function Conversation({ role = "client" }) {
           </div>
 
           <div style={styles.headerRight}>
-            <span style={styles.orderLabel}>Commande</span>
+            <span style={styles.orderLabel}>
+              <FiClock size={11} />
+              Commande
+            </span>
 
-            <span style={styles.orderId}>#{String(commandeId).slice(-6)}</span>
+            <span style={styles.orderId}>
+              #{String(commandeId).slice(-6)}
+            </span>
           </div>
         </header>
 
@@ -690,22 +726,25 @@ export default function Conversation({ role = "client" }) {
 
         {erreur && (
           <div style={styles.errorBox}>
-            <span>⚠️</span>
-            <span>{erreur}</span>
+            <FiAlertCircle size={18} />
+
+            <span style={styles.alertText}>{erreur}</span>
 
             <button
               type="button"
               onClick={() => setErreur("")}
               style={styles.closeAlertButton}
+              aria-label="Fermer"
             >
-              ×
+              <FiX size={18} />
             </button>
           </div>
         )}
 
         {messageInfo && (
           <div style={styles.successBox}>
-            <span>✓</span>
+            <FiCheckCircle size={18} />
+
             <span>{messageInfo}</span>
           </div>
         )}
@@ -717,12 +756,19 @@ export default function Conversation({ role = "client" }) {
         <main style={styles.chatCard}>
           {/* Zone messages */}
 
-          <div ref={messagesContainerRef} style={styles.messagesContainer}>
+          <div
+            ref={messagesContainerRef}
+            style={styles.messagesContainer}
+          >
             {messages.length === 0 ? (
               <div style={styles.emptyState}>
-                <div style={styles.emptyAvatar}>💬</div>
+                <div style={styles.emptyAvatar}>
+                  <FiMessageCircle size={34} />
+                </div>
 
-                <h2 style={styles.emptyTitle}>Aucun message</h2>
+                <h2 style={styles.emptyTitle}>
+                  Aucun message
+                </h2>
 
                 <p style={styles.emptyText}>
                   Envoyez un message pour commencer la conversation.
@@ -731,23 +777,30 @@ export default function Conversation({ role = "client" }) {
             ) : (
               <div style={styles.messagesList}>
                 {messagesAvecSeparateurs.map((item) => {
-                  // -----------------------------
+                  // =================================================
                   // DATE
-                  // -----------------------------
+                  // =================================================
 
                   if (item.type === "date") {
                     return (
-                      <div key={item.id} style={styles.dateSeparator}>
+                      <div
+                        key={item.id}
+                        style={styles.dateSeparator}
+                      >
+                        <span style={styles.dateLine} />
+
                         <span style={styles.dateBadge}>
                           {formaterJour(item.date)}
                         </span>
+
+                        <span style={styles.dateLine} />
                       </div>
                     );
                   }
 
-                  // -----------------------------
+                  // =================================================
                   // MESSAGE
-                  // -----------------------------
+                  // =================================================
 
                   const monMessage = estMonMessage(item);
 
@@ -758,17 +811,19 @@ export default function Conversation({ role = "client" }) {
                       key={item._id}
                       style={{
                         ...styles.messageRow,
-                        justifyContent: monMessage ? "flex-end" : "flex-start",
+                        justifyContent: monMessage
+                          ? "flex-end"
+                          : "flex-start",
                       }}
                     >
                       <div
                         style={{
                           ...styles.messageGroup,
-                          alignItems: monMessage ? "flex-end" : "flex-start",
+                          alignItems: monMessage
+                            ? "flex-end"
+                            : "flex-start",
                         }}
                       >
-                        {/* Bulle */}
-
                         <div
                           style={{
                             ...styles.bubble,
@@ -785,12 +840,13 @@ export default function Conversation({ role = "client" }) {
                               : {}),
                           }}
                         >
-                          <div style={styles.messageText}>{item.message}</div>
+                          <div style={styles.messageText}>
+                            {item.message}
+                          </div>
 
                           <div
                             style={{
                               ...styles.messageMeta,
-
                               ...(monMessage
                                 ? styles.myMessageMeta
                                 : styles.otherMessageMeta),
@@ -808,7 +864,17 @@ export default function Conversation({ role = "client" }) {
                                 }}
                                 title={messageLu ? "Lu" : "Envoyé"}
                               >
-                                {messageLu ? "✓✓" : "✓"}
+                                {messageLu ? (
+                                  <FiCheck
+                                    size={12}
+                                    strokeWidth={3}
+                                  />
+                                ) : (
+                                  <FiCheck
+                                    size={12}
+                                    strokeWidth={3}
+                                  />
+                                )}
                               </span>
                             )}
                           </div>
@@ -819,13 +885,22 @@ export default function Conversation({ role = "client" }) {
                         {monMessage && (
                           <button
                             type="button"
-                            onClick={() => demanderSuppression(item._id)}
-                            disabled={suppressionEnCours === item._id}
+                            onClick={() =>
+                              demanderSuppression(item._id)
+                            }
+                            disabled={
+                              suppressionEnCours === item._id
+                            }
                             style={styles.deleteButton}
+                            title="Supprimer le message"
                           >
-                            {suppressionEnCours === item._id
-                              ? "Suppression..."
-                              : "Supprimer"}
+                            <FiTrash2 size={12} />
+
+                            <span>
+                              {suppressionEnCours === item._id
+                                ? "Suppression..."
+                                : "Supprimer"}
+                            </span>
                           </button>
                         )}
                       </div>
@@ -848,9 +923,13 @@ export default function Conversation({ role = "client" }) {
                 }}
                 style={styles.newMessagesButton}
               >
-                ↓ {nouveauxMessages} nouveau
-                {nouveauxMessages > 1 ? "x" : ""} message
-                {nouveauxMessages > 1 ? "s" : ""}
+                <FiChevronDown size={16} />
+
+                <span>
+                  {nouveauxMessages} nouveau
+                  {nouveauxMessages > 1 ? "x" : ""} message
+                  {nouveauxMessages > 1 ? "s" : ""}
+                </span>
               </button>
             )}
           </div>
@@ -859,7 +938,10 @@ export default function Conversation({ role = "client" }) {
           {/* BARRE DE SAISIE */}
           {/* ================================================= */}
 
-          <form onSubmit={envoyerMessage} style={styles.composer}>
+          <form
+            onSubmit={envoyerMessage}
+            style={styles.composer}
+          >
             <div style={styles.composerInner}>
               <textarea
                 value={nouveauMessage}
@@ -876,7 +958,10 @@ export default function Conversation({ role = "client" }) {
                   )}px`;
                 }}
                 onKeyDown={(event) => {
-                  if (event.key === "Enter" && !event.shiftKey) {
+                  if (
+                    event.key === "Enter" &&
+                    !event.shiftKey
+                  ) {
                     event.preventDefault();
 
                     envoyerMessage(event);
@@ -890,36 +975,44 @@ export default function Conversation({ role = "client" }) {
               />
 
               <div style={styles.characterCount}>
-                {nouveauMessage.length}
-                /1000
+                {nouveauMessage.length}/1000
               </div>
             </div>
 
             <button
               type="submit"
-              disabled={envoiEnCours || !nouveauMessage.trim() || !conversation}
+              disabled={
+                envoiEnCours ||
+                !nouveauMessage.trim() ||
+                !conversation
+              }
               style={{
                 ...styles.sendButton,
 
-                ...(envoiEnCours || !nouveauMessage.trim() || !conversation
+                ...(envoiEnCours ||
+                !nouveauMessage.trim() ||
+                !conversation
                   ? styles.sendButtonDisabled
                   : {}),
               }}
               aria-label="Envoyer le message"
+              title="Envoyer"
             >
               {envoiEnCours ? (
                 <span style={styles.buttonSpinner} />
               ) : (
                 <>
                   <span>Envoyer</span>
-                  <span style={styles.sendIcon}>➤</span>
+                  <FiSend size={16} />
                 </>
               )}
             </button>
           </form>
 
           <div style={styles.composerHint}>
-            Entrée pour envoyer · Maj + Entrée pour aller à la ligne
+            <span>Entrée</span> pour envoyer
+            <span style={styles.hintSeparator}>·</span>
+            <span>Maj + Entrée</span> pour aller à la ligne
           </div>
         </main>
       </div>
@@ -931,30 +1024,40 @@ export default function Conversation({ role = "client" }) {
       {confirmationSuppression && (
         <div style={styles.modalOverlay}>
           <div style={styles.modal}>
-            <div style={styles.modalIcon}>🗑️</div>
+            <div style={styles.modalIcon}>
+              <FiTrash2 size={24} />
+            </div>
 
-            <h3 style={styles.modalTitle}>Supprimer ce message ?</h3>
+            <h3 style={styles.modalTitle}>
+              Supprimer ce message ?
+            </h3>
 
             <p style={styles.modalText}>
-              Cette action supprimera définitivement le message de la
-              conversation.
+              Cette action supprimera définitivement le message
+              de la conversation.
             </p>
 
             <div style={styles.modalActions}>
               <button
                 type="button"
-                onClick={() => setConfirmationSuppression(null)}
+                onClick={() =>
+                  setConfirmationSuppression(null)
+                }
                 style={styles.cancelButton}
               >
+                <FiX size={16} />
                 Annuler
               </button>
 
               <button
                 type="button"
-                onClick={() => supprimerMessage(confirmationSuppression)}
+                onClick={() =>
+                  supprimerMessage(confirmationSuppression)
+                }
                 style={styles.confirmDeleteButton}
                 disabled={suppressionEnCours !== null}
               >
+                <FiTrash2 size={16} />
                 Supprimer
               </button>
             </div>
@@ -970,66 +1073,74 @@ export default function Conversation({ role = "client" }) {
 // =====================================================
 
 const styles = {
-  // -----------------------------------------------------
+  // =====================================================
   // PAGE
-  // -----------------------------------------------------
+  // =====================================================
 
   page: {
+    width: "100%",
+    height: "100vh",
     minHeight: "100vh",
-    background: "linear-gradient(135deg, #f5f7fb 0%, #eef2f7 100%)",
-    padding: "20px",
+    margin: 0,
+    padding: 0,
     boxSizing: "border-box",
+    background:
+      "linear-gradient(135deg, #f5f7fb 0%, #eef2f7 100%)",
     fontFamily:
       "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+    overflow: "hidden",
   },
 
   appShell: {
     width: "100%",
-    maxWidth: "980px",
-    height: "calc(100vh - 40px)",
-    minHeight: "620px",
-    margin: "0 auto",
+    height: "100vh",
+    minHeight: 0,
+    margin: 0,
     display: "flex",
     flexDirection: "column",
+    boxSizing: "border-box",
   },
 
-  // -----------------------------------------------------
+  // =====================================================
   // LOADING
-  // -----------------------------------------------------
+  // =====================================================
 
   loadingCard: {
-    minHeight: "70vh",
+    width: "100%",
+    height: "100vh",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    gap: "10px",
+    gap: "12px",
     color: "#1f2937",
   },
 
   loadingSpinner: {
-    width: "34px",
-    height: "34px",
+    width: "36px",
+    height: "36px",
     borderRadius: "50%",
     border: "3px solid #e5e7eb",
     borderTopColor: "#111827",
     animation: "conversationSpin 0.8s linear infinite",
   },
 
-  // -----------------------------------------------------
+  // =====================================================
   // HEADER
-  // -----------------------------------------------------
+  // =====================================================
 
   header: {
     flexShrink: 0,
+    width: "100%",
+    minHeight: "72px",
+    boxSizing: "border-box",
     display: "flex",
     alignItems: "center",
-    gap: "13px",
+    gap: "14px",
     background: "#ffffff",
-    border: "1px solid #e6e9ef",
-    borderRadius: "18px 18px 0 0",
-    padding: "14px 18px",
-    boxShadow: "0 5px 20px rgba(15, 23, 42, 0.06)",
+    borderBottom: "1px solid #e6e9ef",
+    padding: "12px 24px",
+    boxShadow: "0 3px 15px rgba(15, 23, 42, 0.06)",
     zIndex: 5,
   },
 
@@ -1042,7 +1153,6 @@ const styles = {
     background: "#ffffff",
     color: "#111827",
     cursor: "pointer",
-    fontSize: "22px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -1054,14 +1164,14 @@ const styles = {
     height: "44px",
     flexShrink: 0,
     borderRadius: "50%",
-    background: "linear-gradient(135deg, #111827, #374151)",
+    background:
+      "linear-gradient(135deg, #111827, #374151)",
     color: "#ffffff",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontWeight: 800,
-    fontSize: "17px",
-    boxShadow: "0 4px 12px rgba(17, 24, 39, 0.18)",
+    boxShadow:
+      "0 4px 12px rgba(17, 24, 39, 0.18)",
   },
 
   headerIdentity: {
@@ -1090,6 +1200,7 @@ const styles = {
     borderRadius: "50%",
     background: "#22c55e",
     display: "inline-block",
+    boxShadow: "0 0 0 3px rgba(34,197,94,0.12)",
   },
 
   headerRight: {
@@ -1097,10 +1208,13 @@ const styles = {
     flexDirection: "column",
     alignItems: "flex-end",
     gap: "3px",
-    paddingLeft: "10px",
+    paddingLeft: "15px",
   },
 
   orderLabel: {
+    display: "flex",
+    alignItems: "center",
+    gap: "4px",
     fontSize: "10px",
     color: "#9ca3af",
     textTransform: "uppercase",
@@ -1114,32 +1228,36 @@ const styles = {
     fontWeight: 800,
   },
 
-  // -----------------------------------------------------
+  // =====================================================
   // ALERTES
-  // -----------------------------------------------------
+  // =====================================================
 
   errorBox: {
     flexShrink: 0,
-    marginTop: "10px",
+    width: "100%",
+    boxSizing: "border-box",
     background: "#fff5f5",
-    border: "1px solid #fecaca",
+    borderBottom: "1px solid #fecaca",
     color: "#b91c1c",
-    borderRadius: "12px",
-    padding: "11px 13px",
+    padding: "11px 24px",
     display: "flex",
     alignItems: "center",
     gap: "9px",
     fontSize: "13px",
   },
 
+  alertText: {
+    flex: 1,
+  },
+
   successBox: {
     flexShrink: 0,
-    marginTop: "10px",
+    width: "100%",
+    boxSizing: "border-box",
     background: "#f0fdf4",
-    border: "1px solid #bbf7d0",
+    borderBottom: "1px solid #bbf7d0",
     color: "#166534",
-    borderRadius: "12px",
-    padding: "11px 13px",
+    padding: "11px 24px",
     display: "flex",
     alignItems: "center",
     gap: "9px",
@@ -1152,25 +1270,26 @@ const styles = {
     background: "transparent",
     color: "inherit",
     cursor: "pointer",
-    fontSize: "20px",
-    lineHeight: 1,
+    width: "28px",
+    height: "28px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: "8px",
   },
 
-  // -----------------------------------------------------
+  // =====================================================
   // CHAT
-  // -----------------------------------------------------
+  // =====================================================
 
   chatCard: {
     flex: 1,
     minHeight: 0,
+    width: "100%",
     display: "flex",
     flexDirection: "column",
     background: "#ffffff",
-    border: "1px solid #e6e9ef",
-    borderTop: "none",
-    borderRadius: "0 0 18px 18px",
     overflow: "hidden",
-    boxShadow: "0 8px 30px rgba(15, 23, 42, 0.08)",
   },
 
   messagesContainer: {
@@ -1182,20 +1301,24 @@ const styles = {
     overscrollBehavior: "contain",
     background:
       "radial-gradient(circle at top left, rgba(17,24,39,0.025), transparent 35%), #fafbfc",
-    padding: "22px 20px",
+    padding: "24px clamp(14px, 4vw, 70px)",
     boxSizing: "border-box",
   },
 
   messagesList: {
+    width: "100%",
+    maxWidth: "1100px",
+    margin: "0 auto",
     display: "flex",
     flexDirection: "column",
   },
 
-  // -----------------------------------------------------
+  // =====================================================
   // EMPTY
-  // -----------------------------------------------------
+  // =====================================================
 
   emptyState: {
+    width: "100%",
     height: "100%",
     minHeight: "350px",
     display: "flex",
@@ -1207,20 +1330,20 @@ const styles = {
   },
 
   emptyAvatar: {
-    width: "72px",
-    height: "72px",
+    width: "76px",
+    height: "76px",
     borderRadius: "50%",
     background: "#eef2f7",
+    color: "#6b7280",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "30px",
     marginBottom: "16px",
   },
 
   emptyTitle: {
     margin: "0 0 7px",
-    fontSize: "17px",
+    fontSize: "18px",
     color: "#1f2937",
   },
 
@@ -1230,18 +1353,27 @@ const styles = {
     color: "#9ca3af",
   },
 
-  // -----------------------------------------------------
+  // =====================================================
   // DATES
-  // -----------------------------------------------------
+  // =====================================================
 
   dateSeparator: {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    margin: "12px 0 18px",
+    gap: "10px",
+    margin: "12px 0 20px",
+  },
+
+  dateLine: {
+    height: "1px",
+    flex: 1,
+    maxWidth: "120px",
+    background: "#e5e7eb",
   },
 
   dateBadge: {
+    flexShrink: 0,
     padding: "6px 11px",
     borderRadius: "20px",
     background: "#eef1f5",
@@ -1250,27 +1382,28 @@ const styles = {
     fontWeight: 700,
   },
 
-  // -----------------------------------------------------
+  // =====================================================
   // MESSAGES
-  // -----------------------------------------------------
+  // =====================================================
 
   messageRow: {
     width: "100%",
     display: "flex",
-    marginBottom: "7px",
+    marginBottom: "8px",
   },
 
   messageGroup: {
-    maxWidth: "76%",
+    maxWidth: "min(76%, 680px)",
     display: "flex",
     flexDirection: "column",
   },
 
   bubble: {
-    padding: "10px 13px 8px",
+    padding: "11px 14px 8px",
     borderRadius: "17px",
     wordBreak: "break-word",
-    boxShadow: "0 1px 2px rgba(15, 23, 42, 0.06)",
+    boxShadow:
+      "0 1px 2px rgba(15, 23, 42, 0.06)",
   },
 
   myBubble: {
@@ -1279,11 +1412,13 @@ const styles = {
   },
 
   myBubbleSent: {
-    background: "linear-gradient(135deg, #111827, #1f2937)",
+    background:
+      "linear-gradient(135deg, #111827, #1f2937)",
   },
 
   myBubbleRead: {
-    background: "linear-gradient(135deg, #075985, #0369a1)",
+    background:
+      "linear-gradient(135deg, #075985, #0369a1)",
   },
 
   otherBubble: {
@@ -1295,7 +1430,7 @@ const styles = {
 
   messageText: {
     fontSize: "14px",
-    lineHeight: 1.5,
+    lineHeight: 1.55,
     whiteSpace: "pre-wrap",
   },
 
@@ -1318,9 +1453,8 @@ const styles = {
   },
 
   checks: {
-    fontSize: "11px",
-    fontWeight: 800,
-    letterSpacing: "-2px",
+    display: "flex",
+    alignItems: "center",
   },
 
   checksSent: {
@@ -1339,11 +1473,14 @@ const styles = {
     fontSize: "10px",
     padding: "4px 2px",
     opacity: 0.8,
+    display: "flex",
+    alignItems: "center",
+    gap: "4px",
   },
 
-  // -----------------------------------------------------
+  // =====================================================
   // NOUVEAUX MESSAGES
-  // -----------------------------------------------------
+  // =====================================================
 
   newMessagesButton: {
     position: "sticky",
@@ -1359,19 +1496,26 @@ const styles = {
     fontSize: "12px",
     fontWeight: 700,
     cursor: "pointer",
-    boxShadow: "0 5px 15px rgba(15, 23, 42, 0.22)",
+    boxShadow:
+      "0 5px 15px rgba(15, 23, 42, 0.22)",
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
   },
 
-  // -----------------------------------------------------
+  // =====================================================
   // COMPOSER
-  // -----------------------------------------------------
+  // =====================================================
 
   composer: {
     flexShrink: 0,
+    width: "100%",
+    boxSizing: "border-box",
     display: "flex",
     alignItems: "flex-end",
     gap: "10px",
-    padding: "13px 15px 8px",
+    padding:
+      "14px clamp(14px, 4vw, 70px) 8px",
     background: "#ffffff",
     borderTop: "1px solid #edf0f4",
   },
@@ -1384,7 +1528,7 @@ const styles = {
 
   textarea: {
     width: "100%",
-    minHeight: "46px",
+    minHeight: "48px",
     maxHeight: "130px",
     boxSizing: "border-box",
     resize: "none",
@@ -1398,7 +1542,8 @@ const styles = {
     fontSize: "16px",
     lineHeight: 1.4,
     fontFamily: "inherit",
-    transition: "border-color 0.2s ease, background 0.2s ease",
+    transition:
+      "border-color 0.2s ease, background 0.2s ease",
   },
 
   characterCount: {
@@ -1412,22 +1557,25 @@ const styles = {
 
   sendButton: {
     flexShrink: 0,
-    minWidth: "105px",
-    height: "46px",
+    minWidth: "108px",
+    height: "48px",
     border: "none",
     borderRadius: "14px",
-    background: "linear-gradient(135deg, #111827, #374151)",
+    background:
+      "linear-gradient(135deg, #111827, #374151)",
     color: "#ffffff",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     gap: "8px",
-    padding: "0 15px",
+    padding: "0 16px",
     fontSize: "13px",
     fontWeight: 800,
     cursor: "pointer",
-    boxShadow: "0 4px 12px rgba(17, 24, 39, 0.18)",
-    transition: "transform 0.15s ease, opacity 0.2s ease",
+    boxShadow:
+      "0 4px 12px rgba(17, 24, 39, 0.18)",
+    transition:
+      "transform 0.15s ease, opacity 0.2s ease",
   },
 
   sendButtonDisabled: {
@@ -1436,31 +1584,33 @@ const styles = {
     boxShadow: "none",
   },
 
-  sendIcon: {
-    fontSize: "14px",
-  },
-
   buttonSpinner: {
-    width: "16px",
-    height: "16px",
+    width: "17px",
+    height: "17px",
     borderRadius: "50%",
     border: "2px solid rgba(255,255,255,0.35)",
     borderTopColor: "#ffffff",
-    animation: "conversationSpin 0.7s linear infinite",
+    animation:
+      "conversationSpin 0.7s linear infinite",
   },
 
   composerHint: {
     flexShrink: 0,
     textAlign: "right",
-    padding: "0 16px 10px",
+    padding:
+      "0 clamp(14px, 4vw, 70px) 9px",
     color: "#a1a1aa",
     fontSize: "9px",
     background: "#ffffff",
   },
 
-  // -----------------------------------------------------
+  hintSeparator: {
+    margin: "0 5px",
+  },
+
+  // =====================================================
   // MODAL
-  // -----------------------------------------------------
+  // =====================================================
 
   modalOverlay: {
     position: "fixed",
@@ -1481,7 +1631,8 @@ const styles = {
     borderRadius: "20px",
     padding: "24px",
     boxSizing: "border-box",
-    boxShadow: "0 20px 50px rgba(15, 23, 42, 0.2)",
+    boxShadow:
+      "0 20px 50px rgba(15, 23, 42, 0.2)",
     textAlign: "center",
   },
 
@@ -1491,10 +1642,10 @@ const styles = {
     margin: "0 auto 14px",
     borderRadius: "50%",
     background: "#fff1f2",
+    color: "#dc2626",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "22px",
   },
 
   modalTitle: {
@@ -1524,6 +1675,10 @@ const styles = {
     color: "#374151",
     fontWeight: 700,
     cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "7px",
   },
 
   confirmDeleteButton: {
@@ -1535,5 +1690,9 @@ const styles = {
     color: "#ffffff",
     fontWeight: 700,
     cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "7px",
   },
 };
