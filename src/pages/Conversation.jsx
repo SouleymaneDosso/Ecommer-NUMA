@@ -6,6 +6,7 @@ import React, {
   useState,
 } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { io } from "socket.io-client";
 
 import {
   FiArrowLeft,
@@ -34,7 +35,8 @@ export default function Conversation({ role = "client" }) {
 
   const typeUtilisateur = role === "livreur" ? "livreur" : "client";
 
-  const tokenKey = typeUtilisateur === "livreur" ? "tokenLivreur" : "token";
+  const tokenKey =
+    typeUtilisateur === "livreur" ? "tokenLivreur" : "token";
 
   const token = localStorage.getItem(tokenKey);
 
@@ -46,24 +48,30 @@ export default function Conversation({ role = "client" }) {
 
   const premierChargementRef = useRef(true);
 
+  const socketRef = useRef(null);
+
   // =====================================================
   // ÉTATS
   // =====================================================
 
   const [conversation, setConversation] = useState(null);
+
   const [messages, setMessages] = useState([]);
 
   const [nouveauMessage, setNouveauMessage] = useState("");
 
   const [loading, setLoading] = useState(true);
+
   const [envoiEnCours, setEnvoiEnCours] = useState(false);
 
   const [erreur, setErreur] = useState("");
+
   const [messageInfo, setMessageInfo] = useState("");
 
   const [suppressionEnCours, setSuppressionEnCours] = useState(null);
 
-  const [confirmationSuppression, setConfirmationSuppression] = useState(null);
+  const [confirmationSuppression, setConfirmationSuppression] =
+    useState(null);
 
   const [estEnBas, setEstEnBas] = useState(true);
 
@@ -85,7 +93,9 @@ export default function Conversation({ role = "client" }) {
         return null;
       }
 
-      const base64 = parties[1].replace(/-/g, "+").replace(/_/g, "/");
+      const base64 = parties[1]
+        .replace(/-/g, "+")
+        .replace(/_/g, "/");
 
       const payload = JSON.parse(atob(base64));
 
@@ -131,7 +141,9 @@ export default function Conversation({ role = "client" }) {
       }
 
       if (!response.ok) {
-        throw new Error(data?.message || `Erreur HTTP ${response.status}`);
+        throw new Error(
+          data?.message || `Erreur HTTP ${response.status}`,
+        );
       }
 
       return data;
@@ -164,7 +176,9 @@ export default function Conversation({ role = "client" }) {
     }
 
     const distance =
-      container.scrollHeight - container.scrollTop - container.clientHeight;
+      container.scrollHeight -
+      container.scrollTop -
+      container.clientHeight;
 
     const procheDuBas = distance < 100;
 
@@ -239,13 +253,25 @@ export default function Conversation({ role = "client" }) {
 
       return data.conversation;
     } catch (error) {
-      console.error("ERREUR CHARGEMENT CONVERSATION :", error);
+      console.error(
+        "ERREUR CHARGEMENT CONVERSATION :",
+        error,
+      );
 
-      setErreur(error.message || "Impossible de charger la conversation.");
+      setErreur(
+        error.message ||
+          "Impossible de charger la conversation.",
+      );
 
       return null;
     }
-  }, [API_URL, commandeId, fetchAPI, token, typeUtilisateur]);
+  }, [
+    API_URL,
+    commandeId,
+    fetchAPI,
+    token,
+    typeUtilisateur,
+  ]);
 
   // =====================================================
   // RÉCUPÉRER LES MESSAGES
@@ -271,11 +297,15 @@ export default function Conversation({ role = "client" }) {
 
         return nouveaux;
       } catch (error) {
-        console.error("ERREUR CHARGEMENT MESSAGES :", error);
+        console.error(
+          "ERREUR CHARGEMENT MESSAGES :",
+          error,
+        );
 
         if (afficherErreur) {
           setErreur(
-            error.message || "Impossible de récupérer les messages.",
+            error.message ||
+              "Impossible de récupérer les messages.",
           );
         }
 
@@ -302,11 +332,29 @@ export default function Conversation({ role = "client" }) {
             method: "PATCH",
           },
         );
+
+        // Mise à jour locale :
+        // tous les messages reçus deviennent lus.
+        setMessages((anciensMessages) =>
+          anciensMessages.map((message) => {
+            if (estMonMessage(message)) {
+              return message;
+            }
+
+            return {
+              ...message,
+              lu: true,
+            };
+          }),
+        );
       } catch (error) {
-        console.error("ERREUR MARQUAGE MESSAGES LUS :", error);
+        console.error(
+          "ERREUR MARQUAGE MESSAGES LUS :",
+          error,
+        );
       }
     },
-    [API_URL, fetchAPI],
+    [API_URL, fetchAPI, estMonMessage],
   );
 
   // =====================================================
@@ -320,8 +368,10 @@ export default function Conversation({ role = "client" }) {
       }
 
       return (
-        message.expediteur.type === utilisateurConnecte.type &&
-        String(message.expediteur.id) === String(utilisateurConnecte.id)
+        message.expediteur.type ===
+          utilisateurConnecte.type &&
+        String(message.expediteur.id) ===
+          String(utilisateurConnecte.id)
       );
     },
     [utilisateurConnecte],
@@ -338,7 +388,8 @@ export default function Conversation({ role = "client" }) {
       setLoading(true);
       setErreur("");
 
-      const conversationChargee = await chargerConversation();
+      const conversationChargee =
+        await chargerConversation();
 
       if (!actif) {
         return;
@@ -349,12 +400,15 @@ export default function Conversation({ role = "client" }) {
         return;
       }
 
-      const messagesCharges = await chargerMessages(
-        conversationChargee._id,
-        true,
-      );
+      const messagesCharges =
+        await chargerMessages(
+          conversationChargee._id,
+          true,
+        );
 
-      await marquerMessagesCommeLus(conversationChargee._id);
+      await marquerMessagesCommeLus(
+        conversationChargee._id,
+      );
 
       if (!actif) {
         return;
@@ -362,7 +416,10 @@ export default function Conversation({ role = "client" }) {
 
       setLoading(false);
 
-      if (messagesCharges && messagesCharges.length > 0) {
+      if (
+        messagesCharges &&
+        messagesCharges.length > 0
+      ) {
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             scrollVersBas(false);
@@ -388,7 +445,176 @@ export default function Conversation({ role = "client" }) {
   ]);
 
   // =====================================================
-  // POLLING
+  // SOCKET.IO
+  // =====================================================
+
+  useEffect(() => {
+    if (
+      !utilisateurConnecte?.id ||
+      !commandeId
+    ) {
+      return;
+    }
+
+    const socket = io(API_URL || undefined, {
+      transports: ["websocket", "polling"],
+    });
+
+    socketRef.current = socket;
+
+    // -----------------------------------------------------
+    // CONNEXION
+    // -----------------------------------------------------
+
+    socket.on("connect", () => {
+      console.log(
+        "🟢 Socket chat connecté :",
+        socket.id,
+      );
+
+      // Room personnelle
+      socket.emit(
+        "join_room",
+        String(utilisateurConnecte.id),
+      );
+
+      // Room de la commande
+      socket.emit(
+        "join_commande",
+        String(commandeId),
+      );
+    });
+
+    // -----------------------------------------------------
+    // NOUVEAU MESSAGE
+    // -----------------------------------------------------
+
+    socket.on("nouveau_message", async (data) => {
+      if (!data?.message) {
+        return;
+      }
+
+      // On ignore les messages d'une autre conversation.
+      if (
+        String(data.conversationId) !==
+        String(conversation?._id)
+      ) {
+        return;
+      }
+
+      const nouveauMessage = data.message;
+
+      setMessages((anciensMessages) => {
+        const existeDeja = anciensMessages.some(
+          (message) =>
+            String(message._id) ===
+            String(nouveauMessage._id),
+        );
+
+        if (existeDeja) {
+          return anciensMessages;
+        }
+
+        return [...anciensMessages, nouveauMessage];
+      });
+
+      setConversation((ancienneConversation) => {
+        if (!ancienneConversation) {
+          return ancienneConversation;
+        }
+
+        return {
+          ...ancienneConversation,
+          derniermessage:
+            nouveauMessage.message,
+        };
+      });
+
+      const messageEstDeMoi =
+        utilisateurConnecte &&
+        nouveauMessage?.expediteur?.type ===
+          utilisateurConnecte.type &&
+        String(nouveauMessage?.expediteur?.id) ===
+          String(utilisateurConnecte.id);
+
+      if (messageEstDeMoi) {
+        return;
+      }
+
+      const container =
+        messagesContainerRef.current;
+
+      const etaitEnBas = container
+        ? container.scrollHeight -
+            container.scrollTop -
+            container.clientHeight <
+          100
+        : true;
+
+      if (etaitEnBas) {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            scrollVersBas(true);
+          });
+        });
+
+        // Si le message arrive alors que la personne
+        // regarde le bas du chat, on le marque lu.
+        await marquerMessagesCommeLus(
+          data.conversationId,
+        );
+
+        setNouveauxMessages(0);
+      } else {
+        setNouveauxMessages(
+          (nombre) => nombre + 1,
+        );
+      }
+    });
+
+    // -----------------------------------------------------
+    // DÉCONNEXION
+    // -----------------------------------------------------
+
+    socket.on("disconnect", (reason) => {
+      console.log(
+        "🔴 Socket chat déconnecté :",
+        reason,
+      );
+    });
+
+    // -----------------------------------------------------
+    // ERREUR
+    // -----------------------------------------------------
+
+    socket.on("connect_error", (error) => {
+      console.error(
+        "❌ Erreur Socket.IO chat :",
+        error.message,
+      );
+    });
+
+    return () => {
+      socket.emit(
+        "leave_commande",
+        String(commandeId),
+      );
+
+      socket.disconnect();
+
+      socketRef.current = null;
+    };
+  }, [
+    API_URL,
+    commandeId,
+    conversation?._id,
+    utilisateurConnecte,
+    scrollVersBas,
+    marquerMessagesCommeLus,
+  ]);
+
+  // =====================================================
+  // POLLING DE SECOURS
   // =====================================================
 
   useEffect(() => {
@@ -397,7 +623,8 @@ export default function Conversation({ role = "client" }) {
     }
 
     const interval = setInterval(async () => {
-      const container = messagesContainerRef.current;
+      const container =
+        messagesContainerRef.current;
 
       const etaitEnBas = container
         ? container.scrollHeight -
@@ -408,25 +635,28 @@ export default function Conversation({ role = "client" }) {
 
       const anciensMessages = messages;
 
-      const messagesActualises = await chargerMessages(
-        conversation._id,
-        false,
-      );
+      const messagesActualises =
+        await chargerMessages(
+          conversation._id,
+          false,
+        );
 
       if (!messagesActualises) {
         return;
       }
 
-      await marquerMessagesCommeLus(conversation._id);
-
       const anciensIds = new Set(
-        anciensMessages.map((msg) => String(msg._id)),
+        anciensMessages.map((msg) =>
+          String(msg._id),
+        ),
       );
 
-      const messagesNouveaux = messagesActualises.filter(
-        (msg) =>
-          !anciensIds.has(String(msg._id)) && !estMonMessage(msg),
-      );
+      const messagesNouveaux =
+        messagesActualises.filter(
+          (msg) =>
+            !anciensIds.has(String(msg._id)) &&
+            !estMonMessage(msg),
+        );
 
       if (messagesNouveaux.length > 0) {
         if (etaitEnBas) {
@@ -434,10 +664,15 @@ export default function Conversation({ role = "client" }) {
             scrollVersBas(true);
           });
 
+          await marquerMessagesCommeLus(
+            conversation._id,
+          );
+
           setNouveauxMessages(0);
         } else {
           setNouveauxMessages(
-            (nombre) => nombre + messagesNouveaux.length,
+            (nombre) =>
+              nombre + messagesNouveaux.length,
           );
         }
       } else if (etaitEnBas) {
@@ -476,7 +711,9 @@ export default function Conversation({ role = "client" }) {
     }
 
     if (texte.length > 1000) {
-      setErreur("Le message ne peut pas dépasser 1000 caractères.");
+      setErreur(
+        "Le message ne peut pas dépasser 1000 caractères.",
+      );
       return;
     }
 
@@ -496,12 +733,28 @@ export default function Conversation({ role = "client" }) {
       );
 
       if (data?.nouveauMessage) {
-        setMessages((anciensMessages) => [
-          ...anciensMessages,
-          data.nouveauMessage,
-        ]);
+        setMessages((anciensMessages) => {
+          const existeDeja =
+            anciensMessages.some(
+              (message) =>
+                String(message._id) ===
+                String(data.nouveauMessage._id),
+            );
+
+          if (existeDeja) {
+            return anciensMessages;
+          }
+
+          return [
+            ...anciensMessages,
+            data.nouveauMessage,
+          ];
+        });
       } else {
-        await chargerMessages(conversation._id, false);
+        await chargerMessages(
+          conversation._id,
+          false,
+        );
       }
 
       setConversation((ancienneConversation) => {
@@ -525,9 +778,15 @@ export default function Conversation({ role = "client" }) {
 
       setNouveauxMessages(0);
     } catch (error) {
-      console.error("ERREUR ENVOI MESSAGE :", error);
+      console.error(
+        "ERREUR ENVOI MESSAGE :",
+        error,
+      );
 
-      setErreur(error.message || "Impossible d'envoyer le message.");
+      setErreur(
+        error.message ||
+          "Impossible d'envoyer le message.",
+      );
     } finally {
       setEnvoiEnCours(false);
     }
@@ -542,7 +801,10 @@ export default function Conversation({ role = "client" }) {
   };
 
   const supprimerMessage = async (messageId) => {
-    if (!conversation?._id || !messageId) {
+    if (
+      !conversation?._id ||
+      !messageId
+    ) {
       return;
     }
 
@@ -560,9 +822,14 @@ export default function Conversation({ role = "client" }) {
       if (data?.conversation) {
         setConversation(data.conversation);
 
-        setMessages(data.conversation.messages || []);
+        setMessages(
+          data.conversation.messages || [],
+        );
       } else {
-        await chargerMessages(conversation._id, false);
+        await chargerMessages(
+          conversation._id,
+          false,
+        );
       }
 
       setConfirmationSuppression(null);
@@ -573,9 +840,15 @@ export default function Conversation({ role = "client" }) {
         setMessageInfo("");
       }, 2500);
     } catch (error) {
-      console.error("ERREUR SUPPRESSION MESSAGE :", error);
+      console.error(
+        "ERREUR SUPPRESSION MESSAGE :",
+        error,
+      );
 
-      setErreur(error.message || "Impossible de supprimer le message.");
+      setErreur(
+        error.message ||
+          "Impossible de supprimer le message.",
+      );
     } finally {
       setSuppressionEnCours(null);
     }
@@ -629,7 +902,9 @@ export default function Conversation({ role = "client" }) {
   let dernierJour = null;
 
   messages.forEach((message) => {
-    const jour = new Date(message.date).toLocaleDateString("fr-FR");
+    const jour = new Date(
+      message.date,
+    ).toLocaleDateString("fr-FR");
 
     if (jour !== dernierJour) {
       messagesAvecSeparateurs.push({
@@ -657,9 +932,13 @@ export default function Conversation({ role = "client" }) {
         <div style={styles.loadingCard}>
           <div style={styles.loadingSpinner} />
 
-          <strong>Ouverture de la conversation</strong>
+          <strong>
+            Ouverture de la conversation
+          </strong>
 
-          <span>Chargement des messages...</span>
+          <span>
+            Chargement des messages...
+          </span>
         </div>
       </div>
     );
@@ -669,11 +948,13 @@ export default function Conversation({ role = "client" }) {
   // RENDU
   // =====================================================
 
-  const interlocuteurEstLivreur = typeUtilisateur === "client";
+  const interlocuteurEstLivreur =
+    typeUtilisateur === "client";
 
   return (
     <div style={styles.page}>
       <div style={styles.appShell}>
+
         {/* ================================================= */}
         {/* HEADER DU CHAT */}
         {/* ================================================= */}
@@ -699,11 +980,16 @@ export default function Conversation({ role = "client" }) {
 
           <div style={styles.headerIdentity}>
             <div style={styles.headerName}>
-              {interlocuteurEstLivreur ? "Livreur" : "Client"}
+              {interlocuteurEstLivreur
+                ? "Livreur"
+                : "Client"}
             </div>
 
             <div style={styles.onlineStatus}>
-              <span style={styles.onlineDot} />
+              <span
+                style={styles.onlineDot}
+              />
+
               Conversation active
             </div>
           </div>
@@ -728,7 +1014,9 @@ export default function Conversation({ role = "client" }) {
           <div style={styles.errorBox}>
             <FiAlertCircle size={18} />
 
-            <span style={styles.alertText}>{erreur}</span>
+            <span style={styles.alertText}>
+              {erreur}
+            </span>
 
             <button
               type="button"
@@ -754,6 +1042,7 @@ export default function Conversation({ role = "client" }) {
         {/* ================================================= */}
 
         <main style={styles.chatCard}>
+
           {/* Zone messages */}
 
           <div
@@ -771,142 +1060,193 @@ export default function Conversation({ role = "client" }) {
                 </h2>
 
                 <p style={styles.emptyText}>
-                  Envoyez un message pour commencer la conversation.
+                  Envoyez un message pour commencer
+                  la conversation.
                 </p>
               </div>
             ) : (
               <div style={styles.messagesList}>
-                {messagesAvecSeparateurs.map((item) => {
-                  // =================================================
-                  // DATE
-                  // =================================================
+                {messagesAvecSeparateurs.map(
+                  (item) => {
 
-                  if (item.type === "date") {
+                    // =====================================
+                    // DATE
+                    // =====================================
+
+                    if (item.type === "date") {
+                      return (
+                        <div
+                          key={item.id}
+                          style={
+                            styles.dateSeparator
+                          }
+                        >
+                          <span
+                            style={styles.dateLine}
+                          />
+
+                          <span
+                            style={
+                              styles.dateBadge
+                            }
+                          >
+                            {formaterJour(
+                              item.date,
+                            )}
+                          </span>
+
+                          <span
+                            style={styles.dateLine}
+                          />
+                        </div>
+                      );
+                    }
+
+                    // =====================================
+                    // MESSAGE
+                    // =====================================
+
+                    const monMessage =
+                      estMonMessage(item);
+
+                    const messageLu =
+                      item.lu === true;
+
                     return (
                       <div
-                        key={item.id}
-                        style={styles.dateSeparator}
-                      >
-                        <span style={styles.dateLine} />
-
-                        <span style={styles.dateBadge}>
-                          {formaterJour(item.date)}
-                        </span>
-
-                        <span style={styles.dateLine} />
-                      </div>
-                    );
-                  }
-
-                  // =================================================
-                  // MESSAGE
-                  // =================================================
-
-                  const monMessage = estMonMessage(item);
-
-                  const messageLu = item.lu === true;
-
-                  return (
-                    <div
-                      key={item._id}
-                      style={{
-                        ...styles.messageRow,
-                        justifyContent: monMessage
-                          ? "flex-end"
-                          : "flex-start",
-                      }}
-                    >
-                      <div
+                        key={item._id}
                         style={{
-                          ...styles.messageGroup,
-                          alignItems: monMessage
-                            ? "flex-end"
-                            : "flex-start",
+                          ...styles.messageRow,
+                          justifyContent:
+                            monMessage
+                              ? "flex-end"
+                              : "flex-start",
                         }}
                       >
                         <div
                           style={{
-                            ...styles.bubble,
-                            ...(monMessage
-                              ? styles.myBubble
-                              : styles.otherBubble),
-
-                            ...(monMessage && messageLu
-                              ? styles.myBubbleRead
-                              : {}),
-
-                            ...(monMessage && !messageLu
-                              ? styles.myBubbleSent
-                              : {}),
+                            ...styles.messageGroup,
+                            alignItems:
+                              monMessage
+                                ? "flex-end"
+                                : "flex-start",
                           }}
                         >
-                          <div style={styles.messageText}>
-                            {item.message}
-                          </div>
-
                           <div
                             style={{
-                              ...styles.messageMeta,
+                              ...styles.bubble,
                               ...(monMessage
-                                ? styles.myMessageMeta
-                                : styles.otherMessageMeta),
+                                ? styles.myBubble
+                                : styles.otherBubble),
+
+                              ...(monMessage &&
+                              messageLu
+                                ? styles.myBubbleRead
+                                : {}),
+
+                              ...(monMessage &&
+                              !messageLu
+                                ? styles.myBubbleSent
+                                : {}),
                             }}
                           >
-                            <span>{formaterHeure(item.date)}</span>
+                            <div
+                              style={
+                                styles.messageText
+                              }
+                            >
+                              {item.message}
+                            </div>
 
-                            {monMessage && (
-                              <span
-                                style={{
-                                  ...styles.checks,
-                                  ...(messageLu
-                                    ? styles.checksRead
-                                    : styles.checksSent),
-                                }}
-                                title={messageLu ? "Lu" : "Envoyé"}
-                              >
-                                {messageLu ? (
-                                  <FiCheck
-                                    size={12}
-                                    strokeWidth={3}
-                                  />
-                                ) : (
-                                  <FiCheck
-                                    size={12}
-                                    strokeWidth={3}
-                                  />
+                            <div
+                              style={{
+                                ...styles.messageMeta,
+
+                                ...(monMessage
+                                  ? styles.myMessageMeta
+                                  : styles.otherMessageMeta),
+                              }}
+                            >
+                              <span>
+                                {formaterHeure(
+                                  item.date,
                                 )}
                               </span>
-                            )}
+
+                              {/* ================================= */}
+                              {/* STATUT DU MESSAGE */}
+                              {/* ================================= */}
+
+                              {monMessage && (
+                                <span
+                                  style={{
+                                    ...styles.checks,
+
+                                    ...(messageLu
+                                      ? styles.checksRead
+                                      : styles.checksSent),
+                                  }}
+                                  title={
+                                    messageLu
+                                      ? "Lu"
+                                      : "Envoyé"
+                                  }
+                                >
+                                  {/* Deux coches */}
+                                  <FiCheck
+                                    size={12}
+                                    strokeWidth={3}
+                                  />
+
+                                  <FiCheck
+                                    size={12}
+                                    strokeWidth={3}
+                                    style={{
+                                      marginLeft:
+                                        "-7px",
+                                    }}
+                                  />
+                                </span>
+                              )}
+                            </div>
                           </div>
+
+                          {/* ================================= */}
+                          {/* SUPPRESSION */}
+                          {/* ================================= */}
+
+                          {monMessage && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                demanderSuppression(
+                                  item._id,
+                                )
+                              }
+                              disabled={
+                                suppressionEnCours ===
+                                item._id
+                              }
+                              style={
+                                styles.deleteButton
+                              }
+                              title="Supprimer le message"
+                            >
+                              <FiTrash2 size={12} />
+
+                              <span>
+                                {suppressionEnCours ===
+                                item._id
+                                  ? "Suppression..."
+                                  : "Supprimer"}
+                              </span>
+                            </button>
+                          )}
                         </div>
-
-                        {/* Suppression */}
-
-                        {monMessage && (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              demanderSuppression(item._id)
-                            }
-                            disabled={
-                              suppressionEnCours === item._id
-                            }
-                            style={styles.deleteButton}
-                            title="Supprimer le message"
-                          >
-                            <FiTrash2 size={12} />
-
-                            <span>
-                              {suppressionEnCours === item._id
-                                ? "Suppression..."
-                                : "Supprimer"}
-                            </span>
-                          </button>
-                        )}
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  },
+                )}
               </div>
             )}
 
@@ -914,24 +1254,38 @@ export default function Conversation({ role = "client" }) {
             {/* NOUVEAUX MESSAGES */}
             {/* ================================================= */}
 
-            {!estEnBas && nouveauxMessages > 0 && (
-              <button
-                type="button"
-                onClick={() => {
-                  scrollVersBas(true);
-                  setNouveauxMessages(0);
-                }}
-                style={styles.newMessagesButton}
-              >
-                <FiChevronDown size={16} />
+            {!estEnBas &&
+              nouveauxMessages > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    scrollVersBas(true);
+                    setNouveauxMessages(0);
 
-                <span>
-                  {nouveauxMessages} nouveau
-                  {nouveauxMessages > 1 ? "x" : ""} message
-                  {nouveauxMessages > 1 ? "s" : ""}
-                </span>
-              </button>
-            )}
+                    if (conversation?._id) {
+                      marquerMessagesCommeLus(
+                        conversation._id,
+                      );
+                    }
+                  }}
+                  style={
+                    styles.newMessagesButton
+                  }
+                >
+                  <FiChevronDown size={16} />
+
+                  <span>
+                    {nouveauxMessages} nouveau
+                    {nouveauxMessages > 1
+                      ? "x"
+                      : ""}{" "}
+                    message
+                    {nouveauxMessages > 1
+                      ? "s"
+                      : ""}
+                  </span>
+                </button>
+              )}
           </div>
 
           {/* ================================================= */}
@@ -946,11 +1300,15 @@ export default function Conversation({ role = "client" }) {
               <textarea
                 value={nouveauMessage}
                 onChange={(event) => {
-                  setNouveauMessage(event.target.value);
+                  setNouveauMessage(
+                    event.target.value,
+                  );
+
                   setErreur("");
                 }}
                 onInput={(event) => {
-                  event.target.style.height = "auto";
+                  event.target.style.height =
+                    "auto";
 
                   event.target.style.height = `${Math.min(
                     event.target.scrollHeight,
@@ -974,7 +1332,9 @@ export default function Conversation({ role = "client" }) {
                 style={styles.textarea}
               />
 
-              <div style={styles.characterCount}>
+              <div
+                style={styles.characterCount}
+              >
                 {nouveauMessage.length}/1000
               </div>
             </div>
@@ -999,10 +1359,15 @@ export default function Conversation({ role = "client" }) {
               title="Envoyer"
             >
               {envoiEnCours ? (
-                <span style={styles.buttonSpinner} />
+                <span
+                  style={
+                    styles.buttonSpinner
+                  }
+                />
               ) : (
                 <>
                   <span>Envoyer</span>
+
                   <FiSend size={16} />
                 </>
               )}
@@ -1011,8 +1376,15 @@ export default function Conversation({ role = "client" }) {
 
           <div style={styles.composerHint}>
             <span>Entrée</span> pour envoyer
-            <span style={styles.hintSeparator}>·</span>
-            <span>Maj + Entrée</span> pour aller à la ligne
+
+            <span
+              style={styles.hintSeparator}
+            >
+              ·
+            </span>
+
+            <span>Maj + Entrée</span> pour aller
+            à la ligne
           </div>
         </main>
       </div>
@@ -1033,15 +1405,18 @@ export default function Conversation({ role = "client" }) {
             </h3>
 
             <p style={styles.modalText}>
-              Cette action supprimera définitivement le message
-              de la conversation.
+              Cette action supprimera
+              définitivement le message de la
+              conversation.
             </p>
 
             <div style={styles.modalActions}>
               <button
                 type="button"
                 onClick={() =>
-                  setConfirmationSuppression(null)
+                  setConfirmationSuppression(
+                    null,
+                  )
                 }
                 style={styles.cancelButton}
               >
@@ -1052,10 +1427,16 @@ export default function Conversation({ role = "client" }) {
               <button
                 type="button"
                 onClick={() =>
-                  supprimerMessage(confirmationSuppression)
+                  supprimerMessage(
+                    confirmationSuppression,
+                  )
                 }
-                style={styles.confirmDeleteButton}
-                disabled={suppressionEnCours !== null}
+                style={
+                  styles.confirmDeleteButton
+                }
+                disabled={
+                  suppressionEnCours !== null
+                }
               >
                 <FiTrash2 size={16} />
                 Supprimer
@@ -1122,7 +1503,8 @@ const styles = {
     borderRadius: "50%",
     border: "3px solid #e5e7eb",
     borderTopColor: "#111827",
-    animation: "conversationSpin 0.8s linear infinite",
+    animation:
+      "conversationSpin 0.8s linear infinite",
   },
 
   // =====================================================
@@ -1140,7 +1522,8 @@ const styles = {
     background: "#ffffff",
     borderBottom: "1px solid #e6e9ef",
     padding: "12px 24px",
-    boxShadow: "0 3px 15px rgba(15, 23, 42, 0.06)",
+    boxShadow:
+      "0 3px 15px rgba(15, 23, 42, 0.06)",
     zIndex: 5,
   },
 
@@ -1200,7 +1583,8 @@ const styles = {
     borderRadius: "50%",
     background: "#22c55e",
     display: "inline-block",
-    boxShadow: "0 0 0 3px rgba(34,197,94,0.12)",
+    boxShadow:
+      "0 0 0 3px rgba(34,197,94,0.12)",
   },
 
   headerRight: {
@@ -1301,7 +1685,8 @@ const styles = {
     overscrollBehavior: "contain",
     background:
       "radial-gradient(circle at top left, rgba(17,24,39,0.025), transparent 35%), #fafbfc",
-    padding: "24px clamp(14px, 4vw, 70px)",
+    padding:
+      "24px clamp(14px, 4vw, 70px)",
     boxSizing: "border-box",
   },
 
@@ -1452,17 +1837,24 @@ const styles = {
     color: "#9ca3af",
   },
 
+  // =====================================================
+  // DOUBLE CHECK
+  // =====================================================
+
   checks: {
-    display: "flex",
+    display: "inline-flex",
     alignItems: "center",
+    justifyContent: "center",
+    width: "20px",
+    height: "14px",
   },
 
   checksSent: {
-    color: "rgba(255,255,255,0.7)",
+    color: "rgba(255,255,255,0.72)",
   },
 
   checksRead: {
-    color: "#7dd3fc",
+    color: "#38bdf8",
   },
 
   deleteButton: {
@@ -1588,7 +1980,8 @@ const styles = {
     width: "17px",
     height: "17px",
     borderRadius: "50%",
-    border: "2px solid rgba(255,255,255,0.35)",
+    border:
+      "2px solid rgba(255,255,255,0.35)",
     borderTopColor: "#ffffff",
     animation:
       "conversationSpin 0.7s linear infinite",
@@ -1616,7 +2009,8 @@ const styles = {
     position: "fixed",
     inset: 0,
     zIndex: 1000,
-    background: "rgba(15, 23, 42, 0.45)",
+    background:
+      "rgba(15, 23, 42, 0.45)",
     backdropFilter: "blur(4px)",
     display: "flex",
     alignItems: "center",
