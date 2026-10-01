@@ -651,6 +651,10 @@ export default function SuiviCommande() {
   // SOCKET.IO
   // ====================================================
 
+  // ====================================================
+  // SOCKET.IO
+  // ====================================================
+
   useEffect(() => {
     if (!currentCommandeId) return;
 
@@ -682,7 +686,6 @@ export default function SuiviCommande() {
       }
 
       const latitude = Number(data.latitude);
-
       const longitude = Number(data.longitude);
 
       if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
@@ -705,7 +708,6 @@ export default function SuiviCommande() {
       }
 
       const latitude = Number(data.latitude);
-
       const longitude = Number(data.longitude);
 
       if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
@@ -716,6 +718,30 @@ export default function SuiviCommande() {
         latitude,
         longitude,
       });
+    };
+
+    // ================================================
+    // NOUVEAU MESSAGE
+    // ================================================
+
+    const handleNouveauMessage = (data) => {
+      if (data.commandeId?.toString() !== currentCommandeId.toString()) {
+        return;
+      }
+
+      const nouveauMessage = data.nouveauMessage;
+
+      if (!nouveauMessage) {
+        return;
+      }
+
+      // Sur la page client, seuls les messages du livreur
+      // doivent augmenter le compteur.
+      if (nouveauMessage.expediteur?.type === "client") {
+        return;
+      }
+
+      setNombreMessagesNonLus((prev) => prev + 1);
     };
 
     // ================================================
@@ -743,29 +769,6 @@ export default function SuiviCommande() {
         };
       });
 
-      // ================================================
-      // NOUVEAU MESSAGE
-      // ================================================
-
-      const handleNouveauMessage = (data) => {
-        if (data.commandeId?.toString() !== currentCommandeId.toString()) {
-          return;
-        }
-
-        const nouveauMessage = data.nouveauMessage;
-
-        if (!nouveauMessage) {
-          return;
-        }
-
-        // Le badge ne compte que les messages reçus.
-        if (nouveauMessage.expediteur?.type === "client") {
-          return;
-        }
-
-        setNombreMessagesNonLus((prev) => prev + 1);
-      };
-
       // ==============================================
       // NOUVEAU LIVREUR
       // ==============================================
@@ -779,7 +782,6 @@ export default function SuiviCommande() {
           const localisation = data.livreur.localisation;
 
           const latitude = Number(localisation.latitude);
-
           const longitude = Number(localisation.longitude);
 
           if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
@@ -792,18 +794,22 @@ export default function SuiviCommande() {
       }
     };
 
+    // ================================================
+    // LISTENERS
+    // ================================================
+
     socket.on("livreur_position", handlePositionLivreur);
+    socket.on("client_position", handlePositionClient);
+    socket.on("commande_update", handleCommandeUpdate);
     socket.on("nouveau_message", handleNouveauMessage);
 
-    socket.on("client_position", handlePositionClient);
-
-    socket.on("commande_update", handleCommandeUpdate);
+    // ================================================
+    // CLEANUP
+    // ================================================
 
     return () => {
       socket.off("livreur_position", handlePositionLivreur);
-
       socket.off("client_position", handlePositionClient);
-
       socket.off("commande_update", handleCommandeUpdate);
       socket.off("nouveau_message", handleNouveauMessage);
 
