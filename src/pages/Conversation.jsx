@@ -6,7 +6,6 @@ import React, {
   useState,
 } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { io } from "socket.io-client";
 
 import {
   FiArrowLeft,
@@ -23,13 +22,10 @@ import {
   FiClock,
 } from "react-icons/fi";
 
+import { socket } from "../services/socket";
+
 export default function Conversation({ role = "client" }) {
   const navigate = useNavigate();
-
-  // =====================================================
-  // IMPORTANT : ON GARDE useParams COMME DANS TA VERSION
-  // =====================================================
-
   const { commandeId } = useParams();
 
   const API_URL = import.meta.env.VITE_API_URL || "";
@@ -56,8 +52,11 @@ export default function Conversation({ role = "client" }) {
 
   const premierChargementRef = useRef(true);
 
-  // SOCKET
-  const socketRef = useRef(null);
+  const conversationIdRef = useRef(null);
+
+  const messagesRef = useRef([]);
+
+  const estEnBasRef = useRef(true);
 
   // =====================================================
   // ÉTATS
@@ -132,6 +131,23 @@ export default function Conversation({ role = "client" }) {
   }, [token, typeUtilisateur]);
 
   // =====================================================
+  // SYNCHRONISATION REFS
+  // =====================================================
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
+  useEffect(() => {
+    estEnBasRef.current = estEnBas;
+  }, [estEnBas]);
+
+  useEffect(() => {
+    conversationIdRef.current =
+      conversation?._id || null;
+  }, [conversation?._id]);
+
+  // =====================================================
   // FETCH API
   // =====================================================
 
@@ -173,6 +189,31 @@ export default function Conversation({ role = "client" }) {
   );
 
   // =====================================================
+  // MESSAGE À MOI
+  // =====================================================
+
+  const estMonMessage = useCallback(
+    (message) => {
+      if (
+        !message?.expediteur ||
+        !utilisateurConnecte
+      ) {
+        return false;
+      }
+
+      return (
+        message.expediteur.type ===
+          utilisateurConnecte.type &&
+        String(
+          message.expediteur.id,
+        ) ===
+          String(utilisateurConnecte.id)
+      );
+    },
+    [utilisateurConnecte],
+  );
+
+  // =====================================================
   // SCROLL
   // =====================================================
 
@@ -198,6 +239,8 @@ export default function Conversation({ role = "client" }) {
       messagesContainerRef.current;
 
     if (!container) {
+      estEnBasRef.current = true;
+      setEstEnBas(true);
       return true;
     }
 
@@ -207,6 +250,8 @@ export default function Conversation({ role = "client" }) {
       container.clientHeight;
 
     const procheDuBas = distance < 100;
+
+    estEnBasRef.current = procheDuBas;
 
     setEstEnBas(procheDuBas);
 
@@ -243,7 +288,7 @@ export default function Conversation({ role = "client" }) {
         handleScroll,
       );
     };
-  }, [verifierSiEnBas]);
+  }, [verifierSiEnBas, loading]);
 
   // =====================================================
   // CRÉER / RÉCUPÉRER CONVERSATION
@@ -256,8 +301,6 @@ export default function Conversation({ role = "client" }) {
           "Identifiant de commande manquant.",
         );
 
-        setLoading(false);
-
         return null;
       }
 
@@ -268,14 +311,10 @@ export default function Conversation({ role = "client" }) {
             : "Vous devez être connecté en tant que client.",
         );
 
-        setLoading(false);
-
         return null;
       }
 
       try {
-        setErreur("");
-
         const data = await fetchAPI(
           `${API_URL}/api/conversations`,
           {
@@ -292,11 +331,17 @@ export default function Conversation({ role = "client" }) {
           );
         }
 
+        const conversationChargee =
+          data.conversation;
+
+        conversationIdRef.current =
+          conversationChargee._id;
+
         setConversation(
-          data.conversation,
+          conversationChargee,
         );
 
-        return data.conversation;
+        return conversationChargee;
       } catch (error) {
         console.error(
           "ERREUR CHARGEMENT CONVERSATION :",
@@ -342,7 +387,39 @@ export default function Conversation({ role = "client" }) {
         const nouveaux =
           data?.messages || [];
 
-        setMessages(nouveaux);
+        /*
+         * On fusionne avec les messages déjà
+         * reçus en temps réel afin qu'un message
+         * Socket.IO ne soit pas écrasé par une
+         * requête REST arrivée un peu plus tard.
+         */
+        setMessages((anciensMessages) => {
+          const map = new Map();
+
+          anciensMessages.forEach((message) => {
+            if (message?._id) {
+              map.set(
+                String(message._id),
+                message,
+              );
+            }
+          });
+
+          nouveaux.forEach((message) => {
+            if (message?._id) {
+              map.set(
+                String(message._id),
+                message,
+              );
+            }
+          });
+
+          return Array.from(map.values()).sort(
+            (a, b) =>
+              new Date(a.date).getTime() -
+              new Date(b.date).getTime(),
+          );
+        });
 
         return nouveaux;
       } catch (error) {
@@ -383,12 +460,6 @@ export default function Conversation({ role = "client" }) {
             },
           );
 
-          /*
-           * Mise à jour locale immédiate.
-           *
-           * Cela permet aux messages reçus
-           * de devenir lus directement.
-           */
           setMessages(
             (anciensMessages) =>
               anciensMessages.map(
@@ -416,49 +487,28 @@ export default function Conversation({ role = "client" }) {
       [
         API_URL,
         fetchAPI,
+        estMonMessage,
       ],
     );
 
   // =====================================================
-  // MESSAGE À MOI
-  //
-  // IMPORTANT :
-  // ce bloc est placé AVANT le useEffect SOCKET
-  // qui utilise estMonMessage.
-  // =====================================================
-
-  const estMonMessage = useCallback(
-    (message) => {
-      if (
-        !message?.expediteur ||
-        !utilisateurConnecte
-      ) {
-        return false;
-      }
-
-      return (
-        message.expediteur.type ===
-          utilisateurConnecte.type &&
-        String(
-          message.expediteur.id,
-        ) ===
-          String(utilisateurConnecte.id)
-      );
-    },
-    [utilisateurConnecte],
-  );
-
-  // =====================================================
-  // INITIALISATION
+  // INITIALISATION RAPIDE
   // =====================================================
 
   useEffect(() => {
     let actif = true;
 
     const initialiser = async () => {
-      setLoading(true);
       setErreur("");
+      setLoading(true);
 
+      /*
+       * 1. On récupère uniquement la conversation.
+       *
+       * Dès qu'elle existe, l'interface est affichée.
+       * Le chargement des messages ne bloque plus
+       * l'ouverture de la page.
+       */
       const conversationChargee =
         await chargerConversation();
 
@@ -471,22 +521,38 @@ export default function Conversation({ role = "client" }) {
         return;
       }
 
+      /*
+       * IMPORTANT :
+       * l'interface devient disponible immédiatement.
+       */
+      setLoading(false);
+
+      /*
+       * 2. Les messages sont chargés ensuite,
+       * sans bloquer l'affichage.
+       */
       const messagesCharges =
         await chargerMessages(
           conversationChargee._id,
           true,
         );
 
-      await marquerMessagesCommeLus(
-        conversationChargee._id,
-      );
-
       if (!actif) {
         return;
       }
 
-      setLoading(false);
+      /*
+       * 3. On marque les messages comme lus
+       * en arrière-plan.
+       */
+      marquerMessagesCommeLus(
+        conversationChargee._id,
+      );
 
+      /*
+       * 4. Positionnement en bas après
+       * réception des messages.
+       */
       if (
         messagesCharges &&
         messagesCharges.length > 0
@@ -517,7 +583,7 @@ export default function Conversation({ role = "client" }) {
   ]);
 
   // =====================================================
-  // SOCKET.IO
+  // SOCKET.IO PARTAGÉ
   // =====================================================
 
   useEffect(() => {
@@ -529,50 +595,22 @@ export default function Conversation({ role = "client" }) {
     }
 
     /*
-     * Connexion au serveur Socket.IO.
+     * IMPORTANT :
      *
-     * Si VITE_API_URL = http://localhost:3000
-     * alors on se connecte dessus.
+     * On utilise le socket singleton de
+     * services/socket.js.
      *
-     * Si VITE_API_URL est vide,
-     * on utilise le même domaine que le frontend.
+     * On ne fait surtout PAS socket.disconnect()
+     * ici car ce socket est utilisé par toute
+     * l'application.
      */
-    const socket = io(
-      API_URL || undefined,
-      {
-        transports: [
-          "websocket",
-          "polling",
-        ],
-      },
-    );
-
-    socketRef.current = socket;
-
-    // ===================================================
-    // REJOINDRE LES ROOMS
-    // ===================================================
 
     const rejoindreRooms = () => {
-      console.log(
-        "🟢 Socket connecté :",
-        socket.id,
-      );
-
-      /*
-       * Room personnelle.
-       * Elle servira pour les notifications
-       * et les messages lus.
-       */
       socket.emit(
         "join_room",
         utilisateurConnecte.id,
       );
 
-      /*
-       * Room de la commande.
-       * Client + livreur peuvent être ensemble.
-       */
       socket.emit(
         "join_commande",
         commandeId,
@@ -586,14 +624,10 @@ export default function Conversation({ role = "client" }) {
     const handleNouveauMessage = (
       data,
     ) => {
-      if (!data) {
+      if (!data?.nouveauMessage) {
         return;
       }
 
-      /*
-       * On vérifie que le message appartient
-       * bien à cette commande.
-       */
       if (
         String(data.commandeId) !==
         String(commandeId)
@@ -601,17 +635,16 @@ export default function Conversation({ role = "client" }) {
         return;
       }
 
-      /*
-       * Si on reçoit conversationId,
-       * on vérifie également.
-       */
+      const currentConversationId =
+        conversationIdRef.current;
+
       if (
-        conversation?._id &&
+        currentConversationId &&
         data.conversationId &&
         String(
           data.conversationId,
         ) !==
-          String(conversation._id)
+          String(currentConversationId)
       ) {
         return;
       }
@@ -624,47 +657,54 @@ export default function Conversation({ role = "client" }) {
       }
 
       /*
-       * Protection contre les doublons.
-       *
-       * Quand on envoie un message :
-       * - REST nous renvoie le message
-       * - Socket peut également nous le renvoyer
-       *
-       * On ne l'ajoute donc qu'une seule fois.
+       * Anti-doublon.
        */
-      setMessages(
-        (anciensMessages) => {
-          const existeDeja =
-            anciensMessages.some(
-              (ancienMessage) =>
-                String(
-                  ancienMessage._id,
-                ) ===
-                String(message._id),
+      const existeDeja =
+        messagesRef.current.some(
+          (ancienMessage) =>
+            String(
+              ancienMessage._id,
+            ) ===
+            String(message._id),
+        );
+
+      if (!existeDeja) {
+        setMessages(
+          (anciensMessages) => {
+            const dejaPresent =
+              anciensMessages.some(
+                (ancienMessage) =>
+                  String(
+                    ancienMessage._id,
+                  ) ===
+                  String(message._id),
+              );
+
+            if (dejaPresent) {
+              return anciensMessages;
+            }
+
+            return [
+              ...anciensMessages,
+              message,
+            ].sort(
+              (a, b) =>
+                new Date(a.date).getTime() -
+                new Date(b.date).getTime(),
             );
-
-          if (existeDeja) {
-            return anciensMessages;
-          }
-
-          return [
-            ...anciensMessages,
-            message,
-          ];
-        },
-      );
+          },
+        );
+      }
 
       /*
        * Si c'est notre propre message,
-       * rien d'autre à faire.
+       * le serveur nous l'a déjà renvoyé
+       * via la requête POST.
        */
       if (estMonMessage(message)) {
         return;
       }
 
-      /*
-       * Message reçu de l'autre personne.
-       */
       const container =
         messagesContainerRef.current;
 
@@ -678,27 +718,19 @@ export default function Conversation({ role = "client" }) {
         distance < 100;
 
       if (procheDuBas) {
-        /*
-         * L'utilisateur est déjà en bas :
-         * on affiche directement le nouveau message.
-         */
         requestAnimationFrame(() => {
           scrollVersBas(true);
         });
 
-        /*
-         * Il est donc automatiquement considéré
-         * comme lu.
-         */
-        if (conversation?._id) {
+        const currentConversationId =
+          conversationIdRef.current;
+
+        if (currentConversationId) {
           marquerMessagesCommeLus(
-            conversation._id,
+            currentConversationId,
           );
         }
       } else {
-        /*
-         * L'utilisateur est plus haut dans le chat.
-         */
         setNouveauxMessages(
           (nombre) =>
             nombre + 1,
@@ -733,24 +765,20 @@ export default function Conversation({ role = "client" }) {
         return;
       }
 
+      const currentConversationId =
+        conversationIdRef.current;
+
       if (
-        conversation?._id &&
+        currentConversationId &&
         data.conversationId &&
         String(
           data.conversationId,
         ) !==
-          String(conversation._id)
+          String(currentConversationId)
       ) {
         return;
       }
 
-      /*
-       * L'autre personne vient de lire
-       * nos messages.
-       *
-       * On passe donc nos messages
-       * à lu = true.
-       */
       setMessages(
         (anciensMessages) =>
           anciensMessages.map(
@@ -777,7 +805,7 @@ export default function Conversation({ role = "client" }) {
     const handleMessageSupprime = (
       data,
     ) => {
-      if (!data) {
+      if (!data?.messageId) {
         return;
       }
 
@@ -789,20 +817,20 @@ export default function Conversation({ role = "client" }) {
         return;
       }
 
+      const currentConversationId =
+        conversationIdRef.current;
+
       if (
-        conversation?._id &&
+        currentConversationId &&
         data.conversationId &&
         String(
           data.conversationId,
         ) !==
-          String(conversation._id)
+          String(currentConversationId)
       ) {
         return;
       }
 
-      /*
-       * Suppression immédiate chez l'autre utilisateur.
-       */
       setMessages(
         (anciensMessages) =>
           anciensMessages.filter(
@@ -833,17 +861,13 @@ export default function Conversation({ role = "client" }) {
     };
 
     // ===================================================
-    // SOCKET CONNECTÉ
+    // CONNEXION
     // ===================================================
 
     socket.on(
       "connect",
       rejoindreRooms,
     );
-
-    // ===================================================
-    // ÉVÉNEMENTS
-    // ===================================================
 
     socket.on(
       "nouveau_message",
@@ -860,36 +884,9 @@ export default function Conversation({ role = "client" }) {
       handleMessageSupprime,
     );
 
-    // ===================================================
-    // DÉCONNEXION
-    // ===================================================
-
-    socket.on(
-      "disconnect",
-      () => {
-        console.log(
-          "🔴 Socket déconnecté",
-        );
-      },
-    );
-
-    // ===================================================
-    // ERREUR SOCKET
-    // ===================================================
-
-    socket.on(
-      "connect_error",
-      (error) => {
-        console.error(
-          "❌ Erreur Socket.IO :",
-          error.message,
-        );
-      },
-    );
-
     /*
-     * Si le socket était déjà connecté
-     * au moment de l'installation des listeners.
+     * Si le singleton est déjà connecté,
+     * on rejoint immédiatement les rooms.
      */
     if (socket.connected) {
       rejoindreRooms();
@@ -920,14 +917,13 @@ export default function Conversation({ role = "client" }) {
         handleMessageSupprime,
       );
 
-      socket.disconnect();
-
-      socketRef.current = null;
+      socket.emit(
+        "leave_commande",
+        commandeId,
+      );
     };
   }, [
-    API_URL,
     commandeId,
-    conversation?._id,
     utilisateurConnecte?.id,
     estMonMessage,
     marquerMessagesCommeLus,
@@ -938,19 +934,13 @@ export default function Conversation({ role = "client" }) {
   // POLLING DE SÉCURITÉ
   // =====================================================
 
-  /*
-   * On garde ton polling.
-   *
-   * Pourquoi ?
-   *
-   * Si Socket.IO rencontre un problème réseau,
-   * le chat continue quand même à récupérer
-   * les messages toutes les 5 secondes.
-   */
   useEffect(() => {
     if (!conversation?._id) {
       return;
     }
+
+    const conversationId =
+      conversation._id;
 
     const interval =
       setInterval(async () => {
@@ -965,26 +955,16 @@ export default function Conversation({ role = "client" }) {
           : true;
 
         const anciensMessages =
-          messages;
+          messagesRef.current;
 
         const messagesActualises =
           await chargerMessages(
-            conversation._id,
+            conversationId,
             false,
           );
 
         if (!messagesActualises) {
           return;
-        }
-
-        /*
-         * On ne marque comme lu que si
-         * l'utilisateur est déjà en bas.
-         */
-        if (etaitEnBas) {
-          await marquerMessagesCommeLus(
-            conversation._id,
-          );
         }
 
         const anciensIds =
@@ -1013,6 +993,10 @@ export default function Conversation({ role = "client" }) {
             });
 
             setNouveauxMessages(0);
+
+            marquerMessagesCommeLus(
+              conversationId,
+            );
           } else {
             setNouveauxMessages(
               (nombre) =>
@@ -1022,6 +1006,10 @@ export default function Conversation({ role = "client" }) {
           }
         } else if (etaitEnBas) {
           setNouveauxMessages(0);
+
+          marquerMessagesCommeLus(
+            conversationId,
+          );
         }
       }, 5000);
 
@@ -1031,10 +1019,9 @@ export default function Conversation({ role = "client" }) {
   }, [
     conversation?._id,
     chargerMessages,
-    marquerMessagesCommeLus,
-    messages,
-    scrollVersBas,
     estMonMessage,
+    marquerMessagesCommeLus,
+    scrollVersBas,
   ]);
 
   // =====================================================
@@ -1091,9 +1078,6 @@ export default function Conversation({ role = "client" }) {
       ) {
         setMessages(
           (anciensMessages) => {
-            /*
-             * Sécurité anti-doublon.
-             */
             const existeDeja =
               anciensMessages.some(
                 (message) =>
@@ -1113,7 +1097,11 @@ export default function Conversation({ role = "client" }) {
             return [
               ...anciensMessages,
               data.nouveauMessage,
-            ];
+            ].sort(
+              (a, b) =>
+                new Date(a.date).getTime() -
+                new Date(b.date).getTime(),
+            );
           },
         );
       } else {
@@ -1202,13 +1190,6 @@ export default function Conversation({ role = "client" }) {
           data.conversation,
         );
 
-        /*
-         * Si le backend renvoie les messages,
-         * on les utilise.
-         *
-         * Sinon le socket s'occupera de la
-         * synchronisation et on garde notre état.
-         */
         if (
           Array.isArray(
             data.conversation
@@ -1369,7 +1350,7 @@ export default function Conversation({ role = "client" }) {
   );
 
   // =====================================================
-  // LOADING
+  // LOADING INITIAL
   // =====================================================
 
   if (loading) {
@@ -1388,7 +1369,7 @@ export default function Conversation({ role = "client" }) {
           </strong>
 
           <span>
-            Chargement des messages...
+            Connexion en cours...
           </span>
         </div>
       </div>
@@ -1598,10 +1579,6 @@ export default function Conversation({ role = "client" }) {
               >
                 {messagesAvecSeparateurs.map(
                   (item) => {
-                    // =====================================
-                    // DATE
-                    // =====================================
-
                     if (
                       item.type ===
                       "date"
@@ -1637,10 +1614,6 @@ export default function Conversation({ role = "client" }) {
                         </div>
                       );
                     }
-
-                    // =====================================
-                    // MESSAGE
-                    // =====================================
 
                     const monMessage =
                       estMonMessage(
@@ -1717,10 +1690,6 @@ export default function Conversation({ role = "client" }) {
                                 )}
                               </span>
 
-                              {/* =================================
-                                  COCHES
-                              ================================= */}
-
                               {monMessage && (
                                 <span
                                   style={{
@@ -1737,9 +1706,6 @@ export default function Conversation({ role = "client" }) {
                                   }
                                 >
                                   {messageLu ? (
-                                    /*
-                                     * ✓✓ BLEU
-                                     */
                                     <span
                                       style={
                                         styles.doubleChecks
@@ -1770,9 +1736,6 @@ export default function Conversation({ role = "client" }) {
                                       />
                                     </span>
                                   ) : (
-                                    /*
-                                     * ✓ SIMPLE
-                                     */
                                     <FiCheck
                                       size={
                                         12
@@ -1786,10 +1749,6 @@ export default function Conversation({ role = "client" }) {
                               )}
                             </div>
                           </div>
-
-                          {/* =================================
-                              SUPPRESSION
-                          ================================= */}
 
                           {monMessage && (
                             <button
@@ -1828,9 +1787,9 @@ export default function Conversation({ role = "client" }) {
               </div>
             )}
 
-            {/* =============================================
-                NOUVEAUX MESSAGES
-            ============================================= */}
+            {/* ================================================= */}
+            {/* NOUVEAUX MESSAGES */}
+            {/* ================================================= */}
 
             {!estEnBas &&
               nouveauxMessages >

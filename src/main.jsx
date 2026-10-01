@@ -1,5 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import toast from "react-hot-toast";
+import { socket } from "./services/socket";
 import {
   BrowserRouter as Router,
   Routes,
@@ -63,6 +65,50 @@ import { trackPage } from "./Utils/visitorTracking";
 import AdminStatistiques from "./pages/AdminStatistiques";
 import Conversation from "./pages/Conversation";
 
+function GlobalNotifications() {
+  const location = useLocation();
+
+  useEffect(() => {
+    const handleNouveauMessage = (data) => {
+      if (!data?.commandeId || !data?.nouveauMessage) {
+        return;
+      }
+
+      const commandeId = data.commandeId.toString();
+
+      // Si l'utilisateur est déjà dans cette conversation,
+      // Conversation.jsx s'occupe directement du message.
+      const conversationClient =
+        location.pathname === `/conversation/${commandeId}`;
+
+      const conversationLivreur =
+        location.pathname === `/conversation-livreur/${commandeId}`;
+
+      if (conversationClient || conversationLivreur) {
+        return;
+      }
+
+      const message = data.nouveauMessage;
+
+      toast(
+        `💬 Nouveau message : ${message.message}`,
+        {
+          duration: 5000,
+          position: "top-right",
+        }
+      );
+    };
+
+    socket.on("nouveau_message", handleNouveauMessage);
+
+    return () => {
+      socket.off("nouveau_message", handleNouveauMessage);
+    };
+  }, [location.pathname]);
+
+  return null;
+}
+
 const VisitorTracking = () => {
   const location = useLocation();
 
@@ -98,6 +144,7 @@ createRoot(document.getElementById("root")).render(
   <StrictMode>
     <Router>
       <VisitorTracking />
+      <GlobalNotifications />
       <ToggleTheme>
         <Panier>
           <GlobalStyle />

@@ -1,9 +1,8 @@
 import { io } from "socket.io-client";
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || "";
 
-export const socket = io(API_URL, {
+export const socket = io(API_URL || undefined, {
   autoConnect: true,
-  transports: ["websocket"],
+  transports: ["websocket", "polling"],
 });
-
