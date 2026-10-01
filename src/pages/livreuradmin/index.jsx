@@ -345,6 +345,7 @@ function LivreurAdmin() {
   const [positionLivreur, setPositionLivreur] = useState(null);
 
   const [itineraire, setItineraire] = useState(null);
+  const [messagesNonLus, setMessagesNonLus] = useState({});
 
   const navigate = useNavigate();
 
@@ -356,6 +357,89 @@ function LivreurAdmin() {
     "Content-Type": "application/json",
     Authorization: `Bearer ${token}`,
   };
+
+  // ======================================================
+  // MESSAGES NON LUS
+  // ======================================================
+
+  useEffect(() => {
+    if (!mesCommandes.length || !token) {
+      setMessagesNonLus({});
+      return;
+    }
+
+    const chargerMessagesNonLus = async () => {
+      try {
+        const compteurs = {};
+
+        for (const commande of mesCommandes) {
+          if (!commande?._id) {
+            continue;
+          }
+
+          try {
+            const conversationResponse = await fetch(
+              `${API_URL}/api/conversations`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                  commandeId: commande._id,
+                }),
+              },
+            );
+
+            const conversationData = await conversationResponse.json();
+
+            if (!conversationResponse.ok) {
+              continue;
+            }
+
+            const conversation = conversationData.conversation;
+
+            if (!conversation?._id) {
+              continue;
+            }
+
+            const response = await fetch(
+              `${API_URL}/api/conversations/${conversation._id}/messages/unread-count`,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              },
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+              continue;
+            }
+
+            const nombre = Number(data.nombreNonLus) || 0;
+
+            if (nombre > 0) {
+              compteurs[commande._id.toString()] = nombre;
+            }
+          } catch (error) {
+            console.error(
+              `Erreur compteur messages commande ${commande._id} :`,
+              error,
+            );
+          }
+        }
+
+        setMessagesNonLus(compteurs);
+      } catch (error) {
+        console.error("ERREUR CHARGEMENT MESSAGES NON LUS :", error);
+      }
+    };
+
+    chargerMessagesNonLus();
+  }, [mesCommandes, token, API_URL]);
 
   // ======================================================
   // DÉCONNEXION
@@ -538,6 +622,27 @@ function LivreurAdmin() {
 
     socket.emit("join_commande", commandeId);
 
+    const tokenLivreur = localStorage.getItem("tokenLivreur");
+
+    try {
+      if (tokenLivreur) {
+        const payload = JSON.parse(
+          atob(
+            tokenLivreur.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"),
+          ),
+        );
+
+        if (payload?.livreurId || payload?.userId || payload?.id) {
+          socket.emit(
+            "join_room",
+            payload.livreurId || payload.userId || payload.id,
+          );
+        }
+      }
+    } catch (error) {
+      console.warn("Impossible de lire le token livreur");
+    }
+
     // ==================================================
     // POSITION CLIENT
     // ==================================================
@@ -548,7 +653,6 @@ function LivreurAdmin() {
       }
 
       const latitude = Number(data.latitude);
-
       const longitude = Number(data.longitude);
 
       if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
@@ -571,7 +675,6 @@ function LivreurAdmin() {
       }
 
       const latitude = Number(data.latitude);
-
       const longitude = Number(data.longitude);
 
       if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
@@ -584,14 +687,40 @@ function LivreurAdmin() {
       });
     };
 
-    socket.on("client_position", handleClientPosition);
+    // ==================================================
+    // NOUVEAU MESSAGE
+    // ==================================================
 
+    const handleNouveauMessage = (data) => {
+      if (data?.commandeId?.toString() !== commandeId) {
+        return;
+      }
+
+      const nouveauMessage = data.nouveauMessage;
+
+      if (!nouveauMessage) {
+        return;
+      }
+
+      // Le livreur ne compte pas ses propres messages
+      if (nouveauMessage.expediteur?.type === "livreur") {
+        return;
+      }
+
+      setMessagesNonLus((prev) => ({
+        ...prev,
+        [commandeId]: (prev[commandeId] || 0) + 1,
+      }));
+    };
+
+    socket.on("client_position", handleClientPosition);
     socket.on("livreur_position", handleLivreurPosition);
+    socket.on("nouveau_message", handleNouveauMessage);
 
     return () => {
       socket.off("client_position", handleClientPosition);
-
       socket.off("livreur_position", handleLivreurPosition);
+      socket.off("nouveau_message", handleNouveauMessage);
 
       socket.emit("leave_commande", commandeId);
     };
@@ -1689,11 +1818,26 @@ function LivreurAdmin() {
                     <MyOrderAction>
                       <ChatActionButton
                         type="button"
-                        onClick={() =>
-                          navigate(`/conversation-livreur/${commande._id}`)
-                        }
+                        onClick={() => {
+                          setMessagesNonLus((prev) => ({
+                            ...prev,
+                            [commande._id.toString()]: 0,
+                          }));
+
+                          navigate(`/conversation-livreur/${commande._id}`);
+                        }}
                       >
-                        <span>💬</span>
+                        <ChatIconWrapper>
+                          <span>💬</span>
+
+                          {messagesNonLus[commande._id.toString()] > 0 && (
+                            <UnreadBadge>
+                              {messagesNonLus[commande._id.toString()] > 99
+                                ? "99+"
+                                : messagesNonLus[commande._id.toString()]}
+                            </UnreadBadge>
+                          )}
+                        </ChatIconWrapper>
                         Discuter avec le client
                       </ChatActionButton>
                       {statut === "ACCEPTED" && (
@@ -3097,6 +3241,37 @@ const ChatActionButton = styled.button`
     font-size: 17px;
     line-height: 1;
   }
+`;
+const ChatIconWrapper = styled.span`
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const UnreadBadge = styled.span`
+  position: absolute;
+  top: -12px;
+  right: -13px;
+
+  min-width: 19px;
+  height: 19px;
+  padding: 0 5px;
+
+  border-radius: 999px;
+
+  background: #ff3b30;
+  color: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+
+  border: 2px solid white;
 `;
 
 export default LivreurAdmin;
