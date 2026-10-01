@@ -103,7 +103,7 @@ export const Panier = ({ children }) => {
                     ? p.stockDisponible
                     : newQuantite,
               }
-            : p
+            : p,
         );
       }
 
@@ -122,84 +122,43 @@ export const Panier = ({ children }) => {
           ? {
               ...p,
               quantite:
-                p.quantite < p.stockDisponible
-                  ? p.quantite + 1
-                  : p.quantite,
+                p.quantite < p.stockDisponible ? p.quantite + 1 : p.quantite,
             }
-          : p
-      )
+          : p,
+      ),
     );
   };
 
   const diminuer = (id) => {
     setAjouter((prev) =>
       prev.map((p) =>
-        p.id === id && p.quantite > 1
-          ? { ...p, quantite: p.quantite - 1 }
-          : p
-      )
+        p.id === id && p.quantite > 1 ? { ...p, quantite: p.quantite - 1 } : p,
+      ),
     );
   };
 
   const toutSupprimer = () => setAjouter([]);
   const modifierProduit = (id, nouvellesDonnees) => {
-  setAjouter((prev) =>
-    prev.map((p) =>
-      p.id === id
-        ? {
-            ...p,
-            ...nouvellesDonnees,
-          }
-        : p
-    )
-  );
-};
+    setAjouter((prev) =>
+      prev.map((p) =>
+        p.id === id
+          ? {
+              ...p,
+              ...nouvellesDonnees,
+            }
+          : p,
+      ),
+    );
+  };
 
-  /* ================== CALCULS LIVRAISON ================== */
+  /* ================== CALCULS PANIER ================== */
 
   const sousTotal = ajouter.reduce(
     (acc, item) => acc + item.prix * item.quantite,
-    0
+    0,
   );
 
-  const nombreProduits = ajouter.reduce(
-    (acc, item) => acc + item.quantite,
-    0
-  );
-
-  let fraisLivraison = 0;
-
-  const zonesProche = ["Cocody", "Bingerville"];
-  const zonesMoyenne = [
-    "Plateau",
-    "Adjamé",
-    "Treichville",
-    "Marcory",
-    "Attécoubé",
-  ];
-  const zonesLoin = [
-    "Yopougon",
-    "Abobo",
-    "Koumassi",
-    "Port-Bouët",
-    "Anyama",
-  ];
-
-  if (villeLivraison) {
-    if (zonesProche.includes(villeLivraison)) {
-      // À Abidjan
-      fraisLivraison = nombreProduits >= 2 ? 0 : 1500;
-    } else if (zonesMoyenne.includes(villeLivraison)) {
-      fraisLivraison = nombreProduits >= 2 ? 0 : 2000;
-    } else if (zonesLoin.includes(villeLivraison)) {
-      fraisLivraison = nombreProduits >= 2 ? 0 : 3000;
-    } else {
-      // Hors Abidjan
-      fraisLivraison = nombreProduits >= 2 ? 2000 : 4000;
-    }
-  }
-
-  const total = sousTotal + fraisLivraison;
+  const total = sousTotal;
 
   /* ================== PERSISTENCE ================== */
 
@@ -223,7 +182,6 @@ export const Panier = ({ children }) => {
         villeLivraison,
         setVilleLivraison,
         sousTotal,
-        fraisLivraison,
         total,
         modifierProduit,
       }}

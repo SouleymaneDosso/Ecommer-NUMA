@@ -376,7 +376,7 @@ export default function PageCheckout() {
             {modePaiement === "installments" && (
               <p>
                 Paiement en 3 tranches :{" "}
-                <strong>{montantParMois.toLocaleString()} FCFA</strong> par mois
+                <strong>{montantParMois.toLocaleString()} FCFA</strong>
               </p>
             )}
 

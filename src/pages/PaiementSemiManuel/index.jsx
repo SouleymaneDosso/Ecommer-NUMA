@@ -230,7 +230,7 @@ export default function PaiementSemiManuel() {
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || "Erreur serveur");
-        setCommande(data);
+        setCommande(data.commande);
       } catch (err) {
         console.error(err);
         alert(err.message);
@@ -357,10 +357,7 @@ export default function PaiementSemiManuel() {
           </Line>
         ))}
 
-        <Line>
-          <span>Frais de livraison</span>
-          <span>{(commande.fraisLivraison || 0).toLocaleString()} FCFA</span>
-        </Line>
+       
 
         <Line>
           <strong>Total</strong>
