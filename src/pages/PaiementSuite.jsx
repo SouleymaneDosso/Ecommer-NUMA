@@ -47,7 +47,7 @@ const PaiementSuite = () => {
           throw new Error(data.message || "Erreur");
         }
 
-        setCommande(data);
+        setCommande(data.commande);
       } catch (error) {
         console.error(error);
         alert(error.message);
