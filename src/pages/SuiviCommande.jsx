@@ -237,6 +237,79 @@ export default function SuiviCommande() {
   const [erreur, setErreur] = useState("");
 
   const [messageRecherche, setMessageRecherche] = useState("");
+  const [nombreMessagesNonLus, setNombreMessagesNonLus] = useState(0);
+
+  // ====================================================
+  // MESSAGES NON LUS
+  // ====================================================
+
+  useEffect(() => {
+    if (!currentCommandeId) return;
+
+    const chargerMessagesNonLus = async () => {
+      try {
+        const token = localStorage.getItem("token");
+
+        if (!token) return;
+
+        // ------------------------------------------------
+        // 1. RÉCUPÉRER LA CONVERSATION
+        // ------------------------------------------------
+
+        const conversationResponse = await fetch(
+          `${API_URL}/api/conversations`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              commandeId: currentCommandeId,
+            }),
+          },
+        );
+
+        const conversationData = await conversationResponse.json();
+
+        if (!conversationResponse.ok) {
+          return;
+        }
+
+        const conversation = conversationData.conversation;
+
+        if (!conversation?._id) {
+          setNombreMessagesNonLus(0);
+          return;
+        }
+
+        // ------------------------------------------------
+        // 2. RÉCUPÉRER LE NOMBRE DE MESSAGES NON LUS
+        // ------------------------------------------------
+
+        const response = await fetch(
+          `${API_URL}/api/conversations/${conversation._id}/messages/unread-count`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          return;
+        }
+
+        setNombreMessagesNonLus(Number(data.nombreNonLus) || 0);
+      } catch (error) {
+        console.error("ERREUR COMPTE MESSAGES NON LUS :", error);
+      }
+    };
+
+    chargerMessagesNonLus();
+  }, [API_URL, currentCommandeId]);
 
   // ====================================================
   // GPS CLIENT
@@ -670,6 +743,29 @@ export default function SuiviCommande() {
         };
       });
 
+      // ================================================
+      // NOUVEAU MESSAGE
+      // ================================================
+
+      const handleNouveauMessage = (data) => {
+        if (data.commandeId?.toString() !== currentCommandeId.toString()) {
+          return;
+        }
+
+        const nouveauMessage = data.nouveauMessage;
+
+        if (!nouveauMessage) {
+          return;
+        }
+
+        // Le badge ne compte que les messages reçus.
+        if (nouveauMessage.expediteur?.type === "client") {
+          return;
+        }
+
+        setNombreMessagesNonLus((prev) => prev + 1);
+      };
+
       // ==============================================
       // NOUVEAU LIVREUR
       // ==============================================
@@ -697,6 +793,7 @@ export default function SuiviCommande() {
     };
 
     socket.on("livreur_position", handlePositionLivreur);
+    socket.on("nouveau_message", handleNouveauMessage);
 
     socket.on("client_position", handlePositionClient);
 
@@ -708,6 +805,7 @@ export default function SuiviCommande() {
       socket.off("client_position", handlePositionClient);
 
       socket.off("commande_update", handleCommandeUpdate);
+      socket.off("nouveau_message", handleNouveauMessage);
 
       socket.emit("leave_commande", currentCommandeId);
     };
@@ -1215,7 +1313,17 @@ export default function SuiviCommande() {
                       navigate(`/conversation/${currentCommandeId}`)
                     }
                   >
-                    <FaComments />
+                    <MessageIconWrapper>
+                      <FaComments />
+
+                      {nombreMessagesNonLus > 0 && (
+                        <UnreadBadge>
+                          {nombreMessagesNonLus > 99
+                            ? "99+"
+                            : nombreMessagesNonLus}
+                        </UnreadBadge>
+                      )}
+                    </MessageIconWrapper>
 
                     <span>Discuter</span>
                   </DriverAction>
@@ -2548,4 +2656,39 @@ const BackButton = styled.button`
   cursor: pointer;
 
   font-weight: 700;
+`;
+
+const MessageIconWrapper = styled.span`
+  position: relative;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const UnreadBadge = styled.span`
+  position: absolute;
+
+  top: -10px;
+  right: -12px;
+
+  min-width: 19px;
+  height: 19px;
+
+  padding: 0 5px;
+
+  border-radius: 999px;
+
+  background: #ff3b30;
+  color: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+
+  border: 2px solid white;
 `;
