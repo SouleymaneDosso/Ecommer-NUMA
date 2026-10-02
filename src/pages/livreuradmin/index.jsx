@@ -610,8 +610,12 @@ function LivreurAdmin() {
   }, [livreur?.localisation?.latitude, livreur?.localisation?.longitude]);
 
   // ======================================================
-  // SOCKET.IO
+  // SOCKET.IO — GPS + MESSAGES TEMPS RÉEL
   // ======================================================
+
+  // ------------------------------------------------------
+  // GPS TEMPS RÉEL DE LA COMMANDE ACTIVE
+  // ------------------------------------------------------
 
   useEffect(() => {
     if (!commandeActive?._id) {
@@ -621,27 +625,6 @@ function LivreurAdmin() {
     const commandeId = commandeActive._id.toString();
 
     socket.emit("join_commande", commandeId);
-
-    const tokenLivreur = localStorage.getItem("tokenLivreur");
-
-    try {
-      if (tokenLivreur) {
-        const payload = JSON.parse(
-          atob(
-            tokenLivreur.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"),
-          ),
-        );
-
-        if (payload?.livreurId || payload?.userId || payload?.id) {
-          socket.emit(
-            "join_room",
-            payload.livreurId || payload.userId || payload.id,
-          );
-        }
-      }
-    } catch (error) {
-      console.warn("Impossible de lire le token livreur");
-    }
 
     // ==================================================
     // POSITION CLIENT
@@ -687,23 +670,53 @@ function LivreurAdmin() {
       });
     };
 
-    // ==================================================
-    // NOUVEAU MESSAGE
-    // ==================================================
+    socket.on("client_position", handleClientPosition);
+    socket.on("livreur_position", handleLivreurPosition);
+
+    return () => {
+      socket.off("client_position", handleClientPosition);
+      socket.off("livreur_position", handleLivreurPosition);
+
+      socket.emit("leave_commande", commandeId);
+    };
+  }, [commandeActive?._id]);
+
+  // ------------------------------------------------------
+  // MESSAGES TEMPS RÉEL DU LIVREUR
+  // ------------------------------------------------------
+
+  useEffect(() => {
+    if (!livreur?.id && !livreur?._id) {
+      return;
+    }
+
+    const livreurId = (livreur.id || livreur._id).toString();
+
+    // Le livreur rejoint sa room personnelle.
+    // Les messages lui sont envoyés par le backend dans :
+    // user:${destinataireId}
+    socket.emit("join_room", livreurId);
 
     const handleNouveauMessage = (data) => {
-      if (data?.commandeId?.toString() !== commandeId) {
+      const commandeId = data?.commandeId?.toString();
+      const nouveauMessage = data?.nouveauMessage;
+
+      if (!commandeId || !nouveauMessage) {
         return;
       }
 
-      const nouveauMessage = data.nouveauMessage;
-
-      if (!nouveauMessage) {
-        return;
-      }
-
-      // Le livreur ne compte pas ses propres messages
+      // Le livreur ne compte pas ses propres messages.
       if (nouveauMessage.expediteur?.type === "livreur") {
+        return;
+      }
+
+      // On vérifie que cette commande appartient bien
+      // aux commandes actuellement affichées du livreur.
+      const commandeExiste = mesCommandes.some(
+        (commande) => commande?._id?.toString() === commandeId,
+      );
+
+      if (!commandeExiste) {
         return;
       }
 
@@ -713,18 +726,12 @@ function LivreurAdmin() {
       }));
     };
 
-    socket.on("client_position", handleClientPosition);
-    socket.on("livreur_position", handleLivreurPosition);
     socket.on("nouveau_message", handleNouveauMessage);
 
     return () => {
-      socket.off("client_position", handleClientPosition);
-      socket.off("livreur_position", handleLivreurPosition);
       socket.off("nouveau_message", handleNouveauMessage);
-
-      socket.emit("leave_commande", commandeId);
     };
-  }, [commandeActive?._id]);
+  }, [livreur?.id, livreur?._id, mesCommandes]);
 
   // ======================================================
   // PROFIL
