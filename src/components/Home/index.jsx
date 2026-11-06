@@ -44,6 +44,18 @@ const getMediaUrl = (url) => {
     : `${API_URL}${url.startsWith("/") ? "" : "/"}${url}`;
 };
 
+const extraireListe = (data) => {
+  if (Array.isArray(data)) return data;
+
+  const liste =
+    data?.bestSellers ||
+    data?.products ||
+    data?.produits ||
+    data?.data;
+
+  return Array.isArray(liste) ? liste : [];
+};
+
 /* =========================================================
    ANIMATIONS
 ========================================================= */
@@ -415,7 +427,6 @@ const UniverseContent = styled.div`
     left: 22px;
     right: 22px;
     bottom: 7%;
-
     align-items: flex-end;
   }
 `;
@@ -828,6 +839,7 @@ const CarouselArrow = styled.button`
 const BestSellerSection = styled.section`
   width: 100%;
   margin: 0;
+  padding: 0;
 `;
 
 const BestCarousel = styled.div`
@@ -963,31 +975,6 @@ const BestPhrase = styled.div`
   }
 `;
 
-const BestBtn = styled(Link)`
-  display: inline-flex;
-  align-items: center;
-  gap: 11px;
-  flex-shrink: 0;
-
-  padding: 14px 20px;
-
-  color: #172019;
-  background: #d6b77e;
-
-  text-decoration: none;
-  font-size: 0.75rem;
-  font-weight: 800;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-
-  transition: 0.3s ease;
-
-  &:hover {
-    background: white;
-    transform: translateY(-3px);
-  }
-`;
-
 const BestDots = styled.div`
   position: absolute;
   z-index: 4;
@@ -1038,7 +1025,6 @@ const BenefitsSection = styled.div`
 const BenefitCard = styled.div`
   position: relative;
   overflow: hidden;
-
   padding: 32px;
   min-height: 240px;
 
@@ -1125,15 +1111,14 @@ function UniverseShowcase({ title, genre, products }) {
     return () => clearInterval(interval);
   }, [items.length]);
 
-  const goTo = (index) => {
-    setActiveIndex(index);
-  };
-
   return (
     <UniverseSection>
       {items.length > 0 ? (
         items.map((product, index) => (
-          <UniverseSlide key={product._id} $active={index === activeIndex}>
+          <UniverseSlide
+            key={product._id}
+            $active={index === activeIndex}
+          >
             <Link
               to={`/${genre}`}
               aria-label={`Découvrir la collection ${title}`}
@@ -1173,7 +1158,7 @@ function UniverseShowcase({ title, genre, products }) {
               key={product._id}
               type="button"
               $active={index === activeIndex}
-              onClick={() => goTo(index)}
+              onClick={() => setActiveIndex(index)}
               aria-label={`Afficher l'image ${index + 1}`}
             />
           ))}
@@ -1189,6 +1174,7 @@ function UniverseShowcase({ title, genre, products }) {
 
 export default function HomePremium() {
   const [products, setProducts] = useState([]);
+  const [bestSellers, setBestSellers] = useState([]);
   const [videos, setVideos] = useState([]);
 
   const [slide, setSlide] = useState(0);
@@ -1226,10 +1212,7 @@ export default function HomePremium() {
         }
 
         const data = await response.json();
-
-        const modeles = Array.isArray(data)
-          ? data
-          : data.modeles || data.data || [];
+        const modeles = extraireListe(data);
 
         setPrecommandeDisponible(modeles.length > 0);
       } catch (error) {
@@ -1242,7 +1225,7 @@ export default function HomePremium() {
   }, []);
 
   /* =======================================================
-     FETCH PRODUITS ET VIDÉOS
+     FETCH PRODUITS, BEST SELLERS ET VIDÉOS
   ======================================================= */
 
   useEffect(() => {
@@ -1255,10 +1238,37 @@ export default function HomePremium() {
         }
 
         const data = await response.json();
-        setProducts(Array.isArray(data) ? data : []);
+        setProducts(extraireListe(data));
       } catch (error) {
         console.error("Erreur produits :", error);
         setProducts([]);
+      }
+    };
+
+    const fetchBestSellers = async () => {
+      try {
+        const response = await fetch(
+          `${API_URL}/api/produits/best-sellers`,
+        );
+
+        if (!response.ok) {
+          throw new Error("Impossible de récupérer les Best Sellers");
+        }
+
+        const data = await response.json();
+
+        const liste = extraireListe(data);
+
+        setBestSellers(
+          liste.filter(
+            (product) =>
+              !estPrecommande(product) &&
+              product?.images?.[0]?.url,
+          ),
+        );
+      } catch (error) {
+        console.error("Erreur Best Sellers :", error);
+        setBestSellers([]);
       }
     };
 
@@ -1284,6 +1294,7 @@ export default function HomePremium() {
     };
 
     fetchProducts();
+    fetchBestSellers();
     fetchVideos();
   }, []);
 
@@ -1293,7 +1304,9 @@ export default function HomePremium() {
 
   const heroProducts = useMemo(
     () =>
-      products.filter((product) => product.hero && product.images?.[0]?.url),
+      products.filter(
+        (product) => product.hero && product.images?.[0]?.url,
+      ),
     [products],
   );
 
@@ -1320,24 +1333,6 @@ export default function HomePremium() {
           !estPrecommande(product) &&
           product?.images?.[0]?.url,
       ),
-    [products],
-  );
-
-  /* =======================================================
-     BEST SELLERS
-     On conserve ici la règle existante : badge = "new".
-  ======================================================= */
-
-  const bestSellers = useMemo(
-    () =>
-      products
-        .filter(
-          (product) =>
-            normaliserGenre(product.badge) === "new" &&
-            !estPrecommande(product) &&
-            product?.images?.[0]?.url,
-        )
-        .slice(0, 5),
     [products],
   );
 
@@ -1422,6 +1417,10 @@ export default function HomePremium() {
   ======================================================= */
 
   useEffect(() => {
+    setMiniSlide(0);
+  }, [carouselProducts.length]);
+
+  useEffect(() => {
     if (carouselProducts.length <= 1) return;
 
     const interval = setInterval(() => {
@@ -1434,6 +1433,10 @@ export default function HomePremium() {
   /* =======================================================
      BEST SELLERS AUTOPLAY
   ======================================================= */
+
+  useEffect(() => {
+    setBestSlide(0);
+  }, [bestSellers.length]);
 
   useEffect(() => {
     if (bestSellers.length <= 1) return;
@@ -1606,7 +1609,7 @@ export default function HomePremium() {
         </HeroBottom>
       </Hero>
 
-      {/* UNIVERS HOMME : UNE IMAGE À LA FOIS */}
+      {/* UNIVERS HOMME */}
 
       <UniverseShowcase
         title="Homme"
@@ -1614,7 +1617,7 @@ export default function HomePremium() {
         products={hommeProducts}
       />
 
-      {/* UNIVERS FEMME : UNE IMAGE À LA FOIS */}
+      {/* UNIVERS FEMME */}
 
       <UniverseShowcase
         title="Femme"
@@ -1764,7 +1767,10 @@ export default function HomePremium() {
             <>
               <MiniCarousel $isDark={$isDark}>
                 {carouselProducts.map((product, index) => (
-                  <MiniSlide key={product._id} $active={index === miniSlide}>
+                  <MiniSlide
+                    key={product._id}
+                    $active={index === miniSlide}
+                  >
                     <MiniSlideImg
                       src={getMediaUrl(product.images?.[0]?.url)}
                       alt={product.title}
@@ -1821,7 +1827,9 @@ export default function HomePremium() {
               </DotsRow>
             </>
           ) : (
-            <EmptyState>Aucune pièce disponible pour le moment.</EmptyState>
+            <EmptyState>
+              Aucune pièce disponible pour le moment.
+            </EmptyState>
           )}
         </CarouselSection>
       </Section>
@@ -1829,13 +1837,6 @@ export default function HomePremium() {
       {/* BEST SELLERS */}
 
       <BestSellerSection>
-        <Section>
-          <SectionHeader>
-            <div className="eyebrow">BEST SELLERS</div>
-            <h2>Nos pièces incontournables.</h2>
-          </SectionHeader>
-        </Section>
-
         {bestSellers.length > 0 ? (
           <BestCarousel>
             {bestSellers.map((product, index) => (
@@ -1943,8 +1944,8 @@ export default function HomePremium() {
               <BenefitTitle>Livraison rapide</BenefitTitle>
 
               <BenefitText>
-                Recevez vos articles rapidement, soigneusement emballés et prêts
-                à être portés.
+                Recevez vos articles rapidement, soigneusement emballés et
+                prêts à être portés.
               </BenefitText>
             </BenefitCard>
 
