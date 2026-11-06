@@ -119,6 +119,7 @@ function AdminProducts() {
   const [categorie, setCategorie] = useState("haut");
   const [badge, setBadge] = useState(null);
   const [hero, setHero] = useState(false);
+  const [bestSeller, setBestSeller] = useState(false);
   const [editingProductId, setEditingProductId] = useState(null);
   const [details, setDetails] = useState({
     matiere: "",
@@ -278,6 +279,7 @@ function AdminProducts() {
       formData.append("badge", badge);
     }
     formData.append("hero", hero);
+    formData.append("bestSeller", bestSeller);
     formData.append("mainImageIndex", mainImageIndex);
 
     // ✅ Images à supprimer
@@ -343,6 +345,7 @@ function AdminProducts() {
     setStock(stockObj);
 
     setHero(p.hero);
+    setBestSeller(p.bestSeller || false);
     setGenre(p.genre);
     setCategorie(p.categorie);
     setBadge(p.badge);
@@ -455,6 +458,7 @@ function AdminProducts() {
     setCategorie("haut");
     setBadge(null);
     setHero(false);
+    setBestSeller(false);
     setEditingProductId(null);
     setDetails({
       matiere: "",
@@ -523,6 +527,14 @@ function AdminProducts() {
         >
           <option value="false">Non Hero</option>
           <option value="true">Hero</option>
+        </Select>
+
+        <Select
+          value={bestSeller ? "true" : "false"}
+          onChange={(e) => setBestSeller(e.target.value === "true")}
+        >
+          <option value="false">Non Best-Seller</option>
+          <option value="true">⭐ Best-Seller</option>
         </Select>
 
         <Input
@@ -694,7 +706,10 @@ function AdminProducts() {
           <ProductItem key={p._id}>
             <ProductHeader>
               <div>
-                {p.title} {p.hero && "(Hero)"} {p.isNew && "(Nouveau)"}
+                {p.title}
+                {p.hero && " (Hero)"}
+                {p.isNew && " (Nouveau)"}
+                {p.bestSeller && " ⭐ (Best-Seller)"}
               </div>
               <div style={{ display: "flex", gap: "5px" }}>
                 <Button onClick={() => handleEditProduct(p)}>Modifier</Button>
