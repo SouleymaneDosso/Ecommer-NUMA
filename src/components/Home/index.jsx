@@ -24,9 +24,7 @@ const estPrecommande = (product) =>
   product?.precommande === true && product?.disponible === false;
 
 const normaliserGenre = (genre) =>
-  String(genre || "")
-    .trim()
-    .toLowerCase();
+  String(genre || "").trim().toLowerCase();
 
 const getProduitId = (video) => {
   const produit = video?.produitId;
@@ -61,116 +59,20 @@ const slowZoom = keyframes`
   to { transform: scale(1.07); }
 `;
 
+const fadeUp = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
+
 const float = keyframes`
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-6px); }
-`;
-
-const UniversContainer = styled.div`
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
-  width: 100%;
-  max-width: 1200px;
-  margin: 60px auto;
-  padding: 0 20px;
-
-  @media (max-width: 650px) {
-    grid-template-columns: 1fr;
-    gap: 16px;
-    padding: 0 15px;
-  }
-`;
-
-const UniversCard = styled(Link)`
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 180px;
-  padding: 35px;
-  overflow: hidden;
-  text-decoration: none;
-  color: #fff;
-  background: ${({ $femme }) =>
-    $femme
-      ? "linear-gradient(135deg, #29201f, #72564b)"
-      : "linear-gradient(135deg, #101c1b, #354b43)"};
-  border: 1px solid rgba(198, 164, 106, 0.45);
-  border-radius: 4px;
-  transition: all 0.4s ease;
-
-  &::before {
-    content: "✦";
-    position: absolute;
-    right: 75px;
-    top: -35px;
-    font-size: 180px;
-    color: rgba(255, 255, 255, 0.045);
-    transition: transform 0.5s ease;
-  }
-
-  &:hover {
-    transform: translateY(-7px);
-    border-color: #c6a46a;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.18);
-
-    &::before {
-      transform: rotate(45deg) scale(1.1);
-    }
-
-    svg {
-      transform: translateX(6px);
-    }
-  }
-
-  @media (max-width: 650px) {
-    min-height: 140px;
-    padding: 25px;
-  }
-`;
-
-const UniversText = styled.div`
-  position: relative;
-  z-index: 1;
-
-  span {
-    display: block;
-    margin-bottom: 12px;
-    color: #d5b77e;
-    font-size: 10px;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-  }
-
-  h2 {
-    margin: 0;
-    font-family: Georgia, serif;
-    font-size: clamp(28px, 4vw, 42px);
-    font-weight: 400;
-    letter-spacing: 2px;
-  }
-
-  p {
-    margin: 12px 0 0;
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 12px;
-    letter-spacing: 1px;
-  }
-`;
-
-const UniversArrow = styled.div`
-  position: relative;
-  z-index: 1;
-  display: grid;
-  place-items: center;
-  width: 45px;
-  height: 45px;
-  flex-shrink: 0;
-  border: 1px solid rgba(213, 183, 126, 0.7);
-  border-radius: 50%;
-  color: #d5b77e;
-  transition: all 0.3s ease;
 `;
 
 /* =========================================================
@@ -189,9 +91,7 @@ const Wrapper = styled.main`
 
   color: ${({ $isDark }) => ($isDark ? "#f8f7f2" : "#20251f")};
 
-  transition:
-    background 0.4s ease,
-    color 0.4s ease;
+  transition: background 0.4s ease, color 0.4s ease;
 `;
 
 const Section = styled.section`
@@ -210,45 +110,42 @@ const Container = styled.div`
 
 const SectionHeader = styled.div`
   text-align: center;
-  max-width: 850px;
-  margin: 0 auto 48px;
+  max-width: 800px;
+  margin: 0 auto 45px;
   padding: 0 15px;
 
   .eyebrow {
     display: inline-block;
-    margin-bottom: 18px;
+    margin-bottom: 16px;
     color: #b18b55;
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     font-weight: 800;
     letter-spacing: 3px;
     text-transform: uppercase;
   }
 
   h2 {
-    margin: 0 0 18px;
-    font-size: clamp(2.1rem, 4vw, 3.5rem);
-    line-height: 1.06;
-    letter-spacing: -0.045em;
-    font-weight: 800;
+    margin: 0;
+    font-family: Georgia, serif;
+    font-size: clamp(2rem, 4vw, 3.3rem);
+    line-height: 1.1;
+    font-weight: 400;
+    letter-spacing: -0.035em;
   }
 
   p {
-    max-width: 700px;
-    margin: 0 auto;
-    font-size: 1rem;
-    line-height: 1.85;
-    opacity: 0.65;
+    max-width: 600px;
+    margin: 16px auto 0;
+    font-size: 0.95rem;
+    line-height: 1.8;
+    opacity: 0.6;
   }
 
   @media (max-width: 600px) {
-    margin-bottom: 35px;
+    margin-bottom: 30px;
 
     h2 {
       font-size: 2rem;
-    }
-
-    p {
-      font-size: 0.93rem;
     }
   }
 `;
@@ -263,8 +160,8 @@ const WhatsAppButton = styled.a`
   bottom: 24px;
   z-index: 9999;
 
-  width: 60px;
-  height: 60px;
+  width: 58px;
+  height: 58px;
 
   display: flex;
   align-items: center;
@@ -285,20 +182,15 @@ const WhatsAppButton = styled.a`
   }
 
   svg {
-    width: 30px;
-    height: 30px;
+    width: 29px;
+    height: 29px;
   }
 
   @media (max-width: 600px) {
     right: 16px;
     bottom: 16px;
-    width: 54px;
-    height: 54px;
-
-    svg {
-      width: 27px;
-      height: 27px;
-    }
+    width: 52px;
+    height: 52px;
   }
 `;
 
@@ -311,7 +203,7 @@ const Hero = styled.section`
   width: 100%;
   height: 100vh;
   height: 100svh;
-  min-height: 620px;
+  min-height: 600px;
   overflow: hidden;
   background: #101512;
 `;
@@ -320,7 +212,8 @@ const HeroSlide = styled.div`
   position: absolute;
   inset: -1%;
 
-  background-image: ${({ $image }) => ($image ? `url("${$image}")` : "none")};
+  background-image: ${({ $image }) =>
+    $image ? `url("${$image}")` : "none"};
 
   background-size: cover;
   background-position: center;
@@ -337,9 +230,9 @@ const HeroGradient = styled.div`
 
   background: linear-gradient(
     180deg,
-    rgba(0, 0, 0, 0.08) 0%,
-    transparent 45%,
-    rgba(0, 0, 0, 0.35) 100%
+    rgba(0, 0, 0, 0.04) 0%,
+    transparent 55%,
+    rgba(0, 0, 0, 0.4) 100%
   );
 `;
 
@@ -359,7 +252,6 @@ const HeroBottom = styled.div`
     left: 18px;
     right: 18px;
     bottom: 22px;
-    flex-wrap: wrap;
   }
 `;
 
@@ -385,32 +277,26 @@ const HeroCollection = styled(Link)`
   transition: 0.3s ease;
 
   &:hover {
-    background: rgba(177, 139, 85, 0.85);
-    border-color: #c6a36a;
-    transform: translateY(-3px);
-  }
-
-  @media (max-width: 600px) {
-    padding: 11px 13px;
-    font-size: 0.62rem;
+    background: #b18b55;
+    border-color: #b18b55;
   }
 `;
 
 const PreorderLink = styled(Link)`
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 
   padding: 13px 18px;
 
-  color: #fff;
+  color: white;
   text-decoration: none;
 
   border: 1px solid rgba(255, 255, 255, 0.55);
   background: rgba(17, 27, 22, 0.42);
   backdrop-filter: blur(14px);
 
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -418,18 +304,13 @@ const PreorderLink = styled(Link)`
   transition: 0.3s ease;
 
   &:hover {
-    background: rgba(177, 139, 85, 0.85);
-    border-color: #c6a36a;
-    transform: translateY(-3px);
-  }
-
-  svg {
-    color: #d8bd91;
+    background: #b18b55;
+    border-color: #b18b55;
   }
 
   @media (max-width: 600px) {
-    padding: 11px 13px;
-    font-size: 0.62rem;
+    padding: 11px 12px;
+    font-size: 0.6rem;
   }
 `;
 
@@ -441,13 +322,13 @@ const DotsRow = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 10px;
-  margin-top: 25px;
+  gap: 9px;
+  margin-top: 22px;
 `;
 
 const Dot = styled.button`
-  width: ${({ $active }) => ($active ? "30px" : "8px")};
-  height: 8px;
+  width: ${({ $active }) => ($active ? "28px" : "7px")};
+  height: 7px;
   padding: 0;
 
   border: none;
@@ -457,75 +338,37 @@ const Dot = styled.button`
     $active ? "#b18b55" : "rgba(177, 139, 85, 0.3)"};
 
   cursor: pointer;
-  transition:
-    width 0.35s ease,
-    background 0.35s ease;
+  transition: width 0.35s ease, background 0.35s ease;
 `;
 
 /* =========================================================
-   UNIVERS HOMME / FEMME
+   UNIVERS HOMME / FEMME — PLEIN ÉCRAN
 ========================================================= */
 
 const UniverseSection = styled.section`
-  width: 100%;
-  margin: 0;
-  padding: 5px;
-  overflow: hidden;
-`;
-
-const UniverseGallery = styled.div`
-  width: 100%;
-  margin: 0;
-  padding: 0;
-`;
-
-const UniverseViewport = styled.div`
-  width: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
-
-  scroll-snap-type: x mandatory;
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
-
-  scrollbar-width: none;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
-`;
-
-const UniverseTrack = styled.div`
-  display: flex;
-  width: 100%;
-`;
-
-const UniverseSlide = styled.div`
-  flex: 0 0 100%;
-  width: 100%;
-  margin: 0;
-  padding: 0;
-  scroll-snap-align: start;
-`;
-
-const UniverseImageLink = styled(Link)`
   position: relative;
-  display: block;
-
   width: 100%;
   height: 100vh;
   height: 100svh;
-  min-height: 600px;
-
+  min-height: 620px;
   margin: 0;
   padding: 0;
   overflow: hidden;
-
   background: #111;
 
-  @media (max-width: 700px) {
-    min-height: 100svh;
+  @media (max-width: 650px) {
+    min-height: 620px;
   }
+`;
+
+const UniverseSlide = styled.div`
+  position: absolute;
+  inset: 0;
+
+  opacity: ${({ $active }) => ($active ? 1 : 0)};
+  visibility: ${({ $active }) => ($active ? "visible" : "hidden")};
+
+  transition: opacity 1s ease, visibility 1s ease;
 `;
 
 const UniverseImage = styled.img`
@@ -536,83 +379,59 @@ const UniverseImage = styled.img`
   width: 100%;
   height: 100%;
 
-  margin: 0;
-  padding: 0;
-
   object-fit: cover;
   object-position: center;
 
-  transition: transform 1s ease;
-
-  ${UniverseImageLink}:hover & {
-    transform: scale(1.035);
-  }
+  animation: ${slowZoom} 6s ease-in-out infinite alternate;
 `;
 
-const UniverseImageNumber = styled.div`
+const UniverseShade = styled.div`
   position: absolute;
-  top: 30px;
-  left: 30px;
+  inset: 0;
 
-  padding: 10px 15px;
-
-  color: white;
-  background: rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(12px);
-
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 2px;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.02) 30%,
+    rgba(0, 0, 0, 0.08) 55%,
+    rgba(0, 0, 0, 0.48) 100%
+  );
 `;
 
-const UniverseCaption = styled.div`
-  width: 100%;
-  padding: 38px 6%;
+const UniverseContent = styled.div`
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  bottom: 8%;
+  z-index: 2;
 
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 25px;
+  gap: 20px;
 
-  background: ${({ $isDark }) =>
-    $isDark
-      ? "linear-gradient(135deg, #202b23, #141b16)"
-      : "linear-gradient(135deg, #e9e4d9, #f5f1e9)"};
+  animation: ${fadeUp} 0.8s ease both;
 
-  border-bottom: 1px solid
-    ${({ $isDark }) =>
-      $isDark ? "rgba(255,255,255,0.09)" : "rgba(23,61,50,0.12)"};
+  @media (max-width: 600px) {
+    left: 22px;
+    right: 22px;
+    bottom: 7%;
 
-  @media (max-width: 650px) {
-    padding: 28px 22px;
-    flex-direction: column;
-    align-items: flex-start;
+    align-items: flex-end;
   }
 `;
 
-const UniverseInfo = styled.div`
-  .eyebrow {
-    display: inline-block;
-    margin-bottom: 12px;
+const UniverseTitle = styled.h2`
+  margin: 0;
+  color: white;
 
-    color: #b18b55;
-    font-size: 0.7rem;
-    font-weight: 800;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-  }
+  font-family: Georgia, serif;
+  font-size: clamp(3.5rem, 10vw, 8rem);
+  line-height: 0.95;
+  font-weight: 400;
+  letter-spacing: -0.055em;
 
-  h3 {
-    margin: 0;
-    font-size: clamp(1.8rem, 4vw, 3rem);
-    letter-spacing: -0.04em;
-  }
-
-  p {
-    margin: 10px 0 0;
-    font-size: 0.95rem;
-    line-height: 1.7;
-    opacity: 0.65;
+  @media (max-width: 600px) {
+    font-size: clamp(3rem, 16vw, 5.2rem);
   }
 `;
 
@@ -622,13 +441,15 @@ const UniverseCTA = styled(Link)`
   gap: 12px;
   flex-shrink: 0;
 
-  padding: 14px 20px;
+  padding: 15px 21px;
 
   color: white;
-  background: #173d32;
-  text-decoration: none;
+  background: rgba(23, 61, 50, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(12px);
 
-  font-size: 0.78rem;
+  text-decoration: none;
+  font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -639,6 +460,38 @@ const UniverseCTA = styled(Link)`
     background: #b18b55;
     transform: translateY(-3px);
   }
+
+  @media (max-width: 600px) {
+    padding: 12px 13px;
+    font-size: 0.62rem;
+  }
+`;
+
+const UniverseDots = styled.div`
+  position: absolute;
+  z-index: 3;
+  left: 6%;
+  bottom: 35px;
+
+  display: flex;
+  gap: 8px;
+
+  @media (max-width: 600px) {
+    left: 22px;
+    bottom: 20px;
+  }
+`;
+
+const UniverseDot = styled.button`
+  width: ${({ $active }) => ($active ? "28px" : "7px")};
+  height: 7px;
+  padding: 0;
+  border: none;
+  border-radius: 20px;
+  background: ${({ $active }) =>
+    $active ? "#d6b77e" : "rgba(255,255,255,0.5)"};
+  cursor: pointer;
+  transition: width 0.3s ease;
 `;
 
 /* =========================================================
@@ -675,7 +528,6 @@ const VideoPlayer = styled.video`
 
   object-fit: cover;
   object-position: center;
-
   background: #080b09;
 `;
 
@@ -869,7 +721,6 @@ const MiniSlide = styled.div`
 
   opacity: ${({ $active }) => ($active ? 1 : 0)};
   pointer-events: ${({ $active }) => ($active ? "auto" : "none")};
-
   transition: opacity 0.8s ease;
 `;
 
@@ -890,7 +741,7 @@ const MiniOverlay = styled.div`
   justify-content: space-between;
   gap: 20px;
 
-  padding: 24px 27px;
+  padding: 22px 25px;
 
   color: white;
   background: rgba(18, 28, 22, 0.75);
@@ -900,20 +751,20 @@ const MiniOverlay = styled.div`
   @media (max-width: 650px) {
     flex-direction: column;
     align-items: flex-start;
-    padding: 20px;
+    padding: 18px;
   }
 `;
 
 const MiniInfo = styled.div`
   h3 {
-    margin: 0 0 8px;
-    font-size: clamp(1.4rem, 3vw, 2rem);
+    margin: 0;
+    font-size: clamp(1.3rem, 3vw, 1.8rem);
   }
 
   p {
-    margin: 0;
-    font-size: 0.9rem;
-    opacity: 0.75;
+    margin: 8px 0 0;
+    font-size: 0.88rem;
+    opacity: 0.7;
   }
 `;
 
@@ -923,7 +774,7 @@ const MiniCTA = styled(Link)`
   gap: 10px;
   flex-shrink: 0;
 
-  padding: 13px 20px;
+  padding: 13px 19px;
 
   color: white;
   background: #173d32;
@@ -971,29 +822,27 @@ const CarouselArrow = styled.button`
 `;
 
 /* =========================================================
-   BEST SELLERS
+   BEST SELLERS — FULL BLEED
 ========================================================= */
 
-const BestSellerSection = styled.div`
-  width: min(1240px, 92%);
-  margin: 0 auto;
+const BestSellerSection = styled.section`
+  width: 100%;
+  margin: 0;
 `;
 
 const BestCarousel = styled.div`
   position: relative;
   width: 100%;
-  height: 680px;
+  height: 90vh;
+  height: 90svh;
+  min-height: 600px;
   overflow: hidden;
+  background: #101510;
 
-  background: ${({ $isDark }) => ($isDark ? "#111" : "#e9e6df")};
-  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.13);
-
-  @media (max-width: 900px) {
-    height: 850px;
-  }
-
-  @media (max-width: 600px) {
-    height: 760px;
+  @media (max-width: 650px) {
+    height: 75vh;
+    height: 75svh;
+    min-height: 520px;
   }
 `;
 
@@ -1002,132 +851,171 @@ const BestSlide = styled.div`
   inset: 0;
 
   opacity: ${({ $active }) => ($active ? 1 : 0)};
-  pointer-events: ${({ $active }) => ($active ? "auto" : "none")};
-
-  transition: opacity 0.8s ease;
-`;
-
-const BestSlideInner = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  width: 100%;
-  height: 100%;
-
-  @media (max-width: 900px) {
-    grid-template-columns: 1fr;
-    grid-template-rows: 48% 52%;
-  }
-`;
-
-const BestImageWrap = styled.div`
-  position: relative;
-  overflow: hidden;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  background: ${({ $isDark }) => ($isDark ? "#101510" : "#e9e6df")};
+  visibility: ${({ $active }) => ($active ? "visible" : "hidden")};
+  transition: opacity 0.9s ease, visibility 0.9s ease;
 `;
 
 const BestImage = styled.img`
+  position: absolute;
+  inset: 0;
+
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  padding: 30px;
+  display: block;
+
+  object-fit: cover;
+  object-position: center;
+
+  transform: ${({ $active }) => ($active ? "scale(1)" : "scale(1.04)")};
+  transition: transform 6s ease;
+`;
+
+const BestShade = styled.div`
+  position: absolute;
+  inset: 0;
+
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.12) 0%,
+    transparent 40%,
+    rgba(0, 0, 0, 0.38) 100%
+  );
 `;
 
 const BestBadge = styled.div`
   position: absolute;
-  top: 25px;
-  left: 25px;
+  top: 30px;
+  left: 30px;
+  z-index: 2;
 
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 9px;
 
-  padding: 9px 13px;
+  padding: 11px 15px;
 
-  background: rgba(23, 61, 50, 0.85);
-  color: white;
-
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  background: rgba(23, 61, 50, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(12px);
 
   font-size: 0.68rem;
   font-weight: 800;
   letter-spacing: 2px;
-`;
 
-const BestContent = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-
-  padding: 60px;
-
-  background: ${({ $isDark }) =>
-    $isDark
-      ? "linear-gradient(135deg, #18221b, #101510)"
-      : "linear-gradient(135deg, #fff, #f0ede6)"};
-
-  @media (max-width: 900px) {
-    padding: 32px;
+  @media (max-width: 600px) {
+    top: 18px;
+    left: 18px;
   }
 `;
 
-const BestSmall = styled.span`
-  margin-bottom: 15px;
-  color: #b18b55;
+const BestStars = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #e3bd76;
 
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 3px;
-  text-transform: uppercase;
+  svg {
+    font-size: 13px;
+  }
+
+  @media (max-width: 600px) {
+    svg {
+      font-size: 11px;
+    }
+  }
 `;
 
-const BestTitle = styled.h3`
-  margin: 0 0 17px;
-  font-size: clamp(2rem, 4vw, 3.6rem);
-  line-height: 1;
-  letter-spacing: -0.055em;
+const BestBottom = styled.div`
+  position: absolute;
+  left: 5%;
+  right: 5%;
+  bottom: 55px;
+  z-index: 3;
+
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+
+  color: white;
+
+  @media (max-width: 600px) {
+    left: 20px;
+    right: 20px;
+    bottom: 45px;
+    align-items: flex-start;
+    flex-direction: column;
+  }
 `;
 
-const BestSubtitle = styled.p`
-  max-width: 500px;
-  margin: 0 0 24px;
+const BestPhrase = styled.div`
+  max-width: 480px;
 
-  font-size: 0.98rem;
-  line-height: 1.85;
-  opacity: 0.68;
-`;
-
-const BestPrice = styled.div`
-  margin-bottom: 27px;
-  font-size: 1.4rem;
-  font-weight: 800;
+  h3 {
+    margin: 0;
+    font-family: Georgia, serif;
+    font-size: clamp(1.8rem, 4vw, 3rem);
+    line-height: 1.1;
+    font-weight: 400;
+    letter-spacing: -0.025em;
+    text-shadow: 0 2px 15px rgba(0, 0, 0, 0.25);
+  }
 `;
 
 const BestBtn = styled(Link)`
-  width: fit-content;
-
   display: inline-flex;
   align-items: center;
   gap: 11px;
+  flex-shrink: 0;
 
-  padding: 15px 22px;
+  padding: 14px 20px;
 
-  background: ${({ $isDark }) => ($isDark ? "#d6b77e" : "#173d32")};
-  color: ${({ $isDark }) => ($isDark ? "#172019" : "#fff")};
+  color: #172019;
+  background: #d6b77e;
 
   text-decoration: none;
-  font-size: 0.82rem;
+  font-size: 0.75rem;
   font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
 
-  transition: transform 0.3s ease;
+  transition: 0.3s ease;
 
   &:hover {
-    transform: translateY(-4px);
+    background: white;
+    transform: translateY(-3px);
   }
+`;
+
+const BestDots = styled.div`
+  position: absolute;
+  z-index: 4;
+  left: 5%;
+  bottom: 20px;
+
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  @media (max-width: 600px) {
+    left: 20px;
+    bottom: 15px;
+  }
+`;
+
+const BestDot = styled.button`
+  width: ${({ $active }) => ($active ? "27px" : "7px")};
+  height: 7px;
+  padding: 0;
+  border: none;
+  border-radius: 20px;
+
+  background: ${({ $active }) =>
+    $active ? "#d6b77e" : "rgba(255,255,255,0.55)"};
+
+  cursor: pointer;
+  transition: width 0.3s ease;
 `;
 
 /* =========================================================
@@ -1152,7 +1040,7 @@ const BenefitCard = styled.div`
   overflow: hidden;
 
   padding: 32px;
-  min-height: 250px;
+  min-height: 240px;
 
   background: ${({ $isDark }) =>
     $isDark ? "rgba(255,255,255,0.035)" : "rgba(255,255,255,0.72)"};
@@ -1204,7 +1092,7 @@ const BenefitText = styled.p`
 `;
 
 const EmptyState = styled.div`
-  min-height: 350px;
+  min-height: 300px;
 
   display: flex;
   align-items: center;
@@ -1215,145 +1103,83 @@ const EmptyState = styled.div`
 `;
 
 /* =========================================================
-   GALERIE D'UN UNIVERS
+   COMPOSANT : UNIVERS HOMME / FEMME
 ========================================================= */
 
-function UniverseGallerySection({ title, subtitle, genre, products, isDark }) {
-  const viewportRef = useRef(null);
-  const touchStartX = useRef(null);
+function UniverseShowcase({ title, genre, products }) {
   const [activeIndex, setActiveIndex] = useState(0);
 
   const items = products.filter((product) => product?.images?.[0]?.url);
 
-  const handleScroll = () => {
-    const viewport = viewportRef.current;
-    if (!viewport) return;
-
-    const index = Math.round(viewport.scrollLeft / viewport.clientWidth);
-
-    setActiveIndex(index);
-  };
-
-  const goToSlide = (index) => {
-    const viewport = viewportRef.current;
-    if (!viewport) return;
-
-    viewport.scrollTo({
-      left: index * viewport.clientWidth,
-      behavior: "smooth",
-    });
-
-    setActiveIndex(index);
-  };
-
-  const handleTouchStart = (event) => {
-    touchStartX.current = event.touches[0].clientX;
-  };
-
-  const handleTouchEnd = (event) => {
-    if (touchStartX.current === null) return;
-
-    const difference = touchStartX.current - event.changedTouches[0].clientX;
-
-    if (Math.abs(difference) > 45) {
-      const nextIndex =
-        difference > 0
-          ? Math.min(activeIndex + 1, items.length - 1)
-          : Math.max(activeIndex - 1, 0);
-
-      goToSlide(nextIndex);
-    }
-
-    touchStartX.current = null;
-  };
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [items.length]);
 
   useEffect(() => {
-    const viewport = viewportRef.current;
-    if (!viewport) return;
+    if (items.length <= 1) return;
 
-    const handleResize = () => {
-      viewport.scrollTo({
-        left: activeIndex * viewport.clientWidth,
-        behavior: "instant",
-      });
-    };
+    const interval = setInterval(() => {
+      setActiveIndex((current) => (current + 1) % items.length);
+    }, 3000);
 
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [activeIndex]);
+    return () => clearInterval(interval);
+  }, [items.length]);
+
+  const goTo = (index) => {
+    setActiveIndex(index);
+  };
 
   return (
-    <UniverseGallery>
-      <UniverseViewport
-        ref={viewportRef}
-        onScroll={handleScroll}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-      >
-        <UniverseTrack>
-          {items.length > 0 ? (
-            items.map((product, index) => (
-              <UniverseSlide key={product._id}>
-                <UniverseImageLink to={`/produit/${product._id}`}>
-                  <UniverseImage
-                    src={getMediaUrl(product.images?.[0]?.url)}
-                    alt={product.title || `Collection ${title}`}
-                    loading={index === 0 ? "eager" : "lazy"}
-                  />
+    <UniverseSection>
+      {items.length > 0 ? (
+        items.map((product, index) => (
+          <UniverseSlide key={product._id} $active={index === activeIndex}>
+            <Link
+              to={`/${genre}`}
+              aria-label={`Découvrir la collection ${title}`}
+              style={{
+                position: "absolute",
+                inset: 0,
+                display: "block",
+              }}
+            >
+              <UniverseImage
+                src={getMediaUrl(product.images?.[0]?.url)}
+                alt={product.title || `Collection ${title}`}
+                loading={index === 0 ? "eager" : "lazy"}
+              />
+              <UniverseShade />
+            </Link>
+          </UniverseSlide>
+        ))
+      ) : (
+        <UniverseSlide $active>
+          <UniverseShade />
+        </UniverseSlide>
+      )}
 
-                  <UniverseImageNumber>
-                    {String(index + 1).padStart(2, "0")} /{" "}
-                    {String(items.length).padStart(2, "0")}
-                  </UniverseImageNumber>
-                </UniverseImageLink>
+      <UniverseContent>
+        <UniverseTitle>{title}</UniverseTitle>
 
-                <UniverseCaption $isDark={isDark}>
-                  <UniverseInfo>
-                    <div className="eyebrow">
-                      UNIVERS {genre.toUpperCase()} — NUMA
-                    </div>
-
-                    <h3>{product.title || title}</h3>
-
-                    <p>{product.subtitle || subtitle}</p>
-                  </UniverseInfo>
-
-                  <UniverseCTA to={`/produit/${product._id}`}>
-                    Découvrir <FaArrowRight />
-                  </UniverseCTA>
-                </UniverseCaption>
-              </UniverseSlide>
-            ))
-          ) : (
-            <UniverseSlide>
-              <UniverseImageLink to={`/${genre}`}>
-                <UniverseCaption $isDark={isDark}>
-                  <UniverseInfo>
-                    <div className="eyebrow">UNIVERS NUMA</div>
-                    <h3>{title}</h3>
-                    <p>{subtitle}</p>
-                  </UniverseInfo>
-                </UniverseCaption>
-              </UniverseImageLink>
-            </UniverseSlide>
-          )}
-        </UniverseTrack>
-      </UniverseViewport>
+        <UniverseCTA to={`/${genre}`}>
+          Découvrir <FaArrowRight />
+        </UniverseCTA>
+      </UniverseContent>
 
       {items.length > 1 && (
-        <DotsRow>
+        <UniverseDots>
           {items.map((product, index) => (
-            <Dot
+            <UniverseDot
               key={product._id}
               type="button"
-              $active={activeIndex === index}
-              onClick={() => goToSlide(index)}
-              aria-label={`Afficher ${product.title || `photo ${index + 1}`}`}
+              $active={index === activeIndex}
+              onClick={() => goTo(index)}
+              aria-label={`Afficher l'image ${index + 1}`}
             />
           ))}
-        </DotsRow>
+        </UniverseDots>
       )}
-    </UniverseGallery>
+    </UniverseSection>
   );
 }
 
@@ -1366,7 +1192,6 @@ export default function HomePremium() {
   const [videos, setVideos] = useState([]);
 
   const [slide, setSlide] = useState(0);
-
   const [miniSlide, setMiniSlide] = useState(0);
   const [bestSlide, setBestSlide] = useState(0);
 
@@ -1430,7 +1255,6 @@ export default function HomePremium() {
         }
 
         const data = await response.json();
-
         setProducts(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Erreur produits :", error);
@@ -1464,7 +1288,7 @@ export default function HomePremium() {
   }, []);
 
   /* =======================================================
-     PRODUITS HERO
+     HERO
   ======================================================= */
 
   const heroProducts = useMemo(
@@ -1500,21 +1324,8 @@ export default function HomePremium() {
   );
 
   /* =======================================================
-     PRODUITS FOCUS
-  ======================================================= */
-
-  const carouselProducts = useMemo(
-    () =>
-      products
-        .filter(
-          (product) => !estPrecommande(product) && product?.images?.[0]?.url,
-        )
-        .slice(0, 5),
-    [products],
-  );
-
-  /* =======================================================
      BEST SELLERS
+     On conserve ici la règle existante : badge = "new".
   ======================================================= */
 
   const bestSellers = useMemo(
@@ -1531,6 +1342,26 @@ export default function HomePremium() {
   );
 
   /* =======================================================
+     FOCUS
+     Exclusion des Best Sellers pour éviter les doublons.
+  ======================================================= */
+
+  const carouselProducts = useMemo(() => {
+    const bestSellerIds = new Set(
+      bestSellers.map((product) => String(product._id)),
+    );
+
+    return products
+      .filter(
+        (product) =>
+          !estPrecommande(product) &&
+          product?.images?.[0]?.url &&
+          !bestSellerIds.has(String(product._id)),
+      )
+      .slice(0, 5);
+  }, [products, bestSellers]);
+
+  /* =======================================================
      VIDÉOS PAR GENRE
   ======================================================= */
 
@@ -1543,7 +1374,9 @@ export default function HomePremium() {
     videos.forEach((video) => {
       const produitId = getProduitId(video);
 
-      const produit = products.find((item) => String(item._id) === produitId);
+      const produit = products.find(
+        (item) => String(item._id) === produitId,
+      );
 
       if (!produit) return;
 
@@ -1613,7 +1446,7 @@ export default function HomePremium() {
   }, [bestSellers.length]);
 
   /* =======================================================
-     VIDÉOS : GENRE ET NAVIGATION
+     VIDÉOS : NAVIGATION
   ======================================================= */
 
   const changerGenreVideo = (genre) => {
@@ -1773,6 +1606,22 @@ export default function HomePremium() {
         </HeroBottom>
       </Hero>
 
+      {/* UNIVERS HOMME : UNE IMAGE À LA FOIS */}
+
+      <UniverseShowcase
+        title="Homme"
+        genre="homme"
+        products={hommeProducts}
+      />
+
+      {/* UNIVERS FEMME : UNE IMAGE À LA FOIS */}
+
+      <UniverseShowcase
+        title="Femme"
+        genre="femme"
+        products={femmeProducts}
+      />
+
       {/* VIDÉOS */}
 
       <VideoSection>
@@ -1897,54 +1746,6 @@ export default function HomePremium() {
         </VideoCaption>
       </VideoSection>
 
-      {/* UNIVERS HOMME */}
-
-       <UniversContainer>
-      <UniversCard to="/homme">
-        <UniversText>
-          <span>Découvrir la collection</span>
-          <h2>Homme</h2>
-          <p>Élégance & caractère</p>
-        </UniversText>
-        <UniversArrow>
-          <FaArrowRight />
-        </UniversArrow>
-      </UniversCard>
-
-      <UniversCard to="/femme" $femme>
-        <UniversText>
-          <span>Découvrir la collection</span>
-          <h2>Femme</h2>
-          <p>Grâce & distinction</p>
-        </UniversText>
-        <UniversArrow>
-          <FaArrowRight />
-        </UniversArrow>
-      </UniversCard>
-    </UniversContainer>
-
-      <UniverseSection>
-        <UniverseGallerySection
-          title="Homme"
-          subtitle="Une allure forte, élégante et assumée."
-          genre="homme"
-          products={hommeProducts}
-          isDark={$isDark}
-        />
-      </UniverseSection>
-
-      {/* UNIVERS FEMME */}
-
-      <UniverseSection>
-        <UniverseGallerySection
-          title="Femme"
-          subtitle="L'élégance, la confiance et le caractère."
-          genre="femme"
-          products={femmeProducts}
-          isDark={$isDark}
-        />
-      </UniverseSection>
-
       {/* FOCUS */}
 
       <Section>
@@ -1955,8 +1756,7 @@ export default function HomePremium() {
             <h2>Des pièces qui attirent le regard.</h2>
 
             <p>
-              Une sélection de créations pensées pour marquer les esprits dès le
-              premier regard.
+              Une sélection de créations pensées pour marquer les esprits.
             </p>
           </SectionHeader>
 
@@ -1973,7 +1773,6 @@ export default function HomePremium() {
                     <MiniOverlay>
                       <MiniInfo>
                         <h3>{product.title}</h3>
-
                         <p>
                           {product.subtitle ||
                             "Une pièce signature à forte présence."}
@@ -2029,104 +1828,96 @@ export default function HomePremium() {
 
       {/* BEST SELLERS */}
 
-      <Section>
-        <BestSellerSection>
+      <BestSellerSection>
+        <Section>
           <SectionHeader>
-            <div className="eyebrow">SÉLECTION</div>
-
-            <h2>Les pièces les plus convoitées.</h2>
-
-            <p>
-              Une sélection pensée pour celles et ceux qui veulent une allure
-              marquante, élégante et mémorable.
-            </p>
+            <div className="eyebrow">BEST SELLERS</div>
+            <h2>Nos pièces incontournables.</h2>
           </SectionHeader>
+        </Section>
 
-          {bestSellers.length > 0 ? (
-            <>
-              <BestCarousel $isDark={$isDark}>
-                {bestSellers.map((product, index) => (
-                  <BestSlide key={product._id} $active={index === bestSlide}>
-                    <BestSlideInner>
-                      <BestImageWrap $isDark={$isDark}>
-                        <BestImage
-                          src={getMediaUrl(product.images?.[0]?.url)}
-                          alt={product.title}
-                        />
-
-                        <BestBadge>
-                          <FaStar />
-                          BEST SELLER
-                        </BestBadge>
-                      </BestImageWrap>
-
-                      <BestContent $isDark={$isDark}>
-                        <BestSmall>Collection Signature</BestSmall>
-
-                        <BestTitle>{product.title}</BestTitle>
-
-                        <BestSubtitle>
-                          {product.subtitle ||
-                            "Une pièce forte pensée pour révéler votre présence avec style, élégance et caractère."}
-                        </BestSubtitle>
-
-                        <BestPrice>{product.price} FCFA</BestPrice>
-
-                        <BestBtn
-                          to={`/produit/${product._id}`}
-                          $isDark={$isDark}
-                        >
-                          Voir le produit <FaArrowRight />
-                        </BestBtn>
-                      </BestContent>
-                    </BestSlideInner>
-                  </BestSlide>
-                ))}
-
-                {bestSellers.length > 1 && (
-                  <>
-                    <CarouselArrow
-                      type="button"
-                      $left
-                      aria-label="Produit précédent"
-                      onClick={previousBest}
-                    >
-                      ‹
-                    </CarouselArrow>
-
-                    <CarouselArrow
-                      type="button"
-                      aria-label="Produit suivant"
-                      onClick={nextBest}
-                    >
-                      ›
-                    </CarouselArrow>
-                  </>
-                )}
-              </BestCarousel>
-
-              <DotsRow>
-                {bestSellers.map((product, index) => (
-                  <Dot
-                    key={product._id}
-                    type="button"
+        {bestSellers.length > 0 ? (
+          <BestCarousel>
+            {bestSellers.map((product, index) => (
+              <BestSlide
+                key={product._id}
+                $active={index === bestSlide}
+              >
+                <Link
+                  to={`/produit/${product._id}`}
+                  aria-label={`Découvrir ${product.title}`}
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    display: "block",
+                  }}
+                >
+                  <BestImage
+                    src={getMediaUrl(product.images?.[0]?.url)}
+                    alt={product.title}
                     $active={index === bestSlide}
-                    onClick={() => setBestSlide(index)}
-                    aria-label={`Voir ${product.title}`}
                   />
-                ))}
-              </DotsRow>
-            </>
-          ) : (
-            <EmptyState>
-              <div>
-                <h3>Notre sélection arrive bientôt.</h3>
-                <p>De nouvelles pièces seront bientôt disponibles.</p>
-              </div>
-            </EmptyState>
-          )}
-        </BestSellerSection>
-      </Section>
+                  <BestShade />
+                </Link>
+
+                <BestBadge>
+                  <FaStar />
+                  BEST SELLER
+                </BestBadge>
+
+                <BestBottom>
+                  <BestPhrase>
+                    <h3>Une pièce qui fait la différence.</h3>
+                  </BestPhrase>
+
+                  <BestStars aria-label="5 étoiles">
+                    {Array.from({ length: 5 }).map((_, starIndex) => (
+                      <FaStar key={starIndex} />
+                    ))}
+                  </BestStars>
+                </BestBottom>
+              </BestSlide>
+            ))}
+
+            {bestSellers.length > 1 && (
+              <>
+                <CarouselArrow
+                  type="button"
+                  $left
+                  aria-label="Best Seller précédent"
+                  onClick={previousBest}
+                >
+                  ‹
+                </CarouselArrow>
+
+                <CarouselArrow
+                  type="button"
+                  aria-label="Best Seller suivant"
+                  onClick={nextBest}
+                >
+                  ›
+                </CarouselArrow>
+
+                <BestDots>
+                  {bestSellers.map((product, index) => (
+                    <BestDot
+                      key={product._id}
+                      type="button"
+                      $active={index === bestSlide}
+                      onClick={() => setBestSlide(index)}
+                      aria-label={`Voir le Best Seller ${index + 1}`}
+                    />
+                  ))}
+                </BestDots>
+              </>
+            )}
+          </BestCarousel>
+        ) : (
+          <EmptyState>
+            <h3>Notre sélection arrive bientôt.</h3>
+          </EmptyState>
+        )}
+      </BestSellerSection>
 
       {/* AVANTAGES */}
 
