@@ -1212,7 +1212,7 @@ export default function HomePremium() {
   const [bestSlide, setBestSlide] = useState(0);
   const [bestProgress, setBestProgress] = useState(0);
 
-  const [videoGenre, setVideoGenre] = useState("femme");
+  const [videoGenre, setVideoGenre] = useState("homme");
   const [videoIndex, setVideoIndex] = useState(0);
 
   const [isPlaying, setIsPlaying] = useState(true);
@@ -1221,7 +1221,7 @@ export default function HomePremium() {
   const [precommandeDisponible, setPrecommandeDisponible] = useState(false);
 
   const { theme } = useContext(ThemeContext);
-  const $isDark = theme === "dark";
+  const $isDark = theme === "light";
 
   const videoRef = useRef(null);
   const touchStartX = useRef(null);
