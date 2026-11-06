@@ -66,6 +66,113 @@ const float = keyframes`
   50% { transform: translateY(-6px); }
 `;
 
+const UniversContainer = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 60px auto;
+  padding: 0 20px;
+
+  @media (max-width: 650px) {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 0 15px;
+  }
+`;
+
+const UniversCard = styled(Link)`
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 180px;
+  padding: 35px;
+  overflow: hidden;
+  text-decoration: none;
+  color: #fff;
+  background: ${({ $femme }) =>
+    $femme
+      ? "linear-gradient(135deg, #29201f, #72564b)"
+      : "linear-gradient(135deg, #101c1b, #354b43)"};
+  border: 1px solid rgba(198, 164, 106, 0.45);
+  border-radius: 4px;
+  transition: all 0.4s ease;
+
+  &::before {
+    content: "✦";
+    position: absolute;
+    right: 75px;
+    top: -35px;
+    font-size: 180px;
+    color: rgba(255, 255, 255, 0.045);
+    transition: transform 0.5s ease;
+  }
+
+  &:hover {
+    transform: translateY(-7px);
+    border-color: #c6a46a;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.18);
+
+    &::before {
+      transform: rotate(45deg) scale(1.1);
+    }
+
+    svg {
+      transform: translateX(6px);
+    }
+  }
+
+  @media (max-width: 650px) {
+    min-height: 140px;
+    padding: 25px;
+  }
+`;
+
+const UniversText = styled.div`
+  position: relative;
+  z-index: 1;
+
+  span {
+    display: block;
+    margin-bottom: 12px;
+    color: #d5b77e;
+    font-size: 10px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+  }
+
+  h2 {
+    margin: 0;
+    font-family: Georgia, serif;
+    font-size: clamp(28px, 4vw, 42px);
+    font-weight: 400;
+    letter-spacing: 2px;
+  }
+
+  p {
+    margin: 12px 0 0;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 12px;
+    letter-spacing: 1px;
+  }
+`;
+
+const UniversArrow = styled.div`
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 45px;
+  height: 45px;
+  flex-shrink: 0;
+  border: 1px solid rgba(213, 183, 126, 0.7);
+  border-radius: 50%;
+  color: #d5b77e;
+  transition: all 0.3s ease;
+`;
+
 /* =========================================================
    GLOBAL LAYOUT
 ========================================================= */
@@ -362,7 +469,7 @@ const Dot = styled.button`
 const UniverseSection = styled.section`
   width: 100%;
   margin: 0;
-  padding: 0;
+  padding: 5px;
   overflow: hidden;
 `;
 
@@ -1791,6 +1898,30 @@ export default function HomePremium() {
       </VideoSection>
 
       {/* UNIVERS HOMME */}
+
+       <UniversContainer>
+      <UniversCard to="/homme">
+        <UniversText>
+          <span>Découvrir la collection</span>
+          <h2>Homme</h2>
+          <p>Élégance & caractère</p>
+        </UniversText>
+        <UniversArrow>
+          <FaArrowRight />
+        </UniversArrow>
+      </UniversCard>
+
+      <UniversCard to="/femme" $femme>
+        <UniversText>
+          <span>Découvrir la collection</span>
+          <h2>Femme</h2>
+          <p>Grâce & distinction</p>
+        </UniversText>
+        <UniversArrow>
+          <FaArrowRight />
+        </UniversArrow>
+      </UniversCard>
+    </UniversContainer>
 
       <UniverseSection>
         <UniverseGallerySection
