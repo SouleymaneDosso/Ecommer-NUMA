@@ -1379,7 +1379,7 @@ export default function HomePremium() {
   const [precommandeDisponible, setPrecommandeDisponible] = useState(false);
 
   const { theme } = useContext(ThemeContext);
-  const $isDark = theme === "night";
+  const $isDark = theme === "light";
 
   const videoRef = useRef(null);
   const videoTouchStart = useRef(null);
