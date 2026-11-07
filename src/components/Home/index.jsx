@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo, useContext, useRef } from "react";
+
 import { Play, Pause, Volume2, VolumeX } from "lucide-react";
+
 import styled, { keyframes } from "styled-components";
 import { Link } from "react-router-dom";
 
@@ -11,6 +13,8 @@ import {
   FaStar,
   FaWhatsapp,
 } from "react-icons/fa";
+
+import { FaArrowUpRightFromSquare } from "react-icons/fa6";
 
 import { ThemeContext } from "../../Utils/Context";
 
@@ -51,14 +55,20 @@ const getMediaUrl = (url) => {
 ========================================================= */
 
 const pulse = keyframes`
-  0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.35); }
-  70% { box-shadow: 0 0 0 12px rgba(37, 211, 102, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+  0% {
+    box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.35);
+  }
+  70% {
+    box-shadow: 0 0 0 12px rgba(37, 211, 102, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(37, 211, 102, 0);
+  }
 `;
 
 const slowZoom = keyframes`
   from { transform: scale(1); }
-  to { transform: scale(1.07); }
+  to { transform: scale(1.06); }
 `;
 
 const fadeUp = keyframes`
@@ -223,6 +233,7 @@ const HeroSlide = styled.div`
 
   opacity: ${({ $active }) => ($active ? 1 : 0)};
   transition: opacity 1.2s ease;
+
   animation: ${slowZoom} 9s ease-in-out infinite alternate;
 `;
 
@@ -318,36 +329,7 @@ const PreorderLink = styled(Link)`
 `;
 
 /* =========================================================
-   DOTS
-========================================================= */
-
-const DotsRow = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 9px;
-  margin-top: 22px;
-`;
-
-const Dot = styled.button`
-  width: ${({ $active }) => ($active ? "28px" : "7px")};
-  height: 7px;
-  padding: 0;
-
-  border: none;
-  border-radius: 20px;
-
-  background: ${({ $active }) =>
-    $active ? "#b18b55" : "rgba(177, 139, 85, 0.3)"};
-
-  cursor: pointer;
-  transition:
-    width 0.35s ease,
-    background 0.35s ease;
-`;
-
-/* =========================================================
-   UNIVERS HOMME / FEMME — PLEIN ÉCRAN
+   UNIVERS HOMME / FEMME
 ========================================================= */
 
 const UniverseSection = styled.section`
@@ -360,10 +342,6 @@ const UniverseSection = styled.section`
   padding: 0;
   overflow: hidden;
   background: #111;
-
-  @media (max-width: 650px) {
-    min-height: 620px;
-  }
 `;
 
 const UniverseSlide = styled.div`
@@ -382,9 +360,9 @@ const UniverseImage = styled.img`
   position: absolute;
   inset: 0;
 
-  display: block;
   width: 100%;
   height: 100%;
+  display: block;
 
   object-fit: cover;
   object-position: center;
@@ -422,8 +400,6 @@ const UniverseContent = styled.div`
     left: 22px;
     right: 22px;
     bottom: 7%;
-
-    align-items: flex-end;
   }
 `;
 
@@ -443,34 +419,32 @@ const UniverseTitle = styled.h2`
 `;
 
 const UniverseCTA = styled(Link)`
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
+  width: 54px;
+  height: 54px;
   flex-shrink: 0;
 
-  padding: 15px 21px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   color: white;
-  background: rgba(23, 61, 50, 0.88);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(23, 61, 50, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   backdrop-filter: blur(12px);
 
   text-decoration: none;
-  font-size: 0.75rem;
-  font-weight: 800;
-  letter-spacing: 1px;
-  text-transform: uppercase;
+  font-size: 1.1rem;
 
   transition: 0.3s ease;
 
   &:hover {
     background: #b18b55;
-    transform: translateY(-3px);
+    transform: translate(3px, -3px);
   }
 
   @media (max-width: 600px) {
-    padding: 12px 13px;
-    font-size: 0.62rem;
+    width: 46px;
+    height: 46px;
   }
 `;
 
@@ -495,8 +469,10 @@ const UniverseDot = styled.button`
   padding: 0;
   border: none;
   border-radius: 20px;
+
   background: ${({ $active }) =>
     $active ? "#d6b77e" : "rgba(255,255,255,0.5)"};
+
   cursor: pointer;
   transition: width 0.3s ease;
 `;
@@ -655,6 +631,7 @@ const RadioDot = styled.span`
   border-radius: 50%;
 
   background: ${({ $active }) => ($active ? "#b18b55" : "transparent")};
+
   border: 1px solid #b18b55;
 `;
 
@@ -701,135 +678,273 @@ const VideoEmpty = styled.div`
 `;
 
 /* =========================================================
-   FOCUS CAROUSEL
+   FOCUS — PLEINE LARGEUR + SCROLL HORIZONTAL
 ========================================================= */
 
-const CarouselSection = styled.div`
-  width: min(1240px, 92%);
-  margin: 0 auto;
-`;
-
-const MiniCarousel = styled.div`
-  position: relative;
-  height: 680px;
-  overflow: hidden;
-
-  background: ${({ $isDark }) => ($isDark ? "#111" : "#e9e6df")};
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.12);
-
-  @media (max-width: 768px) {
-    height: 560px;
-  }
-`;
-
-const MiniSlide = styled.div`
-  position: absolute;
-  inset: 0;
-
-  opacity: ${({ $active }) => ($active ? 1 : 0)};
-  pointer-events: ${({ $active }) => ($active ? "auto" : "none")};
-  transition: opacity 0.8s ease;
-`;
-
-const MiniSlideImg = styled.img`
+const FocusSection = styled.section`
   width: 100%;
-  height: 100%;
-  object-fit: contain;
+  margin: 0;
+  padding: 0;
 `;
 
-const MiniOverlay = styled.div`
-  position: absolute;
-  left: 25px;
-  right: 25px;
-  bottom: 25px;
+const FocusHeader = styled.div`
+  padding: 85px 20px 45px;
+  text-align: center;
 
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
+  .eyebrow {
+    display: block;
+    margin-bottom: 16px;
 
-  padding: 22px 25px;
-
-  color: white;
-  background: rgba(18, 28, 22, 0.75);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(18px);
-
-  @media (max-width: 650px) {
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 18px;
+    color: #b18b55;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 3px;
   }
-`;
 
-const MiniInfo = styled.div`
-  h3 {
+  h2 {
     margin: 0;
-    font-size: clamp(1.3rem, 3vw, 1.8rem);
+    font-family: Georgia, serif;
+    font-weight: 400;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    letter-spacing: -0.04em;
   }
 
   p {
-    margin: 8px 0 0;
-    font-size: 0.88rem;
-    opacity: 0.7;
+    margin: 15px auto 0;
+    max-width: 550px;
+    font-size: 0.9rem;
+    line-height: 1.8;
+    opacity: 0.6;
+  }
+
+  @media (max-width: 600px) {
+    padding: 65px 20px 30px;
   }
 `;
 
-const MiniCTA = styled(Link)`
+const FocusTrack = styled.div`
+  display: flex;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  overscroll-behavior-x: contain;
+`;
+
+const FocusSlide = styled.article`
+  flex: 0 0 100%;
+  width: 100%;
+  min-width: 100%;
+
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+`;
+
+const FocusImageLink = styled(Link)`
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 76vh;
+  height: 76svh;
+  min-height: 430px;
+  max-height: 900px;
+
+  overflow: hidden;
+  background: #ded8ca;
+
+  @media (max-width: 600px) {
+    height: 68svh;
+    min-height: 400px;
+  }
+`;
+
+const FocusImage = styled.img`
+  display: block;
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+  object-position: center;
+
+  transition: transform 0.8s ease;
+
+  ${FocusImageLink}:hover & {
+    transform: scale(1.025);
+  }
+`;
+
+const FocusInfo = styled.div`
+  width: 100%;
+  padding: 30px max(5%, calc((100% - 1200px) / 2));
+
+  color: ${({ $isDark }) => ($isDark ? "#f8f4eb" : "#27271f")};
+
+  background: ${({ $isDark }) =>
+    $isDark
+      ? "linear-gradient(135deg, #263329, #17221b)"
+      : "linear-gradient(135deg, #eee8dc, #f8f4eb)"};
+
+  @media (max-width: 600px) {
+    padding: 23px 20px;
+  }
+`;
+
+const FocusInfoRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+
+  padding: 17px 0;
+
+  border-bottom: 1px dotted
+    ${({ $isDark }) =>
+      $isDark ? "rgba(255,255,255,0.25)" : "rgba(39,39,31,0.25)"};
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  .label {
+    flex-shrink: 0;
+    color: #b18b55;
+
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .value {
+    text-align: right;
+    font-family: Georgia, serif;
+    font-size: 1.05rem;
+    line-height: 1.4;
+  }
+
+  @media (max-width: 600px) {
+    padding: 15px 0;
+
+    .value {
+      font-size: 0.95rem;
+    }
+  }
+`;
+
+const FocusPrice = styled.span`
+  font-family: inherit !important;
+  font-size: 0.95rem !important;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+`;
+
+const FocusCTA = styled(Link)`
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
+  justify-content: space-between;
+  gap: 15px;
 
-  padding: 13px 19px;
+  width: 100%;
+  margin-top: 18px;
+  padding: 17px 20px;
 
-  color: white;
-  background: #173d32;
+  color: ${({ $isDark }) => ($isDark ? "#1d261f" : "#fff")};
+
+  background: ${({ $isDark }) => ($isDark ? "#d6b77e" : "#173d32")};
+
   text-decoration: none;
-
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   font-weight: 800;
+  letter-spacing: 1.7px;
+  text-transform: uppercase;
 
   transition: 0.3s ease;
 
   &:hover {
-    transform: translateY(-3px);
     background: #b18b55;
+    color: white;
+  }
+
+  svg {
+    transition: transform 0.3s ease;
+  }
+
+  &:hover svg {
+    transform: translateX(5px);
   }
 `;
 
-const CarouselArrow = styled.button`
-  position: absolute;
-  top: 50%;
-  z-index: 5;
+/* MINIATURES FOCUS */
 
-  ${({ $left }) => ($left ? "left: 18px;" : "right: 18px;")}
-
-  transform: translateY(-50%);
-
-  width: 46px;
-  height: 46px;
-
+const FocusThumbnails = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 12px;
 
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  width: 100%;
+  padding: 25px 15px 35px;
+
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  background: ${({ $isDark }) => ($isDark ? "#172019" : "#f1eee7")};
+`;
+
+const FocusThumbnail = styled.button`
+  position: relative;
+  flex: 0 0 66px;
+
+  width: 66px;
+  height: 66px;
+  padding: 3px;
+
+  border: 1px solid ${({ $active }) => ($active ? "#b18b55" : "transparent")};
+
   border-radius: 50%;
+  background: ${({ $active }) => ($active ? "#b18b55" : "transparent")};
 
-  background: rgba(0, 0, 0, 0.4);
-  color: white;
+  opacity: ${({ $active }) => ($active ? 1 : 0.58)};
 
   cursor: pointer;
   transition: 0.3s ease;
 
   &:hover {
-    background: #b18b55;
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+  }
+
+  @media (max-width: 600px) {
+    flex-basis: 58px;
+    width: 58px;
+    height: 58px;
   }
 `;
 
 /* =========================================================
-   BEST SELLERS — FULL BLEED
+   BEST SELLERS — SCROLL HORIZONTAL
 ========================================================= */
 
 const BestSellerSection = styled.section`
@@ -837,31 +952,48 @@ const BestSellerSection = styled.section`
   margin: 0;
 `;
 
-const BestCarousel = styled.div`
-  position: relative;
+const BestTrack = styled.div`
+  display: flex;
   width: 100%;
-  height: 90vh;
-  height: 90svh;
-  min-height: 600px;
+
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  overscroll-behavior-x: contain;
+`;
+
+const BestSlide = styled.article`
+  position: relative;
+
+  flex: 0 0 100%;
+  width: 100%;
+  min-width: 100%;
+
+  height: 85vh;
+  height: 85svh;
+  min-height: 520px;
+  max-height: 900px;
+
   overflow: hidden;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+
   background: #101510;
 
   @media (max-width: 650px) {
-    height: 75vh;
-    height: 75svh;
-    min-height: 520px;
+    height: 72svh;
+    min-height: 480px;
   }
-`;
-
-const BestSlide = styled.div`
-  position: absolute;
-  inset: 0;
-
-  opacity: ${({ $active }) => ($active ? 1 : 0)};
-  visibility: ${({ $active }) => ($active ? "visible" : "hidden")};
-  transition:
-    opacity 0.9s ease,
-    visibility 0.9s ease;
 `;
 
 const BestImage = styled.img`
@@ -875,8 +1007,11 @@ const BestImage = styled.img`
   object-fit: cover;
   object-position: center;
 
-  transform: ${({ $active }) => ($active ? "scale(1)" : "scale(1.04)")};
-  transition: transform 6s ease;
+  transition: transform 1s ease;
+
+  ${BestSlide}:hover & {
+    transform: scale(1.025);
+  }
 `;
 
 const BestShade = styled.div`
@@ -887,7 +1022,7 @@ const BestShade = styled.div`
     180deg,
     rgba(0, 0, 0, 0.12) 0%,
     transparent 40%,
-    rgba(0, 0, 0, 0.38) 100%
+    rgba(0, 0, 0, 0.6) 100%
   );
 `;
 
@@ -903,7 +1038,7 @@ const BestBadge = styled.div`
 
   padding: 11px 15px;
 
-  color: #fff;
+  color: white;
   background: rgba(23, 61, 50, 0.82);
   border: 1px solid rgba(255, 255, 255, 0.25);
   backdrop-filter: blur(12px);
@@ -918,28 +1053,11 @@ const BestBadge = styled.div`
   }
 `;
 
-const BestStars = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  color: #e3bd76;
-
-  svg {
-    font-size: 13px;
-  }
-
-  @media (max-width: 600px) {
-    svg {
-      font-size: 11px;
-    }
-  }
-`;
-
 const BestBottom = styled.div`
   position: absolute;
-  left: 5%;
-  right: 5%;
-  bottom: 55px;
+  left: 6%;
+  right: 6%;
+  bottom: 45px;
   z-index: 3;
 
   display: flex;
@@ -952,14 +1070,15 @@ const BestBottom = styled.div`
   @media (max-width: 600px) {
     left: 20px;
     right: 20px;
-    bottom: 45px;
+    bottom: 30px;
+
     align-items: flex-start;
     flex-direction: column;
   }
 `;
 
 const BestPhrase = styled.div`
-  max-width: 480px;
+  max-width: 520px;
 
   h3 {
     margin: 0;
@@ -972,59 +1091,64 @@ const BestPhrase = styled.div`
   }
 `;
 
-const BestBtn = styled(Link)`
-  display: inline-flex;
+const BestStars = styled.div`
+  display: flex;
   align-items: center;
-  gap: 11px;
-  flex-shrink: 0;
+  gap: 5px;
+  color: #e3bd76;
 
-  padding: 14px 20px;
+  svg {
+    font-size: 13px;
+  }
+`;
 
-  color: #172019;
-  background: #d6b77e;
+const BestThumbnails = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
 
-  text-decoration: none;
-  font-size: 0.75rem;
-  font-weight: 800;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
+  width: 100%;
+  padding: 22px 15px 35px;
 
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  background: ${({ $isDark }) => ($isDark ? "#172019" : "#f1eee7")};
+`;
+
+const BestThumbnail = styled.button`
+  flex: 0 0 58px;
+
+  width: 58px;
+  height: 58px;
+  padding: 3px;
+
+  border: 1px solid ${({ $active }) => ($active ? "#b18b55" : "transparent")};
+
+  border-radius: 50%;
+  background: ${({ $active }) => ($active ? "#b18b55" : "transparent")};
+
+  opacity: ${({ $active }) => ($active ? 1 : 0.55)};
+
+  cursor: pointer;
   transition: 0.3s ease;
 
   &:hover {
-    background: white;
-    transform: translateY(-3px);
+    opacity: 1;
   }
-`;
 
-const BestDots = styled.div`
-  position: absolute;
-  z-index: 4;
-  left: 5%;
-  bottom: 20px;
-
-  display: flex;
-  align-items: center;
-  gap: 9px;
-
-  @media (max-width: 600px) {
-    left: 20px;
-    bottom: 15px;
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
   }
-`;
-
-const BestDot = styled.button`
-  width: ${({ $active }) => ($active ? "27px" : "7px")};
-  height: 7px;
-  padding: 0;
-  border: none;
-  border-radius: 20px;
-
-  background: ${({ $active }) =>
-    $active ? "#d6b77e" : "rgba(255,255,255,0.55)"};
-
-  cursor: pointer;
-  transition: width 0.3s ease;
 `;
 
 /* =========================================================
@@ -1079,9 +1203,11 @@ const BenefitIcon = styled.div`
   margin-bottom: 25px;
 
   background: ${({ $isDark }) => ($isDark ? "#d6b77e" : "#173d32")};
+
   color: ${({ $isDark }) => ($isDark ? "#172019" : "#fff")};
 
   font-size: 21px;
+
   animation: ${float} 4s ease-in-out infinite;
 `;
 
@@ -1109,10 +1235,11 @@ const EmptyState = styled.div`
 
   text-align: center;
   opacity: 0.55;
+  padding: 30px;
 `;
 
 /* =========================================================
-   COMPOSANT : UNIVERS HOMME / FEMME
+   COMPOSANT UNIVERS HOMME / FEMME
 ========================================================= */
 
 function UniverseShowcase({ title, genre, products }) {
@@ -1134,10 +1261,6 @@ function UniverseShowcase({ title, genre, products }) {
     return () => clearInterval(interval);
   }, [items.length]);
 
-  const goTo = (index) => {
-    setActiveIndex(index);
-  };
-
   return (
     <UniverseSection>
       {items.length > 0 ? (
@@ -1145,7 +1268,7 @@ function UniverseShowcase({ title, genre, products }) {
           <UniverseSlide key={product._id} $active={index === activeIndex}>
             <Link
               to={`/${genre}`}
-              aria-label={`Découvrir la collection ${title}`}
+              aria-label={`Collection ${title}`}
               style={{
                 position: "absolute",
                 inset: 0,
@@ -1157,6 +1280,7 @@ function UniverseShowcase({ title, genre, products }) {
                 alt={product.title || `Collection ${title}`}
                 loading={index === 0 ? "eager" : "lazy"}
               />
+
               <UniverseShade />
             </Link>
           </UniverseSlide>
@@ -1170,8 +1294,11 @@ function UniverseShowcase({ title, genre, products }) {
       <UniverseContent>
         <UniverseTitle>{title}</UniverseTitle>
 
-        <UniverseCTA to={`/${genre}`}>
-          Découvrir <FaArrowRight />
+        <UniverseCTA
+          to={`/${genre}`}
+          aria-label={`Voir la collection ${title}`}
+        >
+          <FaArrowUpRightFromSquare />
         </UniverseCTA>
       </UniverseContent>
 
@@ -1182,7 +1309,7 @@ function UniverseShowcase({ title, genre, products }) {
               key={product._id}
               type="button"
               $active={index === activeIndex}
-              onClick={() => goTo(index)}
+              onClick={() => setActiveIndex(index)}
               aria-label={`Afficher l'image ${index + 1}`}
             />
           ))}
@@ -1200,10 +1327,8 @@ export default function HomePremium() {
   const [products, setProducts] = useState([]);
   const [videos, setVideos] = useState([]);
   const [bestSellers, setBestSellers] = useState([]);
-  const [slide, setSlide] = useState(0);
-  const [miniSlide, setMiniSlide] = useState(0);
-  const [bestSlide, setBestSlide] = useState(0);
 
+  const [slide, setSlide] = useState(0);
   const [videoGenre, setVideoGenre] = useState("homme");
   const [videoIndex, setVideoIndex] = useState(0);
 
@@ -1218,11 +1343,17 @@ export default function HomePremium() {
   const videoRef = useRef(null);
   const videoTouchStart = useRef(null);
 
-  const duration = 5000;
+  // Références des carrousels horizontaux
+  const focusTrackRef = useRef(null);
+  const bestTrackRef = useRef(null);
+
+  // Index des images visibles
+  const [focusIndex, setFocusIndex] = useState(0);
+  const [bestIndex, setBestIndex] = useState(0);
 
   /* =======================================================
-   FETCH BEST SELLERS
-======================================================= */
+     FETCH BEST SELLERS
+  ======================================================= */
 
   useEffect(() => {
     const fetchBestSellers = async () => {
@@ -1230,7 +1361,7 @@ export default function HomePremium() {
         const response = await fetch(`${API_URL}/api/produits/best-sellers`);
 
         if (!response.ok) {
-          throw new Error("Erreur récupération Best Sellers");
+          throw new Error(`Erreur HTTP ${response.status}`);
         }
 
         const data = await response.json();
@@ -1278,6 +1409,7 @@ export default function HomePremium() {
         setPrecommandeDisponible(modeles.length > 0);
       } catch (error) {
         console.error("Erreur vérification précommande :", error);
+
         setPrecommandeDisponible(false);
       }
     };
@@ -1299,6 +1431,7 @@ export default function HomePremium() {
         }
 
         const data = await response.json();
+
         setProducts(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Erreur produits :", error);
@@ -1369,7 +1502,7 @@ export default function HomePremium() {
 
   /* =======================================================
      FOCUS
-     Exclusion des Best Sellers pour éviter les doublons.
+     Pas de doublons avec les Best Sellers.
   ======================================================= */
 
   const carouselProducts = useMemo(() => {
@@ -1430,7 +1563,7 @@ export default function HomePremium() {
 
     const interval = setInterval(() => {
       setSlide((current) => (current + 1) % heroProducts.length);
-    }, duration);
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [heroProducts.length]);
@@ -1442,31 +1575,88 @@ export default function HomePremium() {
   }, [heroProducts.length]);
 
   /* =======================================================
-     FOCUS AUTOPLAY
+     SYNCHRONISATION DES CARROUSELS
   ======================================================= */
 
+  const scrollToFocus = (index) => {
+    const track = focusTrackRef.current;
+
+    if (!track) return;
+
+    const width = track.clientWidth;
+
+    track.scrollTo({
+      left: index * width,
+      behavior: "smooth",
+    });
+
+    setFocusIndex(index);
+  };
+
+  const scrollToBest = (index) => {
+    const track = bestTrackRef.current;
+
+    if (!track) return;
+
+    const width = track.clientWidth;
+
+    track.scrollTo({
+      left: index * width,
+      behavior: "smooth",
+    });
+
+    setBestIndex(index);
+  };
+
+  const handleFocusScroll = () => {
+    const track = focusTrackRef.current;
+
+    if (!track) return;
+
+    const width = track.clientWidth;
+
+    if (!width) return;
+
+    const index = Math.round(track.scrollLeft / width);
+
+    setFocusIndex(Math.min(index, carouselProducts.length - 1));
+  };
+
+  const handleBestScroll = () => {
+    const track = bestTrackRef.current;
+
+    if (!track) return;
+
+    const width = track.clientWidth;
+
+    if (!width) return;
+
+    const index = Math.round(track.scrollLeft / width);
+
+    setBestIndex(Math.min(index, bestSellers.length - 1));
+  };
+
+  // Réinitialiser les index après chargement des produits
   useEffect(() => {
-    if (carouselProducts.length <= 1) return;
+    setFocusIndex(0);
 
-    const interval = setInterval(() => {
-      setMiniSlide((current) => (current + 1) % carouselProducts.length);
-    }, duration);
-
-    return () => clearInterval(interval);
+    if (focusTrackRef.current) {
+      focusTrackRef.current.scrollTo({
+        left: 0,
+        behavior: "instant",
+      });
+    }
   }, [carouselProducts.length]);
 
-  /* =======================================================
-     BEST SELLERS AUTOPLAY
-  ======================================================= */
-
   useEffect(() => {
-    if (bestSellers.length <= 1) return;
+    setBestIndex(0);
 
-    const interval = setInterval(() => {
-      setBestSlide((current) => (current + 1) % bestSellers.length);
-    }, duration);
-
-    return () => clearInterval(interval);
+    if (bestTrackRef.current) {
+      bestTrackRef.current.scrollTo({
+        left: 0,
+        behavior: "instant",
+      });
+    }
   }, [bestSellers.length]);
 
   /* =======================================================
@@ -1555,43 +1745,8 @@ export default function HomePremium() {
     if (!videoRef.current) return;
 
     videoRef.current.muted = !videoRef.current.muted;
+
     setIsMuted(videoRef.current.muted);
-  };
-
-  /* =======================================================
-     NAVIGATION FOCUS
-  ======================================================= */
-
-  const previousMini = () => {
-    if (!carouselProducts.length) return;
-
-    setMiniSlide((current) =>
-      current === 0 ? carouselProducts.length - 1 : current - 1,
-    );
-  };
-
-  const nextMini = () => {
-    if (!carouselProducts.length) return;
-
-    setMiniSlide((current) => (current + 1) % carouselProducts.length);
-  };
-
-  /* =======================================================
-     NAVIGATION BEST SELLERS
-  ======================================================= */
-
-  const previousBest = () => {
-    if (!bestSellers.length) return;
-
-    setBestSlide((current) =>
-      current === 0 ? bestSellers.length - 1 : current - 1,
-    );
-  };
-
-  const nextBest = () => {
-    if (!bestSellers.length) return;
-
-    setBestSlide((current) => (current + 1) % bestSellers.length);
   };
 
   /* =======================================================
@@ -1600,7 +1755,9 @@ export default function HomePremium() {
 
   return (
     <Wrapper $isDark={$isDark}>
-      {/* HERO */}
+      {/* ================================================
+          HERO
+      ================================================= */}
 
       <Hero>
         {heroProducts.length > 0 ? (
@@ -1630,15 +1787,21 @@ export default function HomePremium() {
         </HeroBottom>
       </Hero>
 
-      {/* UNIVERS HOMME : UNE IMAGE À LA FOIS */}
+      {/* ================================================
+          HOMME
+      ================================================= */}
 
       <UniverseShowcase title="Homme" genre="homme" products={hommeProducts} />
 
-      {/* UNIVERS FEMME : UNE IMAGE À LA FOIS */}
+      {/* ================================================
+          FEMME
+      ================================================= */}
 
       <UniverseShowcase title="Femme" genre="femme" products={femmeProducts} />
 
-      {/* VIDÉOS */}
+      {/* ================================================
+          VIDÉOS
+      ================================================= */}
 
       <VideoSection>
         {activeVideo ? (
@@ -1762,167 +1925,193 @@ export default function HomePremium() {
         </VideoCaption>
       </VideoSection>
 
-      {/* FOCUS */}
+      {/* ================================================
+          FOCUS
+          Navigation manuelle + miniatures
+      ================================================= */}
 
-      <Section>
-        <CarouselSection>
-          <SectionHeader>
-            <div className="eyebrow">FOCUS</div>
+      <FocusSection>
+        <FocusHeader>
+          <div className="eyebrow">FOCUS</div>
 
-            <h2>Des pièces qui attirent le regard.</h2>
+          <h2>Des pièces qui attirent le regard.</h2>
 
-            <p>Une sélection de créations pensées pour marquer les esprits.</p>
-          </SectionHeader>
+          <p>Une sélection de créations pensées pour marquer les esprits.</p>
+        </FocusHeader>
 
-          {carouselProducts.length > 0 ? (
-            <>
-              <MiniCarousel $isDark={$isDark}>
-                {carouselProducts.map((product, index) => (
-                  <MiniSlide key={product._id} $active={index === miniSlide}>
-                    <MiniSlideImg
+        {carouselProducts.length > 0 ? (
+          <>
+            <FocusTrack ref={focusTrackRef} onScroll={handleFocusScroll}>
+              {carouselProducts.map((product, index) => (
+                <FocusSlide key={product._id}>
+                  <FocusImageLink
+                    to={`/produit/${product._id}`}
+                    aria-label={`Voir ${product.title}`}
+                  >
+                    <FocusImage
                       src={getMediaUrl(product.images?.[0]?.url)}
                       alt={product.title}
+                      loading={index === 0 ? "eager" : "lazy"}
                     />
+                  </FocusImageLink>
 
-                    <MiniOverlay>
-                      <MiniInfo>
-                        <h3>{product.title}</h3>
-                        <p>
-                          {product.subtitle ||
-                            "Une pièce signature à forte présence."}
-                        </p>
-                      </MiniInfo>
+                  <FocusInfo $isDark={$isDark}>
+                    <FocusInfoRow $isDark={$isDark}>
+                      <span className="label">Collection</span>
 
-                      <MiniCTA to={`/produit/${product._id}`}>
-                        Voir le produit <FaArrowRight />
-                      </MiniCTA>
-                    </MiniOverlay>
-                  </MiniSlide>
-                ))}
+                      <span className="value">NUMA — Sélection</span>
+                    </FocusInfoRow>
 
-                {carouselProducts.length > 1 && (
-                  <>
-                    <CarouselArrow
-                      type="button"
-                      $left
-                      aria-label="Produit précédent"
-                      onClick={previousMini}
-                    >
-                      ‹
-                    </CarouselArrow>
+                    <FocusInfoRow $isDark={$isDark}>
+                      <span className="label">Pièce</span>
 
-                    <CarouselArrow
-                      type="button"
-                      aria-label="Produit suivant"
-                      onClick={nextMini}
-                    >
-                      ›
-                    </CarouselArrow>
-                  </>
-                )}
-              </MiniCarousel>
+                      <span className="value">{product.title}</span>
+                    </FocusInfoRow>
 
-              <DotsRow>
-                {carouselProducts.map((product, index) => (
-                  <Dot
-                    key={product._id}
-                    type="button"
-                    $active={index === miniSlide}
-                    onClick={() => setMiniSlide(index)}
-                    aria-label={`Voir ${product.title}`}
+                    <FocusInfoRow $isDark={$isDark}>
+                      <span className="label">Description</span>
+
+                      <span className="value">
+                        {product.description ||
+                          "Une création pensée pour vous."}
+                      </span>
+                    </FocusInfoRow>
+
+                    <FocusInfoRow $isDark={$isDark}>
+                      <span className="label">Matière</span>
+
+                      <span className="value">
+                        {product.details?.matiere || "Sélection premium"}
+                      </span>
+                    </FocusInfoRow>
+
+                    <FocusInfoRow $isDark={$isDark}>
+                      <span className="label">Prix</span>
+
+                      <FocusPrice className="value">
+                        {Number(product.price || 0).toLocaleString("fr-FR")}{" "}
+                        FCFA
+                      </FocusPrice>
+                    </FocusInfoRow>
+
+                    <FocusCTA to={`/produit/${product._id}`} $isDark={$isDark}>
+                      Voir le produit
+                      <FaArrowRight />
+                    </FocusCTA>
+                  </FocusInfo>
+                </FocusSlide>
+              ))}
+            </FocusTrack>
+
+            {/* MINIATURES QUI SERVENT DE DOTS */}
+
+            <FocusThumbnails $isDark={$isDark}>
+              {carouselProducts.map((product, index) => (
+                <FocusThumbnail
+                  key={product._id}
+                  type="button"
+                  $active={index === focusIndex}
+                  onClick={() => scrollToFocus(index)}
+                  aria-label={`Afficher ${product.title}`}
+                  aria-current={index === focusIndex ? "true" : undefined}
+                >
+                  <img
+                    src={getMediaUrl(product.images?.[0]?.url)}
+                    alt={product.title}
+                    loading="lazy"
                   />
-                ))}
-              </DotsRow>
-            </>
-          ) : (
-            <EmptyState>Aucune pièce disponible pour le moment.</EmptyState>
-          )}
-        </CarouselSection>
-      </Section>
+                </FocusThumbnail>
+              ))}
+            </FocusThumbnails>
+          </>
+        ) : (
+          <EmptyState>Aucune pièce disponible pour le moment.</EmptyState>
+        )}
+      </FocusSection>
 
-      {/* BEST SELLERS */}
+      {/* ================================================
+          BEST SELLERS
+          Navigation horizontale sans flèches
+      ================================================= */}
 
       <BestSellerSection>
         <Section>
           <SectionHeader>
             <div className="eyebrow">BEST SELLERS</div>
+
             <h2>Nos pièces incontournables.</h2>
+
+            <p>
+              Découvrez les créations les plus appréciées de notre collection.
+            </p>
           </SectionHeader>
         </Section>
 
         {bestSellers.length > 0 ? (
-          <BestCarousel>
-            {bestSellers.map((product, index) => (
-              <BestSlide key={product._id} $active={index === bestSlide}>
-                <Link
-                  to={`/produit/${product._id}`}
-                  aria-label={`Découvrir ${product.title}`}
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    display: "block",
-                  }}
+          <>
+            <BestTrack ref={bestTrackRef} onScroll={handleBestScroll}>
+              {bestSellers.map((product, index) => (
+                <BestSlide key={product._id}>
+                  <Link
+                    to={`/produit/${product._id}`}
+                    aria-label={`Découvrir ${product.title}`}
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      display: "block",
+                    }}
+                  >
+                    <BestImage
+                      src={getMediaUrl(product.images?.[0]?.url)}
+                      alt={product.title}
+                      loading={index === 0 ? "eager" : "lazy"}
+                    />
+
+                    <BestShade />
+                  </Link>
+
+                  <BestBadge>
+                    <FaStar />
+                    BEST SELLER
+                  </BestBadge>
+
+                  <BestBottom>
+                    <BestPhrase>
+                      <h3>
+                        {product.title || "Une pièce qui fait la différence."}
+                      </h3>
+                    </BestPhrase>
+
+                    <BestStars aria-label="5 étoiles">
+                      {Array.from({ length: 5 }).map((_, starIndex) => (
+                        <FaStar key={starIndex} />
+                      ))}
+                    </BestStars>
+                  </BestBottom>
+                </BestSlide>
+              ))}
+            </BestTrack>
+
+            {/* MINIATURES BEST SELLERS */}
+
+            <BestThumbnails $isDark={$isDark}>
+              {bestSellers.map((product, index) => (
+                <BestThumbnail
+                  key={product._id}
+                  type="button"
+                  $active={index === bestIndex}
+                  onClick={() => scrollToBest(index)}
+                  aria-label={`Afficher ${product.title}`}
                 >
-                  <BestImage
+                  <img
                     src={getMediaUrl(product.images?.[0]?.url)}
                     alt={product.title}
-                    $active={index === bestSlide}
+                    loading="lazy"
                   />
-                  <BestShade />
-                </Link>
-
-                <BestBadge>
-                  <FaStar />
-                  BEST SELLER
-                </BestBadge>
-
-                <BestBottom>
-                  <BestPhrase>
-                    <h3>Une pièce qui fait la différence.</h3>
-                  </BestPhrase>
-
-                  <BestStars aria-label="5 étoiles">
-                    {Array.from({ length: 5 }).map((_, starIndex) => (
-                      <FaStar key={starIndex} />
-                    ))}
-                  </BestStars>
-                </BestBottom>
-              </BestSlide>
-            ))}
-
-            {bestSellers.length > 1 && (
-              <>
-                <CarouselArrow
-                  type="button"
-                  $left
-                  aria-label="Best Seller précédent"
-                  onClick={previousBest}
-                >
-                  ‹
-                </CarouselArrow>
-
-                <CarouselArrow
-                  type="button"
-                  aria-label="Best Seller suivant"
-                  onClick={nextBest}
-                >
-                  ›
-                </CarouselArrow>
-
-                <BestDots>
-                  {bestSellers.map((product, index) => (
-                    <BestDot
-                      key={product._id}
-                      type="button"
-                      $active={index === bestSlide}
-                      onClick={() => setBestSlide(index)}
-                      aria-label={`Voir le Best Seller ${index + 1}`}
-                    />
-                  ))}
-                </BestDots>
-              </>
-            )}
-          </BestCarousel>
+                </BestThumbnail>
+              ))}
+            </BestThumbnails>
+          </>
         ) : (
           <EmptyState>
             <h3>Notre sélection arrive bientôt.</h3>
@@ -1930,7 +2119,9 @@ export default function HomePremium() {
         )}
       </BestSellerSection>
 
-      {/* AVANTAGES */}
+      {/* ================================================
+          AVANTAGES
+      ================================================= */}
 
       <Section>
         <Container>
@@ -1988,7 +2179,9 @@ export default function HomePremium() {
         </Container>
       </Section>
 
-      {/* WHATSAPP */}
+      {/* ================================================
+          WHATSAPP
+      ================================================= */}
 
       <WhatsAppButton
         href="https://wa.me/2250700247693"
