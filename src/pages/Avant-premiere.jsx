@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
@@ -9,12 +8,20 @@ const Overlay = styled.div`
   inset: 0;
   z-index: 99999;
   width: 100%;
+  height: 100vh;
   height: 100dvh;
   background: #111;
   color: white;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  box-sizing: border-box;
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
 `;
 
 // EN-TÊTE
@@ -22,22 +29,39 @@ const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 20px;
+  gap: 12px;
+  flex-shrink: 0;
+  padding: max(15px, env(safe-area-inset-top)) 20px 12px;
 
   h1 {
     font-size: 20px;
+    line-height: 1.3;
     margin: 0;
+    flex: 1;
   }
 
   button {
     width: 38px;
     height: 38px;
+    flex-shrink: 0;
     border: none;
     border-radius: 50%;
     background: white;
     color: black;
     font-size: 25px;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  @media (max-width: 480px) {
+    padding-left: 16px;
+    padding-right: 16px;
+
+    h1 {
+      font-size: 17px;
+    }
   }
 `;
 
@@ -46,10 +70,12 @@ const ProgressContainer = styled.div`
   display: flex;
   gap: 4px;
   padding: 0 15px 12px;
+  flex-shrink: 0;
 `;
 
 const ProgressBar = styled.div`
   flex: 1;
+  min-width: 0;
   height: 3px;
   background: #555;
   border-radius: 5px;
@@ -63,51 +89,96 @@ const ProgressFill = styled.div`
   transition: width 0.2s linear;
 `;
 
-// PHOTO PRINCIPALE
+// ZONE DE LA PHOTO ET DES INFORMATIONS
 const MainContent = styled.div`
   flex: 1;
   min-height: 0;
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 10px 15px;
+  padding: 10px 20px;
+  gap: 12px;
+  overflow: hidden;
 `;
 
+// IMAGE PRINCIPALE
 const MainImage = styled.img`
+  display: block;
   width: 100%;
-  height: 100%;
-  max-height: 65vh;
+  height: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 100%;
   object-fit: contain;
   border-radius: 12px;
+
+  @media (max-width: 600px) {
+    border-radius: 10px;
+  }
 `;
 
+// INFORMATIONS PRODUIT
 const ProductInfo = styled.div`
+  width: 100%;
+  flex-shrink: 0;
   text-align: center;
-  padding: 12px;
+  padding: 4px 10px 8px;
+  overflow: hidden;
 
   h2 {
     font-size: 21px;
-    margin: 5px;
+    line-height: 1.3;
+    margin: 0 0 8px;
+    overflow-wrap: anywhere;
   }
 
   p {
     font-size: 18px;
+    line-height: 1.3;
     color: #ddd;
-    margin: 5px;
+    margin: 0;
+    font-weight: 600;
+  }
+
+  @media (max-width: 480px) {
+    padding: 4px 8px 10px;
+
+    h2 {
+      font-size: 17px;
+      margin-bottom: 6px;
+    }
+
+    p {
+      font-size: 16px;
+    }
   }
 `;
 
 // MINIATURES
 const Thumbnails = styled.div`
+  width: 100%;
+  flex-shrink: 0;
   display: flex;
+  align-items: center;
+  justify-content: flex-start;
   gap: 10px;
   overflow-x: auto;
-  padding: 12px 15px;
-  justify-content: center;
+  overflow-y: hidden;
+  padding: 12px 20px 16px;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
 
   &::-webkit-scrollbar {
     display: none;
+  }
+
+  scrollbar-width: none;
+
+  @media (max-width: 480px) {
+    gap: 9px;
+    padding: 12px 16px 16px;
   }
 `;
 
@@ -120,11 +191,14 @@ const Thumbnail = styled.img`
   border: 2px solid ${({ active }) =>
     active ? "white" : "transparent"};
   opacity: ${({ active }) => (active ? 1 : 0.55)};
+  transition: opacity 0.2s, border-color 0.2s;
 `;
 
 // BOUTON FINAL
 const Footer = styled.div`
-  padding: 12px 20px 20px;
+  width: 100%;
+  flex-shrink: 0;
+  padding: 12px 20px max(20px, env(safe-area-inset-bottom));
   display: flex;
   justify-content: center;
 
@@ -140,11 +214,21 @@ const Footer = styled.div`
     font-size: 15px;
     cursor: pointer;
   }
+
+  @media (max-width: 480px) {
+    padding-left: 16px;
+    padding-right: 16px;
+
+    button {
+      padding: 15px;
+    }
+  }
 `;
 
 const Message = styled.p`
   text-align: center;
   margin: auto;
+  padding: 20px;
   color: white;
 `;
 
@@ -155,7 +239,7 @@ function Avantpremiere() {
   const [ferme, setFerme] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
   // ATTENDRE 30 SECONDES
   useEffect(() => {
@@ -189,7 +273,6 @@ function Avantpremiere() {
         );
 
         setProducts(newProducts);
-
       } catch (err) {
         console.error(err);
       } finally {
@@ -213,6 +296,13 @@ function Avantpremiere() {
         }))
     );
   }, [products]);
+
+  // SÉCURISER L'INDEX SI LES PRODUITS CHANGENT
+  useEffect(() => {
+    if (currentIndex >= slides.length) {
+      setCurrentIndex(0);
+    }
+  }, [slides.length, currentIndex]);
 
   // DÉFILEMENT AUTOMATIQUE TOUTES LES 3 SECONDES
   useEffect(() => {
@@ -246,8 +336,13 @@ function Avantpremiere() {
 
   const currentSlide = slides[currentIndex];
 
+  if (!currentSlide) {
+    return null;
+  }
+
   return (
     <Overlay>
+      {/* EN-TÊTE */}
       <Header>
         <h1>✨ Découvrez nos nouveautés</h1>
 
@@ -268,7 +363,7 @@ function Avantpremiere() {
         ))}
       </ProgressContainer>
 
-      {/* GRANDE PHOTO */}
+      {/* GRANDE PHOTO ET INFORMATIONS */}
       <MainContent>
         <MainImage
           src={currentSlide.url}
@@ -298,11 +393,14 @@ function Avantpremiere() {
         ))}
       </Thumbnails>
 
-      {/* FERMER */}
+      {/* BOUTON FINAL */}
       <Footer>
-        <button onClick={() =>{
-            navigate("/new") & setFerme(true)
-        }}>
+        <button
+          onClick={() => {
+            setFerme(true);
+            navigate("/new");
+          }}
+        >
           Nouveautés-NUMA
         </button>
       </Footer>
