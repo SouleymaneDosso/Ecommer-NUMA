@@ -24,7 +24,9 @@ const estPrecommande = (product) =>
   product?.precommande === true && product?.disponible === false;
 
 const normaliserGenre = (genre) =>
-  String(genre || "").trim().toLowerCase();
+  String(genre || "")
+    .trim()
+    .toLowerCase();
 
 const getProduitId = (video) => {
   const produit = video?.produitId;
@@ -91,7 +93,9 @@ const Wrapper = styled.main`
 
   color: ${({ $isDark }) => ($isDark ? "#f8f7f2" : "#20251f")};
 
-  transition: background 0.4s ease, color 0.4s ease;
+  transition:
+    background 0.4s ease,
+    color 0.4s ease;
 `;
 
 const Section = styled.section`
@@ -212,8 +216,7 @@ const HeroSlide = styled.div`
   position: absolute;
   inset: -1%;
 
-  background-image: ${({ $image }) =>
-    $image ? `url("${$image}")` : "none"};
+  background-image: ${({ $image }) => ($image ? `url("${$image}")` : "none")};
 
   background-size: cover;
   background-position: center;
@@ -338,7 +341,9 @@ const Dot = styled.button`
     $active ? "#b18b55" : "rgba(177, 139, 85, 0.3)"};
 
   cursor: pointer;
-  transition: width 0.35s ease, background 0.35s ease;
+  transition:
+    width 0.35s ease,
+    background 0.35s ease;
 `;
 
 /* =========================================================
@@ -368,7 +373,9 @@ const UniverseSlide = styled.div`
   opacity: ${({ $active }) => ($active ? 1 : 0)};
   visibility: ${({ $active }) => ($active ? "visible" : "hidden")};
 
-  transition: opacity 1s ease, visibility 1s ease;
+  transition:
+    opacity 1s ease,
+    visibility 1s ease;
 `;
 
 const UniverseImage = styled.img`
@@ -852,7 +859,9 @@ const BestSlide = styled.div`
 
   opacity: ${({ $active }) => ($active ? 1 : 0)};
   visibility: ${({ $active }) => ($active ? "visible" : "hidden")};
-  transition: opacity 0.9s ease, visibility 0.9s ease;
+  transition:
+    opacity 0.9s ease,
+    visibility 0.9s ease;
 `;
 
 const BestImage = styled.img`
@@ -1190,7 +1199,7 @@ function UniverseShowcase({ title, genre, products }) {
 export default function HomePremium() {
   const [products, setProducts] = useState([]);
   const [videos, setVideos] = useState([]);
-
+  const [bestSellers, setBestSellers] = useState([]);
   const [slide, setSlide] = useState(0);
   const [miniSlide, setMiniSlide] = useState(0);
   const [bestSlide, setBestSlide] = useState(0);
@@ -1210,6 +1219,41 @@ export default function HomePremium() {
   const videoTouchStart = useRef(null);
 
   const duration = 5000;
+
+  /* =======================================================
+   FETCH BEST SELLERS
+======================================================= */
+
+  useEffect(() => {
+    const fetchBestSellers = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/produits/best-sellers`);
+
+        if (!response.ok) {
+          throw new Error("Erreur récupération Best Sellers");
+        }
+
+        const data = await response.json();
+
+        setBestSellers(
+          (Array.isArray(data) ? data : [])
+            .filter(
+              (product) =>
+                product.bestSeller === true &&
+                product.disponible === true &&
+                !estPrecommande(product) &&
+                product.images?.[0]?.url,
+            )
+            .slice(0, 5),
+        );
+      } catch (error) {
+        console.error("Erreur Best Sellers :", error);
+        setBestSellers([]);
+      }
+    };
+
+    fetchBestSellers();
+  }, []);
 
   /* =======================================================
      FETCH PRÉCOMMANDES
@@ -1324,24 +1368,6 @@ export default function HomePremium() {
   );
 
   /* =======================================================
-     BEST SELLERS
-     On conserve ici la règle existante : badge = "new".
-  ======================================================= */
-
-  const bestSellers = useMemo(
-    () =>
-      products
-        .filter(
-          (product) =>
-            normaliserGenre(product.badge) === "new" &&
-            !estPrecommande(product) &&
-            product?.images?.[0]?.url,
-        )
-        .slice(0, 5),
-    [products],
-  );
-
-  /* =======================================================
      FOCUS
      Exclusion des Best Sellers pour éviter les doublons.
   ======================================================= */
@@ -1374,9 +1400,7 @@ export default function HomePremium() {
     videos.forEach((video) => {
       const produitId = getProduitId(video);
 
-      const produit = products.find(
-        (item) => String(item._id) === produitId,
-      );
+      const produit = products.find((item) => String(item._id) === produitId);
 
       if (!produit) return;
 
@@ -1608,19 +1632,11 @@ export default function HomePremium() {
 
       {/* UNIVERS HOMME : UNE IMAGE À LA FOIS */}
 
-      <UniverseShowcase
-        title="Homme"
-        genre="homme"
-        products={hommeProducts}
-      />
+      <UniverseShowcase title="Homme" genre="homme" products={hommeProducts} />
 
       {/* UNIVERS FEMME : UNE IMAGE À LA FOIS */}
 
-      <UniverseShowcase
-        title="Femme"
-        genre="femme"
-        products={femmeProducts}
-      />
+      <UniverseShowcase title="Femme" genre="femme" products={femmeProducts} />
 
       {/* VIDÉOS */}
 
@@ -1755,9 +1771,7 @@ export default function HomePremium() {
 
             <h2>Des pièces qui attirent le regard.</h2>
 
-            <p>
-              Une sélection de créations pensées pour marquer les esprits.
-            </p>
+            <p>Une sélection de créations pensées pour marquer les esprits.</p>
           </SectionHeader>
 
           {carouselProducts.length > 0 ? (
@@ -1839,10 +1853,7 @@ export default function HomePremium() {
         {bestSellers.length > 0 ? (
           <BestCarousel>
             {bestSellers.map((product, index) => (
-              <BestSlide
-                key={product._id}
-                $active={index === bestSlide}
-              >
+              <BestSlide key={product._id} $active={index === bestSlide}>
                 <Link
                   to={`/produit/${product._id}`}
                   aria-label={`Découvrir ${product.title}`}
