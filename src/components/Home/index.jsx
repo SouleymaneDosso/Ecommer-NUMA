@@ -5,6 +5,7 @@ import { Play, Pause, Volume2, VolumeX } from "lucide-react";
 import styled, { keyframes } from "styled-components";
 import { Link } from "react-router-dom";
 
+
 import {
   FaArrowRight,
   FaTruck,
@@ -17,6 +18,7 @@ import {
 import { FaArrowUpRightFromSquare } from "react-icons/fa6";
 
 import { ThemeContext } from "../../Utils/Context";
+
 
 /* =========================================================
    HELPERS

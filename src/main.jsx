@@ -67,6 +67,7 @@ import ReceptionPrecommande from "./pages/ReceptionPrecommande";
 import { trackPage } from "./Utils/visitorTracking";
 import AdminStatistiques from "./pages/AdminStatistiques";
 import Conversation from "./pages/Conversation";
+import Avantpremiere from "./pages/Avant-premiere";
 
 function GlobalNotifications() {
   const location = useLocation();
@@ -486,6 +487,7 @@ createRoot(document.getElementById("root")).render(
         <Panier>
           <GlobalStyle />
           <SEO />
+          <Avantpremiere />
           <Routes>
             {/* Pages publiques */}
             <Route
