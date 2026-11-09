@@ -750,6 +750,28 @@ export default function CompteClient() {
         </StatsGrid>
 
         {/* =================================================
+    ACCÈS AUX DÉCISIONS DE RETOUR
+================================================= */}
+
+        <ReturnDecisionLink to="/mes-decisions-retour">
+          <ReturnDecisionIcon>
+            <FiPackage />
+          </ReturnDecisionIcon>
+
+          <ReturnDecisionText>
+            <strong>Mes décisions de retour</strong>
+            <span>
+              Consultez les réponses de NUMA à vos demandes de retour et
+              d'échange.
+            </span>
+          </ReturnDecisionText>
+
+          <ReturnDecisionArrow>
+            <FiArrowRight />
+          </ReturnDecisionArrow>
+        </ReturnDecisionLink>
+
+        {/* =================================================
             COFFRE
         ================================================= */}
 
@@ -2787,4 +2809,63 @@ const PayNextButton = styled.button`
   border-radius: 10px;
   cursor: pointer;
   font-weight: 600;
+`;
+const ReturnDecisionLink = styled(Link)`
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 19px;
+  margin-bottom: 28px;
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 15px;
+  text-decoration: none;
+  color: #171717;
+  transition: 0.2s;
+
+  &:hover {
+    border-color: #bdbdbd;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.04);
+  }
+`;
+
+const ReturnDecisionIcon = styled.div`
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  background: #f1f1f1;
+  font-size: 20px;
+`;
+
+const ReturnDecisionText = styled.div`
+  flex: 1;
+  min-width: 0;
+
+  strong {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 14px;
+  }
+
+  span {
+    display: block;
+    color: #888;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+`;
+
+const ReturnDecisionArrow = styled.div`
+  display: grid;
+  place-items: center;
+  width: 35px;
+  height: 35px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #171717;
+  color: #fff;
 `;

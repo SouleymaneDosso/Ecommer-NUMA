@@ -72,6 +72,9 @@ import ReturnsPage from "./pages/ReturnsPage";
 import ReturnRequestPage from "./pages/ReturnRequestPage";
 import ReturnRequestDetailsPage from "./pages/ReturnRequestDetailsPage";
 import AdminRetours from "./pages/AdminRetours";
+import DecisionsRetour from "./pages/DecisionsRetour";
+
+
 function GlobalNotifications() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -736,6 +739,11 @@ createRoot(document.getElementById("root")).render(
                   <ForgotPassword />
                 </PublicLayout>
               }
+            />
+
+            <Route
+              path="/mes-decisions-retour"
+              element={<PublicLayout><DecisionsRetour /></PublicLayout>}
             />
 
             <Route
