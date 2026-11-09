@@ -803,7 +803,7 @@ export default function ReturnRequestPage() {
               onClick={handleContinue}
               disabled={selectedProducts.length === 0}
             >
-              CONTINUER MA DEMANDE ↗
+              CONTINUER MA DEMANDE 
             </Button>
 
             <HelpText>
