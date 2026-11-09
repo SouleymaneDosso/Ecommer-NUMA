@@ -248,6 +248,47 @@ const formatDate = (date) => {
   });
 };
 
+const WhatsAppInfo = styled.div`
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 18px 0;
+  padding: 14px 16px;
+  background: #f0fbf4;
+  border: 1px solid #d5f1df;
+  border-radius: 10px;
+
+  strong {
+    color: #333;
+    font-size: 14px;
+  }
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 13px;
+    border-radius: 20px;
+    background: #25d366;
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.2s ease;
+
+    &:hover {
+      background: #1da851;
+    }
+  }
+
+  span {
+    color: #999;
+    font-size: 13px;
+    font-style: italic;
+  }
+`;
+
 /* ================= COMPONENT ================= */
 
 export default function AdminRetours() {
@@ -472,20 +513,24 @@ export default function AdminRetours() {
                     </ItemCard>
                   ))}
                 </ItemGrid>
-                <div>
-                  <strong>WhatsApp du client :</strong>{" "}
+                <WhatsAppInfo>
+                  <strong>WhatsApp du client :</strong>
+
                   {demande.numeroWhatsApp ? (
                     <a
                       href={`https://wa.me/${String(demande.numeroWhatsApp).replace(/\D/g, "")}`}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
+                      <span style={{ color: "white", fontStyle: "normal" }}>
+                        ●
+                      </span>
                       {demande.numeroWhatsApp}
                     </a>
                   ) : (
                     <span>Non renseigné</span>
                   )}
-                </div>
+                </WhatsAppInfo>
 
                 {demande.description && (
                   <>
