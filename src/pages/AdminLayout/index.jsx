@@ -244,6 +244,13 @@ function AdminLayout() {
           Statistiques
         </SidebarItem>
 
+        <SidebarItem
+          $active={location.pathname.includes("retours")}
+          onClick={() => navigate("/admin/retours")}
+        >
+          Retours
+        </SidebarItem>
+
       </Sidebar>
 
 

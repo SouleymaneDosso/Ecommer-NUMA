@@ -71,7 +71,7 @@ import Avantpremiere from "./pages/Avant-premiere";
 import ReturnsPage from "./pages/ReturnsPage";
 import ReturnRequestPage from "./pages/ReturnRequestPage";
 import ReturnRequestDetailsPage from "./pages/ReturnRequestDetailsPage";
-
+import AdminRetours from "./pages/AdminRetours";
 function GlobalNotifications() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -808,6 +808,7 @@ createRoot(document.getElementById("root")).render(
               <Route path="paiement" element={<AdminPaiements />} />
               <Route path="livreurs" element={<AdminLivreurs />} />
               <Route path="precommandes" element={<AdminPrecommandes />} />
+              <Route path="/admin/retours" element={<AdminRetours />} />
               <Route
                 path="reception-precommandes"
                 element={<ReceptionPrecommande />}
