@@ -1383,6 +1383,11 @@ export default function CompteClient() {
                 Consultez le statut, le contenu et le suivi de chacune de vos
                 commandes.
               </SectionDescription>
+              <ReturnMainLink to="/returns">
+                <FiPackage />
+                <span>Effectuer un retour ou un échange</span>
+                <FiArrowRight />
+              </ReturnMainLink>
             </SectionTitleWrap>
           </SectionHeader>
 
@@ -1446,7 +1451,7 @@ export default function CompteClient() {
                       }
                     >
                       <OrderMain>
-                        <OrderNumber>
+                        <OrderNumber> no commande : 
                           {commande.numeroCommande ||
                             "Numéro de commande indisponible"}
                         </OrderNumber>
@@ -2868,4 +2873,29 @@ const ReturnDecisionArrow = styled.div`
   border-radius: 50%;
   background: #171717;
   color: #fff;
+`;
+
+const ReturnMainLink = styled(Link)`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 15px;
+  padding: 12px 17px;
+  border-radius: 9px;
+  background: #171717;
+  color: #fff;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 600;
+  transition: 0.2s;
+
+  &:hover {
+    background: #383838;
+    transform: translateY(-2px);
+  }
+
+  svg {
+    font-size: 15px;
+  }
 `;
