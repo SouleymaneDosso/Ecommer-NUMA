@@ -624,7 +624,7 @@ export default function ReturnRequestPage() {
           NUMA
         </a>
 
-        <a href="/returns">RETOURS & ÉCHANGES ↗</a>
+        <a href="/returns">RETOURS & ÉCHANGES</a>
       </Header>
 
       <Main>
@@ -692,7 +692,7 @@ export default function ReturnRequestPage() {
                 {loading ? (
                   <LoadingText>VÉRIFICATION...</LoadingText>
                 ) : (
-                  <>RETROUVER MA COMMANDE ↗</>
+                  <>RETROUVER MA COMMANDE</>
                 )}
               </Button>
             </form>
@@ -814,7 +814,7 @@ export default function ReturnRequestPage() {
         )}
       </Main>
 
-      <Footer>NUMA — YOUR STYLE, YOUR STORY.</Footer>
+      <Footer>NUMA — BEYOND ORDINARY</Footer>
     </Page>
   );
 }
