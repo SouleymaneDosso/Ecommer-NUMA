@@ -68,6 +68,9 @@ import { trackPage } from "./Utils/visitorTracking";
 import AdminStatistiques from "./pages/AdminStatistiques";
 import Conversation from "./pages/Conversation";
 import Avantpremiere from "./pages/Avant-premiere";
+import ReturnsPage from "./pages/ReturnsPage";
+import ReturnRequestPage from "./pages/ReturnRequestPage";
+import ReturnRequestDetailsPage from "./pages/ReturnRequestDetailsPage";
 
 function GlobalNotifications() {
   const location = useLocation();
@@ -538,6 +541,16 @@ createRoot(document.getElementById("root")).render(
                 </PublicLayout>
               }
             />
+
+            <Route
+              path="/returns"
+              element={
+                <PublicLayout>
+                  <ReturnsPage />
+                </PublicLayout>
+              }
+            />
+
             <Route
               path="/paiement-3x"
               element={
@@ -611,6 +624,22 @@ createRoot(document.getElementById("root")).render(
               element={
                 <PublicLayout>
                   <ReturnPolicy />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/returns/request"
+              element={
+                <PublicLayout>
+                  <ReturnRequestPage />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/returns/new"
+              element={
+                <PublicLayout>
+                  <ReturnRequestDetailsPage />
                 </PublicLayout>
               }
             />

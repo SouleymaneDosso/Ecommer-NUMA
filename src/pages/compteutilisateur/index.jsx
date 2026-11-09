@@ -1425,7 +1425,8 @@ export default function CompteClient() {
                     >
                       <OrderMain>
                         <OrderNumber>
-                          Commande #{commande._id.slice(-6).toUpperCase()}
+                          {commande.numeroCommande ||
+                            "Numéro de commande indisponible"}
                         </OrderNumber>
 
                         <OrderDate>
