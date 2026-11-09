@@ -153,6 +153,10 @@ const ReturnRequestDetailsPage = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
+    if (!numeroWhatsApp.trim()) {
+      setError("Veuillez renseigner votre numéro WhatsApp.");
+      return;
+    }
 
     if (!order?._id) {
       setError("Les informations de la commande sont introuvables.");
@@ -478,19 +482,35 @@ const ReturnRequestDetailsPage = () => {
           ))}
         </SolutionContainer>
 
-        <label htmlFor="numeroWhatsApp">
-          Numéro WhatsApp :
-        </label>
+        <WhatsAppSection>
+          <WhatsAppLabel htmlFor="numeroWhatsApp">
+            Numéro WhatsApp pour le remboursement
+          </WhatsAppLabel>
 
-        <input
-          id="numeroWhatsApp"
-          type="tel"
-          name="numeroWhatsApp"
-          placeholder="Ex : +225 07 00 00 00 00"
-          value={numeroWhatsApp}
-          onChange={(e) => setNumeroWhatsApp(e.target.value)}
-          required
-        />
+          <WhatsAppDescription>
+            Renseignez le numéro WhatsApp sur lequel NUMA pourra vous contacter
+            et effectuer le suivi de votre demande.
+          </WhatsAppDescription>
+
+          <WhatsAppInputWrapper>
+            <WhatsAppIcon>W</WhatsAppIcon>
+
+            <WhatsAppInput
+              id="numeroWhatsApp"
+              type="tel"
+              name="numeroWhatsApp"
+              placeholder="+225 07 00 00 00 00"
+              value={numeroWhatsApp}
+              onChange={(e) => setNumeroWhatsApp(e.target.value)}
+              required
+            />
+          </WhatsAppInputWrapper>
+
+          <WhatsAppHint>
+            Exemple : +225 07 00 00 00 00. Utilisez un numéro sur lequel vous
+            êtes joignable.
+          </WhatsAppHint>
+        </WhatsAppSection>
 
         <Conditions>
           <input
@@ -673,7 +693,7 @@ const TextArea = styled.textarea`
   border-radius: 5px;
   resize: vertical;
   font-family: inherit;
-  font-size: 14px;
+  font-size: 16px;
   outline: none;
 
   &:focus {
@@ -895,4 +915,85 @@ const PrimaryButton = styled.button`
   &:hover {
     background: #444;
   }
+`;
+
+const WhatsAppSection = styled.div`
+  margin: 30px 0;
+  padding: 22px;
+  background: #fafafa;
+  border: 1px solid #e8e8e8;
+  border-radius: 14px;
+
+  @media (max-width: 600px) {
+    padding: 17px;
+  }
+`;
+
+const WhatsAppLabel = styled.label`
+  display: block;
+  margin-bottom: 9px;
+  color: #171717;
+  font-size: 14px;
+  font-weight: 600;
+`;
+
+const WhatsAppDescription = styled.p`
+  margin: 0 0 15px;
+  color: #777;
+  font-size: 12px;
+  line-height: 1.6;
+`;
+
+const WhatsAppInputWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 14px;
+  background: #fff;
+  border: 1px solid #dedede;
+  border-radius: 9px;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+
+  &:focus-within {
+    border-color: #25d366;
+    box-shadow: 0 0 0 3px rgba(37, 211, 102, 0.1);
+  }
+`;
+
+const WhatsAppIcon = styled.div`
+  display: grid;
+  place-items: center;
+  width: 35px;
+  height: 35px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #e8f9ee;
+  color: #25a75a;
+  font-size: 19px;
+  font-weight: 700;
+`;
+
+const WhatsAppInput = styled.input`
+  width: 100%;
+  min-width: 0;
+  padding: 15px 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #171717;
+  font-size: 16px;
+
+  &::placeholder {
+    color: #aaa;
+  }
+`;
+
+const WhatsAppHint = styled.small`
+  display: block;
+  margin-top: 10px;
+  color: #888;
+  font-size: 11px;
+  line-height: 1.5;
 `;

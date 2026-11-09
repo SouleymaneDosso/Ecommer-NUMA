@@ -472,14 +472,19 @@ export default function AdminRetours() {
                     </ItemCard>
                   ))}
                 </ItemGrid>
-
                 <div>
-                  <strong>WhatsApp du client :</strong>
-                  <a
-                    href={`https://wa.me/${demande.numeroWhatsApp.replace(/\D/g, "")}`}
-                  >
-                    {demande.numeroWhatsApp}
-                  </a>
+                  <strong>WhatsApp du client :</strong>{" "}
+                  {demande.numeroWhatsApp ? (
+                    <a
+                      href={`https://wa.me/${String(demande.numeroWhatsApp).replace(/\D/g, "")}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {demande.numeroWhatsApp}
+                    </a>
+                  ) : (
+                    <span>Non renseigné</span>
+                  )}
                 </div>
 
                 {demande.description && (
