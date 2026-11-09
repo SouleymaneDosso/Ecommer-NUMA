@@ -4,9 +4,7 @@ import styled from "styled-components";
 
 const API_URL = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
 
-const API_BASE = API_URL.endsWith("/api")
-  ? API_URL
-  : `${API_URL}/api`;
+const API_BASE = API_URL.endsWith("/api") ? API_URL : `${API_URL}/api`;
 
 const reasons = [
   "Taille trop petite",
@@ -47,7 +45,7 @@ const ReturnRequestDetailsPage = () => {
   const selectedProducts = location.state?.selectedProducts || [];
 
   const [details, setDetails] = useState(() =>
-    initialDetails(selectedProducts)
+    initialDetails(selectedProducts),
   );
 
   const [solution, setSolution] = useState("refund");
@@ -56,6 +54,7 @@ const ReturnRequestDetailsPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [requestNumber, setRequestNumber] = useState("");
+  const [numeroWhatsApp, setNumeroWhatsApp] = useState("");
 
   const detailsRef = useRef(details);
   detailsRef.current = details;
@@ -80,8 +79,8 @@ const ReturnRequestDetailsPage = () => {
   const updateDetail = (index, field, value) => {
     setDetails((previous) =>
       previous.map((item, itemIndex) =>
-        itemIndex === index ? { ...item, [field]: value } : item
-      )
+        itemIndex === index ? { ...item, [field]: value } : item,
+      ),
     );
   };
 
@@ -123,7 +122,7 @@ const ReturnRequestDetailsPage = () => {
           ...item,
           photos: [...item.photos, ...newPhotos],
         };
-      })
+      }),
     );
 
     setError("");
@@ -144,10 +143,10 @@ const ReturnRequestDetailsPage = () => {
         return {
           ...item,
           photos: item.photos.filter(
-            (_, indexPhoto) => indexPhoto !== photoIndex
+            (_, indexPhoto) => indexPhoto !== photoIndex,
           ),
         };
-      })
+      }),
     );
   };
 
@@ -162,7 +161,7 @@ const ReturnRequestDetailsPage = () => {
 
     if (order.statusCommande !== "DELIVERED") {
       setError(
-        "Une demande de retour est possible uniquement après la livraison."
+        "Une demande de retour est possible uniquement après la livraison.",
       );
       return;
     }
@@ -183,7 +182,7 @@ const ReturnRequestDetailsPage = () => {
 
       if (!Number.isInteger(product.panierIndex)) {
         setError(
-          "Une erreur est survenue avec les articles sélectionnés. Recommence la recherche de ta commande."
+          "Une erreur est survenue avec les articles sélectionnés. Recommence la recherche de ta commande.",
         );
         return;
       }
@@ -239,9 +238,10 @@ const ReturnRequestDetailsPage = () => {
     formData.append("items", JSON.stringify(items));
     formData.append(
       "solutionSouhaitee",
-      solution === "exchange" ? "ECHANGE" : "REMBOURSEMENT"
+      solution === "exchange" ? "ECHANGE" : "REMBOURSEMENT",
     );
     formData.append("description", description);
+    formData.append("numeroWhatsApp", numeroWhatsApp.trim());
 
     details.forEach((detail) => {
       detail.photos.forEach((photo) => {
@@ -264,7 +264,7 @@ const ReturnRequestDetailsPage = () => {
 
       if (!response.ok) {
         throw new Error(
-          data.message || "Une erreur est survenue lors de l'envoi."
+          data.message || "Une erreur est survenue lors de l'envoi.",
         );
       }
 
@@ -275,15 +275,13 @@ const ReturnRequestDetailsPage = () => {
         returnedRequest?._id ||
           returnedRequest?.numeroDemande ||
           returnedRequest?.numero ||
-          ""
+          "",
       );
 
       setSubmitted(true);
     } catch (err) {
       console.error("ERREUR DEMANDE DE RETOUR :", err);
-      setError(
-        err.message || "Impossible d'envoyer votre demande. Réessayez."
-      );
+      setError(err.message || "Impossible d'envoyer votre demande. Réessayez.");
     } finally {
       setLoading(false);
     }
@@ -313,14 +311,11 @@ const ReturnRequestDetailsPage = () => {
           )}
 
           <p className="small-text">
-            Vous pourrez suivre l'évolution de votre demande depuis votre
-            espace client.
+            Vous pourrez suivre l'évolution de votre demande depuis votre espace
+            client.
           </p>
 
-          <PrimaryButton
-            type="button"
-            onClick={() => navigate("/")}
-          >
+          <PrimaryButton type="button" onClick={() => navigate("/")}>
             RETOUR À L'ACCUEIL
           </PrimaryButton>
         </SuccessCard>
@@ -337,9 +332,7 @@ const ReturnRequestDetailsPage = () => {
 
         <h1>Détails de votre demande</h1>
 
-        <p>
-          Décrivez le problème rencontré avec chaque article sélectionné.
-        </p>
+        <p>Décrivez le problème rencontré avec chaque article sélectionné.</p>
       </PageHeader>
 
       <OrderSummary>
@@ -373,13 +366,9 @@ const ReturnRequestDetailsPage = () => {
                 <ProductInfo>
                   <h3>{product.name}</h3>
 
-                  {product.color && (
-                    <p>Couleur : {product.color}</p>
-                  )}
+                  {product.color && <p>Couleur : {product.color}</p>}
 
-                  {product.size && (
-                    <p>Taille : {product.size}</p>
-                  )}
+                  {product.size && <p>Taille : {product.size}</p>}
 
                   <p>Quantité : {product.quantity}</p>
                 </ProductInfo>
@@ -437,9 +426,7 @@ const ReturnRequestDetailsPage = () => {
                     disabled={detail.photos.length >= 4}
                   />
 
-                  <span>
-                    Ajouter des photos ({detail.photos.length}/4)
-                  </span>
+                  <span>Ajouter des photos ({detail.photos.length}/4)</span>
 
                   <small>JPG, PNG ou WEBP — 5 Mo maximum par photo</small>
                 </UploadBox>
@@ -491,6 +478,20 @@ const ReturnRequestDetailsPage = () => {
           ))}
         </SolutionContainer>
 
+        <label htmlFor="numeroWhatsApp">
+          Numéro WhatsApp :
+        </label>
+
+        <input
+          id="numeroWhatsApp"
+          type="tel"
+          name="numeroWhatsApp"
+          placeholder="Ex : +225 07 00 00 00 00"
+          value={numeroWhatsApp}
+          onChange={(e) => setNumeroWhatsApp(e.target.value)}
+          required
+        />
+
         <Conditions>
           <input
             type="checkbox"
@@ -500,8 +501,8 @@ const ReturnRequestDetailsPage = () => {
           />
 
           <label htmlFor="accept-conditions">
-            Je confirme que les informations fournies sont exactes et
-            j'accepte les conditions de retour de NUMA.
+            Je confirme que les informations fournies sont exactes et j'accepte
+            les conditions de retour de NUMA.
           </label>
         </Conditions>
 
@@ -763,8 +764,7 @@ const SolutionCard = styled.div`
   align-items: flex-start;
   gap: 13px;
   padding: 18px;
-  border: 1px solid
-    ${({ $selected }) => ($selected ? "#252525" : "#e5e5e5")};
+  border: 1px solid ${({ $selected }) => ($selected ? "#252525" : "#e5e5e5")};
   border-radius: 7px;
   cursor: pointer;
   background: ${({ $selected }) => ($selected ? "#faf9f6" : "#fff")};

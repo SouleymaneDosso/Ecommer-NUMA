@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback } from "react";
 import styled from "styled-components";
 
@@ -73,22 +72,34 @@ const Badge = styled.span`
   font-weight: 700;
   background: ${(p) => {
     switch (p.$status) {
-      case "PENDING": return "#fef3c7";
-      case "APPROVED": return "#dcfce7";
-      case "REJECTED": return "#fee2e2";
-      case "CANCELLED": return "#e5e7eb";
-      case "COMPLETED": return "#dbeafe";
-      default: return "#eee";
+      case "PENDING":
+        return "#fef3c7";
+      case "APPROVED":
+        return "#dcfce7";
+      case "REJECTED":
+        return "#fee2e2";
+      case "CANCELLED":
+        return "#e5e7eb";
+      case "COMPLETED":
+        return "#dbeafe";
+      default:
+        return "#eee";
     }
   }};
   color: ${(p) => {
     switch (p.$status) {
-      case "PENDING": return "#92400e";
-      case "APPROVED": return "#166534";
-      case "REJECTED": return "#991b1b";
-      case "CANCELLED": return "#374151";
-      case "COMPLETED": return "#1e40af";
-      default: return "#333";
+      case "PENDING":
+        return "#92400e";
+      case "APPROVED":
+        return "#166534";
+      case "REJECTED":
+        return "#991b1b";
+      case "CANCELLED":
+        return "#374151";
+      case "COMPLETED":
+        return "#1e40af";
+      default:
+        return "#333";
     }
   }};
 `;
@@ -265,13 +276,10 @@ export default function AdminRetours() {
     try {
       const query = filtre === "ALL" ? "" : `?statut=${filtre}`;
 
-      const res = await fetch(
-        `${API_URL}/api/admin/returns${query}`,
-        {
-          method: "GET",
-          headers: getHeaders(),
-        }
-      );
+      const res = await fetch(`${API_URL}/api/admin/returns${query}`, {
+        method: "GET",
+        headers: getHeaders(),
+      });
 
       const data = await res.json();
 
@@ -310,17 +318,14 @@ export default function AdminRetours() {
     setTraitement(id);
 
     try {
-      const res = await fetch(
-        `${API_URL}/api/admin/returns/${id}/status`,
-        {
-          method: "PUT",
-          headers: getHeaders(),
-          body: JSON.stringify({
-            statut,
-            commentaireAdmin,
-          }),
-        }
-      );
+      const res = await fetch(`${API_URL}/api/admin/returns/${id}/status`, {
+        method: "PUT",
+        headers: getHeaders(),
+        body: JSON.stringify({
+          statut,
+          commentaireAdmin,
+        }),
+      });
 
       const data = await res.json();
 
@@ -344,11 +349,7 @@ export default function AdminRetours() {
       <Header>
         <h1>Administration – Retours clients</h1>
 
-        <Button
-          onClick={fetchDemandes}
-          disabled={chargement}
-          $color="#333"
-        >
+        <Button onClick={fetchDemandes} disabled={chargement} $color="#333">
           Actualiser
         </Button>
       </Header>
@@ -393,7 +394,9 @@ export default function AdminRetours() {
               <RequestCard key={demande._id}>
                 <TopLine>
                   <div>
-                    <strong>Demande #{demande._id.slice(-8).toUpperCase()}</strong>
+                    <strong>
+                      Demande #{demande._id.slice(-8).toUpperCase()}
+                    </strong>
                     <p style={{ margin: "5px 0", color: "#666" }}>
                       Créée le {formatDate(demande.createdAt)}
                     </p>
@@ -454,9 +457,13 @@ export default function AdminRetours() {
                         alt={item.nom}
                       />
 
-                      <p><strong>{item.nom}</strong></p>
+                      <p>
+                        <strong>{item.nom}</strong>
+                      </p>
                       <p>Quantité : {item.quantite}</p>
-                      <p>Prix : {(item.prix || 0).toLocaleString("fr-FR")} FCFA</p>
+                      <p>
+                        Prix : {(item.prix || 0).toLocaleString("fr-FR")} FCFA
+                      </p>
                       <p>Couleur : {item.couleur || "-"}</p>
                       <p>Taille : {item.taille || "-"}</p>
                       <p>
@@ -465,6 +472,15 @@ export default function AdminRetours() {
                     </ItemCard>
                   ))}
                 </ItemGrid>
+
+                <div>
+                  <strong>WhatsApp du client :</strong>
+                  <a
+                    href={`https://wa.me/${demande.numeroWhatsApp.replace(/\D/g, "")}`}
+                  >
+                    {demande.numeroWhatsApp}
+                  </a>
+                </div>
 
                 {demande.description && (
                   <>
@@ -521,9 +537,7 @@ export default function AdminRetours() {
                       <Button
                         $color="#16a34a"
                         disabled={traitement === demande._id}
-                        onClick={() =>
-                          traiterDemande(demande._id, "APPROVED")
-                        }
+                        onClick={() => traiterDemande(demande._id, "APPROVED")}
                       >
                         Accepter la demande
                       </Button>
@@ -531,9 +545,7 @@ export default function AdminRetours() {
                       <Button
                         $color="#dc2626"
                         disabled={traitement === demande._id}
-                        onClick={() =>
-                          traiterDemande(demande._id, "REJECTED")
-                        }
+                        onClick={() => traiterDemande(demande._id, "REJECTED")}
                       >
                         Refuser la demande
                       </Button>
@@ -560,9 +572,7 @@ export default function AdminRetours() {
                       <Button
                         $color="#2563eb"
                         disabled={traitement === demande._id}
-                        onClick={() =>
-                          traiterDemande(demande._id, "COMPLETED")
-                        }
+                        onClick={() => traiterDemande(demande._id, "COMPLETED")}
                       >
                         Marquer comme terminé
                       </Button>
