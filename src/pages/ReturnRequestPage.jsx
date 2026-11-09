@@ -208,7 +208,7 @@ const Field = styled.input`
   background: white;
   outline: none;
   font: inherit;
-  font-size: 13px;
+  font-size: 16px;
   transition: border 0.2s;
 
   &:focus {
