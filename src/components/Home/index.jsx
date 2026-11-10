@@ -1,14 +1,16 @@
-
 import { useState, useEffect, useMemo, useContext, useRef } from "react";
 import styled, { keyframes } from "styled-components";
 import { Link } from "react-router-dom";
 import {
-  ArrowUpRight, ArrowRight, Play, Pause, Volume2, VolumeX,
-  MoveRight
+  ArrowUpRight,
+  ArrowRight,
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  MoveRight,
 } from "lucide-react";
-import {
-  FaWhatsapp, FaTruck, FaShieldAlt, FaUndo
-} from "react-icons/fa";
+import { FaWhatsapp, FaTruck, FaShieldAlt, FaUndo } from "react-icons/fa";
 import { ThemeContext } from "../../Utils/Context";
 
 /* =====================================================
@@ -24,10 +26,12 @@ const media = (url) => {
     : `${API_URL}${url.startsWith("/") ? "" : "/"}${url}`;
 };
 
-const isPreorder = (p) =>
-  p?.precommande === true && p?.disponible === false;
+const isPreorder = (p) => p?.precommande === true && p?.disponible === false;
 
-const genreOf = (g) => String(g || "").trim().toLowerCase();
+const genreOf = (g) =>
+  String(g || "")
+    .trim()
+    .toLowerCase();
 
 const reveal = keyframes`
   from { opacity: 0; transform: translateY(35px); }
@@ -44,28 +48,49 @@ const imageZoom = keyframes`
 ===================================================== */
 
 const Page = styled.main`
-  --paper: ${({ $dark }) => $dark ? "#191919" : "#F3F0E9"};
-  --surface: ${({ $dark }) => $dark ? "#222220" : "#FFFFFF"};
-  --ink: ${({ $dark }) => $dark ? "#F4F0E9" : "#201F1C"};
-  --muted: ${({ $dark }) => $dark ? "#A8A39A" : "#77736B"};
-  --line: ${({ $dark }) => $dark ? "#393834" : "#DEDAD1"};
+  --paper: ${({ $dark }) => ($dark ? "#191919" : "#F3F0E9")};
+  --surface: ${({ $dark }) => ($dark ? "#222220" : "#FFFFFF")};
+  --ink: ${({ $dark }) => ($dark ? "#F4F0E9" : "#201F1C")};
+  --muted: ${({ $dark }) => ($dark ? "#A8A39A" : "#77736B")};
+  --line: ${({ $dark }) => ($dark ? "#393834" : "#DEDAD1")};
   --accent: #927657;
 
   background: var(--paper);
   color: var(--ink);
   width: 100%;
   overflow: hidden;
-  transition: background .35s, color .35s;
+  transition:
+    background 0.35s,
+    color 0.35s;
 
-  * { box-sizing: border-box; }
+  * {
+    box-sizing: border-box;
+  }
 `;
 
 const Container = styled.div`
   width: min(1440px, 91%);
   margin: auto;
 
-  @media(max-width: 600px) {
+  @media (max-width: 600px) {
     width: 90%;
+  }
+`;
+
+// Nouveau conteneur pour les médias pleine largeur
+const FullWidthMedia = styled.div`
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+
+  img,
+  video {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
   }
 `;
 
@@ -112,18 +137,20 @@ const SectionHeading = styled.div`
     margin: 0;
   }
 
-  @media(max-width: 700px) {
+  @media (max-width: 700px) {
     display: block;
     margin-bottom: 28px;
 
-    p { margin-top: 15px; }
+    p {
+      margin-top: 15px;
+    }
   }
 `;
 
 const Section = styled.section`
   padding: 115px 0;
 
-  @media(max-width: 700px) {
+  @media (max-width: 700px) {
     padding: 75px 0;
   }
 `;
@@ -140,9 +167,11 @@ const TextLink = styled(Link)`
   letter-spacing: 1.6px;
   border-bottom: 1px solid var(--accent);
   padding-bottom: 9px;
-  transition: gap .3s;
+  transition: gap 0.3s;
 
-  &:hover { gap: 23px; }
+  &:hover {
+    gap: 23px;
+  }
 `;
 
 /* =====================================================
@@ -154,9 +183,9 @@ const Hero = styled.section`
   height: min(900px, 92svh);
   position: relative;
   overflow: hidden;
-  background: #25231F;
+  background: #25231f;
 
-  @media(max-width: 700px) {
+  @media (max-width: 700px) {
     height: 78svh;
     min-height: 580px;
   }
@@ -176,80 +205,8 @@ const HeroOverlay = styled.div`
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg, rgba(0,0,0,.63), rgba(0,0,0,.12) 75%),
-    linear-gradient(0deg, rgba(0,0,0,.40), transparent 40%);
-`;
-
-const HeroContent = styled(Container)`
-  position: relative;
-  z-index: 2;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: flex-start;
-  color: white;
-  padding-top: 55px;
-  animation: ${reveal} .9s ease both;
-
-  .overline {
-    font-size: 10px;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    margin-bottom: 30px;
-    color: #E4D3B9;
-  }
-
-  h1 {
-    font-family: Georgia, serif;
-    font-weight: 400;
-    font-size: clamp(65px, 10.5vw, 150px);
-    line-height: .86;
-    letter-spacing: -7px;
-    max-width: 900px;
-    margin: 0;
-  }
-
-  h1 em {
-    font-weight: 400;
-    color: #D7C2A3;
-  }
-
-  p {
-    max-width: 410px;
-    font-size: 14px;
-    line-height: 1.9;
-    color: rgba(255,255,255,.76);
-    margin: 30px 0;
-  }
-
-  @media(max-width: 700px) {
-    h1 {
-      font-size: clamp(61px, 15vw, 95px);
-      letter-spacing: -4px;
-    }
-    p { max-width: 320px; font-size: 13px; }
-  }
-`;
-
-const HeroButton = styled(Link)`
-  display: inline-flex;
-  align-items: center;
-  gap: 35px;
-  padding: 18px 23px;
-  background: #F3F0E9;
-  color: #201F1C;
-  text-decoration: none;
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  transition: .3s;
-
-  &:hover {
-    background: #927657;
-    color: white;
-  }
+    linear-gradient(90deg, rgba(0, 0, 0, 0.63), rgba(0, 0, 0, 0.12) 75%),
+    linear-gradient(0deg, rgba(0, 0, 0, 0.4), transparent 40%);
 `;
 
 const HeroCounter = styled.div`
@@ -268,7 +225,7 @@ const HeroCounter = styled.div`
     display: block;
     width: 70px;
     height: 1px;
-    background: rgba(255,255,255,.6);
+    background: rgba(255, 255, 255, 0.6);
   }
 `;
 
@@ -296,7 +253,9 @@ const Intro = styled.section`
     margin: 30px auto;
   }
 
-  h2 em { color: var(--accent); }
+  h2 em {
+    color: var(--accent);
+  }
 
   p {
     max-width: 510px;
@@ -306,9 +265,11 @@ const Intro = styled.section`
     font-size: 13px;
   }
 
-  @media(max-width: 600px) {
+  @media (max-width: 600px) {
     padding: 75px 0;
-    h2 { letter-spacing: -1.5px; }
+    h2 {
+      letter-spacing: -1.5px;
+    }
   }
 `;
 
@@ -325,14 +286,14 @@ const UniverseGrid = styled.div`
   grid-template-columns: 1fr 1fr;
   gap: 0;
 
-  @media(max-width: 700px) {
+  @media (max-width: 700px) {
     grid-template-columns: 1fr;
     gap: 0;
   }
 `;
 
 const UniverseCard = styled(Link)`
-    display: block;
+  display: block;
   position: relative;
   width: 100%;
   height: 680px;
@@ -351,15 +312,17 @@ const UniverseCard = styled(Link)`
     height: 100%;
     object-fit: cover;
     object-position: center;
-    transition: transform 1s cubic-bezier(.2,.7,.2,1);
+    transition: transform 1s cubic-bezier(0.2, 0.7, 0.2, 1);
   }
 
-  &:hover img { transform: scale(1.055); }
+  &:hover img {
+    transform: scale(1.055);
+  }
 
   .shade {
     position: absolute;
     inset: 0;
-    background: linear-gradient(0deg,rgba(0,0,0,.62),transparent 65%);
+    background: linear-gradient(0deg, rgba(0, 0, 0, 0.62), transparent 65%);
   }
 
   .top {
@@ -393,11 +356,11 @@ const UniverseCard = styled(Link)`
   .arrow {
     width: 50px;
     height: 50px;
-    border: 1px solid rgba(255,255,255,.7);
+    border: 1px solid rgba(255, 255, 255, 0.7);
     border-radius: 50%;
     display: grid;
     place-items: center;
-    transition: .3s;
+    transition: 0.3s;
   }
 
   &:hover .arrow {
@@ -406,10 +369,16 @@ const UniverseCard = styled(Link)`
     transform: rotate(45deg);
   }
 
-  @media(max-width: 700px) {
+  @media (max-width: 700px) {
     height: 540px;
-    .bottom { left: 22px; right: 22px; bottom: 25px; }
-    h3 { font-size: 65px; }
+    .bottom {
+      left: 22px;
+      right: 22px;
+      bottom: 25px;
+    }
+    h3 {
+      font-size: 65px;
+    }
   }
 `;
 
@@ -419,11 +388,11 @@ const UniverseCard = styled(Link)`
 
 const ProductGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(4, minmax(0,1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 24px 17px;
 
-  @media(max-width: 950px) {
-    grid-template-columns: repeat(2,minmax(0,1fr));
+  @media (max-width: 950px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 30px 13px;
   }
 `;
@@ -434,21 +403,27 @@ const ProductCard = styled.article`
   .photo {
     display: block;
     position: relative;
+    width: 100%;
     height: 390px;
     overflow: hidden;
-    background: ${({ $dark }) => $dark ? "#302F2B" : "#E6E1D8"};
+    padding: 0;
+    margin: 0;
+    background: #e6e1d8;
   }
 
   img {
+    display: block;
     width: 100%;
     height: 100%;
+    max-width: none;
     object-fit: cover;
-    display: block;
-    transition: transform .8s ease;
-    pointer-events: none;
+    object-position: center;
+    transition: transform 0.8s ease;
   }
 
-  &:hover img { transform: scale(1.06); }
+  &:hover img {
+    transform: scale(1.06);
+  }
 
   .tag {
     position: absolute;
@@ -463,7 +438,9 @@ const ProductCard = styled.article`
     text-transform: uppercase;
   }
 
-  .details { padding-top: 16px; }
+  .details {
+    padding-top: 16px;
+  }
 
   .category {
     color: var(--accent);
@@ -485,13 +462,19 @@ const ProductCard = styled.article`
     font-size: 12px;
   }
 
-  @media(max-width: 700px) {
-    .photo { height: 260px; }
-    h3 { font-size: 16px; }
+  @media (max-width: 700px) {
+    .photo {
+      height: 260px;
+    }
+    h3 {
+      font-size: 16px;
+    }
   }
 
-  @media(max-width: 390px) {
-    .photo { height: 215px; }
+  @media (max-width: 390px) {
+    .photo {
+      height: 215px;
+    }
   }
 `;
 
@@ -510,7 +493,7 @@ const ProductArrow = styled(Link)`
   border: 1px solid var(--line);
   color: var(--ink);
   text-decoration: none;
-  transition: .3s;
+  transition: 0.3s;
 
   &:hover {
     background: var(--ink);
@@ -532,26 +515,33 @@ const ProductMeta = styled.div`
 const Campaign = styled.section`
   min-height: 650px;
   position: relative;
-  background: #24221F;
+  background: #24221f;
   color: white;
   display: grid;
   grid-template-columns: 1fr 1fr;
   overflow: hidden;
 
   .visual {
+    width: 100%;
+    height: 100%;
     min-height: 650px;
     overflow: hidden;
+    padding: 0;
+    margin: 0;
   }
 
   .visual img {
+    display: block;
     width: 100%;
     height: 100%;
+    min-height: 650px;
     object-fit: cover;
-    display: block;
-    transition: transform 1s ease;
+    object-position: center;
   }
 
-  &:hover .visual img { transform: scale(1.035); }
+  &:hover .visual img {
+    transform: scale(1.035);
+  }
 
   .copy {
     display: flex;
@@ -561,7 +551,7 @@ const Campaign = styled.section`
   }
 
   .copy small {
-    color: #C5A984;
+    color: #c5a984;
     letter-spacing: 3px;
     font-size: 10px;
     text-transform: uppercase;
@@ -570,14 +560,14 @@ const Campaign = styled.section`
   h2 {
     font-family: Georgia, serif;
     font-size: clamp(45px, 6vw, 85px);
-    line-height: .99;
+    line-height: 0.99;
     letter-spacing: -3px;
     font-weight: 400;
     margin: 30px 0;
   }
 
   p {
-    color: rgba(255,255,255,.65);
+    color: rgba(255, 255, 255, 0.65);
     line-height: 2;
     font-size: 13px;
     max-width: 400px;
@@ -590,7 +580,7 @@ const Campaign = styled.section`
     gap: 20px;
     width: fit-content;
     padding-bottom: 12px;
-    border-bottom: 1px solid #C5A984;
+    border-bottom: 1px solid #c5a984;
     color: white;
     text-decoration: none;
     text-transform: uppercase;
@@ -599,11 +589,15 @@ const Campaign = styled.section`
     font-weight: 800;
   }
 
-  @media(max-width: 750px) {
+  @media (max-width: 750px) {
     grid-template-columns: 1fr;
 
-    .visual { min-height: 430px; }
-    .copy { padding: 60px 8%; }
+    .visual {
+      min-height: 430px;
+    }
+    .copy {
+      padding: 60px 8%;
+    }
   }
 `;
 
@@ -616,18 +610,24 @@ const VideoSection = styled.section`
 
   .video-shell {
     position: relative;
-    height: min(720px, 72vw);
+    width: 100%;
+    height: min(780px, 75vw);
     min-height: 400px;
-    background: #171715;
+    margin: 0;
+    padding: 0;
     overflow: hidden;
+    background: #171715;
   }
 
   video {
     position: absolute;
     inset: 0;
+    display: block;
     width: 100%;
     height: 100%;
+    max-width: none;
     object-fit: cover;
+    object-position: center;
   }
 
   .controls {
@@ -641,8 +641,8 @@ const VideoSection = styled.section`
   }
 
   button {
-    border: 1px solid rgba(255,255,255,.6);
-    background: rgba(0,0,0,.28);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    background: rgba(0, 0, 0, 0.28);
     backdrop-filter: blur(12px);
     color: white;
     width: 46px;
@@ -651,10 +651,12 @@ const VideoSection = styled.section`
     display: grid;
     place-items: center;
     cursor: pointer;
-    transition: .3s;
+    transition: 0.3s;
   }
 
-  button:hover { background: #927657; }
+  button:hover {
+    background: #927657;
+  }
 
   .video-title {
     color: var(--ink);
@@ -668,11 +670,14 @@ const VideoSection = styled.section`
   h3 {
     font-family: Georgia, serif;
     font-weight: 400;
-    font-size: clamp(27px,4vw,45px);
+    font-size: clamp(27px, 4vw, 45px);
     margin: 0;
   }
 
-  .genres { display: flex; gap: 18px; }
+  .genres {
+    display: flex;
+    gap: 18px;
+  }
 
   .genres button {
     width: auto;
@@ -691,10 +696,16 @@ const VideoSection = styled.section`
     border-bottom: 1px solid var(--accent);
   }
 
-  @media(max-width: 650px) {
+  @media (max-width: 650px) {
     padding: 75px 0;
-    .video-shell { height: 65svh; min-height: 380px; }
-    .video-title { align-items: flex-start; flex-direction: column; }
+    .video-shell {
+      height: 65svh;
+      min-height: 380px;
+    }
+    .video-title {
+      align-items: flex-start;
+      flex-direction: column;
+    }
   }
 `;
 
@@ -704,30 +715,37 @@ const VideoSection = styled.section`
 
 const BestsellerSection = styled.section`
   padding: 100px 0;
-  background: ${({ $dark }) => $dark ? "#222220" : "#E8E3D9"};
+  background: ${({ $dark }) => ($dark ? "#222220" : "#E8E3D9")};
 
   .best-grid {
     display: grid;
-    grid-template-columns: 1.15fr .85fr;
+    grid-template-columns: 1.15fr 0.85fr;
     gap: 45px;
     align-items: center;
   }
 
   .best-main {
-    position: relative;
-    height: 680px;
-    overflow: hidden;
-    display: block;
-  }
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 680px;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+}
 
-  .best-main img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform .8s;
-  }
+.best-main img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition: transform .8s;
+}
 
-  .best-main:hover img { transform: scale(1.045); }
+  .best-main:hover img {
+    transform: scale(1.045);
+  }
 
   .best-copy {
     padding: 35px 0;
@@ -736,7 +754,7 @@ const BestsellerSection = styled.section`
   .best-copy h2 {
     font-family: Georgia, serif;
     font-weight: 400;
-    font-size: clamp(43px,5vw,75px);
+    font-size: clamp(43px, 5vw, 75px);
     line-height: 1;
     letter-spacing: -3px;
   }
@@ -784,10 +802,15 @@ const BestsellerSection = styled.section`
     color: var(--muted);
   }
 
-  @media(max-width: 800px) {
+  @media (max-width: 800px) {
     padding: 75px 0;
-    .best-grid { grid-template-columns: 1fr; gap: 15px; }
-    .best-main { height: 520px; }
+    .best-grid {
+      grid-template-columns: 1fr;
+      gap: 15px;
+    }
+    .best-main {
+      height: 520px;
+    }
   }
 `;
 
@@ -797,7 +820,7 @@ const BestsellerSection = styled.section`
 
 const Benefits = styled.div`
   display: grid;
-  grid-template-columns: repeat(3,1fr);
+  grid-template-columns: repeat(3, 1fr);
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
 
@@ -806,9 +829,14 @@ const Benefits = styled.div`
     border-right: 1px solid var(--line);
   }
 
-  article:last-child { border: none; }
+  article:last-child {
+    border: none;
+  }
 
-  .icon { color: var(--accent); font-size: 23px; }
+  .icon {
+    color: var(--accent);
+    font-size: 23px;
+  }
 
   h3 {
     font-family: Georgia, serif;
@@ -824,7 +852,7 @@ const Benefits = styled.div`
     max-width: 270px;
   }
 
-  @media(max-width: 750px) {
+  @media (max-width: 750px) {
     grid-template-columns: 1fr;
 
     article {
@@ -844,15 +872,29 @@ const WhatsApp = styled.a`
   height: 54px;
   display: grid;
   place-items: center;
-  background: #20C76A;
+  background: #20c76a;
   color: white;
   border-radius: 50%;
-  box-shadow: 0 8px 30px rgba(0,0,0,.2);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
   font-size: 25px;
   text-decoration: none;
-  transition: transform .3s;
+  transition: transform 0.3s;
 
-  &:hover { transform: translateY(-5px) scale(1.05); }
+  &:hover {
+    transform: translateY(-5px) scale(1.05);
+  }
+    img,
+video {
+  max-width: 100%;
+}
+
+img {
+  vertical-align: middle;
+}
+
+video {
+  background: #171715;
+}
 `;
 
 /* =====================================================
@@ -883,22 +925,22 @@ export default function HomePremium() {
 
     const load = async () => {
       const requests = await Promise.allSettled([
-        fetch(`${API_URL}/api/produits`).then(r => {
+        fetch(`${API_URL}/api/produits`).then((r) => {
           if (!r.ok) throw new Error("Produits");
           return r.json();
         }),
-        fetch(`${API_URL}/api/videos/produits`).then(r => {
+        fetch(`${API_URL}/api/videos/produits`).then((r) => {
           if (!r.ok) throw new Error("Vidéos");
           return r.json();
         }),
-        fetch(`${API_URL}/api/produits/best-sellers`).then(r => {
+        fetch(`${API_URL}/api/produits/best-sellers`).then((r) => {
           if (!r.ok) throw new Error("Best sellers");
           return r.json();
         }),
-        fetch(`${API_URL}/api/precommandes/modeles`).then(r => {
+        fetch(`${API_URL}/api/precommandes/modeles`).then((r) => {
           if (!r.ok) throw new Error("Précommandes");
           return r.json();
-        })
+        }),
       ]);
 
       if (!mounted) return;
@@ -909,19 +951,23 @@ export default function HomePremium() {
         setProducts(Array.isArray(p.value) ? p.value : []);
 
       if (v.status === "fulfilled")
-        setVideos(Array.isArray(v.value?.videos)
-          ? v.value.videos.filter(x => x?.url && x?.produitId)
-          : []);
+        setVideos(
+          Array.isArray(v.value?.videos)
+            ? v.value.videos.filter((x) => x?.url && x?.produitId)
+            : [],
+        );
 
       if (b.status === "fulfilled")
         setBestSellers(
           (Array.isArray(b.value) ? b.value : [])
-            .filter(x =>
-              x.bestSeller === true &&
-              x.disponible === true &&
-              !isPreorder(x) &&
-              x.images?.[0]?.url
-            ).slice(0, 5)
+            .filter(
+              (x) =>
+                x.bestSeller === true &&
+                x.disponible === true &&
+                !isPreorder(x) &&
+                x.images?.[0]?.url,
+            )
+            .slice(0, 5),
         );
 
       if (pre.status === "fulfilled") {
@@ -935,61 +981,64 @@ export default function HomePremium() {
 
     load().catch(console.error);
 
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   /* DATA */
 
   const heroProducts = useMemo(
-    () => products.filter(p => p.hero && p.images?.[0]?.url),
-    [products]
+    () => products.filter((p) => p.hero && p.images?.[0]?.url),
+    [products],
   );
 
   const heroProduct = heroProducts[slide] || heroProducts[0];
 
   const menProducts = useMemo(
-    () => products.filter(p =>
-      genreOf(p.genre) === "homme" &&
-      !isPreorder(p) &&
-      p.images?.[0]?.url
-    ),
-    [products]
+    () =>
+      products.filter(
+        (p) =>
+          genreOf(p.genre) === "homme" && !isPreorder(p) && p.images?.[0]?.url,
+      ),
+    [products],
   );
 
   const womenProducts = useMemo(
-    () => products.filter(p =>
-      genreOf(p.genre) === "femme" &&
-      !isPreorder(p) &&
-      p.images?.[0]?.url
-    ),
-    [products]
+    () =>
+      products.filter(
+        (p) =>
+          genreOf(p.genre) === "femme" && !isPreorder(p) && p.images?.[0]?.url,
+      ),
+    [products],
   );
 
   const focusProducts = useMemo(() => {
-    const ids = new Set(bestSellers.map(p => String(p._id)));
-    return products.filter(p =>
-      !isPreorder(p) &&
-      p.images?.[0]?.url &&
-      !ids.has(String(p._id))
-    ).slice(0, 8);
+    const ids = new Set(bestSellers.map((p) => String(p._id)));
+    return products
+      .filter(
+        (p) => !isPreorder(p) && p.images?.[0]?.url && !ids.has(String(p._id)),
+      )
+      .slice(0, 8);
   }, [products, bestSellers]);
 
   const videosByGenre = useMemo(() => {
     const result = { homme: [], femme: [] };
 
-    videos.forEach(video => {
-      const id = typeof video.produitId === "object"
-        ? String(video.produitId?._id || video.produitId?.id || "")
-        : String(video.produitId || "");
+    videos.forEach((video) => {
+      const id =
+        typeof video.produitId === "object"
+          ? String(video.produitId?._id || video.produitId?.id || "")
+          : String(video.produitId || "");
 
-      const product = products.find(p => String(p._id) === id);
+      const product = products.find((p) => String(p._id) === id);
       const genre = genreOf(product?.genre);
 
       if (product && result[genre]) {
         result[genre].push({
           ...video,
           produit: product,
-          videoUrl: media(video.url)
+          videoUrl: media(video.url),
         });
       }
     });
@@ -1006,7 +1055,7 @@ export default function HomePremium() {
     if (heroProducts.length <= 1) return;
 
     const timer = setInterval(() => {
-      setSlide(i => (i + 1) % heroProducts.length);
+      setSlide((i) => (i + 1) % heroProducts.length);
     }, 6500);
 
     return () => clearInterval(timer);
@@ -1025,7 +1074,8 @@ export default function HomePremium() {
     if (!video || !activeVideo) return;
 
     video.load();
-    video.play()
+    video
+      .play()
       .then(() => setPlaying(true))
       .catch(() => setPlaying(false));
   }, [activeVideo?._id, activeVideo?.url]);
@@ -1035,7 +1085,10 @@ export default function HomePremium() {
     if (!video) return;
 
     if (video.paused) {
-      video.play().then(() => setPlaying(true)).catch(() => {});
+      video
+        .play()
+        .then(() => setPlaying(true))
+        .catch(() => {});
     } else {
       video.pause();
       setPlaying(false);
@@ -1051,29 +1104,18 @@ export default function HomePremium() {
 
   const nextVideo = () => {
     if (activeVideos.length > 1)
-      setVideoIndex(i => (i + 1) % activeVideos.length);
+      setVideoIndex((i) => (i + 1) % activeVideos.length);
   };
 
   /* RENDER */
 
   return (
     <Page $dark={isDark}>
-
       {/* HERO */}
 
       <Hero>
         <HeroImage $src={media(heroProduct?.images?.[0]?.url)} />
         <HeroOverlay />
-
-        <HeroContent>
-          <div className="overline">NUMA — COLLECTIONS CONTEMPORAINES</div>
-          <p>
-           Beyond ordinary, Au delà de l'ordinaire, NUMA célèbre une mode contemporaine, expressive et intemporelle.
-          </p>
-          <HeroButton to="/collections">
-            Découvrir la collection <ArrowUpRight size={18} />
-          </HeroButton>
-        </HeroContent>
 
         {heroProducts.length > 1 && (
           <HeroCounter>
@@ -1090,13 +1132,12 @@ export default function HomePremium() {
         <Container>
           <div className="number">01 — NOTRE VISION</div>
           <h2>
-            Le style n'est pas une tendance.
-            C'est une <em>signature.</em>
+            Le style n'est pas une tendance. C'est une <em>signature.</em>
           </h2>
           <p>
-            NUMA célèbre une mode contemporaine, expressive et intemporelle.
-            Des pièces sélectionnées pour celles et ceux qui savent que
-            chaque détail compte.
+            NUMA célèbre une mode contemporaine, expressive et intemporelle. Des
+            pièces sélectionnées pour celles et ceux qui savent que chaque
+            détail compte.
           </p>
         </Container>
       </Intro>
@@ -1105,9 +1146,19 @@ export default function HomePremium() {
 
       <UniverseGrid>
         {[
-          { title: "Homme", genre: "homme", items: menProducts, label: "01 / MENSWEAR" },
-          { title: "Femme", genre: "femme", items: womenProducts, label: "02 / WOMENSWEAR" }
-        ].map(item => (
+          {
+            title: "Homme",
+            genre: "homme",
+            items: menProducts,
+            label: "01 / MENSWEAR",
+          },
+          {
+            title: "Femme",
+            genre: "femme",
+            items: womenProducts,
+            label: "02 / WOMENSWEAR",
+          },
+        ].map((item) => (
           <UniverseCard
             className="universe"
             key={item.genre}
@@ -1124,7 +1175,9 @@ export default function HomePremium() {
             <div className="top">{item.label}</div>
             <div className="bottom">
               <h3>{item.title}</h3>
-              <span className="arrow"><ArrowUpRight size={23} /></span>
+              <span className="arrow">
+                <ArrowUpRight size={23} />
+              </span>
             </div>
           </UniverseCard>
         ))}
@@ -1137,11 +1190,15 @@ export default function HomePremium() {
           <SectionHeading>
             <div>
               <Eyebrow>LA SÉLECTION NUMA</Eyebrow>
-              <h2>Des pièces.<br />Du caractère.</h2>
+              <h2>
+                Des pièces.
+                <br />
+                Du caractère.
+              </h2>
             </div>
             <p>
-              Une sélection de créations qui conjuguent
-              silhouette, matière et personnalité.
+              Une sélection de créations qui conjuguent silhouette, matière et
+              personnalité.
             </p>
           </SectionHeading>
 
@@ -1170,7 +1227,8 @@ export default function HomePremium() {
                       <div>
                         <h3>{product.title}</h3>
                         <span className="price">
-                          {Number(product.price || 0).toLocaleString("fr-FR")} FCFA
+                          {Number(product.price || 0).toLocaleString("fr-FR")}{" "}
+                          FCFA
                         </span>
                       </div>
                       <ProductArrow
@@ -1213,8 +1271,8 @@ export default function HomePremium() {
           <small>03 — L'ESPRIT NUMA</small>
           <h2>La différence se joue dans les détails.</h2>
           <p>
-            Chaque pièce raconte une histoire. Une recherche de lignes,
-            de matières et de finitions qui donnent du sens à votre style.
+            Chaque pièce raconte une histoire. Une recherche de lignes, de
+            matières et de finitions qui donnent du sens à votre style.
           </p>
           <Link to="/collections">
             Explorer notre univers <ArrowRight size={17} />
@@ -1229,11 +1287,15 @@ export default function HomePremium() {
           <SectionHeading>
             <div>
               <Eyebrow>NUMA EN MOUVEMENT</Eyebrow>
-              <h2>Une autre façon<br />de voir la mode.</h2>
+              <h2>
+                Une autre façon
+                <br />
+                de voir la mode.
+              </h2>
             </div>
             <p>
-              Découvrez nos créations autrement, à travers
-              nos vidéos et nos campagnes.
+              Découvrez nos créations autrement, à travers nos vidéos et nos
+              campagnes.
             </p>
           </SectionHeading>
 
@@ -1278,7 +1340,7 @@ export default function HomePremium() {
                 </div>
 
                 <div className="genres">
-                  {["homme", "femme"].map(genre => (
+                  {["homme", "femme"].map((genre) => (
                     <button
                       key={genre}
                       className={videoGenre === genre ? "active" : ""}
@@ -1291,15 +1353,17 @@ export default function HomePremium() {
               </div>
             </>
           ) : (
-            <div style={{
-              padding: 80,
-              textAlign: "center",
-              background: "var(--surface)",
-              color: "var(--muted)"
-            }}>
+            <div
+              style={{
+                padding: 80,
+                textAlign: "center",
+                background: "var(--surface)",
+                color: "var(--muted)",
+              }}
+            >
               Les vidéos de cet univers arrivent bientôt.
               <div className="genres" style={{ marginTop: 25 }}>
-                {["homme", "femme"].map(genre => (
+                {["homme", "femme"].map((genre) => (
                   <button
                     key={genre}
                     onClick={() => setVideoGenre(genre)}
@@ -1320,10 +1384,7 @@ export default function HomePremium() {
         <BestsellerSection $dark={isDark}>
           <Container>
             <div className="best-grid">
-              <Link
-                className="best-main"
-                to={`/produit/${bestSellers[0]._id}`}
-              >
+              <Link className="best-main" to={`/produit/${bestSellers[0]._id}`}>
                 <img
                   src={media(bestSellers[0].images?.[0]?.url)}
                   alt={bestSellers[0].title}
@@ -1335,8 +1396,8 @@ export default function HomePremium() {
                 <Eyebrow>LES PLUS APPRÉCIÉS</Eyebrow>
                 <h2>Les incontournables NUMA.</h2>
                 <p>
-                  Les pièces qui séduisent, inspirent et deviennent
-                  rapidement indispensables.
+                  Les pièces qui séduisent, inspirent et deviennent rapidement
+                  indispensables.
                 </p>
 
                 <TextLink to="/collections">
@@ -1344,7 +1405,7 @@ export default function HomePremium() {
                 </TextLink>
 
                 <div className="mini-list">
-                  {bestSellers.slice(0, 4).map(product => (
+                  {bestSellers.slice(0, 4).map((product) => (
                     <Link
                       className="mini"
                       key={product._id}
@@ -1358,7 +1419,8 @@ export default function HomePremium() {
                       <div>
                         <strong>{product.title}</strong>
                         <small>
-                          {Number(product.price || 0).toLocaleString("fr-FR")} FCFA
+                          {Number(product.price || 0).toLocaleString("fr-FR")}{" "}
+                          FCFA
                         </small>
                       </div>
                       <ArrowUpRight size={18} />
@@ -1389,8 +1451,8 @@ export default function HomePremium() {
                 <small>ÉDITIONS À VENIR</small>
                 <h2>Les prochaines pièces se préparent.</h2>
                 <p>
-                  Accédez à nos modèles disponibles en précommande
-                  et soyez parmi les premiers à les découvrir.
+                  Accédez à nos modèles disponibles en précommande et soyez
+                  parmi les premiers à les découvrir.
                 </p>
                 <Link to="/precommande">
                   Découvrir les précommandes <ArrowRight size={17} />
@@ -1408,11 +1470,14 @@ export default function HomePremium() {
           <SectionHeading>
             <div>
               <Eyebrow>LA SIGNATURE NUMA</Eyebrow>
-              <h2>Une expérience<br />à la hauteur de vos attentes.</h2>
+              <h2>
+                Une expérience
+                <br />à la hauteur de vos attentes.
+              </h2>
             </div>
             <p>
-              Bien plus qu'une collection, une expérience pensée
-              pour vous accompagner à chaque étape.
+              Bien plus qu'une collection, une expérience pensée pour vous
+              accompagner à chaque étape.
             </p>
           </SectionHeading>
 
@@ -1421,8 +1486,8 @@ export default function HomePremium() {
               <FaTruck className="icon" />
               <h3>Livraison</h3>
               <p>
-                Vos commandes sont préparées avec soin et expédiées
-                dans les meilleures conditions.
+                Vos commandes sont préparées avec soin et expédiées dans les
+                meilleures conditions.
               </p>
             </article>
 
@@ -1430,8 +1495,8 @@ export default function HomePremium() {
               <FaShieldAlt className="icon" />
               <h3>Paiement sécurisé</h3>
               <p>
-                Profitez d'une expérience d'achat sécurisée
-                et d'un parcours simple.
+                Profitez d'une expérience d'achat sécurisée et d'un parcours
+                simple.
               </p>
             </article>
 
@@ -1439,8 +1504,8 @@ export default function HomePremium() {
               <FaUndo className="icon" />
               <h3>Accompagnement</h3>
               <p>
-                Notre équipe reste disponible pour vous guider
-                avant et après votre commande.
+                Notre équipe reste disponible pour vous guider avant et après
+                votre commande.
               </p>
             </article>
           </Benefits>
@@ -1457,7 +1522,6 @@ export default function HomePremium() {
       >
         <FaWhatsapp />
       </WhatsApp>
-
     </Page>
   );
 }
