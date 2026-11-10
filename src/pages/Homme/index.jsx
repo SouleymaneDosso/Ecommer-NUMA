@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo, useContext } from "react";
 import styled, { keyframes } from "styled-components";
 import {
@@ -11,11 +12,11 @@ import {
   FiShoppingBag,
   FiX,
 } from "react-icons/fi";
-import { FaHeart } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { ThemeContext, PanierContext } from "../../Utils/Context";
 
 import Boutonsfavoris from "../../components/Boutonsfavoris";
+
 /* =========================================================
    ANIMATIONS
 ========================================================= */
@@ -239,7 +240,6 @@ const Toolbar = styled.section`
 
 const SearchBox = styled.div`
   position: relative;
-
   width: 270px;
 
   @media (max-width: 900px) {
@@ -249,20 +249,16 @@ const SearchBox = styled.div`
 
 const SearchIcon = styled(FiSearch)`
   position: absolute;
-
   left: 14px;
   top: 50%;
-
   transform: translateY(-50%);
 
   font-size: 17px;
-
   opacity: 0.5;
 `;
 
 const SearchInput = styled.input`
   width: 100%;
-
   box-sizing: border-box;
 
   padding: 13px 42px 13px 43px;
@@ -271,13 +267,10 @@ const SearchInput = styled.input`
     ${({ $isdark }) => ($isdark ? "rgba(255,255,255,.14)" : "rgba(0,0,0,.12)")};
 
   background: ${({ $isdark }) => ($isdark ? "rgba(255,255,255,.04)" : "#fff")};
-
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
 
   outline: none;
-
   font-size: 16px;
-
   border-radius: 999px;
 
   transition: 0.25s ease;
@@ -295,10 +288,8 @@ const SearchInput = styled.input`
 
 const ClearSearch = styled.button`
   position: absolute;
-
   right: 10px;
   top: 50%;
-
   transform: translateY(-50%);
 
   width: 28px;
@@ -322,9 +313,7 @@ const ClearSearch = styled.button`
 const Filters = styled.div`
   display: flex;
   align-items: center;
-
   gap: 7px;
-
   flex-wrap: wrap;
 
   @media (max-width: 900px) {
@@ -355,7 +344,6 @@ const FilterButton = styled.button`
     $active ? ($isdark ? "#111" : "#fff") : $isdark ? "#fff" : "#111"};
 
   padding: 11px 17px;
-
   border-radius: 999px;
 
   cursor: pointer;
@@ -386,20 +374,16 @@ const SortWrapper = styled.div`
 
 const SortIcon = styled(FiSliders)`
   position: absolute;
-
   left: 13px;
   top: 50%;
-
   transform: translateY(-50%);
 
   pointer-events: none;
-
   opacity: 0.5;
 `;
 
 const Select = styled.select`
   appearance: none;
-
   min-width: 170px;
 
   padding: 12px 14px 12px 38px;
@@ -410,13 +394,10 @@ const Select = styled.select`
     ${({ $isdark }) => ($isdark ? "rgba(255,255,255,.14)" : "rgba(0,0,0,.12)")};
 
   background: ${({ $isdark }) => ($isdark ? "#161616" : "#fff")};
-
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
 
   cursor: pointer;
-
   outline: none;
-
   font-size: 0.78rem;
 
   @media (max-width: 900px) {
@@ -430,7 +411,6 @@ const Select = styled.select`
 
 const Grid = styled.div`
   display: grid;
-
   grid-template-columns: repeat(4, minmax(0, 1fr));
 
   column-gap: 18px;
@@ -444,14 +424,12 @@ const Grid = styled.div`
 
   @media (max-width: 780px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-
     column-gap: 10px;
     row-gap: 35px;
   }
 
   @media (max-width: 480px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-
     column-gap: 8px;
     row-gap: 30px;
   }
@@ -463,7 +441,6 @@ const Grid = styled.div`
 
 const ProductCard = styled.article`
   min-width: 0;
-
   cursor: pointer;
 
   animation: ${fadeUp} 0.55s ease both;
@@ -484,9 +461,7 @@ const ProductCard = styled.article`
 
 const ImageWrapper = styled.div`
   position: relative;
-
   width: 100%;
-
   aspect-ratio: 4 / 5;
 
   overflow: hidden;
@@ -498,7 +473,6 @@ const ImageWrapper = styled.div`
 
 const ProductImage = styled.img`
   position: absolute;
-
   inset: 0;
 
   width: 100%;
@@ -517,11 +491,9 @@ const ProductImage = styled.img`
 
 const ProductOverlay = styled.div`
   position: absolute;
-
   inset: 0;
 
   display: flex;
-
   align-items: flex-end;
   justify-content: space-between;
 
@@ -530,7 +502,6 @@ const ProductOverlay = styled.div`
   background: linear-gradient(to top, rgba(0, 0, 0, 0.48), transparent 45%);
 
   opacity: 0;
-
   transition: opacity 0.3s ease;
 
   pointer-events: none;
@@ -542,30 +513,23 @@ const ProductOverlay = styled.div`
 
 const OverlayText = styled.span`
   color: white;
-
   font-size: 0.65rem;
-
   letter-spacing: 1.5px;
-
   text-transform: uppercase;
 `;
 
 const QuickButton = styled.button`
   position: relative;
-
   z-index: 4;
 
   display: flex;
-
   align-items: center;
   justify-content: center;
-
   gap: 7px;
 
   padding: 10px 13px;
 
   border: none;
-
   background: white;
   color: #111;
 
@@ -575,35 +539,26 @@ const QuickButton = styled.button`
   cursor: pointer;
 
   transform: translateY(12px);
-
   opacity: 0;
 
   transition: all 0.3s ease;
-
   pointer-events: auto;
 `;
 
 const Badge = styled.div`
   position: absolute;
-
   top: 12px;
   left: 12px;
-
   z-index: 5;
 
   padding: 7px 9px;
 
-  background: ${({ $isdark }) =>
-    $isdark ? "rgba(255,255,255,.94)" : "rgba(255,255,255,.94)"};
-
+  background: rgba(255, 255, 255, 0.94);
   color: #111;
 
   font-size: 0.56rem;
-
   font-weight: 700;
-
   letter-spacing: 1.3px;
-
   text-transform: uppercase;
 
   backdrop-filter: blur(8px);
@@ -611,57 +566,31 @@ const Badge = styled.div`
   @media (max-width: 480px) {
     top: 7px;
     left: 7px;
-
     padding: 5px 7px;
-
     font-size: 0.48rem;
   }
 `;
 
-const FavoriteButton = styled.button`
+const DiscountBadge = styled.div`
   position: absolute;
+  top: ${({ $hasBadge }) => ($hasBadge ? "44px" : "12px")};
+  left: 12px;
+  z-index: 5;
 
-  top: 12px;
-  right: 12px;
+  padding: 7px 9px;
 
-  z-index: 6;
+  background: #c62828;
+  color: white;
 
-  width: 38px;
-  height: 38px;
-
-  border-radius: 50%;
-
-  border: none;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  cursor: pointer;
-
-  background: ${({ $favorite }) =>
-    $favorite ? "#111" : "rgba(255,255,255,.92)"};
-
-  color: ${({ $favorite }) => ($favorite ? "#fff" : "#111")};
-
-  font-size: 17px;
-
-  backdrop-filter: blur(10px);
-
-  transition: all 0.25s ease;
-
-  &:hover {
-    transform: scale(1.08);
-  }
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
 
   @media (max-width: 480px) {
-    width: 31px;
-    height: 31px;
-
-    top: 7px;
-    right: 7px;
-
-    font-size: 14px;
+    top: ${({ $hasBadge }) => ($hasBadge ? "34px" : "7px")};
+    left: 7px;
+    padding: 5px 7px;
+    font-size: 0.5rem;
   }
 `;
 
@@ -675,10 +604,8 @@ const CardContent = styled.div`
 
 const ProductTop = styled.div`
   display: flex;
-
   align-items: flex-start;
   justify-content: space-between;
-
   gap: 12px;
 `;
 
@@ -686,11 +613,8 @@ const ProductTitle = styled.h2`
   margin: 0;
 
   font-size: 0.86rem;
-
   line-height: 1.35;
-
   font-weight: 500;
-
   letter-spacing: 0.1px;
 
   @media (max-width: 480px) {
@@ -698,15 +622,32 @@ const ProductTitle = styled.h2`
   }
 `;
 
-const ProductPrice = styled.div`
+const PriceRow = styled.div`
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+
   margin-top: 8px;
+`;
 
+const ProductPrice = styled.span`
   font-size: 0.86rem;
-
   font-weight: 700;
 
   @media (max-width: 480px) {
     font-size: 0.76rem;
+  }
+`;
+
+const OldPrice = styled.span`
+  font-size: 0.76rem;
+  font-weight: 400;
+  text-decoration: line-through;
+  opacity: 0.45;
+
+  @media (max-width: 480px) {
+    font-size: 0.68rem;
   }
 `;
 
@@ -716,13 +657,10 @@ const Gadget = styled.span`
   padding: 5px 7px;
 
   background: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
-
   color: ${({ $isdark }) => ($isdark ? "#111" : "#fff")};
 
   font-size: 0.5rem;
-
   letter-spacing: 0.8px;
-
   text-transform: uppercase;
 
   @media (max-width: 480px) {
@@ -732,19 +670,15 @@ const Gadget = styled.span`
 
 const Validation = styled.div`
   display: inline-flex;
-
   align-items: center;
-
   gap: 5px;
 
   margin-top: 9px;
-
   padding: 5px 8px;
 
   border-radius: 999px;
 
   font-size: 0.62rem;
-
   font-weight: 600;
 
   color: ${({ $disponible }) => ($disponible ? "#15803d" : "#dc2626")};
@@ -757,7 +691,6 @@ const Validation = styled.div`
 
   @media (max-width: 480px) {
     font-size: 0.56rem;
-
     padding: 4px 6px;
   }
 `;
@@ -768,17 +701,13 @@ const Validation = styled.div`
 
 const LoadMoreWrapper = styled.div`
   display: flex;
-
   justify-content: center;
-
   margin-top: 70px;
 `;
 
 const LoadMore = styled.button`
   display: inline-flex;
-
   align-items: center;
-
   gap: 10px;
 
   padding: 15px 25px;
@@ -787,26 +716,20 @@ const LoadMore = styled.button`
     ${({ $isdark }) => ($isdark ? "rgba(255,255,255,.25)" : "#111")};
 
   background: transparent;
-
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
 
   cursor: pointer;
 
   font-size: 0.72rem;
-
   font-weight: 700;
-
   letter-spacing: 1.2px;
-
   text-transform: uppercase;
 
   transition: all 0.25s ease;
 
   &:hover {
     background: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
-
     color: ${({ $isdark }) => ($isdark ? "#111" : "#fff")};
-
     transform: translateY(-3px);
   }
 `;
@@ -821,14 +744,11 @@ const EmptyState = styled.div`
   min-height: 300px;
 
   display: flex;
-
   flex-direction: column;
-
   align-items: center;
   justify-content: center;
 
   text-align: center;
-
   padding: 40px;
 
   border: 1px solid
@@ -844,7 +764,6 @@ const EmptyIcon = styled.div`
   justify-content: center;
 
   border-radius: 50%;
-
   margin-bottom: 18px;
 
   background: ${({ $isdark }) => ($isdark ? "#1b1b1b" : "#f3f3f3")};
@@ -854,7 +773,6 @@ const EmptyIcon = styled.div`
 
 const EmptyTitle = styled.h3`
   margin: 0 0 8px;
-
   font-size: 1.2rem;
 `;
 
@@ -862,11 +780,9 @@ const EmptyText = styled.p`
   margin: 0;
 
   max-width: 430px;
-
   line-height: 1.7;
 
   opacity: 0.6;
-
   font-size: 0.9rem;
 `;
 
@@ -878,7 +794,6 @@ const LoaderWrapper = styled.div`
   min-height: 70vh;
 
   display: flex;
-
   align-items: center;
   justify-content: center;
 `;
@@ -890,7 +805,6 @@ const Loader = styled.div`
   border-radius: 50%;
 
   border: 3px solid ${({ $isdark }) => ($isdark ? "#292929" : "#e5e5e5")};
-
   border-top-color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
 
   animation: ${spin} 0.8s linear infinite;
@@ -905,9 +819,7 @@ const SkeletonGrid = styled.div`
   margin: 60px auto;
 
   display: grid;
-
   grid-template-columns: repeat(4, 1fr);
-
   gap: 18px;
 
   @media (max-width: 1100px) {
@@ -916,9 +828,7 @@ const SkeletonGrid = styled.div`
 
   @media (max-width: 780px) {
     width: calc(100% - 32px);
-
     grid-template-columns: repeat(2, 1fr);
-
     gap: 10px;
   }
 `;
@@ -934,7 +844,6 @@ const SkeletonCard = styled.div`
   );
 
   background-size: 500px 100%;
-
   animation: ${shimmer} 1.3s infinite linear;
 `;
 
@@ -944,7 +853,6 @@ const SkeletonCard = styled.div`
 
 const ModalOverlay = styled.div`
   position: fixed;
-
   inset: 0;
 
   z-index: 1000;
@@ -957,7 +865,6 @@ const ModalOverlay = styled.div`
   padding: 20px;
 
   background: rgba(0, 0, 0, 0.65);
-
   backdrop-filter: blur(10px);
 
   animation: ${fadeIn} 0.25s ease;
@@ -967,11 +874,9 @@ const ModalContent = styled.div`
   position: relative;
 
   width: min(440px, 100%);
-
   padding: 45px 35px;
 
   background: ${({ $isdark }) => ($isdark ? "#171717" : "#fff")};
-
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
 
   text-align: center;
@@ -987,7 +892,6 @@ const ModalContent = styled.div`
 
 const ModalClose = styled.button`
   position: absolute;
-
   top: 15px;
   right: 15px;
 
@@ -995,7 +899,6 @@ const ModalClose = styled.button`
   height: 34px;
 
   border: none;
-
   border-radius: 50%;
 
   display: flex;
@@ -1003,7 +906,6 @@ const ModalClose = styled.button`
   justify-content: center;
 
   background: ${({ $isdark }) => ($isdark ? "#242424" : "#f2f2f2")};
-
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
 
   cursor: pointer;
@@ -1022,7 +924,6 @@ const ModalIcon = styled.div`
   border-radius: 50%;
 
   background: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
-
   color: ${({ $isdark }) => ($isdark ? "#111" : "#fff")};
 
   font-size: 25px;
@@ -1030,7 +931,6 @@ const ModalIcon = styled.div`
 
 const ModalTitle = styled.h2`
   margin: 0 0 12px;
-
   font-size: 1.5rem;
 `;
 
@@ -1038,17 +938,14 @@ const ModalText = styled.p`
   margin: 0 auto;
 
   max-width: 330px;
-
   line-height: 1.7;
 
   opacity: 0.65;
-
   font-size: 0.9rem;
 `;
 
 const ModalButton = styled.button`
   margin-top: 28px;
-
   width: 100%;
 
   padding: 14px;
@@ -1056,13 +953,10 @@ const ModalButton = styled.button`
   border: none;
 
   background: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
-
   color: ${({ $isdark }) => ($isdark ? "#111" : "#fff")};
 
   cursor: pointer;
-
   font-weight: 700;
-
   letter-spacing: 0.5px;
 
   transition: all 0.25s ease;
@@ -1081,7 +975,6 @@ export default function Homme() {
   const navigate = useNavigate();
 
   const { theme } = useContext(ThemeContext);
-
   const $isdark = theme === "light";
 
   const { ajouterPanier } = useContext(PanierContext);
@@ -1089,21 +982,13 @@ export default function Homme() {
   const token = localStorage.getItem("token");
 
   const [products, setProducts] = useState([]);
-
   const [favorites, setFavorites] = useState([]);
-
   const [imageIndexes, setImageIndexes] = useState({});
-
   const [filter, setFilter] = useState("tout");
-
   const [sort, setSort] = useState("default");
-
   const [search, setSearch] = useState("");
-
   const [loading, setLoading] = useState(true);
-
   const [limit, setLimit] = useState(12);
-
   const [showModal, setShowModal] = useState(false);
 
   /* =======================================================
@@ -1112,7 +997,10 @@ export default function Homme() {
 
   const calculStock = (stockParVariation = {}) => {
     return Object.values(stockParVariation).reduce((total, tailles) => {
-      return total + Object.values(tailles).reduce((v, n) => v + Number(n), 0);
+      return (
+        total +
+        Object.values(tailles).reduce((v, n) => v + Number(n), 0)
+      );
     }, 0);
   };
 
@@ -1123,7 +1011,13 @@ export default function Homme() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits`);
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/produits`,
+        );
+
+        if (!res.ok) {
+          throw new Error("Impossible de récupérer les produits.");
+        }
 
         const data = await res.json();
 
@@ -1140,7 +1034,6 @@ export default function Homme() {
 
         valid.forEach((p) => {
           const mainIndex = p.images.findIndex((img) => img.isMain);
-
           indexes[p._id] = mainIndex >= 0 ? mainIndex : 0;
         });
 
@@ -1208,7 +1101,9 @@ export default function Homme() {
 
       if (res.ok) {
         if (data.active) {
-          setFavorites((prev) => [...prev, id]);
+          setFavorites((prev) =>
+            prev.includes(id) ? prev : [...prev, id],
+          );
         } else {
           setFavorites((prev) => prev.filter((f) => f !== id));
         }
@@ -1227,9 +1122,7 @@ export default function Homme() {
 
     const interval = setInterval(() => {
       setImageIndexes((prev) => {
-        const updated = {
-          ...prev,
-        };
+        const updated = { ...prev };
 
         products.forEach((p) => {
           updated[p._id] = ((prev[p._id] || 0) + 1) % p.images.length;
@@ -1250,7 +1143,9 @@ export default function Homme() {
     let filtered =
       filter === "tout"
         ? products
-        : products.filter((p) => p.categorie?.toLowerCase().trim() === filter);
+        : products.filter(
+            (p) => p.categorie?.toLowerCase().trim() === filter,
+          );
 
     if (search.trim()) {
       filtered = filtered.filter((p) =>
@@ -1279,7 +1174,6 @@ export default function Homme() {
         <Hero $isdark={$isdark}>
           <HeroInner>
             <Eyebrow>Collection</Eyebrow>
-
             <HeroTitle>Homme</HeroTitle>
           </HeroInner>
         </Hero>
@@ -1299,9 +1193,7 @@ export default function Homme() {
 
   return (
     <PageWrapper $isdark={$isdark}>
-      {/* =================================================
-          HERO
-      ================================================= */}
+      {/* HERO */}
 
       <Hero $isdark={$isdark}>
         <HeroInner>
@@ -1324,9 +1216,7 @@ export default function Homme() {
       </Hero>
 
       <Content>
-        {/* =================================================
-            TOOLBAR
-        ================================================= */}
+        {/* TOOLBAR */}
 
         <Toolbar $isdark={$isdark}>
           <SearchBox>
@@ -1343,7 +1233,10 @@ export default function Homme() {
             />
 
             {search && (
-              <ClearSearch $isdark={$isdark} onClick={() => setSearch("")}>
+              <ClearSearch
+                $isdark={$isdark}
+                onClick={() => setSearch("")}
+              >
                 <FiX />
               </ClearSearch>
             )}
@@ -1382,17 +1275,13 @@ export default function Homme() {
               }}
             >
               <option value="default">Trier</option>
-
               <option value="asc">Prix croissant</option>
-
               <option value="desc">Prix décroissant</option>
             </Select>
           </SortWrapper>
         </Toolbar>
 
-        {/* =================================================
-            PRODUCTS
-        ================================================= */}
+        {/* PRODUCTS */}
 
         <Grid>
           {filteredProducts.length === 0 ? (
@@ -1411,8 +1300,23 @@ export default function Homme() {
           ) : (
             filteredProducts.map((p, index) => {
               const isFav = favorites.includes(p._id);
-
               const totalStock = calculStock(p.stockParVariation);
+
+              const prixActuel = Number(p.price);
+              const prixAvant = Number(p.prixAvant);
+
+              const hasDiscount =
+                p.prixAvant !== null &&
+                p.prixAvant !== undefined &&
+                Number.isFinite(prixAvant) &&
+                Number.isFinite(prixActuel) &&
+                prixAvant > prixActuel;
+
+              const reduction = hasDiscount
+                ? Math.round(
+                    ((prixAvant - prixActuel) / prixAvant) * 100,
+                  )
+                : 0;
 
               return (
                 <ProductCard
@@ -1434,7 +1338,19 @@ export default function Homme() {
                       />
                     ))}
 
-                    {p.badge && <Badge $isdark={$isdark}>{p.badge}</Badge>}
+                    {p.badge && (
+                      <Badge $isdark={$isdark}>
+                        {p.badge}
+                      </Badge>
+                    )}
+
+                    {hasDiscount && (
+                      <DiscountBadge $hasBadge={Boolean(p.badge)}>
+                        -{reduction}%
+                      </DiscountBadge>
+                    )}
+
+                    {/* Favoris : conservés directement dans ImageWrapper */}
 
                     <Boutonsfavoris
                       active={isFav}
@@ -1443,6 +1359,7 @@ export default function Homme() {
                         toggleFavorite(p._id);
                       }}
                     />
+
                     <ProductOverlay className="product-overlay">
                       <OverlayText>Découvrir</OverlayText>
 
@@ -1450,7 +1367,6 @@ export default function Homme() {
                         className="quick-button"
                         onClick={(e) => {
                           e.stopPropagation();
-
                           navigate(`/produit/${p._id}`);
                         }}
                       >
@@ -1465,11 +1381,27 @@ export default function Homme() {
                       <ProductTitle>{p.title}</ProductTitle>
 
                       {p.gadget && (
-                        <Gadget $isdark={$isdark}>{p.gadget}</Gadget>
+                        <Gadget $isdark={$isdark}>
+                          {p.gadget}
+                        </Gadget>
                       )}
                     </ProductTop>
 
-                    <ProductPrice>{p.price} FCFA</ProductPrice>
+                    {/* PRIX ET PROMOTION */}
+
+                    <PriceRow>
+                      <ProductPrice>
+                        {prixActuel.toLocaleString("fr-FR")} FCFA
+                      </ProductPrice>
+
+                      {hasDiscount && (
+                        <OldPrice>
+                          {prixAvant.toLocaleString("fr-FR")} FCFA
+                        </OldPrice>
+                      )}
+                    </PriceRow>
+
+                    {/* STOCK */}
 
                     <Validation $disponible={totalStock > 0}>
                       {totalStock > 10 ? (
@@ -1496,9 +1428,7 @@ export default function Homme() {
           )}
         </Grid>
 
-        {/* =================================================
-            LOAD MORE
-        ================================================= */}
+        {/* LOAD MORE */}
 
         {filteredProducts.length >= limit &&
           filteredProducts.length < products.length && (
@@ -1514,13 +1444,14 @@ export default function Homme() {
           )}
       </Content>
 
-      {/* =================================================
-          LOGIN MODAL
-      ================================================= */}
+      {/* LOGIN MODAL */}
 
       <ModalOverlay $show={showModal}>
         <ModalContent $isdark={$isdark}>
-          <ModalClose $isdark={$isdark} onClick={() => setShowModal(false)}>
+          <ModalClose
+            $isdark={$isdark}
+            onClick={() => setShowModal(false)}
+          >
             <FiX />
           </ModalClose>
 

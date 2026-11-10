@@ -668,7 +668,7 @@ export default function PromoLuxury() {
                     </ProductCarousel>
 
                     <ProductBadge>
-                      {p.precommande ? "Précommande" : "Offre spéciale"}
+                      {p.precommande ? "Précommande" : "promo"}
                     </ProductBadge>
 
                     {priceData.hasDiscount && (
