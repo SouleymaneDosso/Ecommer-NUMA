@@ -189,7 +189,7 @@ const Textarea = styled.textarea`
   background: #fff;
   color: #25231f;
   font-family: inherit;
-  font-size: 0.9rem;
+  font-size: 16px;
   line-height: 1.7;
   outline: none;
   transition: border 0.25s ease;
