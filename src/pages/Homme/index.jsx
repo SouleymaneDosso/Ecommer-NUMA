@@ -14,7 +14,7 @@ import {
 import { FaHeart } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { ThemeContext, PanierContext } from "../../Utils/Context";
-
+import FavoriteButtons from "../../Components/FavoriteButton";
 /* =========================================================
    ANIMATIONS
 ========================================================= */
@@ -1435,20 +1435,13 @@ export default function Homme() {
 
                     {p.badge && <Badge $isdark={$isdark}>{p.badge}</Badge>}
 
-                    <FavoriteButton
-                      $favorite={isFav}
+                    <FavoriteButtons
+                      active={isFav}
                       onClick={(e) => {
                         e.stopPropagation();
-
                         toggleFavorite(p._id);
                       }}
-                      aria-label={
-                        isFav ? "Retirer des favoris" : "Ajouter aux favoris"
-                      }
-                    >
-                      {isFav ? <FaHeart /> : <FiHeart />}
-                    </FavoriteButton>
-
+                    />
                     <ProductOverlay className="product-overlay">
                       <OverlayText>Découvrir</OverlayText>
 
