@@ -1,17 +1,13 @@
-import { useState } from "react";
-import { FaHeart } from "react-icons/fa";
-import { FiHeart, FiCheck } from "react-icons/fi";
+import React, { useState } from "react";
 import styled, { keyframes } from "styled-components";
+import { FiBookmark } from "react-icons/fi";
+import { HiBookmark } from "react-icons/hi2";
 import { Link } from "react-router-dom";
 
-/* =============================
-   ANIMATION
-============================= */
-
-const heartPop = keyframes`
+const pop = keyframes`
   0% { transform: scale(1); }
-  35% { transform: scale(1.35); }
-  65% { transform: scale(0.9); }
+  45% { transform: scale(1.22); }
+  75% { transform: scale(0.92); }
   100% { transform: scale(1); }
 `;
 
@@ -26,142 +22,189 @@ const fadeIn = keyframes`
   }
 `;
 
-/* =============================
-   WRAPPER
-============================= */
-
-const Wrapper = styled.div`
+const ButtonWrapper = styled.div`
   position: relative;
   display: inline-flex;
-  flex-direction: column;
   align-items: center;
+  justify-content: center;
 `;
 
-/* =============================
-   BUTTON
-============================= */
-
-const Button = styled.button`
+const FavoriteBtn = styled.button`
   width: 46px;
   height: 46px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid ${({ $active }) => ($active ? "#b99a72" : "#e5e0d8")};
+  border: 1px solid ${({ $active }) => ($active ? "#171717" : "#dedbd5")};
   border-radius: 50%;
-  background: ${({ $active }) => ($active ? "#f5eee5" : "#fff")};
-  color: ${({ $active }) => ($active ? "#a66b58" : "#77716a")};
+  background: ${({ $active }) => ($active ? "#171717" : "#fff")};
+  color: ${({ $active }) => ($active ? "#f5f0e8" : "#292929")};
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition:
+    background 0.3s ease,
+    color 0.3s ease,
+    border-color 0.3s ease,
+    transform 0.25s ease,
+    box-shadow 0.3s ease;
 
   svg {
-    font-size: 1.15rem;
-    animation: ${({ $animate }) => ($animate ? heartPop : "none")} 0.45s ease;
+    width: 19px;
+    height: 19px;
+    animation: ${({ $animate }) => ($animate ? pop : "none")} 0.4s ease;
   }
 
   &:hover {
-    border-color: #b99a72;
-    background: #f8f4ee;
-    color: #a66b58;
-    transform: scale(1.06);
+    border-color: #171717;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 14px rgba(0, 0, 0, 0.09);
+  }
+
+  &:active {
+    transform: scale(0.94);
   }
 
   &:focus-visible {
-    outline: 2px solid #b99a72;
+    outline: 2px solid #a47c50;
     outline-offset: 3px;
+  }
+
+  @media (max-width: 480px) {
+    width: 42px;
+    height: 42px;
+
+    svg {
+      width: 18px;
+      height: 18px;
+    }
   }
 `;
 
-/* =============================
-   NOTIFICATION
-============================= */
-
-const AlertMessage = styled.div`
+const Tooltip = styled.div`
   position: absolute;
-  z-index: 20;
-  top: calc(100% + 12px);
-  right: 0;
-  width: max-content;
-  max-width: 270px;
-  padding: 13px 15px;
-  background: #191815;
-  color: #f5f1e9;
-  border: 1px solid #514738;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
-  font-size: 0.76rem;
-  line-height: 1.7;
-  animation: ${fadeIn} 0.25s ease;
+  bottom: calc(100% + 11px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #171717;
+  color: #fff;
+  padding: 8px 11px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.6px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.25s ease;
 
-  &::before {
+  ${ButtonWrapper}:hover & {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  &::after {
     content: "";
     position: absolute;
-    top: -6px;
-    right: 16px;
-    width: 10px;
-    height: 10px;
-    background: #191815;
-    border-top: 1px solid #514738;
-    border-left: 1px solid #514738;
-    transform: rotate(45deg);
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: #171717;
+  }
+`;
+
+const Toast = styled.div`
+  position: fixed;
+  top: 25px;
+  right: 25px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 20px;
+  background: #171717;
+  color: #f5f0e8;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.18);
+  animation: ${fadeIn} 0.3s ease;
+  font-size: 12px;
+  letter-spacing: 0.3px;
+
+  svg {
+    color: #c49a6c;
+    font-size: 17px;
   }
 
   a {
-    color: #c8a77c;
-    font-weight: 600;
+    color: #c49a6c;
     text-decoration: underline;
     text-underline-offset: 3px;
   }
+
+  @media (max-width: 480px) {
+    top: 15px;
+    right: 12px;
+    left: 12px;
+    justify-content: center;
+    padding: 13px;
+    font-size: 11px;
+  }
 `;
 
-/* =============================
-   COMPONENT
-============================= */
-
-export default function FavoriteButton({ active, onClick }) {
-  const [alert, setAlert] = useState("");
+const FavoriteButton = ({ active, onClick }) => {
+  const [showToast, setShowToast] = useState(false);
   const [animate, setAnimate] = useState(false);
 
-  const handleClick = () => {
-    const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token");
 
+  const handleClick = () => {
     if (!token) {
-      setAlert("login");
+      setShowToast(true);
+
+      setTimeout(() => {
+        setShowToast(false);
+      }, 3500);
+
       return;
     }
 
-    if (typeof onClick !== "function") return;
+    setAnimate(true);
+    onClick?.();
 
-    onClick();
-    setAlert("");
-
-    if (!active) {
-      setAnimate(true);
-      setTimeout(() => setAnimate(false), 450);
-    }
+    setTimeout(() => {
+      setAnimate(false);
+    }, 450);
   };
 
   return (
-    <Wrapper>
-      <Button
-        type="button"
-        $active={active}
-        $animate={animate}
-        onClick={handleClick}
-        aria-label={active ? "Retirer des favoris" : "Ajouter aux favoris"}
-        aria-pressed={Boolean(active)}
-      >
-        {active ? <FaHeart /> : <FiHeart />}
-      </Button>
+    <>
+      <ButtonWrapper>
+        <FavoriteBtn
+          type="button"
+          $active={active}
+          $animate={animate}
+          onClick={handleClick}
+          aria-label={active ? "Retirer des favoris" : "Ajouter aux favoris"}
+          aria-pressed={!!active}
+          title={active ? "Retirer des favoris" : "Ajouter aux favoris"}
+        >
+          {active ? <HiBookmark /> : <FiBookmark />}
+        </FavoriteBtn>
 
-      {alert === "login" && (
-        <AlertMessage>
-          Connectez-vous pour ajouter cet article à vos favoris.
-          <br />
-          <Link to="/login">Se connecter</Link>
-          {" ou "}
-          <Link to="/signup">Créer un compte</Link>.
-        </AlertMessage>
+        <Tooltip>{active ? "ENREGISTRÉ" : "AJOUTER AUX FAVORIS"}</Tooltip>
+      </ButtonWrapper>
+
+      {showToast && (
+        <Toast role="status">
+          <FiBookmark />
+          <span>
+            Connectez-vous pour enregistrer vos favoris.{" "}
+            <Link to="/login">Se connecter</Link>
+          </span>
+        </Toast>
       )}
-    </Wrapper>
+    </>
   );
-}
+};
+
+export default FavoriteButton;

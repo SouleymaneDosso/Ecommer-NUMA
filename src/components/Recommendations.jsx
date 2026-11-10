@@ -89,11 +89,6 @@ const ArrowButton = styled.button`
     border-color: #b99a72;
     color: #111;
   }
-
-  &:disabled {
-    opacity: 0.35;
-    cursor: not-allowed;
-  }
 `;
 
 /* =============================
@@ -102,23 +97,12 @@ const ArrowButton = styled.button`
 
 const CarouselViewport = styled.div`
   width: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scroll-behavior: smooth;
-  scrollbar-width: none;
+  overflow: hidden;
   cursor: grab;
-  overscroll-behavior-x: contain;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
+  user-select: none;
 
   &:active {
     cursor: grabbing;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    scroll-behavior: auto;
   }
 `;
 
@@ -127,6 +111,7 @@ const Track = styled.div`
   gap: 22px;
   width: max-content;
   padding: 0 5% 10px;
+  will-change: transform;
 
   @media (max-width: 600px) {
     gap: 14px;
@@ -222,10 +207,15 @@ export default function Recommendations({ currentId }) {
   const [paused, setPaused] = useState(false);
 
   const viewportRef = useRef(null);
-  const intervalRef = useRef(null);
-  const resumeTimeoutRef = useRef(null);
+  const trackRef = useRef(null);
+  const animationRef = useRef(null);
+  const positionRef = useRef(0);
+  const lastTimeRef = useRef(null);
 
   const navigate = useNavigate();
+
+  // VITESSE DU DÉFILEMENT EN PIXELS PAR SECONDE
+  const SPEED = 35;
 
   /* =============================
      FETCH
@@ -268,79 +258,121 @@ export default function Recommendations({ currentId }) {
   }, [currentId]);
 
   /* =============================
-     SCROLL BY
-  ============================= */
-
-  const scrollCarousel = (direction) => {
-    const viewport = viewportRef.current;
-
-    if (!viewport) return;
-
-    const distance = viewport.clientWidth * 0.75;
-
-    viewport.scrollBy({
-      left: direction * distance,
-      behavior: "smooth",
-    });
-
-    pauseTemporarily();
-  };
-
-  /* =============================
-     PAUSE / RESUME
-  ============================= */
-
-  const pauseTemporarily = () => {
-    setPaused(true);
-
-    clearTimeout(resumeTimeoutRef.current);
-
-    resumeTimeoutRef.current = setTimeout(() => {
-      setPaused(false);
-    }, 4000);
-  };
-
-  /* =============================
-     AUTO SCROLL
+     AUTO SCROLL INFINI
   ============================= */
 
   useEffect(() => {
-    if (!produits.length || paused) return;
+    const viewport = viewportRef.current;
+    const track = trackRef.current;
 
-    intervalRef.current = setInterval(() => {
-      const viewport = viewportRef.current;
+    if (!viewport || !track || produits.length === 0) return;
 
-      if (!viewport) return;
+    let frameId;
+    let previousTime = null;
+    let isRunning = true;
 
-      const maxScroll =
-        viewport.scrollWidth - viewport.clientWidth;
+    // Largeur d'un ensemble complet de produits
+    const getLoopWidth = () => {
+      const firstCard = track.children[0];
+      const lastCard = track.children[produits.length - 1];
 
-      if (viewport.scrollLeft >= maxScroll - 3) {
-        viewport.scrollTo({
-          left: 0,
-          behavior: "smooth",
-        });
-      } else {
-        viewport.scrollBy({
-          left: viewport.clientWidth * 0.55,
-          behavior: "smooth",
-        });
+      if (!firstCard || !lastCard) return 0;
+
+      return lastCard.offsetLeft +
+        lastCard.offsetWidth -
+        firstCard.offsetLeft;
+    };
+
+    let loopWidth = getLoopWidth();
+
+    // Repositionnement initial
+    positionRef.current = 0;
+
+    const animate = (time) => {
+      if (!isRunning) return;
+
+      if (previousTime === null) {
+        previousTime = time;
       }
-    }, 3500);
 
-    return () => clearInterval(intervalRef.current);
+      const deltaTime = Math.min(time - previousTime, 50);
+      previousTime = time;
+
+      if (!paused && loopWidth > 0) {
+        positionRef.current += (SPEED * deltaTime) / 1000;
+
+        // Boucle sans retour visible
+        if (positionRef.current >= loopWidth) {
+          positionRef.current -= loopWidth;
+        }
+
+        track.style.transform =
+          `translate3d(-${positionRef.current}px, 0, 0)`;
+      }
+
+      frameId = requestAnimationFrame(animate);
+    };
+
+    frameId = requestAnimationFrame(animate);
+
+    // Recalcul si la taille de l'écran change
+    const resizeObserver = new ResizeObserver(() => {
+      loopWidth = getLoopWidth();
+
+      if (loopWidth > 0) {
+        positionRef.current %= loopWidth;
+      }
+    });
+
+    resizeObserver.observe(viewport);
+    resizeObserver.observe(track);
+
+    animationRef.current = {
+      stop: () => {
+        isRunning = false;
+        cancelAnimationFrame(frameId);
+        resizeObserver.disconnect();
+      },
+    };
+
+    return () => {
+      isRunning = false;
+      cancelAnimationFrame(frameId);
+      resizeObserver.disconnect();
+    };
   }, [produits, paused]);
 
   /* =============================
-     CLEANUP
+     NAVIGATION MANUELLE
   ============================= */
 
-  useEffect(() => {
-    return () => {
-      clearInterval(intervalRef.current);
-      clearTimeout(resumeTimeoutRef.current);
-    };
-  }, []);
+  const scrollCarousel = (direction) => {
+    const track = trackRef.current;
+
+    if (!track) return;
+
+    const card = track.children[0];
+
+    if (!card) return;
+
+    const distance = card.offsetWidth + 22;
+
+    const loopWidth = Array.from(track.children)
+      .slice(0, produits.length)
+      .reduce((total, item, index) => {
+        return total + item.offsetWidth +
+          (index === 0 ? 0 : 22);
+      }, 0);
+
+    if (!loopWidth) return;
+
+    positionRef.current =
+      (positionRef.current - direction * distance + loopWidth) %
+      loopWidth;
+
+    track.style.transform =
+      `translate3d(-${positionRef.current}px, 0, 0)`;
+  };
 
   /* =============================
      OPEN PRODUCT
@@ -352,6 +384,13 @@ export default function Recommendations({ currentId }) {
   };
 
   if (!produits.length) return null;
+
+  // Duplication pour assurer une continuité visuelle
+  const duplicatedProducts = [
+    ...produits,
+    ...produits,
+    ...produits,
+  ];
 
   return (
     <Section>
@@ -383,30 +422,26 @@ export default function Recommendations({ currentId }) {
           ref={viewportRef}
           onMouseEnter={() => setPaused(true)}
           onMouseLeave={() => setPaused(false)}
-          onTouchStart={pauseTemporarily}
-          onWheel={pauseTemporarily}
-          onPointerDown={pauseTemporarily}
-          onKeyDown={pauseTemporarily}
-          tabIndex={0}
-          aria-label="Produits recommandés"
+          onTouchStart={() => setPaused(true)}
+          onTouchEnd={() => setPaused(false)}
+          onPointerDown={() => setPaused(true)}
+          onPointerUp={() => setPaused(false)}
         >
-          <Track>
-            {produits.map((p) => (
+          <Track ref={trackRef}>
+            {duplicatedProducts.map((p, index) => (
               <Card
-                key={p._id}
+                key={`${p._id}-${index}`}
                 onClick={() => openProduct(p._id)}
               >
                 <ImageWrapper>
                   <Image
                     src={p.images?.[0]?.url || "/placeholder.jpg"}
                     alt={p.title || "Produit NUMA"}
-                    loading="lazy"
+                    loading={index < produits.length ? "eager" : "lazy"}
                     draggable="false"
                   />
 
-                  {p.badge && (
-                    <Badge>{p.badge}</Badge>
-                  )}
+                  {p.badge && <Badge>{p.badge}</Badge>}
                 </ImageWrapper>
 
                 <ProductInfo>
