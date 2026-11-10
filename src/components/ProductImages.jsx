@@ -1,331 +1,406 @@
+
 import { useState, useRef, useEffect } from "react";
 import styled, { keyframes } from "styled-components";
 import {
-  FiAperture,
   FiX,
   FiChevronLeft,
   FiChevronRight,
+  FiMaximize2,
 } from "react-icons/fi";
 import { LoaderWrapper, Loader } from "../Utils/Rotate";
 
-// ---------- ANIMATIONS ----------
-const fadeSlide = keyframes`
-  0% {
+/* ============================
+   ANIMATIONS
+============================ */
+
+const appear = keyframes`
+  from {
     opacity: 0;
-    transform: translateY(20px) scale(0.98);
+    transform: translateY(12px);
   }
-  100% {
+  to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
   }
 `;
 
-const flipSlide = keyframes`
-  0% {
-    transform: rotateY(90deg);
+const zoomIn = keyframes`
+  from {
     opacity: 0;
+    transform: scale(0.96);
   }
-  100% {
-    transform: rotateY(0deg);
+  to {
     opacity: 1;
+    transform: scale(1);
   }
 `;
 
-// ---------- STYLES ----------
+/* ============================
+   MAIN WRAPPER
+============================ */
+
 const Wrapper = styled.div`
   width: 100%;
-  max-width: 760px;
-  margin: 0 auto;
   position: relative;
-  font-family: "Helvetica Neue", sans-serif;
-  color: #000;
+  color: #181818;
+  font-family: inherit;
+  animation: ${appear} 0.5s ease;
 `;
 
-const ImagesWrapper = styled.div`
-  height: 88vh;
-  overflow-y: scroll;
-  scroll-snap-type: y mandatory;
+const Gallery = styled.div`
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+
+  @media (max-width: 600px) {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 12px;
+  }
+`;
+
+/* ============================
+   THUMBNAILS
+============================ */
+
+const Thumbnails = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  max-height: 620px;
+  overflow-y: auto;
   scrollbar-width: none;
 
   &::-webkit-scrollbar {
     display: none;
   }
-`;
 
-const ImageSlide = styled.div`
-  height: 88vh;
-  scroll-snap-align: start;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  animation: ${flipSlide} 0.5s ease;
-
-  &:after {
-    content: '${({ index, title }) => title || `0${index + 1}`.slice(-2)}';
-    position: absolute;
-    top: 16px;
-    left: 16px;
-    font-size: 2rem;
-    letter-spacing: 2px;
-    opacity: 0.15;
-    writing-mode: vertical-rl;
-    z-index: 2;
+  @media (max-width: 600px) {
+    width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    max-height: none;
+    padding-bottom: 4px;
   }
 `;
 
-const ProductImage = styled.img`
+const Thumbnail = styled.button`
+  width: 76px;
+  height: 94px;
+  flex-shrink: 0;
+  padding: 3px;
+  border: 1px solid ${({ $active }) =>
+    $active ? "#171717" : "#e9e9e9"};
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  opacity: ${({ $active }) => $active ? 1 : 0.65};
+
+  &:hover {
+    opacity: 1;
+    border-color: #171717;
+  }
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  @media (max-width: 600px) {
+    width: 65px;
+    height: 75px;
+  }
+`;
+
+/* ============================
+   MAIN IMAGE
+============================ */
+
+const MainImageContainer = styled.div`
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  background: #f5f4f1;
+  aspect-ratio: 4 / 5;
+  max-height: 760px;
+  animation: ${zoomIn} 0.4s ease;
+
+  @media (max-width: 600px) {
+    aspect-ratio: 4 / 5;
+    max-height: none;
+  }
+`;
+
+const MainImage = styled.img`
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  display: block;
   cursor: zoom-in;
-  transition: transform 0.35s ease, filter 0.3s ease;
-  filter: contrast(1.05) brightness(0.95) grayscale(0.01);
+  transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
 
   &:hover {
-    transform: scale(1.02);
+    transform: scale(1.035);
   }
 `;
 
-const LogoOverlay = styled.div`
+const ImageLabel = styled.div`
   position: absolute;
-  top: 24px;
-  right: 24px;
-  font-weight: bold;
-  font-size: 1.2rem;
-  opacity: 0.2;
-  letter-spacing: 2px;
-  z-index: 2;
+  top: 20px;
+  left: 20px;
+  padding: 8px 12px;
+  background: rgba(255,255,255,0.85);
+  color: #333;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.7px;
+  text-transform: uppercase;
+  backdrop-filter: blur(8px);
 `;
 
-// ---------- ICON ----------
 const ZoomButton = styled.button`
   position: absolute;
-  bottom: 24px;
-  right: 24px;
-  width: 50px;
-  height: 50px;
+  right: 18px;
+  bottom: 18px;
+  width: 43px;
+  height: 43px;
+  border: 1px solid rgba(0,0,0,0.08);
   border-radius: 50%;
-  border: none;
-  background: rgba(0, 0, 0, 0.72);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: rgba(255,255,255,0.9);
+  color: #171717;
+  display: grid;
+  place-items: center;
   cursor: pointer;
-  z-index: 3;
-  backdrop-filter: blur(8px);
   transition: all 0.25s ease;
-  opacity: 0.95;
+  z-index: 2;
 
   &:hover {
-    transform: translateY(-2px) scale(1.08);
-    background: rgba(0, 0, 0, 0.88);
-  }
-
-  svg {
-    font-size: 1.2rem;
+    background: #171717;
+    color: #fff;
+    transform: scale(1.08);
   }
 `;
 
-// ---------- FULLSCREEN ----------
-const FullscreenOverlay = styled.div`
+const MainNavigation = styled.div`
+  position: absolute;
+  top: 50%;
+  left: 15px;
+  right: 15px;
+  display: flex;
+  justify-content: space-between;
+  transform: translateY(-50%);
+  pointer-events: none;
+`;
+
+const NavigationButton = styled.button`
+  width: 39px;
+  height: 39px;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 50%;
+  background: rgba(255,255,255,0.85);
+  color: #222;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #171717;
+    color: #fff;
+  }
+`;
+
+const Counter = styled.div`
+  position: absolute;
+  bottom: 24px;
+  left: 20px;
+  color: #777;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  font-weight: 600;
+`;
+
+/* ============================
+   FULLSCREEN
+============================ */
+
+const Fullscreen = styled.div`
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.992);
+  z-index: 99999;
+  background: rgba(12,12,12,0.98);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
-  overflow: hidden;
+  animation: ${appear} 0.25s ease;
+  padding: 65px 85px;
+
+  @media (max-width: 600px) {
+    padding: 65px 12px;
+  }
 `;
 
 const FullscreenImage = styled.img`
+  max-width: 100%;
+  max-height: 100%;
   width: auto;
-  max-width: 97vw;
-  max-height: 97vh;
+  height: auto;
   object-fit: contain;
-  animation: ${fadeSlide} 0.4s ease;
-  filter: grayscale(0.01) contrast(1.08);
+  animation: ${zoomIn} 0.3s ease;
   user-select: none;
 `;
 
-const CloseButton = styled.button`
+const FullscreenClose = styled.button`
   position: absolute;
-  top: 24px;
-  right: 24px;
-  width: 54px;
-  height: 54px;
-  border: none;
+  top: 22px;
+  right: 25px;
+  width: 45px;
+  height: 45px;
+  border: 1px solid rgba(255,255,255,0.2);
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
+  background: transparent;
   color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
   cursor: pointer;
-  backdrop-filter: blur(10px);
-  transition: all 0.25s ease;
-  z-index: 10;
+  transition: 0.25s;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.18);
-    transform: scale(1.06);
-  }
-
-  svg {
-    font-size: 1.35rem;
+    background: white;
+    color: #111;
   }
 `;
 
-const Arrow = styled.button`
+const FullscreenArrow = styled.button`
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  width: 62px;
-  height: 62px;
-  border: none;
+  ${({ $left }) => $left ? "left: 22px;" : "right: 22px;"}
+  width: 47px;
+  height: 47px;
+  border: 1px solid rgba(255,255,255,0.2);
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255,255,255,0.08);
   color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
   cursor: pointer;
-  backdrop-filter: blur(10px);
-  transition: all 0.25s ease;
-  z-index: 10;
+  transition: 0.25s;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.18);
-    transform: translateY(-50%) scale(1.06);
+    background: white;
+    color: #111;
   }
 
-  svg {
-    font-size: 1.6rem;
-  }
-
-  @media (max-width: 700px) {
-    width: 50px;
-    height: 50px;
+  @media (max-width: 600px) {
+    width: 38px;
+    height: 38px;
+    ${({ $left }) => $left ? "left: 8px;" : "right: 8px;"}
   }
 `;
 
-const ArrowLeft = styled(Arrow)`
-  left: 24px;
-`;
-
-const ArrowRight = styled(Arrow)`
-  right: 24px;
-`;
-
-const IndicatorWrapper = styled.div`
+const FullscreenFooter = styled.div`
   position: absolute;
-  bottom: 28px;
-  width: 170px;
-  height: 3px;
-  background: rgba(255, 255, 255, 0.18);
-  border-radius: 999px;
-  overflow: hidden;
+  bottom: 25px;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  color: rgba(255,255,255,0.65);
+  font-size: 11px;
+  letter-spacing: 2px;
 `;
 
-const IndicatorBar = styled.div`
-  height: 100%;
-  width: ${({ progress }) => progress}%;
-  background: white;
-  transition: width 0.3s ease;
-`;
+/* ============================
+   COMPONENT
+============================ */
 
-const ImageCounter = styled.div`
-  position: absolute;
-  bottom: 52px;
-  color: rgba(255, 255, 255, 0.88);
-  font-size: 0.92rem;
-  font-weight: 700;
-  letter-spacing: 1px;
-`;
-
-// ---------- COMPONENT ----------
 export default function ProductImages({ images = [] }) {
   const [urls, setUrls] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  const slidesRef = useRef([]);
+  const thumbnailRefs = useRef([]);
+  const previousOverflow = useRef("");
 
-  // Charger images
+  // Charger les images
   useEffect(() => {
-    if (images.length) {
-      setUrls(images.map((img) => ({ url: img.url, title: img.title || "" })));
-    }
+    const validImages = images
+      .filter((img) => img?.url)
+      .map((img) => ({
+        url: img.url,
+        title: img.title || "",
+      }));
+
+    setUrls(validImages);
+    setCurrentIndex(0);
     setLoading(false);
   }, [images]);
 
-  // Bloquer scroll body en fullscreen
+  // Bloquer le scroll en plein écran
   useEffect(() => {
-    if (isFullscreen) {
-      const scrollY = window.scrollY;
-      document.body.style.position = "fixed";
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.left = "0";
-      document.body.style.width = "100%";
-    } else {
-      const scrollY = -parseInt(document.body.style.top || "0");
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.left = "";
-      document.body.style.width = "";
-      window.scrollTo(0, scrollY);
-    }
+    if (!isFullscreen) return;
+
+    previousOverflow.current = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow.current;
+    };
   }, [isFullscreen]);
 
-  // Scroll auto vers image active
+  // Centrer la miniature active
   useEffect(() => {
-    if (slidesRef.current[currentIndex] && !isFullscreen) {
-      slidesRef.current[currentIndex].scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }
-  }, [currentIndex, isFullscreen]);
+    thumbnailRefs.current[currentIndex]?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+      inline: "nearest",
+    });
+  }, [currentIndex]);
 
-  // Clavier
+  // Navigation clavier
   useEffect(() => {
+    if (!isFullscreen) return;
+
     const handleKeyDown = (e) => {
-      if (!isFullscreen) return;
-
       if (e.key === "Escape") setIsFullscreen(false);
+
       if (e.key === "ArrowLeft") {
-        setCurrentIndex((prev) => (prev === 0 ? urls.length - 1 : prev - 1));
+        setCurrentIndex((prev) =>
+          prev === 0 ? urls.length - 1 : prev - 1
+        );
       }
+
       if (e.key === "ArrowRight") {
-        setCurrentIndex((prev) => (prev === urls.length - 1 ? 0 : prev + 1));
+        setCurrentIndex((prev) =>
+          prev === urls.length - 1 ? 0 : prev + 1
+        );
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
+
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isFullscreen, urls.length]);
 
-  const openFullscreen = (index) => {
-    setCurrentIndex(index);
-    setIsFullscreen(true);
+  const previousImage = () => {
+    setCurrentIndex((prev) =>
+      prev === 0 ? urls.length - 1 : prev - 1
+    );
   };
 
-  const closeFullscreen = () => setIsFullscreen(false);
-
-  const prevImage = (e) => {
-    e?.stopPropagation();
-    setCurrentIndex((prev) => (prev === 0 ? urls.length - 1 : prev - 1));
+  const nextImage = () => {
+    setCurrentIndex((prev) =>
+      prev === urls.length - 1 ? 0 : prev + 1
+    );
   };
 
-  const nextImage = (e) => {
-    e?.stopPropagation();
-    setCurrentIndex((prev) => (prev === urls.length - 1 ? 0 : prev + 1));
-  };
-
-  const progress = ((currentIndex + 1) / urls.length) * 100;
+  const openFullscreen = () => setIsFullscreen(true);
 
   if (loading) {
     return (
@@ -337,67 +412,148 @@ export default function ProductImages({ images = [] }) {
 
   if (!urls.length) return null;
 
+  const activeImage = urls[currentIndex];
+
   return (
     <Wrapper>
-      <ImagesWrapper>
-        {urls.map((item, i) => (
-          <ImageSlide
-            key={i}
-            index={i}
-            title={item.title}
-            ref={(el) => (slidesRef.current[i] = el)}
-          >
-            <LogoOverlay>NUMA</LogoOverlay>
 
-            <ZoomButton
-              onClick={() => openFullscreen(i)}
-              aria-label="Voir l'image en grand"
-            >
-              <FiAperture />
-            </ZoomButton>
+      <Gallery>
 
-            <ProductImage
-              src={item.url}
-              alt={item.title || `Produit ${i + 1}`}
-              onClick={() => openFullscreen(i)}
-            />
-          </ImageSlide>
-        ))}
-      </ImagesWrapper>
+        {/* MINIATURES */}
 
-      {isFullscreen && urls[currentIndex] && (
-        <FullscreenOverlay onClick={closeFullscreen}>
-          <CloseButton onClick={closeFullscreen} aria-label="Fermer">
-            <FiX />
-          </CloseButton>
+        {urls.length > 1 && (
+          <Thumbnails>
+            {urls.map((item, index) => (
+              <Thumbnail
+                key={`${item.url}-${index}`}
+                ref={(el) => {
+                  thumbnailRefs.current[index] = el;
+                }}
+                type="button"
+                $active={currentIndex === index}
+                onClick={() => setCurrentIndex(index)}
+                aria-label={`Voir la photo ${index + 1}`}
+                aria-pressed={currentIndex === index}
+              >
+                <img
+                  src={item.url}
+                  alt={item.title || `Miniature ${index + 1}`}
+                />
+              </Thumbnail>
+            ))}
+          </Thumbnails>
+        )}
+
+        {/* IMAGE PRINCIPALE */}
+
+        <MainImageContainer key={activeImage.url}>
+
+          <ImageLabel>
+            Collection NUMA
+          </ImageLabel>
+
+          <MainImage
+            src={activeImage.url}
+            alt={activeImage.title || "Photo du produit"}
+            onClick={openFullscreen}
+          />
 
           {urls.length > 1 && (
-            <ArrowLeft onClick={prevImage} aria-label="Image précédente">
-              <FiChevronLeft />
-            </ArrowLeft>
+            <MainNavigation>
+              <NavigationButton
+                type="button"
+                onClick={previousImage}
+                aria-label="Image précédente"
+              >
+                <FiChevronLeft />
+              </NavigationButton>
+
+              <NavigationButton
+                type="button"
+                onClick={nextImage}
+                aria-label="Image suivante"
+              >
+                <FiChevronRight />
+              </NavigationButton>
+            </MainNavigation>
+          )}
+
+          <Counter>
+            {String(currentIndex + 1).padStart(2, "0")} /{" "}
+            {String(urls.length).padStart(2, "0")}
+          </Counter>
+
+          <ZoomButton
+            type="button"
+            onClick={openFullscreen}
+            aria-label="Agrandir l'image"
+          >
+            <FiMaximize2 />
+          </ZoomButton>
+
+        </MainImageContainer>
+
+      </Gallery>
+
+      {/* MODE PLEIN ÉCRAN */}
+
+      {isFullscreen && (
+        <Fullscreen
+          onClick={() => setIsFullscreen(false)}
+        >
+
+          <FullscreenClose
+            type="button"
+            onClick={() => setIsFullscreen(false)}
+            aria-label="Fermer"
+          >
+            <FiX size={21} />
+          </FullscreenClose>
+
+          {urls.length > 1 && (
+            <FullscreenArrow
+              type="button"
+              $left
+              onClick={(e) => {
+                e.stopPropagation();
+                previousImage();
+              }}
+              aria-label="Image précédente"
+            >
+              <FiChevronLeft size={23} />
+            </FullscreenArrow>
           )}
 
           <FullscreenImage
-            src={urls[currentIndex].url}
-            alt={urls[currentIndex].title || `Produit ${currentIndex + 1}`}
+            key={activeImage.url}
+            src={activeImage.url}
+            alt={activeImage.title || "Photo du produit"}
             onClick={(e) => e.stopPropagation()}
           />
 
           {urls.length > 1 && (
-            <ArrowRight onClick={nextImage} aria-label="Image suivante">
-              <FiChevronRight />
-            </ArrowRight>
+            <FullscreenArrow
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                nextImage();
+              }}
+              aria-label="Image suivante"
+            >
+              <FiChevronRight size={23} />
+            </FullscreenArrow>
           )}
 
-          <ImageCounter>
-            {String(currentIndex + 1).padStart(2, "0")} / {String(urls.length).padStart(2, "0")}
-          </ImageCounter>
+          <FullscreenFooter>
+            {String(currentIndex + 1).padStart(2, "0")}
+            {" / "}
+            {String(urls.length).padStart(2, "0")}
+            {" — NUMA"}
+          </FullscreenFooter>
 
-          <IndicatorWrapper>
-            <IndicatorBar progress={progress} />
-          </IndicatorWrapper>
-        </FullscreenOverlay>
+        </Fullscreen>
       )}
+
     </Wrapper>
   );
 }

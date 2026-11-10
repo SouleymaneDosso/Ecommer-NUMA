@@ -1,138 +1,327 @@
-// src/components/ProductDescription.jsx
+
 import { useState } from "react";
 import styled, { keyframes } from "styled-components";
-import { FiEye, FiEyeOff, FiTruck } from "react-icons/fi";
+import {
+  FiEye,
+  FiEyeOff,
+  FiTruck,
+  FiPackage,
+  FiShield,
+  FiArrowUpRight,
+  FiClock,
+  FiCheck,
+} from "react-icons/fi";
 import { FaWhatsapp } from "react-icons/fa";
 
-// ---------- ANIMATIONS ----------
-const fadeIn = keyframes`
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+/* ============================
+   ANIMATIONS
+============================ */
+
+const reveal = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 `;
 
-const float = keyframes`
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-4px); }
-  100% { transform: translateY(0px); }
+const whatsappPulse = keyframes`
+  0%, 100% {
+    box-shadow: 0 8px 25px rgba(37,211,102,0.18);
+  }
+  50% {
+    box-shadow: 0 8px 32px rgba(37,211,102,0.32);
+  }
 `;
 
-// ---------- STYLES ----------
-const Wrapper = styled.div`
-  margin-top: 3rem;
-  font-family: 'Inter', sans-serif;
-  color: #1a1a1a;
+/* ============================
+   WRAPPER
+============================ */
+
+const Wrapper = styled.section`
+  width: 100%;
+  margin-top: 55px;
+  font-family: inherit;
+  color: #191919;
+  animation: ${reveal} 0.5s ease;
 `;
 
-const Tabs = styled.div`
+/* ============================
+   SECTION HEADER
+============================ */
+
+const SectionHeader = styled.div`
   display: flex;
-  gap: 2rem;
-  border-bottom: 1px solid #e5e5e5;
-  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e9e7e2;
+  margin-bottom: 28px;
 
-  @media (max-width: 480px) {
-    gap: 1rem;
+  span {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    color: #a08b6b;
+    text-transform: uppercase;
   }
-`;
 
-const TabButton = styled.button`
-  padding: 14px 0;
-  border: none;
-  background: none;
-  border-bottom: ${({ active }) =>
-    active ? "3px solid #000" : "3px solid transparent"};
-  font-weight: ${({ active }) => (active ? "700" : "500")};
-  font-size: 1rem;
-  cursor: pointer;
-  color: ${({ active }) => (active ? "#000" : "#777")};
-  transition: all 0.3s ease;
-
-  &:hover {
-    color: #000;
+  h3 {
+    margin: 7px 0 0;
+    font-size: 23px;
+    font-weight: 600;
+    letter-spacing: -0.7px;
   }
 
   @media (max-width: 480px) {
-    font-size: 0.9rem;
+    h3 {
+      font-size: 20px;
+    }
   }
 `;
 
-const Content = styled.div`
-  margin-top: 2rem;
-  font-size: 1.05rem;
-  line-height: 1.8;
-  animation: ${fadeIn} 0.4s ease;
-  max-width: 800px;
+const SectionNumber = styled.span`
+  font-size: 35px !important;
+  font-weight: 300 !important;
+  color: #dedbd5 !important;
+  letter-spacing: -2px !important;
+`;
+
+/* ============================
+   DESCRIPTION
+============================ */
+
+const DescriptionContainer = styled.div`
+  max-width: 780px;
 `;
 
 const DescriptionText = styled.p`
-  color: #444;
+  font-size: 14px;
+  line-height: 2;
+  color: #686868;
+  font-weight: 400;
+  white-space: pre-line;
+  margin: 0;
+  overflow-wrap: anywhere;
 `;
 
-const ShowMoreButton = styled.button`
-  display: flex;
+const MoreButton = styled.button`
+  display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  margin-top: 1rem;
+  gap: 9px;
+  margin-top: 19px;
+  padding: 0 0 5px;
   border: none;
-  background: none;
+  border-bottom: 1px solid #191919;
+  background: transparent;
+  color: #191919;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
   cursor: pointer;
-  color: #000;
-  font-weight: 600;
-  font-size: 0.95rem;
-  transition: 0.2s;
+  transition: 0.25s;
 
   &:hover {
-    opacity: 0.6;
+    color: #a08b6b;
+    border-color: #a08b6b;
   }
 `;
 
-const DeliveryBox = styled.div`
-  background: #f9f9f9;
-  padding: 1.5rem;
-  border-radius: 12px;
-  display: flex;
-  gap: 1rem;
-  align-items: flex-start;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-`;
+/* ============================
+   DELIVERY
+============================ */
 
-const WhatsAppButton = styled.a`
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 14px 22px;
-  background: linear-gradient(135deg, #25D366, #1ebe57);
-  color: white;
-  font-weight: 600;
-  font-size: 1rem;
-  border-radius: 50px;
-  text-decoration: none;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
-  transition: all 0.3s ease;
-  animation: ${float} 3s ease-in-out infinite;
-  z-index: 999;
+const DeliveryCard = styled.div`
+  background: #f7f6f2;
+  padding: 28px;
+  position: relative;
+  overflow: hidden;
 
-  &:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 15px 30px rgba(0,0,0,0.3);
-  }
-
-  &.disabled {
-    opacity: 0.6;
-    pointer-events: none;
+  &::after {
+    content: "";
+    position: absolute;
+    width: 180px;
+    height: 180px;
+    border: 1px solid rgba(160,139,107,0.12);
+    border-radius: 50%;
+    right: -70px;
+    top: -75px;
   }
 
   @media (max-width: 480px) {
-    bottom: 16px;
-    right: 16px;
-    padding: 12px 18px;
-    font-size: 0.9rem;
+    padding: 21px;
   }
 `;
 
-// ---------- COMPONENT ----------
+const DeliveryTop = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 17px;
+  position: relative;
+  z-index: 1;
+`;
+
+const DeliveryIcon = styled.div`
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  color: #9c8056;
+  font-size: 21px;
+`;
+
+const DeliveryTitle = styled.div`
+  h4 {
+    margin: 2px 0 7px;
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 0;
+    font-size: 12px;
+    color: #777;
+    line-height: 1.8;
+  }
+
+  strong {
+    color: #191919;
+  }
+`;
+
+const FreeDelivery = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 15px;
+  padding: 8px 11px;
+  background: #e9efe7;
+  color: #416d48;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+`;
+
+const DeliveryFeatures = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin-top: 28px;
+  padding-top: 23px;
+  border-top: 1px solid #e6e3dc;
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+    gap: 17px;
+  }
+`;
+
+const Feature = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  svg {
+    font-size: 16px;
+    color: #9c8056;
+    flex-shrink: 0;
+  }
+
+  span {
+    font-size: 10px;
+    font-weight: 600;
+    color: #555;
+    line-height: 1.5;
+  }
+`;
+
+/* ============================
+   WHATSAPP CTA
+============================ */
+
+const WhatsAppContainer = styled.div`
+  margin-top: 32px;
+  padding: 22px;
+  border: 1px solid #e9e7e2;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+`;
+
+const WhatsAppInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 13px;
+
+  .icon {
+    width: 43px;
+    height: 43px;
+    border-radius: 50%;
+    background: #eaf5ec;
+    color: #25864c;
+    display: grid;
+    place-items: center;
+    font-size: 21px;
+    flex-shrink: 0;
+  }
+
+  h4 {
+    font-size: 12px;
+    margin: 0 0 5px;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 0;
+    color: #888;
+    font-size: 10px;
+  }
+`;
+
+const WhatsAppButton = styled.a`
+  min-height: 47px;
+  padding: 0 19px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: ${({ $disabled }) => $disabled ? "#aaa" : "#191919"};
+  color: white;
+  text-decoration: none;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+  cursor: ${({ $disabled }) => $disabled ? "not-allowed" : "pointer"};
+  pointer-events: ${({ $disabled }) => $disabled ? "none" : "auto"};
+
+  &:hover {
+    background: ${({ $disabled }) => $disabled ? "#aaa" : "#a08b6b"};
+  }
+
+  svg {
+    font-size: 17px;
+  }
+`;
+
+/* ============================
+   COMPONENT
+============================ */
+
 export default function ProductDescription({
   description,
   quantity = 1,
@@ -142,113 +331,174 @@ export default function ProductDescription({
   selectedSize,
   productUrl,
 }) {
-  const tabs = ["Description", "Livraison"];
-  const [activeTab, setActiveTab] = useState(0);
   const [showFullDescription, setShowFullDescription] = useState(false);
 
-  // validation options
-  const canOrder = selectedColor && selectedSize;
+  const canOrder = Boolean(selectedColor && selectedSize);
 
-  // message WhatsApp
+  const hasLongDescription = (description || "").length > 250;
+
+  const deliveryFree = quantity >= 2;
+
   const message = `
-Bonjour 👋
+Bonjour NUMA 👋
 
-Je souhaite commander ce produit :
+Je souhaite commander le produit suivant :
 
 🛍 Produit : ${productName}
-💰 Prix : ${price} FCFA
+💰 Prix : ${Number(price).toLocaleString("fr-FR")} FCFA
 🎨 Couleur : ${selectedColor || "Non spécifiée"}
 📏 Taille : ${selectedSize || "Non spécifiée"}
 🔢 Quantité : ${quantity}
 
-🔗 Lien : ${productUrl}
+🔗 Lien du produit : ${productUrl || "Non disponible"}
 
-Merci.
+Merci !
 `;
 
-  const whatsappLink = `https://wa.me/2250700247693?text=${encodeURIComponent(
-    message
-  )}`;
+  const whatsappLink = `https://wa.me/2250700247693?text=${encodeURIComponent(message)}`;
 
   return (
     <Wrapper>
-      <Tabs>
-        {tabs.map((tab, index) => (
-          <TabButton
-            key={tab}
-            active={activeTab === index}
-            onClick={() => setActiveTab(index)}
+
+      {/* DESCRIPTION */}
+
+      <SectionHeader>
+        <div>
+          <span>En savoir plus</span>
+          <h3>Description du produit</h3>
+        </div>
+
+        <SectionNumber>01</SectionNumber>
+      </SectionHeader>
+
+      <DescriptionContainer>
+        <DescriptionText>
+          {showFullDescription
+            ? description
+            : `${(description || "").slice(0, 250)}${
+                hasLongDescription ? "..." : ""
+              }`}
+        </DescriptionText>
+
+        {hasLongDescription && (
+          <MoreButton
+            type="button"
+            onClick={() =>
+              setShowFullDescription(!showFullDescription)
+            }
           >
-            {tab}
-          </TabButton>
-        ))}
-      </Tabs>
-
-      <Content>
-        {activeTab === 0 && (
-          <>
-            <DescriptionText>
-              {showFullDescription
-                ? description
-                : `${description?.slice(0, 220)}${
-                    description?.length > 220 ? "..." : ""
-                  }`}
-            </DescriptionText>
-
-            {description?.length > 220 && (
-              <ShowMoreButton
-                onClick={() => setShowFullDescription(!showFullDescription)}
-              >
-                {showFullDescription ? (
-                  <>
-                    <FiEyeOff /> Voir moins
-                  </>
-                ) : (
-                  <>
-                    <FiEye /> Voir plus
-                  </>
-                )}
-              </ShowMoreButton>
+            {showFullDescription ? (
+              <>
+                <FiEyeOff />
+                Voir moins
+              </>
+            ) : (
+              <>
+                <FiEye />
+                Découvrir la suite
+              </>
             )}
-          </>
+          </MoreButton>
         )}
+      </DescriptionContainer>
 
-        {activeTab === 1 && (
-          <DeliveryBox>
-            <FiTruck size={24} />
-            <div>
-              {quantity >= 2 ? (
+      {/* LIVRAISON */}
+
+      <div style={{ marginTop: 55 }}>
+        <SectionHeader>
+          <div>
+            <span>Votre expérience NUMA</span>
+            <h3>Livraison & services</h3>
+          </div>
+
+          <SectionNumber>02</SectionNumber>
+        </SectionHeader>
+
+        <DeliveryCard>
+
+          <DeliveryTop>
+            <DeliveryIcon>
+              <FiTruck />
+            </DeliveryIcon>
+
+            <DeliveryTitle>
+              <h4>Une livraison pensée pour vous</h4>
+
+              {deliveryFree ? (
                 <p>
-                  Livraison <strong>gratuite</strong> à partir de 2 articles
-                  (peu importe les modèles). Profitez-en 🎉
+                  Félicitations ! Votre commande bénéficie de la
+                  <strong> livraison gratuite</strong> à partir de 2 articles.
                 </p>
               ) : (
                 <p>
-                  Ajoutez au moins <strong>2 articles</strong> pour bénéficier
-                  de la livraison gratuite. Livraison standard disponible.
+                  Ajoutez un deuxième article pour profiter de la
+                  <strong> livraison gratuite</strong>, quel que soit le modèle.
                 </p>
               )}
-            </div>
-          </DeliveryBox>
-        )}
-      </Content>
 
-      {/* WHATSAPP FLOTANT */}
-      <WhatsAppButton
-        href={canOrder ? whatsappLink : "#"}
-        className={!canOrder ? "disabled" : ""}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={(e) => {
-          if (!canOrder) {
-            e.preventDefault();
-            alert("Veuillez choisir une taille et une couleur.");
-          }
-        }}
-      >
-        <FaWhatsapp size={20} />
-        Commander via WhatsApp
-      </WhatsAppButton>
+              <FreeDelivery>
+                <FiCheck />
+                {deliveryFree
+                  ? "Livraison gratuite débloquée"
+                  : "Offre disponible dès 2 articles"}
+              </FreeDelivery>
+            </DeliveryTitle>
+          </DeliveryTop>
+
+          <DeliveryFeatures>
+            <Feature>
+              <FiPackage />
+              <span>Préparation de commande</span>
+            </Feature>
+
+            <Feature>
+              <FiShield />
+              <span>Commande accompagnée</span>
+            </Feature>
+
+            <Feature>
+              <FiClock />
+              <span>Service client disponible</span>
+            </Feature>
+          </DeliveryFeatures>
+
+        </DeliveryCard>
+      </div>
+
+      {/* WHATSAPP */}
+
+      <WhatsAppContainer>
+
+        <WhatsAppInfo>
+          <div className="icon">
+            <FaWhatsapp />
+          </div>
+
+          <div>
+            <h4>Besoin d'un accompagnement ?</h4>
+            <p>Notre équipe est disponible sur WhatsApp.</p>
+          </div>
+        </WhatsAppInfo>
+
+        <WhatsAppButton
+          href={canOrder ? whatsappLink : undefined}
+          $disabled={!canOrder}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-disabled={!canOrder}
+          onClick={(e) => {
+            if (!canOrder) {
+              e.preventDefault();
+            }
+          }}
+        >
+          <FaWhatsapp />
+          Commander
+          <FiArrowUpRight />
+        </WhatsAppButton>
+
+      </WhatsAppContainer>
+
     </Wrapper>
   );
 }

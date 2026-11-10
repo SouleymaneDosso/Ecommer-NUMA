@@ -1,93 +1,169 @@
 import styled from "styled-components";
-import { FiInfo } from "react-icons/fi";
+import { FiInfo, FiArrowUpRight } from "react-icons/fi";
 
-// Container minimaliste
-const DetailsWrapper = styled.div`
-  margin-top: 2rem;
-  padding: 1.2rem;
-  border-top: 1px solid #e5e5e5;
-  border-radius: 8px;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+const DetailsWrapper = styled.section`
+  margin-top: 2.5rem;
+  padding: 1.8rem;
+  background: #faf9f6;
+  border: 1px solid #eae6df;
+  border-radius: 4px;
+
+  @media (max-width: 600px) {
+    padding: 1.3rem;
+    margin-top: 2rem;
+  }
 `;
 
-// Titre
+const DetailsHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 1.3rem;
+  margin-bottom: 1.2rem;
+  border-bottom: 1px solid #e7e2d9;
+`;
+
+const HeaderContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+`;
+
+const Eyebrow = styled.span`
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #9b805e;
+  font-weight: 600;
+`;
+
 const DetailsTitle = styled.h3`
-  font-size: 1.15rem;
-  font-weight: 700;
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  margin-bottom: 1rem;
-  color: #111;
+  gap: 0.55rem;
+  margin: 0;
+  color: #171714;
+  font-family: Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+
+  svg {
+    color: #a48763;
+    stroke-width: 1.4;
+  }
 `;
 
-// Liste des détails
+const HeaderNumber = styled.span`
+  font-family: Georgia, serif;
+  font-size: 2rem;
+  color: #d8cbb9;
+  line-height: 1;
+`;
+
 const DetailsList = styled.ul`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 2rem;
   list-style: none;
   padding: 0;
   margin: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 0.8rem;
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
-// Item avec hover subtil
 const DetailItem = styled.li`
   display: flex;
   justify-content: space-between;
-  padding: 0.6rem 0.8rem;
-  border-radius: 6px;
-  background: #fafafa;
-  font-size: 0.95rem;
-  font-weight: 500;
-  transition: background 0.2s;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid #ebe7e0;
+  transition: padding 0.2s ease;
 
   &:hover {
-    background: #f0f0f0;
+    padding-left: 0.25rem;
   }
 
   span:first-child {
-    color: #555;
+    color: #858078;
+    font-size: 0.83rem;
+    font-weight: 400;
   }
 
   span:last-child {
+    color: #24231f;
+    font-size: 0.85rem;
     font-weight: 600;
-    color: #111;
+    text-align: right;
+    max-width: 60%;
+    overflow-wrap: anywhere;
   }
 `;
 
+const DetailsFooter = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1.3rem;
+  color: #999187;
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+
+  svg {
+    color: #a48763;
+    flex-shrink: 0;
+  }
+`;
+
+const labels = {
+  matiere: "Matière",
+  poids: "Poids",
+  coupe: "Coupe",
+  saison: "Saison",
+  entretien: "Entretien",
+  paysFabrication: "Pays de fabrication",
+};
+
 export default function ProductDetailsInfo({ details }) {
-  if (!details) return null;
+  if (!details || typeof details !== "object") return null;
+
+  const entries = Object.entries(details).filter(
+    ([, value]) =>
+      value !== null && value !== undefined && String(value).trim() !== "",
+  );
+
+  if (entries.length === 0) return null;
 
   return (
     <DetailsWrapper>
-      <DetailsTitle>
-        <FiInfo size={18} />
-        Détails du produit
-      </DetailsTitle>
+      <DetailsHeader>
+        <HeaderContent>
+          <Eyebrow>Informations & caractéristiques</Eyebrow>
+          <DetailsTitle>
+            <FiInfo size={19} />
+            Détails du produit
+          </DetailsTitle>
+        </HeaderContent>
+
+        <HeaderNumber>{String(entries.length).padStart(2, "0")}</HeaderNumber>
+      </DetailsHeader>
 
       <DetailsList>
-        {Object.entries(details).map(([key, value]) => {
-          if (!value) return null;
-
-          const label = {
-            matiere: "Matière",
-            poids: "Poids",
-            coupe: "Coupe",
-            saison: "Saison",
-            entretien: "Entretien",
-            paysFabrication: "Pays de fabrication",
-          }[key] || key;
-
-          return (
-            <DetailItem key={key}>
-              <span>{label}</span>
-              <span>{value}</span>
-            </DetailItem>
-          );
-        })}
+        {entries.map(([key, value]) => (
+          <DetailItem key={key}>
+            <span>{labels[key] || key}</span>
+            <span>{String(value)}</span>
+          </DetailItem>
+        ))}
       </DetailsList>
+
+      <DetailsFooter>
+        <FiArrowUpRight size={14} />
+        Les caractéristiques de cet article
+      </DetailsFooter>
     </DetailsWrapper>
   );
 }
