@@ -1,44 +1,84 @@
-// src/components/Comments.jsx
 import { useState } from "react";
 import styled from "styled-components";
-import { FiStar, FiUser } from "react-icons/fi";
-import { Link } from "react-router-dom"; // <- pour créer des liens
+import { FiStar, FiUser, FiMessageCircle, FiSend } from "react-icons/fi";
+import { Link } from "react-router-dom";
 
 /* =============================
-   WRAPPER ET STYLES
+   WRAPPER
 ============================= */
 
 const Wrapper = styled.section`
-  margin-top: 5rem;
-  padding-top: 3rem;
-  border-top: 1px solid #eee;
   width: 100%;
+  margin-top: 5rem;
+  padding: 3rem 0;
+  border-top: 1px solid #e9e4dc;
+  color: #211f1b;
 `;
 
-const Heading = styled.h3`
-  font-size: 1.2rem;
-  font-weight: 400;
-  letter-spacing: 1px;
+/* =============================
+   HEADER
+============================= */
+
+const Header = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
   margin-bottom: 2.5rem;
 `;
 
-const CommentCard = styled.div`
+const HeaderLeft = styled.div`
   display: flex;
-  gap: 1rem;
-  padding: 1.8rem 0;
-  border-bottom: 1px solid #f2f2f2;
+  flex-direction: column;
+  gap: 0.6rem;
+`;
+
+const Eyebrow = styled.span`
+  color: #a58a68;
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: 600;
+`;
+
+const Heading = styled.h3`
+  margin: 0;
+  font-family: Georgia, serif;
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  font-weight: 400;
+  letter-spacing: -0.04em;
+`;
+
+const ReviewCount = styled.span`
+  color: #9a9287;
+  font-size: 0.8rem;
+`;
+
+/* =============================
+   COMMENT CARD
+============================= */
+
+const CommentCard = styled.article`
+  display: flex;
+  gap: 1.2rem;
+  padding: 1.7rem 0;
+  border-bottom: 1px solid #eeeae4;
+
+  @media (max-width: 480px) {
+    gap: 0.8rem;
+  }
 `;
 
 const Avatar = styled.div`
-  width: 44px;
-  height: 44px;
-  min-width: 44px;
+  width: 43px;
+  height: 43px;
+  min-width: 43px;
   border-radius: 50%;
-  background: #f4f4f4;
+  background: #eee9e0;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #777;
+  color: #8c7557;
 `;
 
 const Content = styled.div`
@@ -50,85 +90,186 @@ const TopRow = styled.div`
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 0.7rem;
 `;
 
 const UserName = styled.span`
-  font-weight: 500;
-  font-size: 0.9rem;
+  color: #24221e;
+  font-size: 0.87rem;
+  font-weight: 600;
 `;
 
 const DateText = styled.span`
-  font-size: 0.75rem;
-  color: #888;
+  color: #a39c92;
+  font-size: 0.72rem;
 `;
 
 const Stars = styled.div`
   display: flex;
-  gap: 4px;
+  gap: 3px;
+  color: #b18e5d;
 `;
 
 const Message = styled.p`
-  margin-top: 8px;
-  font-size: 0.95rem;
-  line-height: 1.6;
-  color: #444;
+  margin: 0.8rem 0 0;
+  color: #5f5a52;
+  font-size: 0.9rem;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
 `;
 
-const Form = styled.form`
-  margin-top: 3rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  width: 100%;
+/* =============================
+   EMPTY STATE
+============================= */
 
-  @media (min-width: 768px) {
-    flex-direction: row;
-    align-items: stretch;
+const EmptyState = styled.div`
+  padding: 2.5rem 1.5rem;
+  background: #faf9f6;
+  border: 1px solid #eee9e0;
+  text-align: center;
+  color: #898176;
+
+  svg {
+    color: #b18e5d;
+    margin-bottom: 0.8rem;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.85rem;
+    line-height: 1.7;
   }
 `;
 
-const InputContainer = styled.div`
-  flex: 1;
-  width: 100%;
+/* =============================
+   FORM
+============================= */
+
+const FormContainer = styled.div`
+  margin-top: 3.5rem;
+  padding: 2rem;
+  background: #faf9f6;
+  border: 1px solid #eee9e0;
+
+  @media (max-width: 600px) {
+    padding: 1.3rem;
+  }
+`;
+
+const FormHeading = styled.div`
+  margin-bottom: 1.5rem;
+
+  h4 {
+    margin: 0 0 0.5rem;
+    font-family: Georgia, serif;
+    font-size: 1.35rem;
+    font-weight: 400;
+  }
+
+  p {
+    margin: 0;
+    color: #91897e;
+    font-size: 0.8rem;
+  }
+`;
+
+const Form = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 1.3rem;
 `;
 
 const Textarea = styled.textarea`
   width: 100%;
   box-sizing: border-box;
-  border: 1px solid #ddd;
-  padding: 14px;
-  font-size: 16px;
+  min-height: 125px;
+  padding: 1rem;
   resize: vertical;
-  min-height: 100px;
+  border: 1px solid #e5dfd5;
   background: #fff;
+  color: #25231f;
+  font-family: inherit;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  outline: none;
+  transition: border 0.25s ease;
+
+  &::placeholder {
+    color: #aaa399;
+  }
 
   &:focus {
-    outline: none;
-    border-color: #111;
+    border-color: #a58a68;
   }
+`;
+
+const RatingContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+`;
+
+const RatingLabel = styled.span`
+  font-size: 0.78rem;
+  color: #777066;
 `;
 
 const StarSelector = styled.div`
   display: flex;
-  gap: 6px;
-  margin-top: 10px;
+  gap: 7px;
+`;
+
+const StarButton = styled.button`
+  display: flex;
+  padding: 2px;
+  border: none;
+  background: transparent;
+  color: #b18e5d;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: scale(1.15);
+  }
+
+  &:focus-visible {
+    outline: 2px solid #a58a68;
+    outline-offset: 3px;
+  }
+`;
+
+const FormFooter = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
 `;
 
 const Button = styled.button`
-  min-width: 140px;
-  white-space: nowrap;
-  padding: 14px 24px;
-  border: 1px solid #111;
-  background: #111;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 170px;
+  padding: 14px 22px;
+  border: 1px solid #171714;
+  background: #171714;
   color: #fff;
-  font-size: 0.85rem;
-  letter-spacing: 1px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   cursor: pointer;
   transition: all 0.3s ease;
 
-  &:hover {
-    background: #000;
+  &:hover:not(:disabled) {
+    background: #a58a68;
+    border-color: #a58a68;
   }
 
   &:disabled {
@@ -140,11 +281,17 @@ const Button = styled.button`
 const AlertMessage = styled.div`
   margin-top: 1rem;
   padding: 1rem;
-  background: #fff3cd;
-  border: 1px solid #ffeeba;
-  color: #856404;
-  border-radius: 5px;
-  font-size: 0.9rem;
+  background: ${({ $success }) => ($success ? "#edf3eb" : "#f8eee8")};
+  border: 1px solid ${({ $success }) => ($success ? "#d5e4d0" : "#ead6c9")};
+  color: ${({ $success }) => ($success ? "#476343" : "#87543d")};
+  font-size: 0.83rem;
+  line-height: 1.6;
+
+  a {
+    color: inherit;
+    font-weight: 600;
+    text-decoration: underline;
+  }
 `;
 
 /* =============================
@@ -155,15 +302,20 @@ export default function Comments({ commentaires = [], produitId, userId }) {
   const [commentList, setCommentList] = useState(commentaires);
   const [texte, setTexte] = useState("");
   const [note, setNote] = useState(0);
-  const [hover, setHover] = useState(null);
+  const [hover, setHover] = useState(0);
   const [loading, setLoading] = useState(false);
   const [alert, setAlert] = useState("");
+  const [success, setSuccess] = useState(false);
 
   const formatDate = (date) => {
-    return new Date(date).toLocaleDateString("fr-FR", {
-      year: "numeric",
-      month: "long",
+    const parsedDate = new Date(date);
+
+    if (Number.isNaN(parsedDate.getTime())) return "";
+
+    return parsedDate.toLocaleDateString("fr-FR", {
       day: "numeric",
+      month: "long",
+      year: "numeric",
     });
   };
 
@@ -172,27 +324,31 @@ export default function Comments({ commentaires = [], produitId, userId }) {
 
     const token = localStorage.getItem("token");
 
-    // Si l'utilisateur n'est pas connecté
+    setAlert("");
+    setSuccess(false);
+
     if (!token) {
       setAlert(
         <>
-          Vous devez être connecté pour publier un commentaire.{" "}
-          <Link to="/login" style={{ fontWeight: "bold", textDecoration: "underline" }}>
-            Se connecter
-          </Link>{" "}
-          ou{" "}
-          <Link to="/signup" style={{ fontWeight: "bold", textDecoration: "underline" }}>
-            créer un compte
-          </Link>.
-        </>
+          Vous devez être connecté pour publier un avis.{" "}
+          <Link to="/login">Se connecter</Link> ou{" "}
+          <Link to="/signup">créer un compte</Link>.
+        </>,
       );
       return;
     }
 
-    if (!texte || note === 0) return;
+    if (!texte.trim() || note === 0) {
+      setAlert("Veuillez écrire votre avis et sélectionner une note.");
+      return;
+    }
+
+    if (!produitId) {
+      setAlert("Impossible d'identifier ce produit.");
+      return;
+    }
 
     setLoading(true);
-    setAlert("");
 
     try {
       const res = await fetch(
@@ -204,20 +360,27 @@ export default function Comments({ commentaires = [], produitId, userId }) {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            message: texte,
+            message: texte.trim(),
             rating: note,
             user: userId || "Anonyme",
           }),
-        }
+        },
       );
 
-      const newComment = await res.json();
-      setCommentList((prev) => [newComment, ...prev]);
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Impossible de publier votre avis.");
+      }
+
+      setCommentList((prev) => [data, ...prev]);
       setTexte("");
       setNote(0);
+      setSuccess(true);
+      setAlert("Merci pour votre avis ! Votre commentaire a bien été publié.");
     } catch (err) {
       console.error(err);
-      setAlert("Une erreur est survenue. Veuillez réessayer.");
+      setAlert(err.message || "Une erreur est survenue. Veuillez réessayer.");
     } finally {
       setLoading(false);
     }
@@ -225,66 +388,116 @@ export default function Comments({ commentaires = [], produitId, userId }) {
 
   return (
     <Wrapper>
-      <Heading>Commentaires ({commentList.length})</Heading>
+      <Header>
+        <HeaderLeft>
+          <Eyebrow>Votre expérience</Eyebrow>
+          <Heading>Avis & commentaires</Heading>
+          <ReviewCount>
+            {commentList.length} avis client{commentList.length > 1 ? "s" : ""}
+          </ReviewCount>
+        </HeaderLeft>
+      </Header>
 
-      {commentList.map((c, i) => (
-        <CommentCard key={i}>
-          <Avatar>
-            <FiUser size={18} />
-          </Avatar>
+      {/* LISTE DES AVIS */}
 
-          <Content>
-            <TopRow>
-              <UserName>{c.user || "Anonyme"}</UserName>
-              <DateText>{c.createdAt ? formatDate(c.createdAt) : ""}</DateText>
-              <Stars>
-                {[...Array(5)].map((_, index) => (
-                  <FiStar
-                    key={index}
-                    size={14}
-                    fill={index < c.rating ? "#111" : "transparent"}
-                  />
-                ))}
-              </Stars>
-            </TopRow>
+      {commentList.length > 0 ? (
+        commentList.map((c, i) => (
+          <CommentCard key={c._id || i}>
+            <Avatar>
+              <FiUser size={19} />
+            </Avatar>
 
-            <Message>{c.message}</Message>
-          </Content>
-        </CommentCard>
-      ))}
+            <Content>
+              <TopRow>
+                <UserName>{c.user || "Client NUMA"}</UserName>
 
-      <Form onSubmit={handleSubmit}>
-        <InputContainer>
+                {c.createdAt && <DateText>{formatDate(c.createdAt)}</DateText>}
+
+                <Stars aria-label={`Note : ${c.rating} sur 5`}>
+                  {[...Array(5)].map((_, index) => (
+                    <FiStar
+                      key={index}
+                      size={13}
+                      fill={
+                        index < Number(c.rating)
+                          ? "currentColor"
+                          : "transparent"
+                      }
+                    />
+                  ))}
+                </Stars>
+              </TopRow>
+
+              <Message>{c.message}</Message>
+            </Content>
+          </CommentCard>
+        ))
+      ) : (
+        <EmptyState>
+          <FiMessageCircle size={25} />
+          <p>
+            Aucun avis pour le moment.
+            <br />
+            Soyez le premier à partager votre expérience.
+          </p>
+        </EmptyState>
+      )}
+
+      {/* FORMULAIRE */}
+
+      <FormContainer>
+        <FormHeading>
+          <h4>Partagez votre expérience</h4>
+          <p>Votre avis aide les autres clients à faire leur choix.</p>
+        </FormHeading>
+
+        <Form onSubmit={handleSubmit}>
           <Textarea
-            placeholder="Écrire un commentaire..."
+            placeholder="Que pensez-vous de cet article ?"
             value={texte}
             onChange={(e) => setTexte(e.target.value)}
+            maxLength={1500}
           />
 
-          <StarSelector>
-            {[...Array(5)].map((_, index) => {
-              const ratingValue = index + 1;
-              return (
-                <FiStar
-                  key={index}
-                  size={22}
-                  style={{ cursor: "pointer" }}
-                  onClick={() => setNote(ratingValue)}
-                  onMouseEnter={() => setHover(ratingValue)}
-                  onMouseLeave={() => setHover(null)}
-                  fill={ratingValue <= (hover || note) ? "#111" : "transparent"}
-                />
-              );
-            })}
-          </StarSelector>
+          <RatingContainer>
+            <RatingLabel>Votre note</RatingLabel>
 
-          {alert && <AlertMessage>{alert}</AlertMessage>}
-        </InputContainer>
+            <StarSelector>
+              {[1, 2, 3, 4, 5].map((value) => (
+                <StarButton
+                  key={value}
+                  type="button"
+                  aria-label={`Donner ${value} étoile${value > 1 ? "s" : ""}`}
+                  aria-pressed={note === value}
+                  onClick={() => setNote(value)}
+                  onMouseEnter={() => setHover(value)}
+                  onMouseLeave={() => setHover(0)}
+                >
+                  <FiStar
+                    size={25}
+                    fill={
+                      value <= (hover || note) ? "currentColor" : "transparent"
+                    }
+                  />
+                </StarButton>
+              ))}
+            </StarSelector>
+          </RatingContainer>
 
-        <Button type="submit" disabled={loading}>
-          {loading ? "Envoi..." : "Publier"}
-        </Button>
-      </Form>
+          {alert && <AlertMessage $success={success}>{alert}</AlertMessage>}
+
+          <FormFooter>
+            <span style={{ color: "#a39c92", fontSize: "0.72rem" }}>
+              {texte.length}/1500 caractères
+            </span>
+
+            <Button type="submit" disabled={loading}>
+              {loading ? "Publication..." : "Publier mon avis"}
+              {!loading && <FiSend size={15} />}
+            </Button>
+          </FormFooter>
+        </Form>
+      </FormContainer>
     </Wrapper>
   );
 }

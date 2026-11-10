@@ -315,7 +315,7 @@ export default function Recommendations({ currentId }) {
       const maxScroll =
         viewport.scrollWidth - viewport.clientWidth;
 
-      if (viewport.scrollLeft >= maxScroll - 5) {
+      if (viewport.scrollLeft >= maxScroll - 3) {
         viewport.scrollTo({
           left: 0,
           behavior: "smooth",
