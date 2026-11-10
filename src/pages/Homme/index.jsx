@@ -14,6 +14,7 @@ import {
 import { FaHeart } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { ThemeContext, PanierContext } from "../../Utils/Context";
+
 import FavoriteButtons from "../../Components/FavoriteButton";
 /* =========================================================
    ANIMATIONS

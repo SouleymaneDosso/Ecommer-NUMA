@@ -23,7 +23,10 @@ const fadeIn = keyframes`
 `;
 
 const ButtonWrapper = styled.div`
-  position: relative;
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 20;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -157,7 +160,10 @@ const FavoriteButtons = ({ active, onClick }) => {
 
   const token = localStorage.getItem("token");
 
-  const handleClick = () => {
+  const handleClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
     if (!token) {
       setShowToast(true);
 
@@ -169,7 +175,7 @@ const FavoriteButtons = ({ active, onClick }) => {
     }
 
     setAnimate(true);
-    onClick?.();
+    onClick?.(e);
 
     setTimeout(() => {
       setAnimate(false);
