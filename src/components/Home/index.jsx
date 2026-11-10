@@ -522,6 +522,7 @@ const Campaign = styled.section`
   overflow: hidden;
 
   .visual {
+    position: relative;
     width: 100%;
     height: 100%;
     min-height: 650px;
@@ -531,12 +532,15 @@ const Campaign = styled.section`
   }
 
   .visual img {
+    position: absolute;
+    inset: 0;
     display: block;
     width: 100%;
     height: 100%;
-    min-height: 650px;
+    min-height: 100%;
     object-fit: cover;
     object-position: center;
+    transition: transform 0.8s ease;
   }
 
   &:hover .visual img {
@@ -593,8 +597,10 @@ const Campaign = styled.section`
     grid-template-columns: 1fr;
 
     .visual {
-      min-height: 430px;
+      height: 500px;
+      min-height: 500px;
     }
+
     .copy {
       padding: 60px 8%;
     }
@@ -606,13 +612,17 @@ const Campaign = styled.section`
 ===================================================== */
 
 const VideoSection = styled.section`
-  padding: 110px 0;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
 
   .video-shell {
     position: relative;
     width: 100%;
-    height: min(780px, 75vw);
-    min-height: 400px;
+    height: 100vh;
+    height: 100svh;
+    min-height: 500px;
     margin: 0;
     padding: 0;
     overflow: hidden;
@@ -632,6 +642,7 @@ const VideoSection = styled.section`
 
   .controls {
     position: absolute;
+    z-index: 2;
     left: 25px;
     right: 25px;
     bottom: 25px;
@@ -664,7 +675,7 @@ const VideoSection = styled.section`
     justify-content: space-between;
     align-items: center;
     gap: 20px;
-    margin-top: 25px;
+    padding: 25px 5%;
   }
 
   h3 {
@@ -697,11 +708,11 @@ const VideoSection = styled.section`
   }
 
   @media (max-width: 650px) {
-    padding: 75px 0;
     .video-shell {
-      height: 65svh;
-      min-height: 380px;
+      height: 100svh;
+      min-height: 450px;
     }
+
     .video-title {
       align-items: flex-start;
       flex-direction: column;
@@ -714,41 +725,47 @@ const VideoSection = styled.section`
 ===================================================== */
 
 const BestsellerSection = styled.section`
-  padding: 100px 0;
+  width: 100%;
+  margin: 0;
+  padding: 0;
   background: ${({ $dark }) => ($dark ? "#222220" : "#E8E3D9")};
 
   .best-grid {
     display: grid;
-    grid-template-columns: 1.15fr 0.85fr;
-    gap: 45px;
-    align-items: center;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    align-items: stretch;
+    width: 100%;
   }
 
   .best-main {
-  position: relative;
-  display: block;
-  width: 100%;
-  height: 680px;
-  overflow: hidden;
-  padding: 0;
-  margin: 0;
-}
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 680px;
+    overflow: hidden;
+    padding: 0;
+    margin: 0;
+  }
 
-.best-main img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  transition: transform .8s;
-}
+  .best-main img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    transition: transform 0.8s;
+  }
 
   .best-main:hover img {
     transform: scale(1.045);
   }
 
   .best-copy {
-    padding: 35px 0;
+    padding: 60px 8%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
 
   .best-copy h2 {
@@ -803,13 +820,16 @@ const BestsellerSection = styled.section`
   }
 
   @media (max-width: 800px) {
-    padding: 75px 0;
     .best-grid {
       grid-template-columns: 1fr;
-      gap: 15px;
     }
+
     .best-main {
-      height: 520px;
+      height: 550px;
+    }
+
+    .best-copy {
+      padding: 45px 7%;
     }
   }
 `;
@@ -883,18 +903,18 @@ const WhatsApp = styled.a`
   &:hover {
     transform: translateY(-5px) scale(1.05);
   }
-    img,
-video {
-  max-width: 100%;
-}
+  img,
+  video {
+    max-width: 100%;
+  }
 
-img {
-  vertical-align: middle;
-}
+  img {
+    vertical-align: middle;
+  }
 
-video {
-  background: #171715;
-}
+  video {
+    background: #171715;
+  }
 `;
 
 /* =====================================================
@@ -1269,167 +1289,162 @@ export default function HomePremium() {
 
         <div className="copy">
           <small>03 — L'ESPRIT NUMA</small>
-          <h2>La différence se joue dans les détails.</h2>
+          <h2>Nos promotions</h2>
           <p>
-            Chaque pièce raconte une histoire. Une recherche de lignes, de
-            matières et de finitions qui donnent du sens à votre style.
+            Découvrez nos offres et promotions sur une sélection de pièces.
           </p>
-          <Link to="/collections">
-            Explorer notre univers <ArrowRight size={17} />
+          <Link to="/promo">
+            Explorer les promotions <ArrowRight size={17} />
           </Link>
         </div>
-      </Campaign>
+      </Campaign> 
 
       {/* VIDEO */}
 
       <VideoSection>
-        <Container>
-          <SectionHeading>
-            <div>
-              <Eyebrow>NUMA EN MOUVEMENT</Eyebrow>
-              <h2>
-                Une autre façon
-                <br />
-                de voir la mode.
-              </h2>
+        <SectionHeading>
+          <div>
+            <Eyebrow>NUMA EN MOUVEMENT</Eyebrow>
+            <h2>
+              Une autre façon
+              <br />
+              de voir la mode.
+            </h2>
+          </div>
+          <p>
+            Découvrez nos créations autrement, à travers nos vidéos et nos
+            campagnes.
+          </p>
+        </SectionHeading>
+
+        {activeVideo ? (
+          <>
+            <div className="video-shell">
+              <video
+                ref={videoRef}
+                key={activeVideo._id}
+                src={activeVideo.videoUrl}
+                autoPlay
+                muted={muted}
+                playsInline
+                preload="metadata"
+                onEnded={nextVideo}
+                onPlay={() => setPlaying(true)}
+                onPause={() => setPlaying(false)}
+              />
+
+              <div className="controls">
+                <div style={{ display: "flex", gap: 10 }}>
+                  <button onClick={togglePlay} aria-label="Lecture ou pause">
+                    {playing ? <Pause size={18} /> : <Play size={18} />}
+                  </button>
+                  <button onClick={toggleMute} aria-label="Son">
+                    {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+                  </button>
+                </div>
+
+                {activeVideos.length > 1 && (
+                  <button onClick={nextVideo} aria-label="Vidéo suivante">
+                    <ArrowRight size={19} />
+                  </button>
+                )}
+              </div>
             </div>
-            <p>
-              Découvrez nos créations autrement, à travers nos vidéos et nos
-              campagnes.
-            </p>
-          </SectionHeading>
 
-          {activeVideo ? (
-            <>
-              <div className="video-shell">
-                <video
-                  ref={videoRef}
-                  key={activeVideo._id}
-                  src={activeVideo.videoUrl}
-                  autoPlay
-                  muted={muted}
-                  playsInline
-                  preload="metadata"
-                  onEnded={nextVideo}
-                  onPlay={() => setPlaying(true)}
-                  onPause={() => setPlaying(false)}
-                />
-
-                <div className="controls">
-                  <div style={{ display: "flex", gap: 10 }}>
-                    <button onClick={togglePlay} aria-label="Lecture ou pause">
-                      {playing ? <Pause size={18} /> : <Play size={18} />}
-                    </button>
-                    <button onClick={toggleMute} aria-label="Son">
-                      {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
-                    </button>
-                  </div>
-
-                  {activeVideos.length > 1 && (
-                    <button onClick={nextVideo} aria-label="Vidéo suivante">
-                      <ArrowRight size={19} />
-                    </button>
-                  )}
-                </div>
+            <div className="video-title">
+              <div>
+                <Eyebrow>COLLECTION {videoGenre.toUpperCase()}</Eyebrow>
+                <h3>{activeVideo.produit?.title || "L'univers NUMA"}</h3>
               </div>
 
-              <div className="video-title">
-                <div>
-                  <Eyebrow>COLLECTION {videoGenre.toUpperCase()}</Eyebrow>
-                  <h3>{activeVideo.produit?.title || "L'univers NUMA"}</h3>
-                </div>
-
-                <div className="genres">
-                  {["homme", "femme"].map((genre) => (
-                    <button
-                      key={genre}
-                      className={videoGenre === genre ? "active" : ""}
-                      onClick={() => setVideoGenre(genre)}
-                    >
-                      {genre}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </>
-          ) : (
-            <div
-              style={{
-                padding: 80,
-                textAlign: "center",
-                background: "var(--surface)",
-                color: "var(--muted)",
-              }}
-            >
-              Les vidéos de cet univers arrivent bientôt.
-              <div className="genres" style={{ marginTop: 25 }}>
+              <div className="genres">
                 {["homme", "femme"].map((genre) => (
                   <button
                     key={genre}
-                    onClick={() => setVideoGenre(genre)}
                     className={videoGenre === genre ? "active" : ""}
+                    onClick={() => setVideoGenre(genre)}
                   >
                     {genre}
                   </button>
                 ))}
               </div>
             </div>
-          )}
-        </Container>
+          </>
+        ) : (
+          <div
+            style={{
+              padding: 80,
+              textAlign: "center",
+              background: "var(--surface)",
+              color: "var(--muted)",
+            }}
+          >
+            Les vidéos de cet univers arrivent bientôt.
+            <div className="genres" style={{ marginTop: 25 }}>
+              {["homme", "femme"].map((genre) => (
+                <button
+                  key={genre}
+                  onClick={() => setVideoGenre(genre)}
+                  className={videoGenre === genre ? "active" : ""}
+                >
+                  {genre}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </VideoSection>
 
       {/* BEST SELLERS */}
 
       {bestSellers.length > 0 && (
         <BestsellerSection $dark={isDark}>
-          <Container>
-            <div className="best-grid">
-              <Link className="best-main" to={`/produit/${bestSellers[0]._id}`}>
-                <img
-                  src={media(bestSellers[0].images?.[0]?.url)}
-                  alt={bestSellers[0].title}
-                  loading="lazy"
-                />
-              </Link>
+          <div className="best-grid">
+            <Link className="best-main" to={`/produit/${bestSellers[0]._id}`}>
+              <img
+                src={media(bestSellers[0].images?.[0]?.url)}
+                alt={bestSellers[0].title}
+                loading="lazy"
+              />
+            </Link>
 
-              <div className="best-copy">
-                <Eyebrow>LES PLUS APPRÉCIÉS</Eyebrow>
-                <h2>Les incontournables NUMA.</h2>
-                <p>
-                  Les pièces qui séduisent, inspirent et deviennent rapidement
-                  indispensables.
-                </p>
+            <div className="best-copy">
+              <Eyebrow>LES PLUS APPRÉCIÉS</Eyebrow>
+              <h2>Les incontournables NUMA.</h2>
+              <p>
+                Les pièces qui séduisent, inspirent et deviennent rapidement
+                indispensables.
+              </p>
 
-                <TextLink to="/collections">
-                  Découvrir les favoris <ArrowRight size={16} />
-                </TextLink>
+              <TextLink to="/new">
+                Découvrir les nouveautés <ArrowRight size={16} />
+              </TextLink>
 
-                <div className="mini-list">
-                  {bestSellers.slice(0, 4).map((product) => (
-                    <Link
-                      className="mini"
-                      key={product._id}
-                      to={`/produit/${product._id}`}
-                    >
-                      <img
-                        src={media(product.images?.[0]?.url)}
-                        alt={product.title}
-                        loading="lazy"
-                      />
-                      <div>
-                        <strong>{product.title}</strong>
-                        <small>
-                          {Number(product.price || 0).toLocaleString("fr-FR")}{" "}
-                          FCFA
-                        </small>
-                      </div>
-                      <ArrowUpRight size={18} />
-                    </Link>
-                  ))}
-                </div>
+              <div className="mini-list">
+                {bestSellers.slice(0, 4).map((product) => (
+                  <Link
+                    className="mini"
+                    key={product._id}
+                    to={`/produit/${product._id}`}
+                  >
+                    <img
+                      src={media(product.images?.[0]?.url)}
+                      alt={product.title}
+                      loading="lazy"
+                    />
+                    <div>
+                      <strong>{product.title}</strong>
+                      <small>
+                        {Number(product.price || 0).toLocaleString("fr-FR")}{" "}
+                        FCFA
+                      </small>
+                    </div>
+                    <ArrowUpRight size={18} />
+                  </Link>
+                ))}
               </div>
             </div>
-          </Container>
+          </div>
         </BestsellerSection>
       )}
 
