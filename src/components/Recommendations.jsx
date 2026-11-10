@@ -1,21 +1,8 @@
 
-import { useEffect, useState } from "react";
-import styled, { keyframes } from "styled-components";
+import { useEffect, useRef, useState } from "react";
+import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { FiArrowLeft, FiArrowRight } from "react-icons/fi";
-
-/* =============================
-   ANIMATION
-============================= */
-
-const marquee = keyframes`
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-`;
 
 /* =============================
    SECTION
@@ -86,8 +73,8 @@ const Controls = styled.div`
 `;
 
 const ArrowButton = styled.button`
-  width: 42px;
-  height: 42px;
+  width: 43px;
+  height: 43px;
   border: 1px solid #514b43;
   background: transparent;
   color: #f5f1e9;
@@ -102,6 +89,11 @@ const ArrowButton = styled.button`
     border-color: #b99a72;
     color: #111;
   }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
 `;
 
 /* =============================
@@ -110,37 +102,40 @@ const ArrowButton = styled.button`
 
 const CarouselViewport = styled.div`
   width: 100%;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
   cursor: grab;
+  overscroll-behavior-x: contain;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 
   &:active {
     cursor: grabbing;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    scroll-behavior: auto;
   }
 `;
 
 const Track = styled.div`
   display: flex;
-  width: max-content;
   gap: 22px;
-  padding: 0 5%;
-  animation: ${marquee} ${({ $duration }) => $duration}s linear infinite;
-
-  &:hover {
-    animation-play-state: paused;
-  }
-
-  &[data-paused="true"] {
-    animation-play-state: paused;
-  }
+  width: max-content;
+  padding: 0 5% 10px;
 
   @media (max-width: 600px) {
     gap: 14px;
-    padding: 0 1rem;
+    padding: 0 1rem 10px;
   }
 `;
 
 /* =============================
-   PRODUCT CARD
+   CARD
 ============================= */
 
 const Card = styled.article`
@@ -185,6 +180,10 @@ const Badge = styled.span`
   font-weight: 600;
 `;
 
+/* =============================
+   PRODUCT INFO
+============================= */
+
 const ProductInfo = styled.div`
   padding-top: 1rem;
   display: flex;
@@ -208,10 +207,6 @@ const Price = styled.span`
   font-weight: 500;
 `;
 
-/* =============================
-   BOTTOM LINE
-============================= */
-
 const BottomLine = styled.div`
   height: 1px;
   margin: 3rem 5% 0;
@@ -225,7 +220,16 @@ const BottomLine = styled.div`
 export default function Recommendations({ currentId }) {
   const [produits, setProduits] = useState([]);
   const [paused, setPaused] = useState(false);
+
+  const viewportRef = useRef(null);
+  const intervalRef = useRef(null);
+  const resumeTimeoutRef = useRef(null);
+
   const navigate = useNavigate();
+
+  /* =============================
+     FETCH
+  ============================= */
 
   useEffect(() => {
     if (!currentId) {
@@ -263,14 +267,91 @@ export default function Recommendations({ currentId }) {
     return () => controller.abort();
   }, [currentId]);
 
-  if (!produits.length) return null;
+  /* =============================
+     SCROLL BY
+  ============================= */
+
+  const scrollCarousel = (direction) => {
+    const viewport = viewportRef.current;
+
+    if (!viewport) return;
+
+    const distance = viewport.clientWidth * 0.75;
+
+    viewport.scrollBy({
+      left: direction * distance,
+      behavior: "smooth",
+    });
+
+    pauseTemporarily();
+  };
+
+  /* =============================
+     PAUSE / RESUME
+  ============================= */
+
+  const pauseTemporarily = () => {
+    setPaused(true);
+
+    clearTimeout(resumeTimeoutRef.current);
+
+    resumeTimeoutRef.current = setTimeout(() => {
+      setPaused(false);
+    }, 4000);
+  };
+
+  /* =============================
+     AUTO SCROLL
+  ============================= */
+
+  useEffect(() => {
+    if (!produits.length || paused) return;
+
+    intervalRef.current = setInterval(() => {
+      const viewport = viewportRef.current;
+
+      if (!viewport) return;
+
+      const maxScroll =
+        viewport.scrollWidth - viewport.clientWidth;
+
+      if (viewport.scrollLeft >= maxScroll - 5) {
+        viewport.scrollTo({
+          left: 0,
+          behavior: "smooth",
+        });
+      } else {
+        viewport.scrollBy({
+          left: viewport.clientWidth * 0.55,
+          behavior: "smooth",
+        });
+      }
+    }, 3500);
+
+    return () => clearInterval(intervalRef.current);
+  }, [produits, paused]);
+
+  /* =============================
+     CLEANUP
+  ============================= */
+
+  useEffect(() => {
+    return () => {
+      clearInterval(intervalRef.current);
+      clearTimeout(resumeTimeoutRef.current);
+    };
+  }, []);
+
+  /* =============================
+     OPEN PRODUCT
+  ============================= */
 
   const openProduct = (id) => {
     navigate(`/produit/${id}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const duplicatedProducts = [...produits, ...produits];
+  if (!produits.length) return null;
 
   return (
     <Section>
@@ -283,34 +364,36 @@ export default function Recommendations({ currentId }) {
 
           <Controls>
             <ArrowButton
-              aria-label="Mettre en pause le carrousel"
-              onClick={() => setPaused(!paused)}
+              aria-label="Défiler vers la gauche"
+              onClick={() => scrollCarousel(-1)}
             >
-              {paused ? <FiArrowRight /> : <FiArrowLeft />}
+              <FiArrowLeft size={19} />
             </ArrowButton>
 
             <ArrowButton
-              aria-label="Reprendre le défilement"
-              onClick={() => setPaused(false)}
+              aria-label="Défiler vers la droite"
+              onClick={() => scrollCarousel(1)}
             >
-              <FiArrowRight />
+              <FiArrowRight size={19} />
             </ArrowButton>
           </Controls>
         </Header>
 
         <CarouselViewport
+          ref={viewportRef}
           onMouseEnter={() => setPaused(true)}
           onMouseLeave={() => setPaused(false)}
-          onTouchStart={() => setPaused(true)}
-          onTouchEnd={() => setPaused(false)}
+          onTouchStart={pauseTemporarily}
+          onWheel={pauseTemporarily}
+          onPointerDown={pauseTemporarily}
+          onKeyDown={pauseTemporarily}
+          tabIndex={0}
+          aria-label="Produits recommandés"
         >
-          <Track
-            $duration={Math.max(produits.length * 5, 20)}
-            data-paused={paused}
-          >
-            {duplicatedProducts.map((p, index) => (
+          <Track>
+            {produits.map((p) => (
               <Card
-                key={`${p._id}-${index}`}
+                key={p._id}
                 onClick={() => openProduct(p._id)}
               >
                 <ImageWrapper>
