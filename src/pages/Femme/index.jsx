@@ -161,7 +161,7 @@ const SearchInput = styled.input`
   color: ${({ $isdark }) => ($isdark ? "#fff" : "#171714")};
 
   outline: none;
-  font-size: 0.76rem;
+  font-size: 16px;
   transition: border 0.2s ease;
 
   &:focus {
