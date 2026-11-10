@@ -1,497 +1,884 @@
+
+import React, { useContext, useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import styled, { keyframes } from "styled-components";
+import styled, { keyframes, css } from "styled-components";
+
 import {
   FiShoppingBag,
   FiUser,
   FiSun,
   FiMoon,
   FiX,
-  FiHeart,
   FiSearch,
   FiMenu,
+  FiArrowUpRight,
 } from "react-icons/fi";
-import { useContext, useState, useEffect } from "react";
+
+import { FiBookmark } from "react-icons/fi";
+import { HiBookmark } from "react-icons/hi2";
+
 import { ThemeContext, PanierContext } from "../../Utils/Context";
 import { useTranslation } from "react-i18next";
 
-const HEADER_HEIGHT = 70;
-const TOPBAR_HEIGHT = 50; 
+const HEADER_HEIGHT = 76;
+const TOPBAR_HEIGHT = 50;
 
-// Animation fade + slide pour le menu entier
+/* =========================
+   ANIMATIONS
+========================= */
+
+const marquee = keyframes`
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+`;
+
 const fadeSlide = keyframes`
-from { opacity:0; transform:translateY(-30px); }
-to { opacity:1; transform:translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 `;
 
-// Animation fade + slide pour les liens
-const linkSlide = keyframes`
-from { opacity:0; transform:translateY(15px); }
-to { opacity:1; transform:translateY(0); }
+const menuReveal = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 `;
 
-// Animation TopBar slide out
-const topBarSlideOut = keyframes`
-  from { opacity: 1; transform: translateY(0); }
-  to { opacity: 0; transform: translateY(-100%); }
-`;
+/* =========================
+   TOP BAR
+========================= */
 
-// ================= Styled Components =================
-
-
-
-const HeaderWrapper = styled.header`
+const TopBar = styled.div`
   position: fixed;
-  top: ${({ $show, $topOffset }) =>
-    $show ? `${$topOffset}px` : `-${HEADER_HEIGHT}px`};
+  top: 0;
   left: 0;
   width: 100%;
-  height: ${HEADER_HEIGHT}px;
-  z-index: 999;
-
+  height: ${TOPBAR_HEIGHT}px;
+  z-index: 10001;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 1rem;
+  overflow: hidden;
+  color: #fff;
+  background: #171717;
+  font-size: 10px;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
 
-  transition:
-    top 0.35s ease,
-    background 0.3s ease,
-    color 0.3s ease;
-
-  background: ${({ $isdark, $hero, $scrolled }) =>
-    $hero && !$scrolled
-      ? "transparent"
-      : $isdark
-        ? "rgba(0,0,0,0.92)"
-        : "rgba(255,255,255,0.92)"};
-
-  box-shadow: ${({ $scrolled }) =>
-    $scrolled ? "0 6px 28px rgba(0,0,0,0.08)" : "none"};
-
-  color: ${({ $isdark }) => ($isdark ? "#fff" : "#111")};
+  @media (max-width: 768px) {
+    height: 46px;
+    font-size: 9px;
+    letter-spacing: 1px;
+  }
 `;
 
-const HeaderTop = styled.div`
-  width: 100%;
+const TopBarTrack = styled.div`
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  width: max-content;
+  white-space: nowrap;
+  animation: ${marquee} 28s linear infinite;
+
+  &:hover {
+    animation-play-state: paused;
+  }
 `;
 
-const Logo = styled(Link)`
-  font-weight: 700;
-  font-size: 1.3rem;
+const TopBarGroup = styled.div`
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+`;
+
+const TopBarMessage = styled(Link)`
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 35px;
+  color: #fff;
   text-decoration: none;
-  color: inherit;
+  transition: opacity 0.3s ease;
+
+  &:hover {
+    opacity: 0.7;
+  }
+
+  span {
+    color: #d6b982;
+    font-weight: 700;
+  }
+
+  @media (max-width: 768px) {
+    padding: 0 22px;
+    gap: 6px;
+  }
 `;
 
-const Actions = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  position: relative;
+const TopBarDot = styled.span`
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #d6b982;
+  flex-shrink: 0;
 `;
 
-const IconButton = styled.button`
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
+const CloseTopBar = styled.button`
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
   border: none;
   background: transparent;
-  color: inherit;
-
+  color: #fff;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-
-  cursor: pointer;
-  transition: transform 0.15s ease;
+  padding: 8px;
 
   &:hover {
-    transform: scale(1.1);
+    opacity: 0.6;
+  }
+`;
+
+/* =========================
+   HEADER
+========================= */
+
+const HeaderWrapper = styled.header`
+  position: fixed;
+  top: ${({ $hidden, $topBarVisible }) =>
+    $hidden
+      ? `-${HEADER_HEIGHT}px`
+      : $topBarVisible
+        ? `${TOPBAR_HEIGHT}px`
+        : "0"};
+  left: 0;
+  width: 100%;
+  height: ${HEADER_HEIGHT}px;
+  z-index: 10000;
+  transition:
+    top 0.4s ease,
+    background 0.35s ease,
+    box-shadow 0.35s ease,
+    border-color 0.35s ease;
+
+  background: ${({ $transparent, $isdark }) =>
+    $transparent
+      ? "transparent"
+      : $isdark
+        ? "rgba(255,255,255,0.94)"
+        : "rgba(20,20,20,0.94)"};
+
+  backdrop-filter: ${({ $transparent }) =>
+    $transparent ? "none" : "blur(18px)"};
+
+  border-bottom: ${({ $transparent, $isdark }) =>
+    $transparent
+      ? "1px solid transparent"
+      : $isdark
+        ? "1px solid rgba(0,0,0,0.06)"
+        : "1px solid rgba(255,255,255,0.09)"};
+
+  box-shadow: ${({ $transparent }) =>
+    $transparent ? "none" : "0 8px 35px rgba(0,0,0,0.045)"};
+
+  @media (max-width: 768px) {
+    height: 68px;
+    top: ${({ $hidden, $topBarVisible }) =>
+      $hidden
+        ? "-68px"
+        : $topBarVisible
+          ? "46px"
+          : "0"};
+  }
+`;
+
+const HeaderInner = styled.div`
+  width: min(1440px, 94%);
+  height: 100%;
+  margin: auto;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+
+  @media (max-width: 768px) {
+    width: 92%;
+    grid-template-columns: 1fr auto 1fr;
+  }
+`;
+
+/* =========================
+   NAVIGATION DESKTOP
+========================= */
+
+const DesktopNav = styled.nav`
+  display: flex;
+  align-items: center;
+  gap: 27px;
+
+  @media (max-width: 1100px) {
+    gap: 17px;
+  }
+
+  @media (max-width: 900px) {
+    display: none;
+  }
+`;
+
+const NavLink = styled(Link)`
+  position: relative;
+  color: ${({ $isdark }) => ($isdark ? "#202020" : "#fff")};
+  text-decoration: none;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  transition: opacity 0.3s ease;
+  padding: 8px 0;
+
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 2px;
+    width: 0;
+    height: 1px;
+    background: currentColor;
+    transition: width 0.3s ease;
+  }
+
+  &:hover::after {
+    width: 100%;
+  }
+
+  &:hover {
+    opacity: 0.65;
+  }
+`;
+
+/* =========================
+   LOGO
+========================= */
+
+const Logo = styled(Link)`
+  color: ${({ $isdark }) => ($isdark ? "#171717" : "#fff")};
+  text-decoration: none;
+  font-family: "Times New Roman", serif;
+  font-size: 34px;
+  font-weight: 500;
+  letter-spacing: 8px;
+  padding-left: 8px;
+  line-height: 1;
+
+  @media (max-width: 768px) {
+    font-size: 27px;
+    letter-spacing: 6px;
+  }
+`;
+
+/* =========================
+   ACTIONS
+========================= */
+
+const HeaderActions = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 19px;
+
+  @media (max-width: 768px) {
+    gap: 13px;
+  }
+`;
+
+const IconButton = styled.button`
+  position: relative;
+  border: none;
+  background: transparent;
+  color: ${({ $isdark }) => ($isdark ? "#202020" : "#fff")};
+  cursor: pointer;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 19px;
+  transition:
+    transform 0.3s ease,
+    opacity 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    opacity: 0.65;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 19px;
   }
 `;
 
 const CartCount = styled.span`
   position: absolute;
-  top: -6px;
-  right: -6px;
-  background: red;
-  color: white;
-  width: 18px;
-  height: 18px;
-  font-size: 11px;
+  top: -5px;
+  right: -7px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 50px;
+  background: #b89b68;
+  color: #fff;
+  font-size: 9px;
   font-weight: 700;
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
 `;
 
-const SearchWrapper = styled.div`
-  position: relative;
+const MobileMenuButton = styled(IconButton)`
+  display: none;
+
+  @media (max-width: 900px) {
+    display: flex;
+  }
+`;
+
+const DesktopOnly = styled.div`
+  display: flex;
+
+  @media (max-width: 900px) {
+    display: none;
+  }
+`;
+
+/* =========================
+   SEARCH
+========================= */
+
+const SearchPanel = styled.div`
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  padding: 24px 5%;
+  background: ${({ $isdark }) => ($isdark ? "#fff" : "#191919")};
+  border-top: 1px solid
+    ${({ $isdark }) =>
+      $isdark ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.08)"};
+  animation: ${fadeSlide} 0.3s ease both;
+`;
+
+const SearchForm = styled.form`
+  width: min(650px, 100%);
+  margin: auto;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid
+    ${({ $isdark }) =>
+      $isdark ? "rgba(0,0,0,0.3)" : "rgba(255,255,255,0.4)"};
 `;
 
 const SearchInput = styled.input`
-  position: absolute;
-  top: 50%;
-  right: 40px;
-  transform: translateY(-50%);
-
-  width: ${({ $open }) => ($open ? "200px" : "0")};
-  opacity: ${({ $open }) => ($open ? 1 : 0)};
-  padding: ${({ $open }) => ($open ? "8px 12px" : "0")};
-
-  border-radius: 50px;
-  border: 1px solid #ccc;
+  flex: 1;
+  border: none;
   outline: none;
+  background: transparent;
+  padding: 14px 4px;
+  color: ${({ $isdark }) => ($isdark ? "#171717" : "#fff")};
+  font-size: 14px;
+  letter-spacing: 1px;
 
-  transition: all 0.25s ease;
+  &::placeholder {
+    color: ${({ $isdark }) =>
+      $isdark ? "#888" : "rgba(255,255,255,0.55)"};
+  }
 `;
 
-const MobileMenu = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 90vh;
+const SearchSubmit = styled.button`
+  border: none;
+  background: transparent;
+  color: ${({ $isdark }) => ($isdark ? "#171717" : "#fff")};
+  font-size: 20px;
+  cursor: pointer;
+  padding: 8px;
+`;
 
+/* =========================
+   MOBILE MENU
+========================= */
+
+const MobileOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: ${({ $isdark }) => ($isdark ? "#f8f7f4" : "#171717")};
+  color: ${({ $isdark }) => ($isdark ? "#171717" : "#fff")};
+  display: ${({ $open }) => ($open ? "flex" : "none")};
+  flex-direction: column;
+  padding: 30px 8% 45px;
+  overflow-y: auto;
+`;
+
+const MobileMenuHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 65px;
+`;
+
+const MobileLogo = styled.div`
+  font-family: "Times New Roman", serif;
+  font-size: 27px;
+  letter-spacing: 7px;
+`;
+
+const MobileClose = styled.button`
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 25px;
+  cursor: pointer;
+`;
+
+const MobileLinks = styled.nav`
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
-
-  background: ${({ $isdark }) =>
-    $isdark ? "rgba(0,0,0,0.96)" : "rgba(255,255,255,0.98)"};
-
-  transform: ${({ $open }) => ($open ? "translateY(0)" : "translateY(-100%)")};
-  opacity: ${({ $open }) => ($open ? 1 : 0)};
-  transition:
-    transform 0.35s ease,
-    opacity 0.35s ease;
-
-  animation: ${fadeSlide} 0.35s ease;
-
-  z-index: 10000;
+  gap: 0;
 `;
 
 const MenuLink = styled(Link)`
-  font-size: 1.2rem;
-  font-weight: 600;
-  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 19px 0;
+  border-bottom: 1px solid
+    ${({ $isdark }) =>
+      $isdark ? "rgba(0,0,0,0.12)" : "rgba(255,255,255,0.15)"};
   color: inherit;
-  margin: 20px 0;
-  
+  text-decoration: none;
+  font-family: "Times New Roman", serif;
+  font-size: clamp(25px, 7vw, 38px);
+  letter-spacing: 1px;
 
-  transform: ${({ $open }) => ($open ? "translateY(0)" : "translateY(15px)")};
-  opacity: ${({ $open }) => ($open ? 1 : 0)};
-  transition:
-    transform 0.3s ease ${({ $delay }) => $delay}s,
-    opacity 0.3s ease ${({ $delay }) => $delay}s;
-  animation: ${({ $open }) => ($open ? linkSlide : "none")} 0.35s forwards;
+  animation: ${({ $open }) =>
+    $open
+      ? css`${menuReveal} 0.6s ease both`
+      : "none"};
 
   &:hover {
-    transform: scale(1.1);
+    opacity: 0.55;
   }
-`; 
 
-const CloseButton = styled.button`
-  position: absolute;
-  top: 20px;
-  right: 20px;
-
-  background: none;
-  border: none;
-
-  font-size: 25px;
-  cursor: pointer;
-  
-
-  color: ${({ $isdark }) => ($isdark ? "#fff" : "#000")};
+  svg {
+    font-size: 19px;
+  }
 `;
 
-
-// ================= TopBar =================
-const TopBarWrapper = styled.div`
-  width: 100%;
-  height: ${TOPBAR_HEIGHT}px;
-
+const MobileFooter = styled.div`
+  margin-top: auto;
+  padding-top: 40px;
   display: flex;
-  align-items: center;
-  justify-content: center;
-
-  padding: 0 1rem;
-
-  background: linear-gradient(90deg, black, black);
-  color: #fff;
-
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 10001;
-
-  box-sizing: border-box;
-
-  font-weight: 500;
-  font-size: 0.95rem;
-
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-
-  transition: transform 0.35s ease, opacity 0.35s ease;
-
-  a {
-    color: #fff;
-    text-decoration: underline;
-    margin: 0 4px;
-    font-weight: 600;
-  }
-    &.closing {
-  transform: translateY(-100%);
-  opacity: 0;
-}
-
- @media (max-width: 768px) {
-  height: 56px;
-  font-size: 0.8rem;
-  text-align: center;
-}
+  flex-direction: column;
+  gap: 16px;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  opacity: 0.7;
 `;
 
-const Messagelink = styled(Link)`
-display:flex;
-`
-
-const CloseTopBar = styled.button`
-  background: none;
-  border: none;
-  color: #fff;
-  font-size: 20px;
-  cursor: pointer;
-  position: absolute;
-  right: 16px;
-  transition: transform 0.2s;
-  &:hover {
-    transform: scale(1.2);
-  }
-`;
-const TopBarContent = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: nowrap;
+const MobileFooterLink = styled(Link)`
+  color: inherit;
+  text-decoration: none;
 `;
 
-// ================= Header Component =================
-export default function Header() {
+/* =========================
+   COMPONENT
+========================= */
+
+function Header() {
   const themeContext = useContext(ThemeContext);
   const panierContext = useContext(PanierContext);
 
-  const theme = themeContext?.theme ?? "dark";
-  const toggleTheme =
-    themeContext?.themeToglle ?? themeContext?.ToggleTheme ?? (() => {});
-  const ajouter = panierContext?.ajouter ?? [];
-  const $isdark = theme === "light";
+  const theme = themeContext?.theme;
+  const ajouter = panierContext?.ajouter || [];
 
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
 
-  const heroPage = location.pathname === "/";
-  const totalItems = ajouter.reduce((acc, item) => acc + item.quantite, 0);
-
+  const [hidden, setHidden] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [query, setQuery] = useState("");
+  const [searchValue, setSearchValue] = useState("");
 
-  const [showHeader, setShowHeader] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
-  const [showTopBar, setShowTopBar] = useState(true);
-  const [closingTopBar, setClosingTopBar] = useState(false);
+  const [topBarVisible, setTopBarVisible] = useState(true);
 
-  const handleCloseTopBar = () => {
-    setClosingTopBar(true);
-    setTimeout(() => setShowTopBar(false), 350);
-  };
+  // Conserve la logique de thème du composant existant.
+  const $isdark = theme === "dark";
 
-  // Bloquer scroll quand menu ouvert
-  useEffect(() => {
-    if (menuOpen) {
-      const scrollY = window.scrollY;
-      document.body.style.position = "fixed";
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = "100%";
-    } else {
-      const scrollY = -parseInt(document.body.style.top || "0");
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.width = "";
-      window.scrollTo(0, scrollY);
-    }
-  }, [menuOpen]);
+  const isHome = location.pathname === "/";
 
-  // Header qui disparaît à scroll
+  const totalItems = Array.isArray(ajouter)
+    ? ajouter.reduce(
+        (acc, item) => acc + (Number(item.quantite) || 0),
+        0
+      )
+    : 0;
+
+  const isFavoritesPage = location.pathname === "/favoris";
+
+  /* =========================
+     SCROLL HEADER
+  ========================= */
+
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      setScrolled(currentScrollY > 80);
 
-      if (currentScrollY > lastScrollY && currentScrollY > 120) {
-        setShowHeader(false);
+      setScrolled(currentScrollY > 20);
+
+      if (currentScrollY < 80) {
+        setHidden(false);
+      } else if (currentScrollY > lastScrollY) {
+        setHidden(true);
       } else {
-        setShowHeader(true);
+        setHidden(false);
       }
 
       setLastScrollY(currentScrollY);
     };
 
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
   }, [lastScrollY]);
+
+  /* =========================
+     MOBILE SCROLL LOCK
+  ========================= */
+
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [menuOpen]);
+
+  /* =========================
+     CLOSE ON ROUTE CHANGE
+  ========================= */
+
+  useEffect(() => {
+    setMenuOpen(false);
+    setSearchOpen(false);
+  }, [location.pathname]);
+
+  /* =========================
+     SEARCH
+  ========================= */
 
   const handleSearch = (e) => {
     e.preventDefault();
-    if (!query.trim()) return;
-    navigate(`/search?q=${encodeURIComponent(query)}`);
-    setQuery("");
+
+    const value = searchValue.trim();
+
+    if (!value) return;
+
+    navigate(`/search?q=${encodeURIComponent(value)}`);
+    setSearchValue("");
     setSearchOpen(false);
   };
 
+  const toggleTheme = () => {
+    const changeTheme =
+      themeContext?.themeToglle ??
+      themeContext?.ToggleTheme ??
+      (() => {});
+
+    changeTheme();
+  };
+
+  /* =========================
+     NAVIGATION LINKS
+  ========================= */
+
+  const navLinks = [
+    { label: "Accueil", path: "/" },
+    { label: "Homme", path: "/homme" },
+    { label: "Femme", path: "/femme" },
+    { label: "Collections", path: "/collections" },
+    { label: "Nouveautés", path: "/new" },
+    { label: "Promotions", path: "/promo" },
+  ];
+
   return (
     <>
-     <TopBarWrapper className={closingTopBar ? "closing" : ""}>
-  <TopBarContent >
-  <Messagelink to="/paiement-3x">Paiement en 3 tranches</Messagelink> : réservez, payez à votre rythme. 
-  Vous pouvez aussi Payer à la livraison.
-  </TopBarContent>
+      {topBarVisible && (
+        <TopBar>
+          <TopBarTrack>
+            {[0, 1].map((group) => (
+              <TopBarGroup key={group}>
+                <TopBarMessage to="/paiement-3x">
+                  <span>NUMA PRIVILEGE</span>
+                  Paiement en 3 fois : profitez maintenant, payez à votre rythme
+                  <FiArrowUpRight />
+                </TopBarMessage>
 
-  <CloseTopBar onClick={handleCloseTopBar}>×</CloseTopBar>
-</TopBarWrapper>
+                <TopBarDot />
 
-      {/* Header */}
+                <TopBarMessage to="/paiement-3x">
+                  Paiement à la livraison également disponible
+                  <FiArrowUpRight />
+                </TopBarMessage>
+
+                <TopBarDot />
+
+                <TopBarMessage to="/collections">
+                  Découvrez nos collections exclusives
+                  <FiArrowUpRight />
+                </TopBarMessage>
+
+                <TopBarDot />
+              </TopBarGroup>
+            ))}
+          </TopBarTrack>
+
+          <CloseTopBar
+            type="button"
+            onClick={() => setTopBarVisible(false)}
+            aria-label="Fermer le bandeau"
+          >
+            <FiX />
+          </CloseTopBar>
+        </TopBar>
+      )}
+
       <HeaderWrapper
+        $hidden={hidden}
+        $transparent={isHome && !scrolled}
         $isdark={$isdark}
-        $hero={heroPage}
-        $scrolled={scrolled}
-        $show={showHeader}
-        $topOffset={showTopBar ? TOPBAR_HEIGHT : 0} 
+        $topBarVisible={topBarVisible}
       >
-        <HeaderTop>
-          <Logo to="/">NUMA</Logo>
+        <HeaderInner>
+          <DesktopNav>
+            {navLinks.map((item) => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                $isdark={$isdark}
+              >
+                {item.label}
+              </NavLink>
+            ))}
+          </DesktopNav>
 
-          <Actions>
-            <IconButton onClick={toggleTheme}>
-              {$isdark ? <FiMoon /> : <FiSun />}
+          <MobileMenuButton
+            type="button"
+            $isdark={$isdark}
+            onClick={() => setMenuOpen(true)}
+            aria-label="Ouvrir le menu"
+          >
+            <FiMenu />
+          </MobileMenuButton>
+
+          <Logo to="/" $isdark={$isdark}>
+            NUMA
+          </Logo>
+
+          <HeaderActions>
+            <DesktopOnly>
+              <IconButton
+                type="button"
+                $isdark={$isdark}
+                onClick={() => setSearchOpen((prev) => !prev)}
+                aria-label="Rechercher"
+              >
+                <FiSearch />
+              </IconButton>
+            </DesktopOnly>
+
+            <DesktopOnly>
+              <IconButton
+                type="button"
+                $isdark={$isdark}
+                onClick={toggleTheme}
+                aria-label="Changer le thème"
+              >
+                {$isdark ? <FiMoon /> : <FiSun />}
+              </IconButton>
+            </DesktopOnly>
+
+            <DesktopOnly>
+              <IconButton
+                as={Link}
+                to="/compte"
+                $isdark={$isdark}
+                aria-label="Mon compte"
+              >
+                <FiUser />
+              </IconButton>
+            </DesktopOnly>
+
+            <IconButton
+              as={Link}
+              to="/favoris"
+              $isdark={$isdark}
+              aria-label="Mes favoris"
+            >
+              {isFavoritesPage ? <HiBookmark /> : <FiBookmark />}
             </IconButton>
 
-            <IconButton as={Link} to="/compte">
-              <FiUser />
-            </IconButton>
-
-            <IconButton as={Link} to="/panier" style={{ position: "relative" }}>
+            <IconButton
+              as={Link}
+              to="/panier"
+              $isdark={$isdark}
+              aria-label="Mon panier"
+            >
               <FiShoppingBag />
               {totalItems > 0 && <CartCount>{totalItems}</CartCount>}
             </IconButton>
 
-            <IconButton as={Link} to="/favoris">
-              <FiHeart />
-            </IconButton>
+            <MobileMenuButton
+              type="button"
+              $isdark={$isdark}
+              onClick={() => setSearchOpen((prev) => !prev)}
+              aria-label="Rechercher"
+            >
+              <FiSearch />
+            </MobileMenuButton>
+          </HeaderActions>
+        </HeaderInner>
 
-            <SearchWrapper>
-              <IconButton onClick={() => setSearchOpen((prev) => !prev)}>
+        {searchOpen && (
+          <SearchPanel $isdark={$isdark}>
+            <SearchForm onSubmit={handleSearch} $isdark={$isdark}>
+              <SearchInput
+                type="search"
+                placeholder="Que recherchez-vous ?"
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+                autoFocus
+                $isdark={$isdark}
+              />
+
+              <SearchSubmit
+                type="submit"
+                $isdark={$isdark}
+                aria-label="Lancer la recherche"
+              >
                 <FiSearch />
-              </IconButton>
-
-              <form onSubmit={handleSearch}>
-                <SearchInput
-                  $open={searchOpen}
-                  type="text"
-                  placeholder={t?.("searchProducts") ?? "Search products"}
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                />
-              </form>
-            </SearchWrapper>
-
-            <IconButton onClick={() => setMenuOpen((prev) => !prev)}>
-              {menuOpen ? <FiX /> : <FiMenu />}
-            </IconButton>
-          </Actions>
-        </HeaderTop>
+              </SearchSubmit>
+            </SearchForm>
+          </SearchPanel>
+        )}
       </HeaderWrapper>
 
-      {/* Menu mobile */}
-      <MobileMenu $open={menuOpen} $isdark={$isdark}>
-        <CloseButton $isdark={$isdark} onClick={() => setMenuOpen(false)}>
-          <FiX />
-        </CloseButton>
+      <MobileOverlay $open={menuOpen} $isdark={$isdark}>
+        <MobileMenuHeader>
+          <MobileLogo>NUMA</MobileLogo>
 
-        <MenuLink
-          to="/"
-          $open={menuOpen}
-          $delay={0.05}
-          onClick={() => setMenuOpen(false)}
-        >
-          {t?.("home") ?? "Home"}
-        </MenuLink>
-        <MenuLink
-          to="/collections"
-          $open={menuOpen}
-          $delay={0.12}
-          onClick={() => setMenuOpen(false)}
-        >
-          {t?.("collections") ?? "Collections"}
-        </MenuLink>
-        <MenuLink
-          to="/homme"
-          $open={menuOpen}
-          $delay={0.05}
-          onClick={() => setMenuOpen(false)}
-        >
-          {t?.("Homme") ?? "Homme"}
-        </MenuLink>
-        <MenuLink
-          to="/femme"
-          $open={menuOpen}
-          $delay={0.05}
-          onClick={() => setMenuOpen(false)}
-        >
-          {t?.("Femme") ?? "Femme"}
-        </MenuLink>
-        <MenuLink
-          to="/new"
-          $open={menuOpen}
-          $delay={0.18}
-          onClick={() => setMenuOpen(false)}
-        >
-          {t?.("new") ?? "New"}
-        </MenuLink>
-        <MenuLink
-          to="/promo"
-          $open={menuOpen}
-          $delay={0.24}
-          onClick={() => setMenuOpen(false)}
-        >
-          {t?.("deals") ?? "Deals"}
-        </MenuLink>
-        <MenuLink
-          to="/apropo"
-          $open={menuOpen}
-          $delay={0.3}
-          onClick={() => setMenuOpen(false)}
-        >
-          {t?.("about") ?? "About"}
-        </MenuLink>
+          <MobileClose
+            type="button"
+            onClick={() => setMenuOpen(false)}
+            aria-label="Fermer le menu"
+          >
+            <FiX />
+          </MobileClose>
+        </MobileMenuHeader>
 
-        <MenuLink
-          to="/admin-livreur"
-          $open={menuOpen}
-          $delay={0.3}
-          onClick={() => setMenuOpen(false)}
-        >
-          Espace livreur
-        </MenuLink>
-      </MobileMenu>
+        <MobileLinks>
+          {navLinks.map((item, index) => (
+            <MenuLink
+              key={item.path}
+              to={item.path}
+              $isdark={$isdark}
+              $open={menuOpen}
+              style={{ animationDelay: `${index * 0.07}s` }}
+            >
+              {item.label}
+              <FiArrowUpRight />
+            </MenuLink>
+          ))}
+
+          <MenuLink
+            to="/favoris"
+            $isdark={$isdark}
+            $open={menuOpen}
+          >
+            Mes favoris
+            <FiBookmark />
+          </MenuLink>
+
+          <MenuLink
+            to="/compte"
+            $isdark={$isdark}
+            $open={menuOpen}
+          >
+            Mon compte
+            <FiArrowUpRight />
+          </MenuLink>
+
+          <MenuLink
+            to="/admin-livreur"
+            $isdark={$isdark}
+            $open={menuOpen}
+          >
+            Espace livreur
+            <FiArrowUpRight />
+          </MenuLink>
+        </MobileLinks>
+
+        <MobileFooter>
+          <MobileFooterLink to="/apropo">
+            À propos de NUMA
+          </MobileFooterLink>
+
+          <MobileFooterLink to="/paiement-3x">
+            Nos moyens de paiement
+          </MobileFooterLink>
+
+          <button
+            type="button"
+            onClick={toggleTheme}
+            style={{
+              border: "none",
+              background: "transparent",
+              color: "inherit",
+              textAlign: "left",
+              padding: 0,
+              font: "inherit",
+              cursor: "pointer",
+              letterSpacing: "inherit",
+              textTransform: "inherit",
+            }}
+          >
+            Changer le thème {$isdark ? "sombre" : "clair"}
+          </button>
+        </MobileFooter>
+      </MobileOverlay>
     </>
   );
 }
+
+export default Header;

@@ -1,4 +1,3 @@
-// src/pages/Delivery.jsx
 import React from "react";
 import { useTranslation } from "react-i18next";
 
@@ -48,9 +47,7 @@ const Delivery = () => {
       </section>
 
       <section>
-        <p style={{ fontStyle: "italic" }}>
-          {t("delivery.conclusion")}
-        </p>
+        <p style={{ fontStyle: "italic" }}>{t("delivery.conclusion")}</p>
       </section>
     </div>
   );
