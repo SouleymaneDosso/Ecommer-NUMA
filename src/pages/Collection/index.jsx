@@ -1,3 +1,4 @@
+
 import {
   useState,
   useEffect,
@@ -6,173 +7,174 @@ import {
   useMemo,
   useCallback,
 } from "react";
-import styled, { keyframes } from "styled-components";
-import { FiFilter, FiChevronDown, FiArrowUpRight } from "react-icons/fi";
-import { useNavigate } from "react-router-dom";
-import { LoaderWrapper, Loader } from "../../Utils/Rotate";
 
-/* =========================================================
+import styled, { keyframes } from "styled-components";
+import { FiArrowUpRight, FiChevronDown } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
+
+/* =====================================================
    ANIMATIONS
-========================================================= */
+===================================================== */
 
 const fadeUp = keyframes`
   from {
     opacity: 0;
-    transform: translateY(24px);
+    transform: translateY(25px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
   }
 `;
 
-const imageReveal = keyframes`
-  from {
-    opacity: 0;
-    transform: scale(1.04);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+const reveal = keyframes`
+  from { opacity: 0; transform: scale(1.04); }
+  to { opacity: 1; transform: scale(1); }
 `;
 
 const shimmer = keyframes`
-  0% {
-    background-position: -500px 0;
-  }
-
-  100% {
-    background-position: 500px 0;
-  }
+  from { background-position: -500px 0; }
+  to { background-position: 500px 0; }
 `;
 
-/* =========================================================
+/* =====================================================
    PAGE
-========================================================= */
+===================================================== */
 
-const PageWrapper = styled.main`
+const Page = styled.main`
+  --bg: #f7f5f0;
+  --paper: #fffefa;
+  --ink: #24221e;
+  --muted: #8a857c;
+  --line: #e5e0d7;
+  --accent: #927657;
+
   min-height: 100vh;
-  background:
-    radial-gradient(circle at 15% 10%, rgba(0, 0, 0, 0.035), transparent 28%),
-    #f7f6f3;
-  color: #111;
-  padding: 0 0 100px;
+  background: var(--bg);
+  color: var(--ink);
+  padding-bottom: 100px;
+  overflow: hidden;
+
+  * {
+    box-sizing: border-box;
+  }
+
+  img {
+    max-width: 100%;
+  }
 `;
 
-const PageInner = styled.div`
-  width: min(1500px, calc(100% - 48px));
-  margin: 0 auto;
+const Container = styled.div`
+  width: min(1500px, calc(100% - 100px));
+  margin: auto;
 
   @media (max-width: 768px) {
-    width: calc(100% - 24px);
+    width: calc(100% - 32px);
   }
 `;
 
-/* =========================================================
-   INTRO
-========================================================= */
+/* =====================================================
+   INTRODUCTION
+===================================================== */
 
 const Intro = styled.header`
-  padding: 75px 0 48px;
+  padding: 105px 0 65px;
   display: flex;
-  align-items: flex-end;
   justify-content: space-between;
-  gap: 40px;
-  animation: ${fadeUp} 0.8s ease both;
+  align-items: flex-end;
+  gap: 30px;
+  animation: ${fadeUp} .8s ease both;
 
-  @media (max-width: 900px) {
-    padding: 50px 0 30px;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 20px;
-  }
-
-  @media (max-width: 600px) {
-    padding: 35px 0 25px;
+  @media (max-width: 700px) {
+    padding: 65px 0 38px;
+    display: block;
   }
 `;
 
-const IntroLeft = styled.div`
-  max-width: 780px;
+const IntroContent = styled.div`
+  max-width: 850px;
 `;
 
 const Eyebrow = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 18px;
+  gap: 13px;
+  margin-bottom: 25px;
 
   span {
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 3px;
+    color: var(--accent);
+    font-size: 9px;
     font-weight: 700;
-    color: #777;
+    letter-spacing: 3px;
+    text-transform: uppercase;
   }
 
   &::before {
     content: "";
-    width: 38px;
+    width: 28px;
     height: 1px;
-    background: #111;
+    background: var(--accent);
   }
 `;
 
-const CollectionTitle = styled.h1`
+const Title = styled.h1`
   margin: 0;
-  font-size: clamp(3rem, 7vw, 7rem);
-  line-height: 0.88;
-  letter-spacing: -0.07em;
-  font-weight: 900;
-  text-transform: uppercase;
-`;
+  font-family: Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(65px, 10vw, 135px);
+  line-height: .85;
+  letter-spacing: -7px;
 
-const CollectionSub = styled.p`
-  margin: 24px 0 0;
-  max-width: 560px;
-  font-size: 1rem;
-  line-height: 1.8;
-  color: #777;
+  span {
+    color: var(--accent);
+    font-style: italic;
+    font-weight: 400;
+  }
 
   @media (max-width: 600px) {
-    font-size: 0.9rem;
-    line-height: 1.7;
-    margin-top: 18px;
+    font-size: 72px;
+    letter-spacing: -4px;
   }
+`;
+
+const IntroText = styled.p`
+  max-width: 480px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 2;
+  margin: 30px 0 0;
+  letter-spacing: .2px;
 `;
 
 const IntroCount = styled.div`
-  min-width: 130px;
-  padding-bottom: 5px;
+  text-align: right;
+  padding-bottom: 8px;
 
   strong {
     display: block;
-    font-size: 2.8rem;
+    font-family: Georgia, serif;
+    font-size: 52px;
+    font-weight: 400;
     line-height: 1;
-    font-weight: 900;
-    letter-spacing: -0.06em;
   }
 
   span {
     display: block;
-    margin-top: 7px;
-    color: #888;
-    font-size: 0.72rem;
-    text-transform: uppercase;
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 9px;
     letter-spacing: 2px;
+    text-transform: uppercase;
   }
 
-  @media (max-width: 900px) {
+  @media (max-width: 700px) {
     display: none;
   }
 `;
 
-/* =========================================================
+/* =====================================================
    TOOLBAR
-========================================================= */
+===================================================== */
 
 const Toolbar = styled.div`
   position: sticky;
@@ -182,24 +184,24 @@ const Toolbar = styled.div`
   justify-content: space-between;
   align-items: center;
   gap: 20px;
-  padding: 14px 0;
-  margin-bottom: 28px;
-  background: rgba(247, 246, 243, 0.9);
-  backdrop-filter: blur(16px);
-  border-top: 1px solid rgba(0, 0, 0, 0.07);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+  padding: 17px 0;
+  margin-bottom: 30px;
+  background: rgba(247, 245, 240, .94);
+  backdrop-filter: blur(15px);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
 
-  @media (max-width: 800px) {
-    align-items: stretch;
+  @media (max-width: 700px) {
     flex-direction: column;
-    gap: 12px;
+    align-items: stretch;
+    gap: 14px;
   }
 `;
 
-const FilterScroll = styled.div`
+const Filters = styled.div`
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 30px;
   overflow-x: auto;
   scrollbar-width: none;
   min-width: 0;
@@ -207,316 +209,136 @@ const FilterScroll = styled.div`
   &::-webkit-scrollbar {
     display: none;
   }
+
+  @media (max-width: 600px) {
+    gap: 24px;
+  }
 `;
 
 const FilterButton = styled.button`
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 10px 15px;
-  border: 1px solid ${({ $active }) => ($active ? "#111" : "rgba(0,0,0,0.1)")};
-  background: ${({ $active }) => ($active ? "#111" : "transparent")};
-  color: ${({ $active }) => ($active ? "#fff" : "#555")};
-  border-radius: 999px;
+  flex-shrink: 0;
+  position: relative;
+  border: 0;
+  background: transparent;
+  color: ${({ $active }) => $active ? "var(--ink)" : "var(--muted)"};
+  padding: 8px 0;
   cursor: pointer;
-  font-size: 0.72rem;
-  font-weight: 700;
+  font-size: 10px;
+  font-weight: ${({ $active }) => $active ? "800" : "500"};
+  letter-spacing: 1.5px;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  transition: all 0.25s ease;
+  transition: color .25s;
+
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: ${({ $active }) => $active ? "100%" : "0"};
+    height: 1px;
+    background: var(--accent);
+    transition: width .3s;
+  }
 
   &:hover {
-    background: #111;
-    color: #fff;
-    border-color: #111;
-  }
-
-  svg {
-    font-size: 13px;
-  }
-
-  @media (max-width: 600px) {
-    padding: 9px 13px;
-    font-size: 0.65rem;
+    color: var(--ink);
   }
 `;
 
 const ToolbarRight = styled.div`
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 20px;
   flex-shrink: 0;
 
-  @media (max-width: 800px) {
-    width: 100%;
+  @media (max-width: 700px) {
+    justify-content: space-between;
   }
 `;
 
-const CountBadge = styled.div`
-  padding: 11px 14px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  background: rgba(255, 255, 255, 0.6);
-  color: #555;
-  font-size: 0.7rem;
-  font-weight: 800;
+const Count = styled.span`
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: 1.5px;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  white-space: nowrap;
-
-  @media (max-width: 600px) {
-    display: none;
-  }
 `;
 
 const SortWrapper = styled.div`
   position: relative;
-
-  @media (max-width: 800px) {
-    width: 100%;
-  }
 `;
 
 const SortSelect = styled.select`
   appearance: none;
-  width: 220px;
-  padding: 11px 40px 11px 14px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  background: #fff;
-  color: #111;
-  font-size: 0.76rem;
-  font-weight: 700;
-  cursor: pointer;
+  border: none;
   outline: none;
+  background: transparent;
+  color: var(--ink);
+  padding: 8px 25px 8px 0;
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
 
-  &:focus {
-    border-color: #111;
-  }
-
-  @media (max-width: 800px) {
-    width: 100%;
+  option {
+    background: var(--paper);
+    color: var(--ink);
   }
 `;
 
 const SortIcon = styled(FiChevronDown)`
   position: absolute;
-  right: 13px;
+  right: 0;
   top: 50%;
   transform: translateY(-50%);
   pointer-events: none;
+  font-size: 13px;
 `;
 
-/* =========================================================
-   GRID
-========================================================= */
+/* =====================================================
+   PRODUCT GRID
+===================================================== */
 
 const Grid = styled.div`
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 22px;
+  gap: 55px 20px;
   align-items: start;
 
-  @media (max-width: 1200px) {
+  @media (max-width: 1100px) {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 40px 16px;
   }
 
-  @media (max-width: 820px) {
+  @media (max-width: 750px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-  }
-
-  @media (max-width: 420px) {
-    gap: 8px;
+    gap: 30px 11px;
   }
 `;
 
-/* =========================================================
-   BANNER
-========================================================= */
-
-const BannerCard = styled.section`
-  grid-column: 1 / -1;
-  position: relative;
-  overflow: hidden;
-  margin: 8px 0 14px;
-  background: #111;
-  min-height: 600px;
-  animation: ${fadeUp} 0.8s ease both;
-
-  @media (max-width: 900px) {
-    min-height: 460px;
-  }
-
-  @media (max-width: 600px) {
-    min-height: 390px;
-    margin: 5px 0 10px;
-  }
-`;
-
-const BannerWrapper = styled.div`
-  width: 100%;
-  height: 100%;
-  display: flex;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  scrollbar-width: none;
-  scroll-behavior: smooth;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
-`;
-
-const BannerSlide = styled.div`
-  min-width: 100%;
-  height: 600px;
-  position: relative;
-  scroll-snap-align: start;
-  overflow: hidden;
-
-  @media (max-width: 900px) {
-    height: 460px;
-  }
-
-  @media (max-width: 600px) {
-    height: 390px;
-  }
-`;
-
-const BannerImage = styled.img`
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  animation: ${imageReveal} 1s ease both;
-`;
-
-const BannerOverlay = styled.div`
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    rgba(0, 0, 0, 0.78) 0%,
-    rgba(0, 0, 0, 0.42) 38%,
-    rgba(0, 0, 0, 0.08) 75%,
-    rgba(0, 0, 0, 0.18) 100%
-  );
-`;
-
-const BannerText = styled.div`
-  position: absolute;
-  left: 60px;
-  bottom: 65px;
-  z-index: 2;
-  color: #fff;
-  max-width: 600px;
-
-  @media (max-width: 900px) {
-    left: 32px;
-    bottom: 40px;
-    max-width: 470px;
-  }
-
-  @media (max-width: 600px) {
-    left: 20px;
-    bottom: 28px;
-    right: 20px;
-  }
-`;
-
-const BannerLabel = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 15px;
-  font-size: 0.68rem;
-  text-transform: uppercase;
-  letter-spacing: 3px;
-  font-weight: 700;
-
-  &::before {
-    content: "";
-    width: 28px;
-    height: 1px;
-    background: #fff;
-  }
-`;
-
-const BannerTitle = styled.h2`
-  margin: 0;
-  font-size: clamp(2.3rem, 5vw, 5.2rem);
-  line-height: 0.95;
-  letter-spacing: -0.055em;
-  font-weight: 900;
-  text-transform: uppercase;
-
-  @media (max-width: 600px) {
-    font-size: 2.2rem;
-  }
-`;
-
-const BannerDesc = styled.p`
-  max-width: 480px;
-  margin: 18px 0 0;
-  font-size: 0.95rem;
-  line-height: 1.7;
-  color: rgba(255, 255, 255, 0.82);
-
-  @media (max-width: 600px) {
-    font-size: 0.78rem;
-    line-height: 1.55;
-    margin-top: 12px;
-  }
-`;
-
-const Dots = styled.div`
-  position: absolute;
-  z-index: 5;
-  right: 30px;
-  bottom: 30px;
-  display: flex;
-  gap: 6px;
-
-  @media (max-width: 600px) {
-    right: 20px;
-    bottom: 18px;
-  }
-`;
-
-const Dot = styled.button`
-  width: ${({ $active }) => ($active ? "32px" : "8px")};
-  height: 4px;
-  border: none;
-  padding: 0;
-  background: ${({ $active }) => ($active ? "#fff" : "rgba(255,255,255,0.35)")};
-  cursor: pointer;
-  transition: all 0.3s ease;
-`;
-
-/* =========================================================
+/* =====================================================
    PRODUCT CARD
-========================================================= */
+===================================================== */
 
 const ProductCard = styled.article`
-  position: relative;
+  min-width: 0;
   cursor: pointer;
-  overflow: hidden;
-  background: #fff;
-  animation: ${fadeUp} 0.65s ease both;
-  transition:
-    transform 0.35s ease,
-    box-shadow 0.35s ease;
+  animation: ${fadeUp} .7s ease both;
 
-  &:hover {
-    transform: translateY(-7px);
-    box-shadow: 0 22px 45px rgba(0, 0, 0, 0.1);
+  &:hover .product-image {
+    transform: scale(1.055);
+  }
+
+  &:hover .product-arrow {
+    opacity: 1;
+    transform: translateY(0);
   }
 `;
 
 const ImageArea = styled.div`
   position: relative;
+  width: 100%;
   overflow: hidden;
-  background: #ededeb;
+  background: #ebe8e1;
 `;
 
 const ProductCarousel = styled.div`
@@ -533,68 +355,60 @@ const ProductCarousel = styled.div`
 `;
 
 const ProductSlide = styled.div`
+  flex: 0 0 100%;
   min-width: 100%;
   scroll-snap-align: start;
 `;
 
 const ProductImage = styled.img`
-  width: 100%;
-  aspect-ratio: 0.78;
-  object-fit: cover;
   display: block;
-  transition: transform 0.65s cubic-bezier(0.2, 0.7, 0.2, 1);
-
-  ${ProductCard}:hover & {
-    transform: scale(1.035);
-  }
+  width: 100%;
+  aspect-ratio: .76;
+  object-fit: cover;
+  transition: transform .8s cubic-bezier(.2,.7,.2,1);
+  animation: ${reveal} .7s ease both;
 
   @media (max-width: 600px) {
-    aspect-ratio: 0.72;
+    aspect-ratio: .70;
   }
 `;
 
-const Badge = styled.div`
+const Badge = styled.span`
   position: absolute;
-  top: 12px;
-  left: 12px;
-  z-index: 4;
+  z-index: 3;
+  top: 15px;
+  left: 15px;
   padding: 7px 10px;
-  background: #111;
-  color: #fff;
-  font-size: 0.6rem;
-  font-weight: 800;
-  letter-spacing: 1.2px;
+  background: rgba(247,245,240,.94);
+  color: var(--ink);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
 
   @media (max-width: 600px) {
     top: 8px;
     left: 8px;
-    padding: 5px 7px;
-    font-size: 0.5rem;
+    font-size: 7px;
+    padding: 6px 7px;
   }
 `;
 
 const ProductArrow = styled.div`
   position: absolute;
-  z-index: 5;
-  right: 12px;
-  bottom: 12px;
-  width: 36px;
-  height: 36px;
+  z-index: 4;
+  right: 15px;
+  bottom: 15px;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
   border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: rgba(255, 255, 255, 0.92);
-  color: #111;
+  background: var(--paper);
+  color: var(--ink);
   opacity: 0;
-  transform: translateY(5px);
-  transition: all 0.3s ease;
-
-  ${ProductCard}:hover & {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  transform: translateY(8px);
+  transition: .3s;
 
   @media (max-width: 700px) {
     display: none;
@@ -602,55 +416,53 @@ const ProductArrow = styled.div`
 `;
 
 const ProductDots = styled.div`
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
-  justify-content: center;
-  align-items: center;
   gap: 5px;
-  position: relative;
   z-index: 3;
-  margin-top: -15px;
 `;
 
-const ProductDot = styled.div`
-  width: ${({ $active }) => ($active ? "19px" : "6px")};
+const ProductDot = styled.span`
+  width: ${({ $active }) => $active ? "19px" : "5px"};
   height: 3px;
-  background: ${({ $active }) => ($active ? "#fff" : "rgba(255,255,255,0.6)")};
-  transition: all 0.25s ease;
+  background: ${({ $active }) =>
+    $active ? "#fff" : "rgba(255,255,255,.55)"};
+  transition: .3s;
 `;
 
 const ProductInfo = styled.div`
-  padding: 16px 15px 19px;
+  padding: 16px 2px 0;
 
   @media (max-width: 600px) {
-    padding: 11px 9px 14px;
+    padding-top: 12px;
   }
 `;
 
 const ProductGenre = styled.div`
-  margin-bottom: 7px;
-  color: #999;
-  font-size: 0.62rem;
+  color: var(--accent);
+  font-size: 8px;
   font-weight: 700;
-  letter-spacing: 1.5px;
+  letter-spacing: 2px;
   text-transform: uppercase;
-
-  @media (max-width: 600px) {
-    font-size: 0.52rem;
-  }
+  margin-bottom: 8px;
 `;
 
 const ProductTitle = styled.h3`
-  margin: 0 0 10px;
-  color: #111;
-  font-size: 0.95rem;
-  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 12px;
+  font-family: Georgia, serif;
+  font-size: 17px;
+  font-weight: 400;
   line-height: 1.35;
-  min-height: 38px;
+  min-height: 44px;
 
   @media (max-width: 600px) {
-    font-size: 0.76rem;
-    min-height: 32px;
-    margin-bottom: 7px;
+    font-size: 14px;
+    min-height: 37px;
+    margin-bottom: 8px;
   }
 `;
 
@@ -659,85 +471,212 @@ const ProductBottom = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
 `;
 
-const ProductPrice = styled.div`
-  color: #111;
-  font-size: 0.95rem;
-  font-weight: 900;
-  letter-spacing: -0.02em;
+const ProductPrice = styled.span`
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .5px;
 
   @media (max-width: 600px) {
-    font-size: 0.78rem;
+    font-size: 10px;
   }
 `;
 
-const ProductMiniLabel = styled.span`
-  color: #999;
-  font-size: 0.58rem;
+const Discover = styled.span`
+  color: var(--muted);
+  font-size: 8px;
+  letter-spacing: 1.3px;
   text-transform: uppercase;
-  letter-spacing: 1px;
 
   @media (max-width: 600px) {
     display: none;
   }
 `;
 
-/* =========================================================
-   EMPTY
-========================================================= */
+/* =====================================================
+   EDITORIAL BANNER
+===================================================== */
 
-const EmptyState = styled.div`
-  min-height: 360px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  background: #fff;
-  padding: 40px;
-  animation: ${fadeUp} 0.7s ease both;
+const Banner = styled.section`
+  grid-column: 1 / -1;
+  position: relative;
+  width: 100%;
+  height: 570px;
+  overflow: hidden;
+  margin: 20px 0 15px;
+  background: #28241e;
 
-  strong {
-    font-size: 1.4rem;
-    margin-bottom: 8px;
+  @media (max-width: 800px) {
+    height: 430px;
   }
 
-  span {
-    color: #888;
-    font-size: 0.9rem;
+  @media (max-width: 600px) {
+    height: 400px;
+    margin: 5px 0;
   }
 `;
 
-/* =========================================================
-   SKELETON
-========================================================= */
+const BannerTrack = styled.div`
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  scroll-behavior: smooth;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+`;
+
+const BannerSlide = styled.div`
+  position: relative;
+  flex: 0 0 100%;
+  min-width: 100%;
+  height: 100%;
+  scroll-snap-align: start;
+`;
+
+const BannerImage = styled.img`
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center;
+`;
+
+const BannerOverlay = styled.div`
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(0,0,0,.72),
+    rgba(0,0,0,.24) 65%,
+    rgba(0,0,0,.05)
+  );
+`;
+
+const BannerContent = styled.div`
+  position: absolute;
+  z-index: 2;
+  left: 7%;
+  bottom: 75px;
+  max-width: 600px;
+  color: white;
+
+  @media (max-width: 600px) {
+    left: 22px;
+    right: 22px;
+    bottom: 55px;
+  }
+`;
+
+const BannerEyebrow = styled.div`
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #d2b38e;
+  margin-bottom: 20px;
+`;
+
+const BannerTitle = styled.h2`
+  font-family: Georgia, serif;
+  font-size: clamp(45px, 7vw, 88px);
+  line-height: .95;
+  font-weight: 400;
+  letter-spacing: -3px;
+  margin: 0;
+
+  @media (max-width: 600px) {
+    font-size: 49px;
+  }
+`;
+
+const BannerDescription = styled.p`
+  max-width: 400px;
+  font-size: 12px;
+  line-height: 2;
+  color: rgba(255,255,255,.75);
+  margin: 22px 0 0;
+`;
+
+const BannerDots = styled.div`
+  position: absolute;
+  right: 35px;
+  bottom: 30px;
+  z-index: 4;
+  display: flex;
+  gap: 7px;
+`;
+
+const BannerDot = styled.button`
+  width: ${({ $active }) => $active ? "30px" : "7px"};
+  height: 3px;
+  padding: 0;
+  border: none;
+  background: ${({ $active }) =>
+    $active ? "#fff" : "rgba(255,255,255,.4)"};
+  cursor: pointer;
+  transition: .3s;
+`;
+
+/* =====================================================
+   EMPTY STATE
+===================================================== */
+
+const EmptyState = styled.div`
+  padding: 110px 20px;
+  text-align: center;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+
+  h2 {
+    font-family: Georgia, serif;
+    font-size: 36px;
+    font-weight: 400;
+  }
+
+  p {
+    color: var(--muted);
+    font-size: 12px;
+  }
+`;
+
+/* =====================================================
+   LOADING
+===================================================== */
 
 const SkeletonGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 22px;
+  gap: 20px;
 
-  @media (max-width: 1200px) {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  @media (max-width: 820px) {
+  @media(max-width: 750px) {
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
   }
 `;
 
-const SkeletonCard = styled.div`
-  aspect-ratio: 0.78;
-  background: linear-gradient(90deg, #e7e6e3 0%, #f3f2ef 50%, #e7e6e3 100%);
+const Skeleton = styled.div`
+  aspect-ratio: .76;
+  background: linear-gradient(
+    90deg,
+    #e9e5dd,
+    #f5f2ec,
+    #e9e5dd
+  );
   background-size: 500px 100%;
-  animation: ${shimmer} 1.3s infinite linear;
+  animation: ${shimmer} 1.4s infinite linear;
 `;
 
-/* =========================================================
-   COMPONENT
-========================================================= */
+/* =====================================================
+   MAIN COMPONENT
+===================================================== */
 
 export default function Collection() {
   const navigate = useNavigate();
@@ -752,14 +691,25 @@ export default function Collection() {
   const bannerRef = useRef(null);
   const carouselRefs = useRef({});
 
-  /* =======================================================
-     FETCH
-  ======================================================= */
+  const API_URL = import.meta.env.VITE_API_URL || "";
+
+  const getImageUrl = (url) => {
+    if (!url) return "";
+    return url.startsWith("http")
+      ? url
+      : `${API_URL}${url.startsWith("/") ? "" : "/"}${url}`;
+  };
+
+  /* FETCH */
 
   useEffect(() => {
+    let mounted = true;
+
     async function fetchProducts() {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits`);
+        const res = await fetch(`${API_URL}/api/produits`);
+
+        if (!res.ok) throw new Error("Erreur chargement produits");
 
         const data = await res.json();
 
@@ -767,9 +717,11 @@ export default function Collection() {
           ? data.filter(
               (p) =>
                 p.images?.length &&
-                !(p.precommande === true && p.disponible === false),
+                !(p.precommande === true && p.disponible === false)
             )
           : [];
+
+        if (!mounted) return;
 
         setProducts(validProducts);
 
@@ -777,7 +729,6 @@ export default function Collection() {
 
         validProducts.forEach((p) => {
           const mainIndex = p.images.findIndex((img) => img.isMain);
-
           indexes[p._id] = mainIndex >= 0 ? mainIndex : 0;
         });
 
@@ -785,37 +736,37 @@ export default function Collection() {
       } catch (error) {
         console.error("Erreur chargement produits :", error);
       } finally {
-        setTimeout(() => {
-          setLoading(false);
-        }, 400);
+        if (mounted) setLoading(false);
       }
     }
 
     fetchProducts();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  /* =======================================================
-     BANNER AUTO SCROLL
-  ======================================================= */
+  /* BANNER DATA */
 
   const bannerImages = useMemo(() => {
     const source = products.find((p) => p.images?.length);
     return source?.images || [];
   }, [products]);
 
+  /* BANNER AUTOPLAY */
+
   useEffect(() => {
     if (!bannerRef.current || bannerImages.length <= 1) return;
 
     const interval = setInterval(() => {
       setActiveSlide((prev) => {
-        const next = prev + 1 >= bannerImages.length ? 0 : prev + 1;
+        const next = (prev + 1) % bannerImages.length;
 
-        if (bannerRef.current) {
-          bannerRef.current.scrollTo({
-            left: next * bannerRef.current.clientWidth,
-            behavior: "smooth",
-          });
-        }
+        bannerRef.current?.scrollTo({
+          left: next * bannerRef.current.clientWidth,
+          behavior: "smooth",
+        });
 
         return next;
       });
@@ -824,16 +775,15 @@ export default function Collection() {
     return () => clearInterval(interval);
   }, [bannerImages.length]);
 
-  /* =======================================================
-     PRODUCT CAROUSEL
-  ======================================================= */
+  /* PRODUCT CAROUSEL */
 
   const handleProductScroll = useCallback((id) => {
     const element = carouselRefs.current[id];
-
     if (!element) return;
 
-    const index = Math.round(element.scrollLeft / element.clientWidth);
+    const index = Math.round(
+      element.scrollLeft / element.clientWidth
+    );
 
     setImageIndexes((prev) => ({
       ...prev,
@@ -841,27 +791,22 @@ export default function Collection() {
     }));
   }, []);
 
-  /* =======================================================
-     GENRES
-  ======================================================= */
+  /* GENRES */
 
   const genres = useMemo(() => {
-    const uniqueGenres = [
-      ...new Set(products.map((p) => p.genre).filter(Boolean)),
+    const unique = [
+      ...new Set(products.map((p) => p.genre).filter(Boolean))
     ];
 
-    return ["Tous", ...uniqueGenres];
+    return ["Tous", ...unique];
   }, [products]);
 
-  /* =======================================================
-     FILTER + SORT
-  ======================================================= */
+  /* FILTER AND SORT */
 
   const filteredProducts = useMemo(() => {
-    let result =
-      genreFilter === "Tous"
-        ? [...products]
-        : products.filter((p) => p.genre === genreFilter);
+    let result = genreFilter === "Tous"
+      ? [...products]
+      : products.filter((p) => p.genre === genreFilter);
 
     switch (sortBy) {
       case "price-asc":
@@ -874,13 +819,13 @@ export default function Collection() {
 
       case "title-asc":
         result.sort((a, b) =>
-          String(a.title || "").localeCompare(String(b.title || "")),
+          String(a.title || "").localeCompare(String(b.title || ""))
         );
         break;
 
       case "title-desc":
         result.sort((a, b) =>
-          String(b.title || "").localeCompare(String(a.title || "")),
+          String(b.title || "").localeCompare(String(a.title || ""))
         );
         break;
 
@@ -891,99 +836,88 @@ export default function Collection() {
     return result;
   }, [products, genreFilter, sortBy]);
 
-  /* =======================================================
-     BADGES
-  ======================================================= */
+  /* BADGES */
 
   const getBadgeText = (index, product) => {
-    if (index < 2) return "Nouveau";
-
-    if (Number(product.price) >= 25000) {
-      return "Premium";
-    }
-
-    return "Tendance";
+    if (product.bestSeller) return "Best seller";
+    if (index < 2) return "Nouveauté";
+    if (Number(product.price) >= 25000) return "Sélection NUMA";
+    return "Collection";
   };
 
-  /* =======================================================
-     LOADING
-  ======================================================= */
+  /* LOADING */
 
   if (loading) {
     return (
-      <PageWrapper>
-        <PageInner>
+      <Page>
+        <Container>
           <Intro>
-            <IntroLeft>
-              <Eyebrow>
-                <span>Collection</span>
-              </Eyebrow>
-
-              <CollectionTitle>Collection</CollectionTitle>
-            </IntroLeft>
+            <IntroContent>
+              <Eyebrow><span>Maison NUMA</span></Eyebrow>
+              <Title>Collection<span>.</span></Title>
+            </IntroContent>
           </Intro>
 
           <SkeletonGrid>
-            {Array.from({ length: 8 }).map((_, index) => (
-              <SkeletonCard key={index} />
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Skeleton key={i} />
             ))}
           </SkeletonGrid>
-        </PageInner>
-      </PageWrapper>
+        </Container>
+      </Page>
     );
   }
 
-  /* =======================================================
-     RENDER
-  ======================================================= */
+  /* RENDER */
 
   return (
-    <PageWrapper>
-      <PageInner>
-        {/* =================================================
-            INTRO
-        ================================================= */}
+    <Page>
+      <Container>
+
+        {/* INTRO */}
 
         <Intro>
-          <IntroLeft>
+          <IntroContent>
             <Eyebrow>
-              <span>Maison Numa — Collection</span>
+              <span>Maison NUMA — L'art du style</span>
             </Eyebrow>
 
-            <CollectionTitle>Collection</CollectionTitle>
+            <Title>
+              Collection<span>.</span>
+            </Title>
 
-            <CollectionSub>
-              Des pièces pensées pour construire une silhouette forte, élégante
-              et immédiatement reconnaissable.
-            </CollectionSub>
-          </IntroLeft>
+            <IntroText>
+              Des pièces soigneusement sélectionnées, pensées pour
+              révéler votre personnalité et donner à chaque silhouette
+              une signature unique.
+            </IntroText>
+          </IntroContent>
 
           <IntroCount>
             <strong>{filteredProducts.length}</strong>
-            <span>pièces disponibles</span>
+            <span>Pièces disponibles</span>
           </IntroCount>
         </Intro>
 
-        {/* =================================================
-            TOOLBAR
-        ================================================= */}
+        {/* FILTERS */}
 
         <Toolbar>
-          <FilterScroll>
+          <Filters>
             {genres.map((genre) => (
               <FilterButton
                 key={genre}
                 $active={genreFilter === genre}
                 onClick={() => setGenreFilter(genre)}
               >
-                {genre === "Tous" && <FiFilter />}
                 {genre}
               </FilterButton>
             ))}
-          </FilterScroll>
+          </Filters>
 
           <ToolbarRight>
-            <CountBadge>{filteredProducts.length} produits</CountBadge>
+            <Count>
+              {filteredProducts.length} articles
+            </Count>
 
             <SortWrapper>
               <SortSelect
@@ -991,70 +925,68 @@ export default function Collection() {
                 onChange={(e) => setSortBy(e.target.value)}
               >
                 <option value="default">Trier par</option>
-
                 <option value="price-asc">Prix croissant</option>
-
                 <option value="price-desc">Prix décroissant</option>
-
-                <option value="title-asc">Nom A → Z</option>
-
-                <option value="title-desc">Nom Z → A</option>
+                <option value="title-asc">Nom A — Z</option>
+                <option value="title-desc">Nom Z — A</option>
               </SortSelect>
 
-              <SortIcon size={15} />
+              <SortIcon />
             </SortWrapper>
           </ToolbarRight>
         </Toolbar>
 
-        {/* =================================================
-            PRODUCTS
-        ================================================= */}
+        {/* PRODUCTS */}
 
         {filteredProducts.length === 0 ? (
           <EmptyState>
-            <strong>Aucun produit trouvé</strong>
-
-            <span>Essayez une autre catégorie.</span>
+            <h2>Aucune pièce disponible.</h2>
+            <p>Essayez une autre catégorie pour découvrir notre collection.</p>
           </EmptyState>
         ) : (
           <Grid>
             {filteredProducts.map((product, index) => (
               <Fragment key={product._id}>
-                {/* =========================================
-                    BANNER
-                ========================================= */}
+
+                {/* EDITORIAL BANNER */}
 
                 {index === 2 && bannerImages.length > 0 && (
-                  <BannerCard>
-                    <BannerWrapper ref={bannerRef}>
+                  <Banner>
+                    <BannerTrack ref={bannerRef}>
                       {bannerImages.map((image, i) => (
                         <BannerSlide key={i}>
                           <BannerImage
-                            src={image.url}
-                            alt={`Collection ${i + 1}`}
+                            src={getImageUrl(image.url)}
+                            alt={`Campagne NUMA ${i + 1}`}
                           />
 
                           <BannerOverlay />
 
-                          <BannerText>
-                            <BannerLabel>Nouvelle saison</BannerLabel>
+                          <BannerContent>
+                            <BannerEyebrow>
+                              L'expression du style
+                            </BannerEyebrow>
 
-                            <BannerTitle>Dress to impress.</BannerTitle>
+                            <BannerTitle>
+                              Dress to<br />
+                              impress.
+                            </BannerTitle>
 
-                            <BannerDesc>
-                              Une collection pensée pour celles et ceux qui
-                              veulent une allure forte, propre et remarquable.
-                            </BannerDesc>
-                          </BannerText>
+                            <BannerDescription>
+                              Une vision contemporaine de l'élégance.
+                              Des pièces qui parlent avant même
+                              que vous ne le fassiez.
+                            </BannerDescription>
+                          </BannerContent>
                         </BannerSlide>
                       ))}
-                    </BannerWrapper>
+                    </BannerTrack>
 
-                    <Dots>
+                    <BannerDots>
                       {bannerImages.map((_, i) => (
-                        <Dot
+                        <BannerDot
                           key={i}
-                          $active={i === activeSlide}
+                          $active={activeSlide === i}
                           onClick={() => {
                             setActiveSlide(i);
 
@@ -1065,34 +997,39 @@ export default function Collection() {
                           }}
                         />
                       ))}
-                    </Dots>
-                  </BannerCard>
+                    </BannerDots>
+                  </Banner>
                 )}
 
-                {/* =========================================
-                    PRODUCT
-                ========================================= */}
+                {/* PRODUCT */}
 
                 <ProductCard
-                  onClick={() => navigate(`/produit/${product._id}`)}
+                  onClick={() =>
+                    navigate(`/produit/${product._id}`)
+                  }
                 >
                   <ImageArea>
-                    <Badge>{getBadgeText(index, product)}</Badge>
+                    <Badge>
+                      {getBadgeText(index, product)}
+                    </Badge>
 
-                    <ProductArrow>
-                      <FiArrowUpRight size={18} />
+                    <ProductArrow className="product-arrow">
+                      <FiArrowUpRight size={19} />
                     </ProductArrow>
 
                     <ProductCarousel
                       ref={(element) => {
                         carouselRefs.current[product._id] = element;
                       }}
-                      onScroll={() => handleProductScroll(product._id)}
+                      onScroll={() =>
+                        handleProductScroll(product._id)
+                      }
                     >
                       {product.images?.map((image, imageIndex) => (
                         <ProductSlide key={imageIndex}>
                           <ProductImage
-                            src={image.url}
+                            className="product-image"
+                            src={getImageUrl(image.url)}
                             alt={product.title}
                             loading="lazy"
                           />
@@ -1105,7 +1042,9 @@ export default function Collection() {
                         {product.images.map((_, imageIndex) => (
                           <ProductDot
                             key={imageIndex}
-                            $active={imageIndexes[product._id] === imageIndex}
+                            $active={
+                              imageIndexes[product._id] === imageIndex
+                            }
                           />
                         ))}
                       </ProductDots>
@@ -1113,22 +1052,32 @@ export default function Collection() {
                   </ImageArea>
 
                   <ProductInfo>
-                    <ProductGenre>{product.genre || "Collection"}</ProductGenre>
+                    <ProductGenre>
+                      {product.genre || "Collection NUMA"}
+                    </ProductGenre>
 
-                    <ProductTitle>{product.title}</ProductTitle>
+                    <ProductTitle>
+                      {product.title}
+                    </ProductTitle>
 
                     <ProductBottom>
-                      <ProductPrice>{product.price} FCFA</ProductPrice>
+                      <ProductPrice>
+                        {Number(product.price || 0).toLocaleString("fr-FR")} FCFA
+                      </ProductPrice>
 
-                      <ProductMiniLabel>Découvrir</ProductMiniLabel>
+                      <Discover>
+                        Découvrir <FiArrowUpRight />
+                      </Discover>
                     </ProductBottom>
                   </ProductInfo>
                 </ProductCard>
+
               </Fragment>
             ))}
           </Grid>
         )}
-      </PageInner>
-    </PageWrapper>
+
+      </Container>
+    </Page>
   );
 }
