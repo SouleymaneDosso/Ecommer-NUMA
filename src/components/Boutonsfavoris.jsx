@@ -154,7 +154,7 @@ const Toast = styled.div`
   }
 `;
 
-const FavoriteButtons = ({ active, onClick }) => {
+const Boutonsfavoris = ({ active, onClick }) => {
   const [showToast, setShowToast] = useState(false);
   const [animate, setAnimate] = useState(false);
 
@@ -213,4 +213,4 @@ const FavoriteButtons = ({ active, onClick }) => {
   );
 };
 
-export default FavoriteButtons;
+export default Boutonsfavoris;

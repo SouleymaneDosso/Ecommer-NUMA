@@ -11,7 +11,7 @@ import {
 import { FaHeart } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { ThemeContext } from "../../Utils/Context";
-import FavoriteButtons from "../../Components/FavoriteButton";
+import Boutonsfavoris from "../../components/Boutonsfavoris";
 /* =========================================================
    ANIMATIONS
 ========================================================= */
@@ -1007,13 +1007,13 @@ export default function Femme() {
 
                 {p.badge && <Badge $isdark={$isdark}>{p.badge}</Badge>}
 
-               <FavoriteButtons
-                      active={isFav}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleFavorite(p._id);
-                      }}
-                    />
+                <Boutonsfavoris
+                  active={isFav}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleFavorite(p._id);
+                  }}
+                />
               </ImageWrapper>
 
               {/* INFOS */}

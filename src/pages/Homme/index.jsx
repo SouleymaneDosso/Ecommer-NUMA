@@ -15,7 +15,7 @@ import { FaHeart } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { ThemeContext, PanierContext } from "../../Utils/Context";
 
-import FavoriteButtons from "../../Components/FavoriteButton";
+import Boutonsfavoris from "../../components/Boutonsfavoris";
 /* =========================================================
    ANIMATIONS
 ========================================================= */
@@ -1436,7 +1436,7 @@ export default function Homme() {
 
                     {p.badge && <Badge $isdark={$isdark}>{p.badge}</Badge>}
 
-                    <FavoriteButtons
+                    <Boutonsfavoris
                       active={isFav}
                       onClick={(e) => {
                         e.stopPropagation();
