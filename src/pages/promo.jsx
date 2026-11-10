@@ -1,11 +1,4 @@
-import {
-  useState,
-  useEffect,
-  useRef,
-  useMemo,
-  useCallback,
-  Fragment,
-} from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import styled from "styled-components";
 import { LoaderWrapper, Loader } from "../Utils/Rotate";
 import { useNavigate } from "react-router-dom";
@@ -75,7 +68,7 @@ const Toolbar = styled.div`
   align-items: center;
   gap: 1.5rem;
   padding: 1.2rem 0;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.8rem;
   border-top: 1px solid #e9e6df;
   border-bottom: 1px solid #e9e6df;
 
@@ -218,6 +211,11 @@ const ProductCard = styled.article`
   &:hover img {
     transform: scale(1.045);
   }
+
+  &:focus-visible {
+    outline: 2px solid #a58a58;
+    outline-offset: 5px;
+  }
 `;
 
 const ImageArea = styled.div`
@@ -264,13 +262,26 @@ const ProductBadge = styled.span`
   top: 13px;
   left: 13px;
   z-index: 2;
-  background: rgba(248, 247, 244, 0.94);
+  background: rgba(248, 247, 244, 0.95);
   color: #76613e;
   padding: 0.5rem 0.7rem;
   font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 1.1px;
   text-transform: uppercase;
+`;
+
+const DiscountBadge = styled.span`
+  position: absolute;
+  top: 13px;
+  right: 13px;
+  z-index: 2;
+  background: #292720;
+  color: #fff;
+  padding: 0.5rem 0.65rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
 `;
 
 const ProductDots = styled.div`
@@ -284,8 +295,9 @@ const ProductDots = styled.div`
   gap: 6px;
   padding: 7px 10px;
   border-radius: 20px;
-  background: rgba(30, 29, 26, 0.28);
+  background: rgba(30, 29, 26, 0.35);
   backdrop-filter: blur(5px);
+  pointer-events: none;
 `;
 
 const ProductDot = styled.span`
@@ -307,7 +319,7 @@ const ProductTitle = styled.h3`
   font-size: 1rem;
   font-weight: 400;
   line-height: 1.45;
-  margin: 0 0 0.55rem;
+  margin: 0 0 0.65rem;
 
   @media (max-width: 600px) {
     font-size: 0.9rem;
@@ -321,11 +333,25 @@ const ProductBottom = styled.div`
   gap: 0.5rem;
 `;
 
+const PriceGroup = styled.div`
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+`;
+
 const ProductPrice = styled.span`
   color: #292720;
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   font-weight: 700;
-  letter-spacing: 0.2px;
+`;
+
+const OldPrice = styled.span`
+  color: #99938a;
+  font-size: 0.76rem;
+  font-weight: 400;
+  text-decoration: line-through;
+  text-decoration-color: #a58a58;
 `;
 
 const ProductArrow = styled.span`
@@ -334,6 +360,7 @@ const ProductArrow = styled.span`
   justify-content: center;
   width: 27px;
   height: 27px;
+  flex-shrink: 0;
   border: 1px solid #e5e1d9;
   border-radius: 50%;
   color: #76613e;
@@ -371,6 +398,38 @@ const EmptyText = styled.p`
   font-size: 0.88rem;
   margin: 0;
 `;
+
+// ==============================
+// HELPERS PRIX
+// ==============================
+
+// Convention backend :
+// price = prix actuel
+// prixAvant = ancien prix avant promotion
+
+const formatPrice = (price) => Number(price).toLocaleString("fr-FR");
+
+const getPriceData = (product) => {
+  const currentPrice = Number(product.price || 0);
+  const previousPrice = Number(product.prixAvant || 0);
+
+  const hasDiscount =
+    Number.isFinite(currentPrice) &&
+    Number.isFinite(previousPrice) &&
+    currentPrice > 0 &&
+    previousPrice > currentPrice;
+
+  const discountPercentage = hasDiscount
+    ? Math.round(((previousPrice - currentPrice) / previousPrice) * 100)
+    : 0;
+
+  return {
+    currentPrice,
+    previousPrice,
+    hasDiscount,
+    discountPercentage,
+  };
+};
 
 // ==============================
 // COMPONENT
@@ -433,7 +492,7 @@ export default function PromoLuxury() {
     };
   }, []);
 
-  // Catégories disponibles
+  // Catégories
   const genres = useMemo(
     () => ["Tous", ...new Set(products.map((p) => p.genre).filter(Boolean))],
     [products],
@@ -474,7 +533,7 @@ export default function PromoLuxury() {
     return result;
   }, [products, genreFilter, sortBy]);
 
-  // Gestion du carrousel d'images
+  // Gestion du carrousel
   const handleProductScroll = useCallback((id) => {
     const el = carouselRefs.current[id];
 
@@ -487,6 +546,14 @@ export default function PromoLuxury() {
       return { ...prev, [id]: index };
     });
   }, []);
+
+  // Navigation vers la fiche produit
+  const openProduct = useCallback(
+    (id) => {
+      navigate(`/produit/${id}`);
+    },
+    [navigate],
+  );
 
   if (loading) {
     return (
@@ -560,73 +627,90 @@ export default function PromoLuxury() {
         ) : (
           <Grid>
             {filteredProducts.map((p, index) => {
-              const images = p.images.filter((img) => img?.url);
+              const images = (p.images || []).filter((img) => img?.url);
+
+              const priceData = getPriceData(p);
 
               return (
-                <Fragment key={p._id}>
-                  <ProductCard
-                    style={{ animationDelay: `${Math.min(index, 8) * 45}ms` }}
-                    role="button"
-                    tabIndex={0}
-                    aria-label={`Voir ${p.title || "ce produit"}`}
-                    onClick={() => navigate(`/produit/${p._id}`)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        navigate(`/produit/${p._id}`);
-                      }
-                    }}
-                  >
-                    <ImageArea>
-                      <ProductCarousel
-                        ref={(el) => {
-                          carouselRefs.current[p._id] = el;
-                        }}
-                        onScroll={() => handleProductScroll(p._id)}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {images.map((img, idx) => (
-                          <ProductSlide key={img._id || img.url || idx}>
-                            <ProductImage
-                              src={img.url}
-                              alt={p.title || "Produit en promotion"}
-                              loading="lazy"
-                            />
-                          </ProductSlide>
+                <ProductCard
+                  key={p._id}
+                  style={{
+                    animationDelay: `${Math.min(index, 8) * 45}ms`,
+                  }}
+                  role="link"
+                  tabIndex={0}
+                  aria-label={`Voir ${p.title || "ce produit"}`}
+                  onClick={() => openProduct(p._id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      openProduct(p._id);
+                    }
+                  }}
+                >
+                  <ImageArea>
+                    <ProductCarousel
+                      ref={(el) => {
+                        carouselRefs.current[p._id] = el;
+                      }}
+                      onScroll={() => handleProductScroll(p._id)}
+                    >
+                      {images.map((img, idx) => (
+                        <ProductSlide key={img._id || img.url || idx}>
+                          <ProductImage
+                            src={img.url}
+                            alt={p.title || "Produit en promotion"}
+                            loading="lazy"
+                            draggable="false"
+                          />
+                        </ProductSlide>
+                      ))}
+                    </ProductCarousel>
+
+                    <ProductBadge>
+                      {p.precommande ? "Précommande" : "Offre spéciale"}
+                    </ProductBadge>
+
+                    {priceData.hasDiscount && (
+                      <DiscountBadge>
+                        -{priceData.discountPercentage}%
+                      </DiscountBadge>
+                    )}
+
+                    {images.length > 1 && (
+                      <ProductDots>
+                        {images.map((_, idx) => (
+                          <ProductDot
+                            key={idx}
+                            active={(imageIndexes[p._id] || 0) === idx}
+                          />
                         ))}
-                      </ProductCarousel>
+                      </ProductDots>
+                    )}
+                  </ImageArea>
 
-                      <ProductBadge>
-                        {p.precommande ? "Précommande" : "Offre spéciale"}
-                      </ProductBadge>
+                  <ProductInfo>
+                    <ProductTitle>{p.title}</ProductTitle>
 
-                      {images.length > 1 && (
-                        <ProductDots>
-                          {images.map((_, idx) => (
-                            <ProductDot
-                              key={idx}
-                              active={(imageIndexes[p._id] || 0) === idx}
-                            />
-                          ))}
-                        </ProductDots>
-                      )}
-                    </ImageArea>
-
-                    <ProductInfo>
-                      <ProductTitle>{p.title}</ProductTitle>
-
-                      <ProductBottom>
+                    <ProductBottom>
+                      <PriceGroup>
                         <ProductPrice>
-                          {Number(p.price || 0).toLocaleString("fr-FR")} FCFA
+                          {formatPrice(priceData.currentPrice)} FCFA
                         </ProductPrice>
 
-                        <ProductArrow>
-                          <FiArrowUpRight size={15} />
-                        </ProductArrow>
-                      </ProductBottom>
-                    </ProductInfo>
-                  </ProductCard>
-                </Fragment>
+                        {priceData.hasDiscount && (
+                          <OldPrice>
+                            {formatPrice(priceData.previousPrice)} FCFA
+                          </OldPrice>
+                        )}
+                      </PriceGroup>
+
+                      <ProductArrow>
+                        <FiArrowUpRight size={15} />
+                      </ProductArrow>
+                    </ProductBottom>
+                  </ProductInfo>
+                </ProductCard>
               );
             })}
           </Grid>
