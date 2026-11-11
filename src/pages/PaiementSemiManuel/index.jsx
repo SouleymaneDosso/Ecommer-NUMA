@@ -1,510 +1,9 @@
-// import { useEffect, useState, useContext } from "react";
-// import { useParams, useNavigate } from "react-router-dom";
-// import styled, { keyframes } from "styled-components";
-// import { FaCheckCircle, FaRegCircle } from "react-icons/fa";
-// import { PanierContext, ThemeContext } from "../../Utils/Context";
-
-// /* ANIMATION */
-// const spin = keyframes`
-//   to { transform: rotate(360deg); }
-// `;
-
-// /* ===== STYLES GLOBAUX ===== */
-// const Page = styled.main`
-//   max-width: 900px;
-//   margin: 2rem auto;
-//   padding: 0 1.2rem;
-//   font-family: "Inter", sans-serif;
-//   background: ${({ $isdark }) => ($isdark ? "#0f0f0f" : "#f7f7f7")};
-//   color: ${({ $isdark }) => ($isdark ? "#f5f5f5" : "#111")};
-//   min-height: 100vh;
-//   transition:
-//     background 0.3s ease,
-//     color 0.3s ease;
-// `;
-
-// const LoaderWrapper = styled.div`
-//   min-height: 50vh;
-//   display: flex;
-//   align-items: center;
-//   justify-content: center;
-// `;
-
-// const Loader = styled.div`
-//   width: 40px;
-//   height: 40px;
-//   border: 4px solid #eee;
-//   border-top-color: #4f46e5;
-//   border-radius: 50%;
-//   animation: ${spin} 1s linear infinite;
-// `;
-
-// const Box = styled.div`
-//   background: ${({ $isdark }) => ($isdark ? "#181818" : "#fff")};
-//   border: 1px solid ${({ $isdark }) => ($isdark ? "#2a2a2a" : "#e5e5e5")};
-//   border-radius: 16px;
-//   padding: 1.8rem;
-//   margin-bottom: 1.5rem;
-//   box-shadow: ${({ $isdark }) =>
-//     $isdark ? "0 12px 30px rgba(0,0,0,0.6)" : "0 8px 24px rgba(0,0,0,0.05)"};
-// `;
-
-// const Title = styled.h1`
-//   font-size: 2rem;
-//   margin-bottom: 1.2rem;
-// `;
-
-// /* PAYMENT CARDS */
-// const PaymentCards = styled.div`
-//   display: flex;
-//   gap: 1rem;
-//   flex-wrap: wrap;
-// `;
-
-// const PaymentCard = styled.div`
-//   flex: 1;
-//   min-width: 240px;
-//   background: ${({ $isdark }) => ($isdark ? "#181818" : "#fff")};
-//   border: 1px solid ${({ $isdark }) => ($isdark ? "#2a2a2a" : "#e5e5e5")};
-//   border-radius: 18px;
-//   padding: 1.4rem;
-//   display: flex;
-//   align-items: center;
-//   gap: 1rem;
-//   box-shadow: ${({ $isdark }) =>
-//     $isdark ? "0 12px 30px rgba(0,0,0,0.6)" : "0 8px 24px rgba(0,0,0,0.05)"};
-//   transition: transform 0.15s ease;
-
-//   &:hover {
-//     transform: translateY(-4px);
-//   }
-// `;
-
-// const PaymentLogo = styled.img`
-//   width: 52px;
-//   height: 52px;
-//   object-fit: contain;
-// `;
-
-// const PaymentNumber = styled.div`
-//   font-weight: 700;
-//   font-size: 1.2rem;
-// `;
-
-// const Line = styled.div`
-//   display: flex;
-//   justify-content: space-between;
-//   margin-bottom: 0.6rem;
-// `;
-
-// const Input = styled.input`
-//   width: 100%;
-//   padding: 14px;
-//   margin-bottom: 1rem;
-//   border-radius: 10px;
-//   border: 1px solid ${({ $isdark }) => ($isdark ? "#333" : "#d1d5db")};
-//   background: ${({ $isdark }) => ($isdark ? "#222" : "#fff")};
-//   color: inherit;
-//   font-size: 1rem;
-//   box-sizing: border-box;
-
-//   &:focus {
-//     outline: none;
-//     border-color: #6366f1;
-//     box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
-//   }
-// `;
-
-// const Button = styled.button`
-//   width: 100%;
-//   padding: 14px;
-//   border-radius: 12px;
-//   border: none;
-//   background: linear-gradient(135deg, black, #6366f1);
-//   color: white;
-//   font-weight: 600;
-//   cursor: pointer;
-
-//   &:disabled {
-//     opacity: 0.5;
-//     cursor: not-allowed;
-//   }
-// `;
-
-// const Badge = styled.span`
-//   padding: 4px 10px;
-//   border-radius: 12px;
-//   font-size: 0.8rem;
-//   font-weight: 600;
-//   background: ${({ status }) =>
-//     status === "PAID"
-//       ? "#dcfce7"
-//       : status === "PENDING"
-//         ? "#fef3c7"
-//         : "#fee2e2"};
-//   color: ${({ status }) =>
-//     status === "PAID"
-//       ? "#166534"
-//       : status === "PENDING"
-//         ? "#92400e"
-//         : "#991b1b"};
-// `;
-
-// const ProgressBar = styled.div`
-//   height: 6px;
-//   background: #e5e7eb;
-//   border-radius: 3px;
-//   margin: 0.6rem 0 1.2rem;
-// `;
-
-// const Progress = styled.div`
-//   height: 100%;
-//   width: ${({ $percent }) => $percent}%;
-//   background: linear-gradient(90deg, #4f46e5, #6366f1);
-//   border-radius: 3px;
-//   transition: width 0.3s ease;
-// `;
-
-// const Timeline = styled.ul`
-//   list-style: none;
-//   padding: 0;
-// `;
-
-// const TimelineItem = styled.li`
-//   display: flex;
-//   align-items: center;
-//   margin-bottom: 1.2rem;
-// `;
-
-// const StepInfo = styled.div`
-//   margin-left: 0.8rem;
-//   display: flex;
-//   justify-content: space-between;
-//   width: 100%;
-//   align-items: center;
-// `;
-
-// const StepAmount = styled.span`
-//   font-size: 0.9rem;
-//   color: #6b7280;
-// `;
-
-// /* ===== COMPONENT ===== */
-// export default function PaiementSemiManuel() {
-//   const { id } = useParams();
-//   const navigate = useNavigate();
-//   const API_URL = import.meta.env.VITE_API_URL;
-
-//   const [commande, setCommande] = useState(null);
-//   const [loading, setLoading] = useState(true);
-//   const [numeroClient, setNumeroClient] = useState("");
-//   const [montantEnvoye, setMontantEnvoye] = useState("");
-//   const [reference, setReference] = useState("");
-//   const [service, setService] = useState("orange");
-//   const [step, setStep] = useState(1);
-//   const [token, setToken] = useState(null);
-//   const [sending, setSending] = useState(false);
-
-//   const { toutSupprimer } = useContext(PanierContext);
-//   const { theme } = useContext(ThemeContext);
-//   const $isdark = theme === "light";
-
-//   /* TOKEN CHECK */
-//   useEffect(() => {
-//     const saved = localStorage.getItem("token");
-//     if (!saved) {
-//       navigate("/login");
-//       return;
-//     }
-//     setToken(saved);
-//   }, []);
-
-//   /* FETCH COMMANDE */
-//   useEffect(() => {
-//     if (!token) return;
-
-//     const fetchCommande = async () => {
-//       try {
-//         const res = await fetch(`${API_URL}/api/commandes/${id}`, {
-//           headers: { Authorization: `Bearer ${token}` },
-//         });
-//         const data = await res.json();
-//         if (!res.ok) throw new Error(data.message || "Erreur serveur");
-//         setCommande(data.commande);
-//       } catch (err) {
-//         console.error(err);
-//         alert(err.message);
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-
-//     fetchCommande();
-//   }, [id, token]);
-
-//   /* PAIEMENT */
-//   const handlePaiement = async (e) => {
-//     e.preventDefault();
-//     if (sending) return;
-//     setSending(true);
-//     if (!token) {
-//       navigate("/login");
-//       return;
-//     }
-
-//     if (!numeroClient || !montantEnvoye || !reference) {
-//       alert("Remplissez tous les champs.");
-//       return;
-//     }
-
-//     const montant = Number(montantEnvoye);
-//     const etape = commande?.paiements.find((p) => p.step === step);
-//     if (etape && etape.amountExpected && montant < etape.amountExpected) {
-//       alert("Le montant est inférieur à celui attendu pour cette étape.");
-//       return;
-//     }
-
-//     try {
-//       setSending(true);
-
-//       const res = await fetch(`${API_URL}/api/commandes/${id}/paiement-semi`, {
-//         method: "POST",
-//         headers: {
-//           "Content-Type": "application/json",
-//           Authorization: `Bearer ${token}`,
-//         },
-//         body: JSON.stringify({
-//           step,
-//           numeroClient,
-//           montantEnvoye: montant,
-//           reference,
-//           service,
-//         }),
-//       });
-
-//       const data = await res.json();
-//       if (!res.ok) {
-//         alert(data.message || "Erreur lors du paiement");
-//         return;
-//       }
-
-//       toutSupprimer();
-//       navigate(`/merci/${id}`);
-//     } catch (err) {
-//       console.error(err);
-//       alert("Erreur serveur");
-
-//     } finally {
-//       setSending(false);
-//     }
-//   };
-
-//   if (loading)
-//     return (
-//       <LoaderWrapper>
-//         <Loader />
-//       </LoaderWrapper>
-//     );
-
-//   if (!commande) return <Page $isdark={$isdark}>Commande introuvable</Page>;
-
-//   const totalSteps = commande.paiements.length || 1;
-//   const paidSteps = commande.paiements.filter(
-//     (p) => p.status === "PAID",
-//   ).length;
-//   const progressPercent = (paidSteps / totalSteps) * 100;
-
-//   return (
-//     <Page $isdark={$isdark}>
-//       <Title>Paiement Semi-Manuel</Title>
-
-//       {/* NUMEROS + LOGOS */}
-//       <Box $isdark={$isdark}>
-//         <h2>Envoyer votre paiement</h2>
-
-//         <PaymentCards>
-//           <PaymentCard $isdark={$isdark}>
-//             <PaymentLogo src="/logosorange.png" alt="Orange Money" />
-//             <div>
-//               <PaymentNumber>0700247693</PaymentNumber>
-//               <small>
-//                 Envoyez via <strong>Orange Money</strong>
-//               </small>
-//             </div>
-//           </PaymentCard>
-
-//           <PaymentCard $isdark={$isdark}>
-//             <PaymentLogo src="/logoswave.jpg" alt="Wave" />
-//             <div>
-//               <PaymentNumber>0700247693</PaymentNumber>
-//               <small>
-//                 Paiement via <strong>Wave</strong>
-//               </small>
-//             </div>
-//           </PaymentCard>
-//         </PaymentCards>
-//       </Box>
-
-//       {/* RECAP MODIFIÉ */}
-//       <Box $isdark={$isdark}>
-//         <h2>Récapitulatif</h2>
-//         {commande.panier.map((item) => (
-//           <Line key={item.produitId}>
-//             <span>
-//               {item.nom} x {item.quantite}
-//             </span>
-//             <span>{(item.prix * item.quantite).toLocaleString()} FCFA</span>
-//           </Line>
-//         ))}
-
-       
-
-//         <Line>
-//           <strong>Total</strong>
-//           <strong>{commande.total.toLocaleString()} FCFA</strong>
-//         </Line>
-//       </Box>
-
-//       {/* FORM */}
-//       <Box $isdark={$isdark}>
-//         <h2>Soumettre le paiement</h2>
-//         <form onSubmit={handlePaiement}>
-//           <Input
-//             $isdark={$isdark}
-//             placeholder="Numéro de téléphone"
-//             value={numeroClient}
-//             onChange={(e) => setNumeroClient(e.target.value)}
-//           />
-
-//           {/* LISTE DES MONTANTS À PAYER */}
-//           <select
-//             value={montantEnvoye}
-//             onChange={(e) => setMontantEnvoye(e.target.value)}
-//             style={{
-//               width: "100%",
-//               padding: "14px",
-//               borderRadius: "10px",
-//               border: "1px solid #d1d5db",
-//               marginBottom: "1rem",
-//             }}
-//           >
-//             <option value="">Choisir le montant à payer</option>
-//             {commande.paiements
-//               .filter((p) => p.status !== "PAID")
-//               .map((p) => (
-//                 <option key={p.step} value={p.amountExpected}>
-//                   Étape {p.step} — {p.amountExpected.toLocaleString()} FCFA
-//                 </option>
-//               ))}
-//           </select>
-
-//           <Input
-//             $isdark={$isdark}
-//             placeholder="Référence"
-//             value={reference}
-//             onChange={(e) => setReference(e.target.value)}
-//           />
-
-//           <select
-//             value={step}
-//             onChange={(e) => setStep(Number(e.target.value))}
-//             style={{
-//               width: "100%",
-//               padding: "14px",
-//               borderRadius: "10px",
-//               border: "1px solid #d1d5db",
-//               marginBottom: "1rem",
-//             }}
-//           >
-//             {commande.paiements.map((p) => (
-//               <option
-//                 key={p.step}
-//                 value={p.step}
-//                 disabled={p.status === "PAID"}
-//               >
-//                 Étape {p.step} {p.status === "PAID" ? "(déjà payée)" : ""}
-//               </option>
-//             ))}
-//           </select>
-
-//           <div style={{ display: "flex", marginBottom: "1rem" }}>
-//             <label>
-//               <input
-//                 type="radio"
-//                 name="service"
-//                 value="orange"
-//                 checked={service === "orange"}
-//                 onChange={(e) => setService(e.target.value)}
-//               />
-//               Orange Money
-//             </label>
-//             <label style={{ marginLeft: "1rem" }}>
-//               <input
-//                 type="radio"
-//                 name="service"
-//                 value="wave"
-//                 checked={service === "wave"}
-//                 onChange={(e) => setService(e.target.value)}
-//               />
-//               Wave
-//             </label>
-//           </div>
-
-//           <Button
-//             type="submit"
-//             disabled={
-//               commande.paiements.find((p) => p.step === step)?.status === "PAID"
-//             }
-//           >
-//             {sending ? "Envoi..." : "Soumettre le paiement"}
-//           </Button>
-//         </form>
-//       </Box>
-
-//       {/* TIMELINE */}
-//       <Box $isdark={$isdark}>
-//         <h2>Étapes de paiement</h2>
-//         <ProgressBar>
-//           <Progress $percent={progressPercent} />
-//         </ProgressBar>
-
-//         <Timeline>
-//           {commande.paiements.map((p) => (
-//             <TimelineItem key={p._id}>
-//               {p.status === "PAID" ? (
-//                 <FaCheckCircle size={18} />
-//               ) : (
-//                 <FaRegCircle size={18} />
-//               )}
-
-//               <StepInfo>
-//                 <span>Étape {p.step}</span>
-//                 <StepAmount>
-//                   {(p.amountExpected || 0).toLocaleString()} FCFA
-//                 </StepAmount>
-//                 <Badge status={p.status}>{p.status}</Badge>
-//               </StepInfo>
-//             </TimelineItem>
-//           ))}
-//         </Timeline>
-//       </Box>
-//     </Page>
-//   );
-// }
-
-
 import { useEffect, useState, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import styled, { keyframes } from "styled-components";
-import {
-  FaCheckCircle,
-  FaRegCircle,
-} from "react-icons/fa";
+import { FaCheckCircle, FaRegCircle } from "react-icons/fa";
 
-import {
-  PanierContext,
-  ThemeContext,
-} from "../../Utils/Context";
+import { PanierContext, ThemeContext } from "../../Utils/Context";
 
 import {
   FiArrowLeft,
@@ -557,12 +56,12 @@ const pulse = keyframes`
 const Page = styled.main`
   min-height: 100vh;
   padding: 145px 22px 75px;
-  background: ${({ $isdark }) =>
-    $isdark ? "#101010" : "#f7f5f1"};
-  color: ${({ $isdark }) =>
-    $isdark ? "#f5f1e9" : "#24221f"};
+  background: ${({ $isdark }) => ($isdark ? "#101010" : "#f7f5f1")};
+  color: ${({ $isdark }) => ($isdark ? "#f5f1e9" : "#24221f")};
   font-family: "Inter", system-ui, sans-serif;
-  transition: background 0.3s ease, color 0.3s ease;
+  transition:
+    background 0.3s ease,
+    color 0.3s ease;
 
   @media (max-width: 768px) {
     padding: 115px 14px 45px;
@@ -598,7 +97,7 @@ const LoaderWrapper = styled.div`
 const Loader = styled.div`
   width: 42px;
   height: 42px;
-  border: 2px solid rgba(185,154,103,0.2);
+  border: 2px solid rgba(185, 154, 103, 0.2);
   border-top-color: #b99a67;
   border-radius: 50%;
   animation: ${spin} 0.8s linear infinite;
@@ -616,7 +115,7 @@ const BackButton = styled.button`
   padding: 0;
   border: none;
   background: transparent;
-  color: ${({ $isdark }) => $isdark ? "#aaa" : "#888"};
+  color: ${({ $isdark }) => ($isdark ? "#aaa" : "#888")};
   font-size: 10px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
@@ -667,7 +166,7 @@ const Title = styled.h1`
 const Subtitle = styled.p`
   max-width: 550px;
   margin: 14px auto 0;
-  color: ${({ $isdark }) => $isdark ? "#999" : "#888"};
+  color: ${({ $isdark }) => ($isdark ? "#999" : "#888")};
   font-size: 12px;
   line-height: 1.8;
 `;
@@ -682,10 +181,8 @@ const StatusBanner = styled.div`
   gap: 15px;
   padding: 18px 20px;
   margin-bottom: 25px;
-  border: 1px solid ${({ $isdark }) =>
-    $isdark ? "#49402f" : "#e7d9c0"};
-  background: ${({ $isdark }) =>
-    $isdark ? "#211e18" : "#fbf7ef"};
+  border: 1px solid ${({ $isdark }) => ($isdark ? "#49402f" : "#e7d9c0")};
+  background: ${({ $isdark }) => ($isdark ? "#211e18" : "#fbf7ef")};
 
   svg {
     flex-shrink: 0;
@@ -702,7 +199,7 @@ const StatusBanner = styled.div`
 
   p {
     margin: 0;
-    color: ${({ $isdark }) => $isdark ? "#aaa" : "#888"};
+    color: ${({ $isdark }) => ($isdark ? "#aaa" : "#888")};
     font-size: 10px;
     line-height: 1.6;
   }
@@ -731,10 +228,8 @@ const MainColumn = styled.div`
 
 const Box = styled.section`
   padding: 28px;
-  background: ${({ $isdark }) =>
-    $isdark ? "#191919" : "#fff"};
-  border: 1px solid ${({ $isdark }) =>
-    $isdark ? "#303030" : "#ebe7df"};
+  background: ${({ $isdark }) => ($isdark ? "#191919" : "#fff")};
+  border: 1px solid ${({ $isdark }) => ($isdark ? "#303030" : "#ebe7df")};
   box-shadow: ${({ $isdark }) =>
     $isdark ? "none" : "0 12px 40px rgba(30,25,15,0.035)"};
 
@@ -749,8 +244,7 @@ const BoxHeader = styled.div`
   gap: 13px;
   padding-bottom: 20px;
   margin-bottom: 22px;
-  border-bottom: 1px solid ${({ $isdark }) =>
-    $isdark ? "#333" : "#eee9e1"};
+  border-bottom: 1px solid ${({ $isdark }) => ($isdark ? "#333" : "#eee9e1")};
 `;
 
 const BoxIcon = styled.div`
@@ -760,8 +254,7 @@ const BoxIcon = styled.div`
   place-items: center;
   flex-shrink: 0;
   color: #b99a67;
-  background: ${({ $isdark }) =>
-    $isdark ? "#29251f" : "#f5f0e7"};
+  background: ${({ $isdark }) => ($isdark ? "#29251f" : "#f5f0e7")};
   font-size: 18px;
 `;
 
@@ -776,7 +269,7 @@ const BoxHeading = styled.div`
   p {
     margin: 0;
     font-size: 10px;
-    color: ${({ $isdark }) => $isdark ? "#999" : "#999"};
+    color: ${({ $isdark }) => ($isdark ? "#999" : "#999")};
   }
 `;
 
@@ -796,11 +289,11 @@ const PaymentCards = styled.div`
 
 const PaymentCard = styled.div`
   padding: 20px 16px;
-  border: 1px solid ${({ $isdark }) =>
-    $isdark ? "#353535" : "#eae5dc"};
-  background: ${({ $isdark }) =>
-    $isdark ? "#202020" : "#fdfcf9"};
-  transition: border 0.3s ease, transform 0.3s ease;
+  border: 1px solid ${({ $isdark }) => ($isdark ? "#353535" : "#eae5dc")};
+  background: ${({ $isdark }) => ($isdark ? "#202020" : "#fdfcf9")};
+  transition:
+    border 0.3s ease,
+    transform 0.3s ease;
 
   &:hover {
     border-color: #b99a67;
@@ -838,7 +331,7 @@ const PaymentNumber = styled.div`
 
 const ProviderDescription = styled.p`
   margin: 0;
-  color: ${({ $isdark }) => $isdark ? "#999" : "#888"};
+  color: ${({ $isdark }) => ($isdark ? "#999" : "#888")};
   font-size: 10px;
 `;
 
@@ -848,8 +341,7 @@ const CopyButton = styled.button`
   gap: 7px;
   margin-top: 17px;
   padding: 9px 12px;
-  border: 1px solid ${({ $isdark }) =>
-    $isdark ? "#444" : "#e6dfd3"};
+  border: 1px solid ${({ $isdark }) => ($isdark ? "#444" : "#e6dfd3")};
   background: transparent;
   color: #b99a67;
   font-size: 9px;
@@ -871,8 +363,7 @@ const ProductLine = styled.div`
   justify-content: space-between;
   gap: 15px;
   padding: 13px 0;
-  border-bottom: 1px solid ${({ $isdark }) =>
-    $isdark ? "#303030" : "#f0ece5"};
+  border-bottom: 1px solid ${({ $isdark }) => ($isdark ? "#303030" : "#f0ece5")};
 
   &:last-child {
     border-bottom: none;
@@ -886,7 +377,7 @@ const ProductLine = styled.div`
 
   .detail {
     font-size: 10px;
-    color: ${({ $isdark }) => $isdark ? "#999" : "#888"};
+    color: ${({ $isdark }) => ($isdark ? "#999" : "#888")};
   }
 
   .price {
@@ -903,8 +394,7 @@ const TotalLine = styled.div`
   gap: 10px;
   padding-top: 20px;
   margin-top: 10px;
-  border-top: 1px solid ${({ $isdark }) =>
-    $isdark ? "#444" : "#ddd"};
+  border-top: 1px solid ${({ $isdark }) => ($isdark ? "#444" : "#ddd")};
 
   span {
     font-size: 11px;
@@ -927,7 +417,7 @@ const TotalLine = styled.div`
 const FieldLabel = styled.label`
   display: block;
   margin-bottom: 9px;
-  color: ${({ $isdark }) => $isdark ? "#c8c0b3" : "#777"};
+  color: ${({ $isdark }) => ($isdark ? "#c8c0b3" : "#777")};
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 1.4px;
@@ -939,12 +429,10 @@ const Input = styled.input`
   box-sizing: border-box;
   padding: 15px 16px;
   margin-bottom: 19px;
-  border: 1px solid ${({ $isdark }) =>
-    $isdark ? "#393939" : "#e8e3db"};
+  border: 1px solid ${({ $isdark }) => ($isdark ? "#393939" : "#e8e3db")};
   border-radius: 0;
   outline: none;
-  background: ${({ $isdark }) =>
-    $isdark ? "#222" : "#fbfaf8"};
+  background: ${({ $isdark }) => ($isdark ? "#222" : "#fbfaf8")};
   color: inherit;
   font-size: 16px;
   transition: border 0.25s ease;
@@ -954,7 +442,7 @@ const Input = styled.input`
   }
 
   &::placeholder {
-    color: ${({ $isdark }) => $isdark ? "#777" : "#aaa"};
+    color: ${({ $isdark }) => ($isdark ? "#777" : "#aaa")};
   }
 `;
 
@@ -963,12 +451,10 @@ const Select = styled.select`
   box-sizing: border-box;
   padding: 15px 16px;
   margin-bottom: 19px;
-  border: 1px solid ${({ $isdark }) =>
-    $isdark ? "#393939" : "#e8e3db"};
+  border: 1px solid ${({ $isdark }) => ($isdark ? "#393939" : "#e8e3db")};
   border-radius: 0;
   outline: none;
-  background: ${({ $isdark }) =>
-    $isdark ? "#222" : "#fbfaf8"};
+  background: ${({ $isdark }) => ($isdark ? "#222" : "#fbfaf8")};
   color: inherit;
   font-size: 16px;
   cursor: pointer;
@@ -1065,8 +551,7 @@ const TimelineHeader = styled.div`
 const ProgressBar = styled.div`
   height: 4px;
   width: 100%;
-  background: ${({ $isdark }) =>
-    $isdark ? "#383838" : "#e9e5dd"};
+  background: ${({ $isdark }) => ($isdark ? "#383838" : "#e9e5dd")};
   margin-bottom: 30px;
   overflow: hidden;
 `;
@@ -1101,8 +586,7 @@ const TimelineItem = styled.div`
     left: 16px;
     width: 1px;
     height: calc(100% - 34px);
-    background: ${({ $isdark }) =>
-      $isdark ? "#444" : "#e5dfd4"};
+    background: ${({ $isdark }) => ($isdark ? "#444" : "#e5dfd4")};
   }
 `;
 
@@ -1115,10 +599,9 @@ const TimelineIcon = styled.div`
   border-radius: 50%;
   background: ${({ $paid, $isdark }) =>
     $paid ? "#b99a67" : $isdark ? "#292929" : "#f3f0ea"};
-  color: ${({ $paid }) => $paid ? "#fff" : "#b99a67"};
+  color: ${({ $paid }) => ($paid ? "#fff" : "#b99a67")};
   font-size: 14px;
-  animation: ${({ $active }) =>
-    $active ? pulse : "none"} 2s infinite;
+  animation: ${({ $active }) => ($active ? pulse : "none")} 2s infinite;
 `;
 
 const StepInfo = styled.div`
@@ -1147,7 +630,7 @@ const StepInfo = styled.div`
 
   .description {
     font-size: 10px;
-    color: ${({ $isdark }) => $isdark ? "#999" : "#888"};
+    color: ${({ $isdark }) => ($isdark ? "#999" : "#888")};
   }
 `;
 
@@ -1161,14 +644,13 @@ const Trust = styled.div`
   gap: 15px;
   margin-top: 22px;
   padding-top: 20px;
-  border-top: 1px solid ${({ $isdark }) =>
-    $isdark ? "#333" : "#eee9e1"};
+  border-top: 1px solid ${({ $isdark }) => ($isdark ? "#333" : "#eee9e1")};
 
   div {
     display: flex;
     align-items: center;
     gap: 7px;
-    color: ${({ $isdark }) => $isdark ? "#999" : "#888"};
+    color: ${({ $isdark }) => ($isdark ? "#999" : "#888")};
     font-size: 9px;
   }
 
@@ -1186,10 +668,8 @@ const ErrorBox = styled.div`
   margin: 60px auto;
   padding: 50px 25px;
   text-align: center;
-  background: ${({ $isdark }) =>
-    $isdark ? "#191919" : "#fff"};
-  border: 1px solid ${({ $isdark }) =>
-    $isdark ? "#333" : "#ebe7df"};
+  background: ${({ $isdark }) => ($isdark ? "#191919" : "#fff")};
+  border: 1px solid ${({ $isdark }) => ($isdark ? "#333" : "#ebe7df")};
 
   svg {
     color: #b99a67;
@@ -1205,7 +685,7 @@ const ErrorBox = styled.div`
 
   p {
     font-size: 12px;
-    color: ${({ $isdark }) => $isdark ? "#999" : "#888"};
+    color: ${({ $isdark }) => ($isdark ? "#999" : "#888")};
   }
 `;
 
@@ -1265,14 +745,11 @@ export default function PaiementSemiManuel() {
 
     const fetchCommande = async () => {
       try {
-        const res = await fetch(
-          `${API_URL}/api/commandes/${id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const res = await fetch(`${API_URL}/api/commandes/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
         const data = await res.json();
 
@@ -1310,7 +787,7 @@ export default function PaiementSemiManuel() {
   const paiements = commande?.paiements || [];
 
   const etapeSelectionnee = paiements.find(
-    (p) => Number(p.step) === Number(step)
+    (p) => Number(p.step) === Number(step),
   );
 
   useEffect(() => {
@@ -1322,13 +799,9 @@ export default function PaiementSemiManuel() {
     setMontantEnvoye(
       etapeSelectionnee.status === "PAID"
         ? ""
-        : String(etapeSelectionnee.amountExpected ?? "")
+        : String(etapeSelectionnee.amountExpected ?? ""),
     );
-  }, [
-    step,
-    etapeSelectionnee?.amountExpected,
-    etapeSelectionnee?.status,
-  ]);
+  }, [step, etapeSelectionnee?.amountExpected, etapeSelectionnee?.status]);
 
   /* ==========================
      COPY NUMBER
@@ -1374,9 +847,7 @@ export default function PaiementSemiManuel() {
       return;
     }
 
-    const etape = paiements.find(
-      (p) => Number(p.step) === Number(step)
-    );
+    const etape = paiements.find((p) => Number(p.step) === Number(step));
 
     if (!etape) {
       alert("Cette étape de paiement est introuvable.");
@@ -1399,23 +870,20 @@ export default function PaiementSemiManuel() {
     setSending(true);
 
     try {
-      const res = await fetch(
-        `${API_URL}/api/commandes/${id}/paiement-semi`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            step,
-            numeroClient,
-            montantEnvoye: montant,
-            reference,
-            service,
-          }),
-        }
-      );
+      const res = await fetch(`${API_URL}/api/commandes/${id}/paiement-semi`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          step,
+          numeroClient,
+          montantEnvoye: montant,
+          reference,
+          service,
+        }),
+      });
 
       const data = await res.json();
 
@@ -1472,16 +940,13 @@ export default function PaiementSemiManuel() {
 
   const totalSteps = paiements.length || 1;
 
-  const paidSteps = paiements.filter(
-    (p) => p.status === "PAID"
-  ).length;
+  const paidSteps = paiements.filter((p) => p.status === "PAID").length;
 
   const progressPercent = (paidSteps / totalSteps) * 100;
 
   const totalCommande = Number(commande.total) || 0;
 
-  const tousPayes =
-    paiements.length > 0 && paidSteps === paiements.length;
+  const tousPayes = paiements.length > 0 && paidSteps === paiements.length;
 
   return (
     <Page $isdark={$isdark}>
@@ -1512,8 +977,8 @@ export default function PaiementSemiManuel() {
             <div>
               <strong>Votre paiement est en attente de confirmation</strong>
               <p>
-                Effectuez le transfert vers l'un des numéros ci-dessous,
-                puis soumettez votre référence de transaction.
+                Effectuez le transfert vers l'un des numéros ci-dessous, puis
+                soumettez votre référence de transaction.
               </p>
             </div>
           </StatusBanner>
@@ -1548,10 +1013,7 @@ export default function PaiementSemiManuel() {
               <PaymentCards>
                 <PaymentCard $isdark={$isdark}>
                   <ProviderTop>
-                    <PaymentLogo
-                      src="/logosorange.png"
-                      alt="Orange Money"
-                    />
+                    <PaymentLogo src="/logosorange.png" alt="Orange Money" />
                     <ProviderLabel>Orange Money</ProviderLabel>
                   </ProviderTop>
 
@@ -1563,9 +1025,7 @@ export default function PaiementSemiManuel() {
                   <CopyButton
                     type="button"
                     $isdark={$isdark}
-                    onClick={() =>
-                      handleCopy("0700247693", "orange")
-                    }
+                    onClick={() => handleCopy("0700247693", "orange")}
                   >
                     {copied === "orange" ? <FiCheck /> : <FiCopy />}
                     {copied === "orange" ? "Copié" : "Copier le numéro"}
@@ -1574,10 +1034,7 @@ export default function PaiementSemiManuel() {
 
                 <PaymentCard $isdark={$isdark}>
                   <ProviderTop>
-                    <PaymentLogo
-                      src="/logoswave.jpg"
-                      alt="Wave"
-                    />
+                    <PaymentLogo src="/logoswave.jpg" alt="Wave" />
                     <ProviderLabel>Wave</ProviderLabel>
                   </ProviderTop>
 
@@ -1589,9 +1046,7 @@ export default function PaiementSemiManuel() {
                   <CopyButton
                     type="button"
                     $isdark={$isdark}
-                    onClick={() =>
-                      handleCopy("0700247693", "wave")
-                    }
+                    onClick={() => handleCopy("0700247693", "wave")}
                   >
                     {copied === "wave" ? <FiCheck /> : <FiCopy />}
                     {copied === "wave" ? "Copié" : "Copier le numéro"}
@@ -1616,9 +1071,7 @@ export default function PaiementSemiManuel() {
                 </BoxHeader>
 
                 <form onSubmit={handlePaiement}>
-                  <FieldLabel $isdark={$isdark}>
-                    Étape de paiement
-                  </FieldLabel>
+                  <FieldLabel $isdark={$isdark}>Étape de paiement</FieldLabel>
 
                   <Select
                     $isdark={$isdark}
@@ -1647,9 +1100,7 @@ export default function PaiementSemiManuel() {
                     type="tel"
                     placeholder="+225XXXXXXXX"
                     value={numeroClient}
-                    onChange={(e) =>
-                      setNumeroClient(e.target.value)
-                    }
+                    onChange={(e) => setNumeroClient(e.target.value)}
                     required
                   />
 
@@ -1663,23 +1114,24 @@ export default function PaiementSemiManuel() {
                     min="1"
                     placeholder="Montant transféré"
                     value={montantEnvoye}
-                    onChange={(e) =>
-                      setMontantEnvoye(e.target.value)
-                    }
+                    onChange={(e) => setMontantEnvoye(e.target.value)}
                     required
                   />
 
                   {etapeSelectionnee && (
-                    <p style={{
-                      marginTop: -10,
-                      marginBottom: 20,
-                      fontSize: 10,
-                      color: "#b99a67",
-                    }}>
+                    <p
+                      style={{
+                        marginTop: -10,
+                        marginBottom: 20,
+                        fontSize: 10,
+                        color: "#b99a67",
+                      }}
+                    >
                       Montant attendu :{" "}
                       {Number(
-                        etapeSelectionnee.amountExpected || 0
-                      ).toLocaleString("fr-FR")} FCFA
+                        etapeSelectionnee.amountExpected || 0,
+                      ).toLocaleString("fr-FR")}{" "}
+                      FCFA
                     </p>
                   )}
 
@@ -1692,15 +1144,11 @@ export default function PaiementSemiManuel() {
                     type="text"
                     placeholder="Ex : référence du reçu de paiement"
                     value={reference}
-                    onChange={(e) =>
-                      setReference(e.target.value)
-                    }
+                    onChange={(e) => setReference(e.target.value)}
                     required
                   />
 
-                  <FieldLabel $isdark={$isdark}>
-                    Service utilisé
-                  </FieldLabel>
+                  <FieldLabel $isdark={$isdark}>Service utilisé</FieldLabel>
 
                   <Select
                     $isdark={$isdark}
@@ -1713,12 +1161,13 @@ export default function PaiementSemiManuel() {
 
                   <Button
                     type="submit"
-                    disabled={sending || !etapeSelectionnee ||
-                      etapeSelectionnee.status === "PAID"}
+                    disabled={
+                      sending ||
+                      !etapeSelectionnee ||
+                      etapeSelectionnee.status === "PAID"
+                    }
                   >
-                    {sending
-                      ? "Envoi en cours..."
-                      : "Soumettre mon paiement"}
+                    {sending ? "Envoi en cours..." : "Soumettre mon paiement"}
                     {!sending && <FiArrowRight />}
                   </Button>
                 </form>
@@ -1742,25 +1191,16 @@ export default function PaiementSemiManuel() {
               <Timeline>
                 {paiements.map((p) => {
                   const paid = p.status === "PAID";
-                  const active =
-                    !paid &&
-                    Number(p.step) === Number(step);
+                  const active = !paid && Number(p.step) === Number(step);
 
                   return (
-                    <TimelineItem
-                      key={p._id || p.step}
-                      $isdark={$isdark}
-                    >
+                    <TimelineItem key={p._id || p.step} $isdark={$isdark}>
                       <TimelineIcon
                         $paid={paid}
                         $active={active}
                         $isdark={$isdark}
                       >
-                        {paid ? (
-                          <FiCheck />
-                        ) : (
-                          <FaRegCircle />
-                        )}
+                        {paid ? <FiCheck /> : <FaRegCircle />}
                       </TimelineIcon>
 
                       <StepInfo $isdark={$isdark}>
@@ -1777,9 +1217,10 @@ export default function PaiementSemiManuel() {
                         </div>
 
                         <div className="amount">
-                          {Number(
-                            p.amountExpected || 0
-                          ).toLocaleString("fr-FR")} FCFA
+                          {Number(p.amountExpected || 0).toLocaleString(
+                            "fr-FR",
+                          )}{" "}
+                          FCFA
                         </div>
 
                         <div className="description">
@@ -1818,25 +1259,21 @@ export default function PaiementSemiManuel() {
               >
                 <div>
                   <div className="name">{item.nom}</div>
-                  <div className="detail">
-                    Quantité : {item.quantite}
-                  </div>
+                  <div className="detail">Quantité : {item.quantite}</div>
                 </div>
 
                 <div className="price">
                   {(
-                    Number(item.prix || 0) *
-                    Number(item.quantite || 0)
-                  ).toLocaleString("fr-FR")} FCFA
+                    Number(item.prix || 0) * Number(item.quantite || 0)
+                  ).toLocaleString("fr-FR")}{" "}
+                  FCFA
                 </div>
               </ProductLine>
             ))}
 
             <TotalLine $isdark={$isdark}>
               <span>Total commande</span>
-              <strong>
-                {totalCommande.toLocaleString("fr-FR")} FCFA
-              </strong>
+              <strong>{totalCommande.toLocaleString("fr-FR")} FCFA</strong>
             </TotalLine>
 
             <Trust $isdark={$isdark}>
