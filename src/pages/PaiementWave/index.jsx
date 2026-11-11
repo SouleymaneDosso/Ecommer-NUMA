@@ -767,7 +767,7 @@ export default function PageCheckout() {
   const [prenom, setPrenom] = useState("");
   const [adresse, setAdresse] = useState("");
   const [ville, setVille] = useState("");
-  const [numero, setNumero] = useState("+225");
+  const [numero, setNumero] = useState("");
 
   const codePostal = "00225";
   const pays = "Côte d'Ivoire";
@@ -806,10 +806,8 @@ export default function PageCheckout() {
       return;
     }
 
-    if (!numero || !numero.startsWith("+225") || numero.length !== 13) {
-      alert(
-        "Veuillez entrer un numéro valide au format +225XXXXXXXX, sans espaces.",
-      );
+    if (!/^0[157]\d{8}$/.test(numero)) {
+      alert("Veuillez entrer un numéro ivoirien valide de 10 chiffres.");
       return;
     }
 
@@ -1017,18 +1015,17 @@ export default function PageCheckout() {
                     <Input
                       $isdark={$isdark}
                       type="tel"
-                      placeholder="+225XXXXXXXX"
+                      placeholder="Exemple : 0700247693"
                       value={numero}
                       onChange={(e) => {
-                        let value = e.target.value.replace(/\s/g, "");
-
-                        if (!value.startsWith("+225")) {
-                          value = "+225" + value.replace(/^\+?225/, "");
-                        }
-
-                        setNumero(value.slice(0, 13));
+                        const value = e.target.value
+                          .replace(/\D/g, "")
+                          .slice(0, 10);
+                        setNumero(value);
                       }}
                       autoComplete="tel"
+                      inputMode="numeric"
+                      maxLength={10}
                       required
                     />
                   </Field>
