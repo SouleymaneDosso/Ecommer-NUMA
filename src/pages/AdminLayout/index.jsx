@@ -110,7 +110,7 @@ const NotificationButton = styled.button`
   font-weight: bold;
 
   &::after {
-    content: '${(props) => props.count || 0}';
+    content: "${(props) => props.count || 0}";
     position: absolute;
     top: -5px;
     right: -10px;
@@ -146,15 +146,24 @@ function AdminLayout() {
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/commandes`);
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/admin/commandes`,
+        );
         const data = await res.json();
         if (data?.commandes) {
           const commandes = data.commandes;
-          setNbCommandes(commandes.length);
+          const commandesActives = commandes.filter(
+            (cmd) => !["CANCELLED", "DELIVERED"].includes(cmd.statusCommande),
+          );
+
+          setNbCommandes(commandesActives.length);
 
           // Compte des paiements PENDING
           const pending = commandes.reduce((acc, cmd) => {
-            return acc + cmd.paiementsRecus.filter(p => p.status === "PENDING").length;
+            return (
+              acc +
+              cmd.paiementsRecus.filter((p) => p.status === "PENDING").length
+            );
           }, 0);
 
           // Joue le son si nouveau paiement en attente
@@ -216,7 +225,7 @@ function AdminLayout() {
           Paiements <Badge>{nbPaiementsPending}</Badge>
         </SidebarItem>
 
-         <SidebarItem
+        <SidebarItem
           $active={location.pathname.includes("livreurs")}
           onClick={() => navigate("/admin/livreurs")}
         >
@@ -250,10 +259,7 @@ function AdminLayout() {
         >
           Retours
         </SidebarItem>
-
       </Sidebar>
-
-
 
       <Main>
         <Header>
