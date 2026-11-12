@@ -153,7 +153,6 @@ function AdminLayout() {
         const token = localStorage.getItem("adminToken");
 
         if (!token) {
-          console.error("Token administrateur introuvable.");
           return;
         }
 
@@ -175,12 +174,7 @@ function AdminLayout() {
 
         const data = await res.json();
 
-        console.log("Réponse API commandes :", data);
-
         if (!Array.isArray(data.commandes)) {
-          console.error(
-            "La réponse API ne contient pas de tableau data.commandes.",
-          );
           return;
         }
 

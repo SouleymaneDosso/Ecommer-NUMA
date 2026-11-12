@@ -61,6 +61,7 @@ const Precommande = () => {
   const [adresse, setAdresse] = useState("");
   const [ville, setVille] = useState("");
   const [numero, setNumero] = useState("");
+  const [confirmationOuverte, setConfirmationOuverte] = useState(false);
 
   const codePostal = "00225";
   const pays = "Côte d'Ivoire";
@@ -811,10 +812,9 @@ const Precommande = () => {
         );
       }
 
-      setMessage(
-        "Votre précommande a été envoyée avec succès. Elle sera vérifiée par notre équipe.",
-      );
-
+      setMessage("");
+      setErreur("");
+      setConfirmationOuverte(true);
       setService("");
       setNumeroDepot("");
       setReferenceDepot("");
@@ -853,6 +853,43 @@ const Precommande = () => {
   if (erreur && !modeleSelectionne && modeles.length === 0) {
     return (
       <PageContainer>
+        {confirmationOuverte && (
+          <ConfirmationOverlay
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="confirmation-title"
+          >
+            <ConfirmationModal>
+              <ConfirmationIcon>
+                <Check size={34} strokeWidth={2.5} />
+              </ConfirmationIcon>
+
+              <ConfirmationEyebrow>COLLECTION NUMA</ConfirmationEyebrow>
+
+              <ConfirmationTitle id="confirmation-title">
+                Précommande enregistrée !
+              </ConfirmationTitle>
+
+              <ConfirmationText>
+                Merci pour votre confiance. Votre précommande a bien été
+                enregistrée. Notre équipe va vérifier les informations et votre
+                dépôt avant de vous confirmer la suite.
+              </ConfirmationText>
+
+              <ConfirmationButton
+                type="button"
+                onClick={() => {
+                  window.location.assign("/");
+                }}
+              >
+                Retour à l'accueil
+                <ArrowRight size={18} />
+              </ConfirmationButton>
+
+              <ConfirmationNote>Merci d'avoir choisi NUMA.</ConfirmationNote>
+            </ConfirmationModal>
+          </ConfirmationOverlay>
+        )}
         <ErrorBox>{erreur}</ErrorBox>
 
         <RetryButton type="button" onClick={chargerModeles}>
@@ -3679,6 +3716,126 @@ const ModalKeyboardHint = styled.div`
   @media (max-width: 700px) {
     display: none;
   }
+`;
+
+const ConfirmationOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(12, 15, 22, 0.72);
+  backdrop-filter: blur(9px);
+  animation: fadeIn 0.25s ease;
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+`;
+
+const ConfirmationModal = styled.div`
+  width: 100%;
+  max-width: 470px;
+  padding: 42px 32px 34px;
+  background: #fff;
+  border-radius: 24px;
+  text-align: center;
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25);
+  animation: modalIn 0.35s ease;
+
+  @keyframes modalIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px) scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @media (max-width: 480px) {
+    padding: 35px 22px 28px;
+    border-radius: 20px;
+  }
+`;
+
+const ConfirmationIcon = styled.div`
+  width: 76px;
+  height: 76px;
+  margin: 0 auto 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: #173f35;
+  border-radius: 50%;
+  box-shadow: 0 8px 25px rgba(23, 63, 53, 0.2);
+`;
+
+const ConfirmationEyebrow = styled.span`
+  display: block;
+  margin-bottom: 12px;
+  color: #a17b45;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 3px;
+`;
+
+const ConfirmationTitle = styled.h2`
+  margin: 0 0 15px;
+  color: #17231f;
+  font-size: clamp(23px, 5vw, 30px);
+  font-weight: 800;
+  line-height: 1.2;
+`;
+
+const ConfirmationText = styled.p`
+  margin: 0 auto 28px;
+  max-width: 360px;
+  color: #69736e;
+  font-size: 14px;
+  line-height: 1.8;
+`;
+
+const ConfirmationButton = styled.button`
+  width: 100%;
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border: none;
+  border-radius: 12px;
+  background: #173f35;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+
+  &:hover {
+    background: #245b4c;
+    transform: translateY(-2px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
+const ConfirmationNote = styled.p`
+  margin: 20px 0 0;
+  color: #a0a8a3;
+  font-size: 12px;
+  letter-spacing: 0.3px;
 `;
 
 export default Precommande;
