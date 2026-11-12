@@ -143,43 +143,85 @@ function AdminLayout() {
   }, [navigate]);
 
   // Vérifie commandes + paiements toutes les 5s
+
   useEffect(() => {
-    const interval = setInterval(async () => {
+    let premierChargement = true;
+    let interval;
+
+    const chargerCompteurs = async () => {
       try {
+        const token = localStorage.getItem("adminToken");
+
+        if (!token) {
+          console.error("Token administrateur introuvable.");
+          return;
+        }
+
         const res = await fetch(
           `${import.meta.env.VITE_API_URL}/api/admin/commandes`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          },
         );
-        const data = await res.json();
-        if (data?.commandes) {
-          const commandes = data.commandes;
-          const commandesActives = commandes.filter(
-            (cmd) => !["CANCELLED", "DELIVERED"].includes(cmd.statusCommande),
-          );
 
-          setNbCommandes(commandesActives.length);
-
-          // Compte des paiements PENDING
-          const pending = commandes.reduce((acc, cmd) => {
-            return (
-              acc +
-              cmd.paiementsRecus.filter((p) => p.status === "PENDING").length
-            );
-          }, 0);
-
-          // Joue le son si nouveau paiement en attente
-          if (sonAutorise && pending > nbPaiementsPending) {
-            notificationSound.current.play().catch(() => {});
-          }
-
-          setNbPaiementsPending(pending);
+        if (!res.ok) {
+          const erreur = await res.text();
+          throw new Error(`Erreur HTTP ${res.status} : ${erreur}`);
         }
+
+        const data = await res.json();
+
+        console.log("Réponse API commandes :", data);
+
+        if (!Array.isArray(data.commandes)) {
+          console.error(
+            "La réponse API ne contient pas de tableau data.commandes.",
+          );
+          return;
+        }
+
+        const commandes = data.commandes;
+
+        // Commandes non annulées et non livrées
+        const commandesActives = commandes.filter(
+          (cmd) => !["CANCELLED", "DELIVERED"].includes(cmd.statusCommande),
+        );
+
+        setNbCommandes(commandesActives.length);
+
+        // Paiements en attente
+        const pending = commandes.reduce((acc, cmd) => {
+          const paiements = Array.isArray(cmd.paiementsRecus)
+            ? cmd.paiementsRecus
+            : [];
+
+          return acc + paiements.filter((p) => p.status === "PENDING").length;
+        }, 0);
+
+        if (!premierChargement && sonAutorise && pending > nbPaiementsPending) {
+          notificationSound.current?.play().catch(() => {});
+        }
+
+        setNbPaiementsPending(pending);
+
+        premierChargement = false;
       } catch (err) {
-        console.error("Erreur fetch commandes:", err);
+        console.error("Erreur chargement compteurs :", err);
       }
-    }, 5000);
+    };
+
+    // Chargement immédiat
+    chargerCompteurs();
+
+    // Actualisation toutes les 5 secondes
+    interval = setInterval(chargerCompteurs, 5000);
 
     return () => clearInterval(interval);
-  }, [nbPaiementsPending, sonAutorise]);
+  }, [sonAutorise, nbPaiementsPending]);
 
   const handleAutoriserSon = () => {
     setSonAutorise(true);
