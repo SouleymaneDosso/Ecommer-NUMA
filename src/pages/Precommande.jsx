@@ -853,43 +853,6 @@ const Precommande = () => {
   if (erreur && !modeleSelectionne && modeles.length === 0) {
     return (
       <PageContainer>
-        {confirmationOuverte && (
-          <ConfirmationOverlay
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="confirmation-title"
-          >
-            <ConfirmationModal>
-              <ConfirmationIcon>
-                <Check size={34} strokeWidth={2.5} />
-              </ConfirmationIcon>
-
-              <ConfirmationEyebrow>COLLECTION NUMA</ConfirmationEyebrow>
-
-              <ConfirmationTitle id="confirmation-title">
-                Précommande enregistrée !
-              </ConfirmationTitle>
-
-              <ConfirmationText>
-                Merci pour votre confiance. Votre précommande a bien été
-                enregistrée. Notre équipe va vérifier les informations et votre
-                dépôt avant de vous confirmer la suite.
-              </ConfirmationText>
-
-              <ConfirmationButton
-                type="button"
-                onClick={() => {
-                  window.location.assign("/");
-                }}
-              >
-                Retour à l'accueil
-                <ArrowRight size={18} />
-              </ConfirmationButton>
-
-              <ConfirmationNote>Merci d'avoir choisi NUMA.</ConfirmationNote>
-            </ConfirmationModal>
-          </ConfirmationOverlay>
-        )}
         <ErrorBox>{erreur}</ErrorBox>
 
         <RetryButton type="button" onClick={chargerModeles}>
@@ -905,6 +868,41 @@ const Precommande = () => {
 
   return (
     <PageContainer>
+      {confirmationOuverte && (
+        <ConfirmationOverlay
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="confirmation-title"
+        >
+          <ConfirmationModal>
+            <ConfirmationIcon>
+              <Check size={34} strokeWidth={2.5} />
+            </ConfirmationIcon>
+
+            <ConfirmationEyebrow>COLLECTION NUMA</ConfirmationEyebrow>
+
+            <ConfirmationTitle id="confirmation-title">
+              Précommande enregistrée !
+            </ConfirmationTitle>
+
+            <ConfirmationText>
+              Merci pour votre confiance. Votre précommande a bien été
+              enregistrée. Notre équipe va vérifier les informations et votre
+              dépôt avant de vous confirmer la suite.
+            </ConfirmationText>
+
+            <ConfirmationButton
+              type="button"
+              onClick={() => window.location.assign("/compte")}
+            >
+              Espace compte
+              <ArrowRight size={18} />
+            </ConfirmationButton>
+
+            <ConfirmationNote>Merci d'avoir choisi NUMA.</ConfirmationNote>
+          </ConfirmationModal>
+        </ConfirmationOverlay>
+      )}
       {/* =====================================================
           HEADER
       ===================================================== */}
@@ -3819,7 +3817,9 @@ const ConfirmationButton = styled.button`
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s ease, transform 0.2s ease;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
 
   &:hover {
     background: #245b4c;

@@ -1,122 +1,238 @@
+
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import styled from "styled-components";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 
-// ===== STYLES =====
-const PageWrapper = styled.div`
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 2rem 1rem;
-  background: linear-gradient(135deg, #1f1f2e, #11101a);
-  font-family: "Inter", sans-serif;
-  overflow-y: auto;
+// =====================================================
+// DESIGN NUMA — CONNEXION PREMIUM
+// =====================================================
 
-  @media (max-width: 768px) {
-    padding-top: 10vh;
-    padding-bottom: env(safe-area-inset-bottom, 1rem);
-  }
+const PageWrapper = styled.div`
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  background:
+    radial-gradient(circle at top left, rgba(190, 160, 100, 0.12), transparent 35%),
+    #f8f6f1;
 `;
 
 const FormWrapper = styled.div`
   width: 100%;
-  max-width: 360px;
-  background: #1f1f2e;
-  padding: 1.75rem 1.25rem;
-  border-radius: 18px;
-  box-shadow: 0 0 28px rgba(79, 70, 229, 0.3);
+  min-height: 100vh;
+  margin: 0;
+  padding: 60px 8%;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
+  justify-content: center;
+  background: #fff;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+`;
 
-  @media (max-width: 480px) {
-    padding: 1.4rem 1.1rem;
-    border-radius: 16px;
-  }
+const Brand = styled.div`
+  text-align: center;
+  margin-bottom: 35px;
+`;
+
+const BrandName = styled.div`
+  color: #173f35;
+  font-family: Georgia, serif;
+  font-size: 35px;
+  font-weight: 700;
+  letter-spacing: 7px;
+`;
+
+const BrandLine = styled.div`
+  width: 42px;
+  height: 2px;
+  margin: 13px auto;
+  background: #bd9b65;
+`;
+
+const BrandCaption = styled.span`
+  color: #9a896f;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 3px;
 `;
 
 const Title = styled.h1`
+  margin: 0;
+  color: #172c25;
   text-align: center;
-  color: #fff;
-  font-size: 1.4rem;
-  margin-bottom: 1rem;
+  font-family: Georgia, serif;
+  font-size: 29px;
+  font-weight: 600;
+`;
+
+const Subtitle = styled.p`
+  margin: 12px 0 30px;
+  color: #858b85;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.7;
+`;
+
+const Message = styled.div`
+  padding: 13px 15px;
+  margin-bottom: 20px;
+  border-radius: 10px;
+  background: ${(props) => props.error ? "#fff1ef" : "#edf6f0"};
+  border: 1px solid ${(props) => props.error ? "#f3d0ca" : "#d5e8da"};
+  color: ${(props) => props.error ? "#b64035" : "#246644"};
+  font-size: 13px;
+  line-height: 1.5;
+`;
+
+const Form = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+`;
+
+const FieldGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+`;
+
+const FieldLabel = styled.label`
+  color: #394b41;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
 `;
 
 const InputWrapper = styled.div`
   position: relative;
-  margin-bottom: 0.9rem;
 `;
 
 const Input = styled.input`
   width: 100%;
-  padding: 12px 14px;
-  padding-right: 40px;
-  border-radius: 12px;
-  border: none;
-  background: #2a2a3d;
-  color: #fff;
+  height: 54px;
+  padding: 0 48px 0 16px;
+  border: 1px solid #e6e5df;
+  border-radius: 11px;
+  outline: none;
+  background: #fbfaf7;
+  color: #243a30;
+  font-family: inherit;
   font-size: 16px;
+  transition: all 0.2s ease;
+
+  &::placeholder {
+    color: #a9aaa4;
+  }
+
+  &:hover {
+    border-color: #c7b18d;
+  }
 
   &:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.35);
+    background: #fff;
+    border-color: #173f35;
+    box-shadow: 0 0 0 3px rgba(23, 63, 53, 0.08);
   }
 `;
 
 const EyeButton = styled.button`
   position: absolute;
   top: 50%;
-  right: 12px;
+  right: 15px;
   transform: translateY(-50%);
-  background: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
   border: none;
-  color: #aaa;
+  background: transparent;
+  color: #858b85;
+  font-size: 18px;
   cursor: pointer;
-  font-size: 1.1rem;
-  padding: 0;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #173f35;
+  }
 `;
 
 const Button = styled.button`
   width: 100%;
-  padding: 12px;
-  margin-top: 0.4rem;
-  border-radius: 12px;
+  min-height: 55px;
+  margin-top: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   border: none;
-  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  border-radius: 11px;
+  background: #173f35;
   color: #fff;
-  font-weight: 600;
-  font-size: 1rem;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.7px;
   cursor: pointer;
+  transition: all 0.25s ease;
+
+  &:hover:not(:disabled) {
+    background: #245b4c;
+    box-shadow: 0 9px 22px rgba(23, 63, 53, 0.17);
+    transform: translateY(-2px);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
 
   &:disabled {
-    opacity: 0.7;
+    opacity: 0.65;
     cursor: not-allowed;
   }
 `;
 
-const Message = styled.p`
+const SwitchLink = styled.div`
+  margin-top: 27px;
+  padding-top: 22px;
+  border-top: 1px solid #efeee9;
   text-align: center;
-  margin-bottom: 0.8rem;
-  font-size: 0.85rem;
-  color: ${(props) => (props.error ? "#ef4444" : "#10b981")};
-`;
-
-const SwitchLink = styled.p`
-  text-align: center;
-  margin-top: 1rem;
-  font-size: 0.85rem;
-  color: #aaa;
+  color: #898e88;
+  font-size: 12px;
+  line-height: 2.2;
 
   a {
-    color: #6366f1;
-    font-weight: 600;
+    color: #173f35;
+    font-weight: 700;
     text-decoration: none;
+    transition: color 0.2s;
+
+    &:hover {
+      color: #bd9b65;
+      text-decoration: underline;
+    }
   }
 `;
 
-// ===== COMPOSANT =====
+const FooterText = styled.p`
+  margin: 28px 0 0;
+  color: #aaa69d;
+  text-align: center;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+`;
+
+// =====================================================
+// COMPOSANT — LOGIQUE CONSERVÉE
+// =====================================================
+
 export default function Login() {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
@@ -125,7 +241,6 @@ export default function Login() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ⭐ Compteur de tentatives
   const [attempts, setAttempts] = useState(0);
   const MAX_ATTEMPTS = 3;
 
@@ -147,12 +262,10 @@ export default function Login() {
       const data = await res.json();
 
       if (!res.ok) {
-        // ⚠️ Mauvais mot de passe → incrémente tentatives
         const newAttempts = attempts + 1;
         setAttempts(newAttempts);
 
         if (newAttempts >= MAX_ATTEMPTS) {
-          // Rediriger vers reset password après 3 échecs
           navigate(`/forgot`);
           return;
         }
@@ -162,7 +275,6 @@ export default function Login() {
         );
       }
 
-      // ✅ Connexion réussie
       localStorage.setItem("token", data.token);
       navigate("/compte");
     } catch (err) {
@@ -175,50 +287,89 @@ export default function Login() {
   return (
     <PageWrapper>
       <FormWrapper>
-        <Title>Connexion</Title>
+        <Brand>
+          <BrandName>NUMA</BrandName>
+          <BrandLine />
+          <BrandCaption>ÉLÉGANCE & AUTHENTICITÉ</BrandCaption>
+        </Brand>
+
+        <Title>Bienvenue</Title>
+
+        <Subtitle>
+          Connectez-vous à votre espace personnel
+          et retrouvez votre univers NUMA.
+        </Subtitle>
 
         {message && (
-          <Message error={message.toLowerCase().includes("erreur") || message.toLowerCase().includes("incorrect")}>
+          <Message
+            error={
+              message.toLowerCase().includes("erreur") ||
+              message.toLowerCase().includes("incorrect")
+            }
+          >
             {message}
           </Message>
         )}
 
-        <form onSubmit={handleLogin}>
-          <InputWrapper>
-            <Input
-              type="text"
-              placeholder="Identifiant"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-            />
-          </InputWrapper>
+        <Form onSubmit={handleLogin}>
+          <FieldGroup>
+            <FieldLabel htmlFor="username">IDENTIFIANT</FieldLabel>
 
-          <InputWrapper>
-            <Input
-              type={showPassword ? "text" : "password"}
-              placeholder="Mot de passe"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-            <EyeButton
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-            >
-              {showPassword ? <FiEyeOff /> : <FiEye />}
-            </EyeButton>
-          </InputWrapper>
+            <InputWrapper>
+              <Input
+                id="username"
+                type="text"
+                placeholder="Votre identifiant"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                autoComplete="username"
+              />
+            </InputWrapper>
+          </FieldGroup>
+
+          <FieldGroup>
+            <FieldLabel htmlFor="password">MOT DE PASSE</FieldLabel>
+
+            <InputWrapper>
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Votre mot de passe"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+              />
+
+              <EyeButton
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={
+                  showPassword
+                    ? "Masquer le mot de passe"
+                    : "Afficher le mot de passe"
+                }
+              >
+                {showPassword ? <FiEyeOff /> : <FiEye />}
+              </EyeButton>
+            </InputWrapper>
+          </FieldGroup>
 
           <Button type="submit" disabled={loading}>
-            {loading ? "..." : "Se connecter"}
+            {loading ? "Connexion en cours..." : "SE CONNECTER"}
           </Button>
-        </form>
+        </Form>
 
         <SwitchLink>
-          Nouveau ? <Link to="/signup">Créer un compte</Link> |{" "}
+          Nouveau chez NUMA ? <Link to="/signup">Créer un compte</Link>
+          <br />
           <Link to="/forgot">Mot de passe oublié ?</Link>
         </SwitchLink>
+
+        <FooterText>
+          L'EXPÉRIENCE NUMA
+        </FooterText>
       </FormWrapper>
     </PageWrapper>
   );
