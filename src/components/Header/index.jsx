@@ -397,7 +397,7 @@ const SearchInput = styled.input`
   background: transparent;
   padding: 14px 4px;
   color: ${({ $isdark }) => ($isdark ? "#171717" : "#fff")};
-  font-size: 14px;
+  font-size: 16px;
   letter-spacing: 1px;
 
   &::placeholder {
