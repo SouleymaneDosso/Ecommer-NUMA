@@ -1168,7 +1168,6 @@
 // }
 // export default AdminProducts;
 
-
 import { useState, useEffect } from "react";
 import styled from "styled-components";
 
@@ -1421,14 +1420,11 @@ function AdminProducts() {
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/produits`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       const data = await res.json();
 
@@ -1453,7 +1449,7 @@ function AdminProducts() {
     const filesWithPreview = files.map((file) =>
       Object.assign(file, {
         preview: URL.createObjectURL(file),
-      })
+      }),
     );
 
     setNewImages((prev) => [...prev, ...filesWithPreview]);
@@ -1512,16 +1508,14 @@ function AdminProducts() {
 
   const handleDeleteExistingImage = (publicId, idx) => {
     const updatedImages = existingImages.filter(
-      (img) => img.publicId !== publicId
+      (img) => img.publicId !== publicId,
     );
 
     setExistingImages(updatedImages);
     setImagesToDelete((prev) => [...prev, publicId]);
 
     if (mainImageIndex === idx) {
-      setMainImageIndex(
-        updatedImages.length + newImages.length > 0 ? 0 : null
-      );
+      setMainImageIndex(updatedImages.length + newImages.length > 0 ? 0 : null);
     } else if (mainImageIndex > idx) {
       setMainImageIndex(mainImageIndex - 1);
     }
@@ -1542,7 +1536,7 @@ function AdminProducts() {
 
     if (mainImageIndex === globalIdx) {
       setMainImageIndex(
-        existingImages.length + updatedNewImages.length > 0 ? 0 : null
+        existingImages.length + updatedNewImages.length > 0 ? 0 : null,
       );
     } else if (mainImageIndex > globalIdx) {
       setMainImageIndex(mainImageIndex - 1);
@@ -1629,15 +1623,13 @@ function AdminProducts() {
         !Number.isFinite(Number(prixAvant)) ||
         Number(prixAvant) <= Number(price)
       ) {
-        return alert(
-          "L'ancien prix doit être supérieur au prix actuel."
-        );
+        return alert("L'ancien prix doit être supérieur au prix actuel.");
       }
     }
 
     if (badge === "promo" && prixAvant === "") {
       return alert(
-        "Pour un produit en promotion, renseigne obligatoirement l'ancien prix."
+        "Pour un produit en promotion, renseigne obligatoirement l'ancien prix.",
       );
     }
 
@@ -1671,13 +1663,10 @@ function AdminProducts() {
 
     formData.append(
       "mainImageIndex",
-      mainImageIndex === null ? "" : String(mainImageIndex)
+      mainImageIndex === null ? "" : String(mainImageIndex),
     );
 
-    formData.append(
-      "imagesToDelete",
-      JSON.stringify(imagesToDelete)
-    );
+    formData.append("imagesToDelete", JSON.stringify(imagesToDelete));
 
     newImages.forEach((file) => {
       formData.append("images", file);
@@ -1707,33 +1696,28 @@ function AdminProducts() {
               Authorization: `Bearer ${token}`,
             },
             body: formData,
-          }
+          },
         );
       } else {
-        res = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/produits`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-            body: formData,
-          }
-        );
+        res = await fetch(`${import.meta.env.VITE_API_URL}/api/produits`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        });
       }
 
       const data = await res.json();
 
       if (!res.ok) {
-        return alert(
-          data.message || "Erreur lors de l'ajout ou modification"
-        );
+        return alert(data.message || "Erreur lors de l'ajout ou modification");
       }
 
       alert(
         editingProductId
           ? "Produit modifié avec succès !"
-          : "Produit ajouté avec succès !"
+          : "Produit ajouté avec succès !",
       );
 
       resetForm();
@@ -1761,13 +1745,9 @@ function AdminProducts() {
 
     const stockObj = {};
 
-    Object.entries(p.stockParVariation || {}).forEach(
-      ([color, sizesMap]) => {
-        stockObj[color] = Object.fromEntries(
-          Object.entries(sizesMap)
-        );
-      }
-    );
+    Object.entries(p.stockParVariation || {}).forEach(([color, sizesMap]) => {
+      stockObj[color] = Object.fromEntries(Object.entries(sizesMap));
+    });
 
     setStock(stockObj);
 
@@ -1823,7 +1803,7 @@ function AdminProducts() {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       const data = await res.json();
@@ -1855,15 +1835,13 @@ function AdminProducts() {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       const data = await res.json();
 
       if (!res.ok) {
-        return alert(
-          data.message || "Erreur suppression commentaire"
-        );
+        return alert(data.message || "Erreur suppression commentaire");
       }
 
       setProducts((prev) =>
@@ -1872,11 +1850,11 @@ function AdminProducts() {
             ? {
                 ...p,
                 commentaires: (p.commentaires || []).filter(
-                  (c) => c._id.toString() !== commentaireId.toString()
+                  (c) => c._id.toString() !== commentaireId.toString(),
                 ),
               }
-            : p
-        )
+            : p,
+        ),
       );
 
       alert("Commentaire supprimé !");
@@ -1938,8 +1916,8 @@ function AdminProducts() {
           />
 
           <HelpText>
-            Renseigne ce champ uniquement si tu souhaites afficher
-            un prix barré et une réduction.
+            Renseigne ce champ uniquement si tu souhaites afficher un prix barré
+            et une réduction.
           </HelpText>
 
           {price !== "" && prixAvant !== "" && reduction > 0 && (
@@ -1961,10 +1939,7 @@ function AdminProducts() {
 
         {/* GENRE */}
 
-        <Select
-          value={genre}
-          onChange={(e) => setGenre(e.target.value)}
-        >
+        <Select value={genre} onChange={(e) => setGenre(e.target.value)}>
           <option value="homme">Homme</option>
           <option value="femme">Femme</option>
           <option value="enfant">Enfant</option>
@@ -2015,35 +1990,25 @@ function AdminProducts() {
         </Select>
 
         {/* COULEURS */}
-
         <Input
           type="text"
-          placeholder="Couleurs (séparées par ,)"
-          value={colors.join(",")}
-          onChange={(e) =>
-            setColors(
-              e.target.value
-                .split(",")
-                .map((c) => c.trim())
-                .filter(Boolean)
-            )
-          }
+          placeholder="Couleurs : Noir, Blanc, Rouge..."
+          value={colors.join(", ")}
+          onChange={(e) => {
+            const value = e.target.value;
+            setColors(value.split(",").map((c) => c.trim()));
+          }}
         />
 
         {/* TAILLES */}
-
         <Input
           type="text"
-          placeholder="Tailles (séparées par ,)"
-          value={sizes.join(",")}
-          onChange={(e) =>
-            setSizes(
-              e.target.value
-                .split(",")
-                .map((s) => s.trim())
-                .filter(Boolean)
-            )
-          }
+          placeholder="Tailles : S, M, L, XL..."
+          value={sizes.join(", ")}
+          onChange={(e) => {
+            const value = e.target.value;
+            setSizes(value.split(",").map((s) => s.trim()));
+          }}
         />
 
         {/* DÉTAILS PRODUIT */}
@@ -2180,9 +2145,7 @@ function AdminProducts() {
                   background: "#e74c3c",
                   padding: "2px 6px",
                 }}
-                onClick={() =>
-                  handleDeleteExistingImage(img.publicId, idx)
-                }
+                onClick={() => handleDeleteExistingImage(img.publicId, idx)}
               >
                 X
               </Button>
@@ -2214,9 +2177,7 @@ function AdminProducts() {
               <ImagePreview
                 src={img.preview}
                 $isMain={existingImages.length + idx === mainImageIndex}
-                onClick={() =>
-                  setMainImageIndex(existingImages.length + idx)
-                }
+                onClick={() => setMainImageIndex(existingImages.length + idx)}
               />
 
               <Button
@@ -2275,15 +2236,13 @@ function AdminProducts() {
         />
 
         <HelpText>
-          Fichier .glb uniquement. Taille maximale : 50 Mo.
-          Ce fichier est facultatif.
+          Fichier .glb uniquement. Taille maximale : 50 Mo. Ce fichier est
+          facultatif.
         </HelpText>
 
         {newModel3D && (
           <div>
-            <HelpText>
-              Nouveau modèle sélectionné : {newModel3D.name}
-            </HelpText>
+            <HelpText>Nouveau modèle sélectionné : {newModel3D.name}</HelpText>
 
             <Button
               type="button"
@@ -2298,9 +2257,7 @@ function AdminProducts() {
         {/* VALIDATION */}
 
         <Button type="submit">
-          {editingProductId
-            ? "Modifier le produit"
-            : "Ajouter le produit"}
+          {editingProductId ? "Modifier le produit" : "Ajouter le produit"}
         </Button>
 
         {editingProductId && (
@@ -2344,10 +2301,7 @@ function AdminProducts() {
                     flexWrap: "wrap",
                   }}
                 >
-                  <Button
-                    type="button"
-                    onClick={() => handleEditProduct(p)}
-                  >
+                  <Button type="button" onClick={() => handleEditProduct(p)}>
                     Modifier
                   </Button>
 
@@ -2363,10 +2317,7 @@ function AdminProducts() {
 
               {p.images && p.images.length > 0 && (
                 <ImagePreview
-                  src={
-                    p.images.find((i) => i.isMain)?.url ||
-                    p.images[0].url
-                  }
+                  src={p.images.find((i) => i.isMain)?.url || p.images[0].url}
                   $isMain
                 />
               )}
@@ -2382,14 +2333,10 @@ function AdminProducts() {
                 )}
               </PricePreview>
 
-              {p.badge === "promo" && (
-                <HelpText>Produit en promotion</HelpText>
-              )}
+              {p.badge === "promo" && <HelpText>Produit en promotion</HelpText>}
 
               {p.model3D?.url && (
-                <HelpText>
-                  Modèle 3D enregistré : oui
-                </HelpText>
+                <HelpText>Modèle 3D enregistré : oui</HelpText>
               )}
 
               {p.commentaires && p.commentaires.length > 0 && (
@@ -2404,9 +2351,7 @@ function AdminProducts() {
 
                       <Button
                         type="button"
-                        onClick={() =>
-                          handleDeleteComment(p._id, c._id)
-                        }
+                        onClick={() => handleDeleteComment(p._id, c._id)}
                         style={{
                           background: "#e74c3c",
                           padding: "2px 6px",
