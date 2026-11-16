@@ -154,7 +154,10 @@ Merci.
       </BackLink>
 
       <ProductWrapper>
-        <ProductImages images={orderedImages} />
+       <ProductImages
+  images={orderedImages}
+  model3D={produit.model3D}
+/>
 <ProductDetails>
   <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
     <ProductTitle>{produit.title}</ProductTitle>
