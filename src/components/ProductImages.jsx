@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo, useRef } from "react";
 import styled, { keyframes } from "styled-components";
 import { Canvas } from "@react-three/fiber";
@@ -40,7 +39,7 @@ const Wrapper = styled.div`
   min-width: 0;
   color: #171717;
   font-family: inherit;
-  animation: ${fadeIn} .6s ease both;
+  animation: ${fadeIn} 0.6s ease both;
 `;
 
 const Gallery = styled.div`
@@ -89,10 +88,9 @@ const Thumbnail = styled.button`
   overflow: hidden;
   cursor: pointer;
   background: #f0efed;
-  border: 1px solid ${({ $active }) =>
-    $active ? "#171717" : "#e7e5e2"};
-  opacity: ${({ $active }) => $active ? 1 : .68};
-  transition: .25s ease;
+  border: 1px solid ${({ $active }) => ($active ? "#171717" : "#e7e5e2")};
+  opacity: ${({ $active }) => ($active ? 1 : 0.68)};
+  transition: 0.25s ease;
 
   &:hover {
     opacity: 1;
@@ -142,15 +140,13 @@ const Stage = styled.div`
   overflow: hidden;
   isolation: isolate;
   background: #eae8e4;
-  animation: ${zoomIn} .55s ease both;
+  animation: ${zoomIn} 0.55s ease both;
 
   @media (max-width: 650px) {
-    height: 68svh;
-    min-height: 420px;
-  }
-
-  @media (max-width: 380px) {
-    min-height: 360px;
+    width: 100vw;
+    height: 100svh;
+    min-height: 100svh;
+    margin-left: calc((100% - 100vw) / 2);
   }
 `;
 
@@ -162,7 +158,7 @@ const ProductImage = styled.img`
   display: block;
   object-fit: cover;
   cursor: zoom-in;
-  animation: ${zoomIn} .6s ease both;
+  animation: ${zoomIn} 0.6s ease both;
 `;
 
 const ModelStage = styled.div`
@@ -186,7 +182,7 @@ const Label = styled.div`
   top: 20px;
   left: 20px;
   padding: 10px 13px;
-  background: rgba(255,255,255,.78);
+  background: rgba(255, 255, 255, 0.78);
   color: #222;
   font-size: 9px;
   font-weight: 700;
@@ -215,12 +211,12 @@ const IconButton = styled.button`
   height: 43px;
   display: grid;
   place-items: center;
-  border: 1px solid rgba(0,0,0,.08);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 50%;
-  background: rgba(255,255,255,.9);
+  background: rgba(255, 255, 255, 0.9);
   color: #171717;
   cursor: pointer;
-  transition: .25s ease;
+  transition: 0.25s ease;
 
   &:hover {
     background: #171717;
@@ -246,13 +242,13 @@ const NavButton = styled.button`
   height: 42px;
   display: grid;
   place-items: center;
-  border: 1px solid rgba(0,0,0,.08);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 50%;
-  background: rgba(255,255,255,.88);
+  background: rgba(255, 255, 255, 0.88);
   color: #171717;
   cursor: pointer;
   pointer-events: auto;
-  transition: .25s ease;
+  transition: 0.25s ease;
 
   &:hover {
     background: #171717;
@@ -312,7 +308,7 @@ const CloseButton = styled(IconButton)`
   z-index: 10;
   top: 20px;
   right: 20px;
-  background: rgba(255,255,255,.9);
+  background: rgba(255, 255, 255, 0.9);
 `;
 
 const FullscreenNavigation = styled(Navigation)`
@@ -347,15 +343,8 @@ function ModelViewer({ url }) {
       <color attach="background" args={["#eae8e4"]} />
 
       <ambientLight intensity={1.5} />
-      <directionalLight
-        position={[4, 6, 5]}
-        intensity={2}
-        castShadow
-      />
-      <directionalLight
-        position={[-4, 2, -3]}
-        intensity={1}
-      />
+      <directionalLight position={[4, 6, 5]} intensity={2} castShadow />
+      <directionalLight position={[-4, 2, -3]} intensity={1} />
 
       <Environment preset="studio" />
 
@@ -377,10 +366,7 @@ function ModelViewer({ url }) {
    MAIN COMPONENT
 ======================================== */
 
-export default function ProductImages({
-  images = [],
-  model3D = null,
-}) {
+export default function ProductImages({ images = [], model3D = null }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -402,11 +388,13 @@ export default function ProductImages({
     return [
       ...urls,
       ...(hasModel
-        ? [{
-            url: model3D.url,
-            title: "Modèle 3D",
-            type: "3d",
-          }]
+        ? [
+            {
+              url: model3D.url,
+              title: "Modèle 3D",
+              type: "3d",
+            },
+          ]
         : []),
     ];
   }, [urls, hasModel, model3D?.url]);
@@ -433,15 +421,11 @@ export default function ProductImages({
       if (e.key === "Escape") setIsFullscreen(false);
 
       if (e.key === "ArrowLeft") {
-        setSelectedIndex((prev) =>
-          prev === 0 ? items.length - 1 : prev - 1
-        );
+        setSelectedIndex((prev) => (prev === 0 ? items.length - 1 : prev - 1));
       }
 
       if (e.key === "ArrowRight") {
-        setSelectedIndex((prev) =>
-          prev === items.length - 1 ? 0 : prev + 1
-        );
+        setSelectedIndex((prev) => (prev === items.length - 1 ? 0 : prev + 1));
       }
     };
 
@@ -454,15 +438,11 @@ export default function ProductImages({
   }, [isFullscreen, items.length]);
 
   const previousItem = () => {
-    setSelectedIndex((prev) =>
-      prev === 0 ? items.length - 1 : prev - 1
-    );
+    setSelectedIndex((prev) => (prev === 0 ? items.length - 1 : prev - 1));
   };
 
   const nextItem = () => {
-    setSelectedIndex((prev) =>
-      prev === items.length - 1 ? 0 : prev + 1
-    );
+    setSelectedIndex((prev) => (prev === items.length - 1 ? 0 : prev + 1));
   };
 
   if (!items.length) return null;
@@ -479,10 +459,7 @@ export default function ProductImages({
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          <ModelViewer
-            key={activeItem.url}
-            url={activeItem.url}
-          />
+          <ModelViewer key={activeItem.url} url={activeItem.url} />
         </div>
       );
     }
@@ -552,10 +529,7 @@ export default function ProductImages({
 
           {activeItem.type === "3d" ? (
             <ModelStage>
-              <ModelViewer
-                key={activeItem.url}
-                url={activeItem.url}
-              />
+              <ModelViewer key={activeItem.url} url={activeItem.url} />
             </ModelStage>
           ) : (
             renderActiveContent()
@@ -600,9 +574,7 @@ export default function ProductImages({
       </Gallery>
 
       {isFullscreen && (
-        <Fullscreen
-          onClick={() => setIsFullscreen(false)}
-        >
+        <Fullscreen onClick={() => setIsFullscreen(false)}>
           {activeItem.type === "3d" ? (
             <FullscreenModel>
               <ModelViewer
