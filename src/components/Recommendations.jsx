@@ -243,7 +243,7 @@ export default function Recommendations({ currentId }) {
 
         if (!controller.signal.aborted) {
           const produitsDisponibles = (Array.isArray(data) ? data : []).filter(
-            (p) => p.status !== "precommande",
+            (p) => p.precommande !== true && p.disponible === true,
           );
 
           setProduits(produitsDisponibles);
