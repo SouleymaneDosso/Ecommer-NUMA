@@ -10,13 +10,13 @@ import {
 import { LoaderWrapper, Loader } from "../Utils/Rotate";
 
 /* ========================================
-   ANIMATIONS
+   CINEMATIC ANIMATIONS
 ======================================== */
 
 const appear = keyframes`
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(25px);
   }
   to {
     opacity: 1;
@@ -25,14 +25,58 @@ const appear = keyframes`
 `;
 
 const cinematicReveal = keyframes`
-  from {
+  0% {
     opacity: 0;
-    transform: scale(1.12);
-    filter: blur(8px);
+    clip-path: inset(0 0 100% 0);
+    transform: scale(1.08);
   }
-  to {
+
+  45% {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+  }
+
+  100% {
     opacity: 1;
     transform: scale(1);
+    clip-path: inset(0 0 0 0);
+  }
+`;
+
+const cinematicZoom = keyframes`
+  from {
+    transform: scale(1.12);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+`;
+
+const fullscreenEnter = keyframes`
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+
+  to {
+    opacity: 1;
+    backdrop-filter: blur(12px);
+  }
+`;
+
+const fullscreenImageEnter = keyframes`
+  from {
+    opacity: 0;
+    transform: scale(0.88) translateY(20px);
+    filter: blur(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
     filter: blur(0);
   }
 `;
@@ -40,77 +84,49 @@ const cinematicReveal = keyframes`
 const thumbnailEnter = keyframes`
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateX(-12px);
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-`;
 
-const fullscreenEnter = keyframes`
-  from {
-    opacity: 0;
-    backdrop-filter: blur(0);
-  }
   to {
     opacity: 1;
-    backdrop-filter: blur(14px);
-  }
-`;
-
-const fullscreenImageEnter = keyframes`
-  from {
-    opacity: 0;
-    transform: scale(.94);
-    filter: blur(8px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-    filter: blur(0);
+    transform: translateX(0);
   }
 `;
 
 const grainAnimation = keyframes`
   0%, 100% { transform: translate(0, 0); }
-  25% { transform: translate(-1%, 1%); }
-  50% { transform: translate(1%, -1%); }
-  75% { transform: translate(-1%, -1%); }
+  20% { transform: translate(-1%, 1%); }
+  40% { transform: translate(1%, -1%); }
+  60% { transform: translate(-1%, -1%); }
+  80% { transform: translate(1%, 1%); }
 `;
 
 /* ========================================
-   WRAPPER
+   MAIN WRAPPER
 ======================================== */
 
 const Wrapper = styled.div`
   width: 100%;
-  min-width: 0;
   position: relative;
   color: #181818;
   font-family: inherit;
-  animation: ${appear} .7s cubic-bezier(.2,.7,.2,1);
+  animation: ${appear} 0.8s cubic-bezier(.2,.7,.2,1);
 
   @media (prefers-reduced-motion: reduce) {
     animation: none;
   }
 `;
 
-/* ========================================
-   GALLERY
-======================================== */
-
 const Gallery = styled.div`
   display: grid;
   grid-template-columns: 76px minmax(0, 1fr);
-  gap: 12px;
-  align-items: stretch;
-  width: 100%;
+  gap: 16px;
+  align-items: start;
 
   @media (max-width: 600px) {
     display: flex;
-    flex-direction: column;
-    gap: 10px;
+    flex-direction: column-reverse;
+    gap: 12px;
   }
 `;
 
@@ -121,8 +137,8 @@ const Gallery = styled.div`
 const Thumbnails = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  max-height: 780px;
+  gap: 11px;
+  max-height: 620px;
   overflow-y: auto;
   scrollbar-width: none;
 
@@ -136,7 +152,7 @@ const Thumbnails = styled.div`
     overflow-x: auto;
     overflow-y: hidden;
     max-height: none;
-    padding: 2px 0;
+    padding-bottom: 4px;
   }
 `;
 
@@ -144,47 +160,51 @@ const Thumbnail = styled.button`
   width: 76px;
   height: 94px;
   flex-shrink: 0;
-  padding: 0;
-  overflow: hidden;
+  padding: 3px;
 
   border: 1px solid ${({ $active }) =>
-    $active ? "#171717" : "transparent"};
+    $active ? "#171717" : "#e9e9e9"};
 
-  background: #eee;
+  background: #fff;
   cursor: pointer;
 
-  opacity: ${({ $active }) => $active ? 1 : .58};
+  opacity: ${({ $active }) => $active ? 1 : 0.55};
+
+  transform: ${({ $active }) =>
+    $active ? "translateX(4px)" : "translateX(0)"};
 
   transition:
-    opacity .35s ease,
-    border-color .35s ease,
-    transform .35s ease,
-    box-shadow .35s ease;
+    opacity 0.4s ease,
+    border-color 0.4s ease,
+    transform 0.4s cubic-bezier(.2,.7,.2,1),
+    box-shadow 0.4s ease;
 
-  animation: ${thumbnailEnter} .55s ease both;
+  animation: ${thumbnailEnter} 0.6s ease both;
 
   &:hover {
     opacity: 1;
     border-color: #171717;
-    transform: translateY(-3px);
-    box-shadow: 0 8px 20px rgba(0,0,0,.12);
+    transform: translateX(4px);
+    box-shadow: 0 5px 18px rgba(0,0,0,0.08);
   }
 
   img {
     width: 100%;
     height: 100%;
-    display: block;
     object-fit: cover;
-    transition: transform .6s cubic-bezier(.2,.7,.2,1);
+    display: block;
+    transition: transform 0.6s ease;
   }
 
   &:hover img {
-    transform: scale(1.1);
+    transform: scale(1.06);
   }
 
   @media (max-width: 600px) {
     width: 65px;
     height: 75px;
+
+    transform: none !important;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -194,110 +214,61 @@ const Thumbnail = styled.button`
 `;
 
 /* ========================================
-   MAIN IMAGE CONTAINER - 3D
+   MAIN IMAGE
 ======================================== */
 
 const MainImageContainer = styled.div`
   width: 100%;
-  min-width: 0;
-  height: clamp(480px, 78vh, 900px);
   position: relative;
   overflow: hidden;
   isolation: isolate;
-
   background: #eae8e4;
+  aspect-ratio: 4 / 5;
+  max-height: 760px;
 
-  /* Perspective 3D */
-  transform:
-    perspective(1400px)
-    rotateX(${({ $rotateX }) => $rotateX || 0}deg)
-    rotateY(${({ $rotateY }) => $rotateY || 0}deg);
-
-  transform-style: preserve-3d;
-
-  transition:
-    transform .35s cubic-bezier(.2,.7,.2,1);
-
-  box-shadow: 0 20px 65px rgba(0,0,0,.10);
-
-  &::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    pointer-events: none;
-
-    background: radial-gradient(
-      circle at ${({ $lightX }) => $lightX || 50}% ${({ $lightY }) => $lightY || 50}%,
-      rgba(255,255,255,.30),
-      rgba(255,255,255,.08) 22%,
-      transparent 55%
-    );
-
-    opacity: .8;
-    mix-blend-mode: screen;
-    transition: opacity .3s ease;
-  }
+  animation: ${appear} 0.7s ease;
 
   &::after {
     content: "";
     position: absolute;
     inset: 0;
-    z-index: 3;
+    z-index: 1;
     pointer-events: none;
 
-    background: linear-gradient(
-      180deg,
-      rgba(0,0,0,.04),
-      transparent 20%,
-      transparent 75%,
-      rgba(0,0,0,.10)
-    );
+    background:
+      linear-gradient(
+        180deg,
+        rgba(0,0,0,0.04),
+        transparent 20%,
+        transparent 75%,
+        rgba(0,0,0,0.07)
+      );
+
+    opacity: 0.7;
   }
 
   @media (max-width: 600px) {
-    height: 72vh;
-    min-height: 420px;
-    max-height: 720px;
-    transform: none !important;
-    box-shadow: none;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    transform: none !important;
-    transition: none;
+    aspect-ratio: 4 / 5;
+    max-height: none;
   }
 `;
 
-/* ========================================
-   MAIN PHOTO
-======================================== */
-
 const MainImage = styled.img`
-  position: absolute;
-  inset: 0;
-
   width: 100%;
   height: 100%;
-
-  /* Remplit toute la zone, sans espace autour */
-  object-fit: cover;
-  object-position: center;
-
+  object-fit: contain;
   display: block;
   cursor: zoom-in;
-  user-select: none;
 
-  animation: ${cinematicReveal} 1s
+  animation: ${cinematicReveal} 1.1s
     cubic-bezier(.16,1,.3,1) both;
 
   transition:
     transform 1s cubic-bezier(.2,.7,.2,1),
-    filter .7s ease;
+    filter 0.8s ease;
 
   &:hover {
-    transform: scale(1.045);
-    filter: contrast(1.03) saturate(1.04);
+    transform: scale(1.035);
   }
 
   @media (max-width: 600px) {
@@ -312,39 +283,26 @@ const MainImage = styled.img`
   }
 `;
 
-/* ========================================
-   GRAIN
-======================================== */
-
 const Grain = styled.div`
   position: absolute;
   inset: -50%;
-  z-index: 4;
+  z-index: 2;
   pointer-events: none;
-  opacity: .035;
+  opacity: 0.055;
 
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
 
-  animation: ${grainAnimation} .3s steps(3) infinite;
-
-  @media (prefers-reduced-motion: reduce) {
-    animation: none;
-  }
+  animation: ${grainAnimation} 0.3s steps(3) infinite;
 `;
-
-/* ========================================
-   LABEL
-======================================== */
 
 const ImageLabel = styled.div`
   position: absolute;
-  z-index: 5;
+  z-index: 3;
   top: 20px;
   left: 20px;
-
   padding: 9px 13px;
 
-  background: rgba(255,255,255,.78);
+  background: rgba(255,255,255,0.78);
   color: #333;
 
   font-size: 9px;
@@ -355,31 +313,22 @@ const ImageLabel = styled.div`
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 
-  animation: ${appear} .8s .2s both;
-
-  @media (max-width: 600px) {
-    top: 14px;
-    left: 14px;
-  }
+  animation: ${appear} 0.8s 0.3s both;
 `;
-
-/* ========================================
-   BUTTONS
-======================================== */
 
 const ZoomButton = styled.button`
   position: absolute;
-  z-index: 6;
+  z-index: 4;
   right: 18px;
   bottom: 18px;
 
-  width: 44px;
-  height: 44px;
+  width: 43px;
+  height: 43px;
 
-  border: 1px solid rgba(0,0,0,.08);
+  border: 1px solid rgba(0,0,0,0.08);
   border-radius: 50%;
 
-  background: rgba(255,255,255,.9);
+  background: rgba(255,255,255,0.9);
   color: #171717;
 
   display: grid;
@@ -387,18 +336,21 @@ const ZoomButton = styled.button`
 
   cursor: pointer;
 
-  transition: all .35s ease;
+  transition:
+    transform 0.4s cubic-bezier(.2,.7,.2,1),
+    background 0.3s ease,
+    color 0.3s ease;
 
   &:hover {
     background: #171717;
-    color: white;
+    color: #fff;
     transform: scale(1.12) rotate(90deg);
   }
 `;
 
 const MainNavigation = styled.div`
   position: absolute;
-  z-index: 6;
+  z-index: 4;
   top: 50%;
   left: 15px;
   right: 15px;
@@ -411,13 +363,13 @@ const MainNavigation = styled.div`
 `;
 
 const NavigationButton = styled.button`
-  width: 43px;
-  height: 43px;
+  width: 42px;
+  height: 42px;
 
-  border: 1px solid rgba(0,0,0,.08);
+  border: 1px solid rgba(0,0,0,0.08);
   border-radius: 50%;
 
-  background: rgba(255,255,255,.88);
+  background: rgba(255,255,255,0.83);
   color: #222;
 
   display: grid;
@@ -428,7 +380,10 @@ const NavigationButton = styled.button`
 
   backdrop-filter: blur(8px);
 
-  transition: all .3s ease;
+  transition:
+    transform 0.35s ease,
+    background 0.3s ease,
+    color 0.3s ease;
 
   &:hover {
     background: #171717;
@@ -439,15 +394,14 @@ const NavigationButton = styled.button`
 
 const Counter = styled.div`
   position: absolute;
-  z-index: 6;
-  bottom: 30px;
-  left: 22px;
+  z-index: 3;
+  bottom: 24px;
+  left: 20px;
 
-  color: white;
+  color: #777;
   font-size: 10px;
   letter-spacing: 2px;
   font-weight: 600;
-  text-shadow: 0 1px 8px rgba(0,0,0,.45);
 `;
 
 /* ========================================
@@ -459,36 +413,37 @@ const Fullscreen = styled.div`
   inset: 0;
   z-index: 99999;
 
-  background: rgba(8,8,8,.98);
+  background: rgba(10,10,10,0.97);
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  animation: ${fullscreenEnter} .4s ease both;
+  animation: ${fullscreenEnter} 0.45s ease both;
 
-  /* Image plein écran */
-  padding: 0;
+  padding: 65px 85px;
 
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  @media (max-width: 600px) {
+    padding: 65px 12px;
+  }
 `;
 
 const FullscreenImage = styled.img`
-  position: absolute;
-  inset: 0;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
 
-  width: 100%;
-  height: 100%;
-
-  /* Aucun espace autour en plein écran */
-  object-fit: cover;
-  object-position: center;
-
+  object-fit: contain;
   user-select: none;
 
-  animation: ${fullscreenImageEnter} .7s
+  animation: ${fullscreenImageEnter} 0.75s
     cubic-bezier(.16,1,.3,1) both;
+
+  filter: drop-shadow(0 15px 45px rgba(0,0,0,0.25));
 
   @media (prefers-reduced-motion: reduce) {
     animation: none;
@@ -497,26 +452,28 @@ const FullscreenImage = styled.img`
 
 const FullscreenClose = styled.button`
   position: absolute;
-  z-index: 5;
+  z-index: 3;
   top: 22px;
   right: 25px;
 
   width: 45px;
   height: 45px;
 
-  border: 1px solid rgba(255,255,255,.3);
+  border: 1px solid rgba(255,255,255,0.2);
   border-radius: 50%;
 
-  background: rgba(0,0,0,.25);
+  background: transparent;
   color: white;
 
   display: grid;
   place-items: center;
 
   cursor: pointer;
-  backdrop-filter: blur(10px);
 
-  transition: all .3s ease;
+  transition:
+    background 0.3s ease,
+    color 0.3s ease,
+    transform 0.3s ease;
 
   &:hover {
     background: white;
@@ -527,7 +484,7 @@ const FullscreenClose = styled.button`
 
 const FullscreenArrow = styled.button`
   position: absolute;
-  z-index: 5;
+  z-index: 3;
   top: 50%;
 
   transform: translateY(-50%);
@@ -535,22 +492,24 @@ const FullscreenArrow = styled.button`
   ${({ $left }) =>
     $left ? "left: 22px;" : "right: 22px;"}
 
-  width: 48px;
-  height: 48px;
+  width: 47px;
+  height: 47px;
 
-  border: 1px solid rgba(255,255,255,.35);
+  border: 1px solid rgba(255,255,255,0.2);
   border-radius: 50%;
 
-  background: rgba(0,0,0,.25);
+  background: rgba(255,255,255,0.08);
   color: white;
 
   display: grid;
   place-items: center;
 
   cursor: pointer;
-  backdrop-filter: blur(10px);
 
-  transition: all .3s ease;
+  transition:
+    background 0.3s ease,
+    color 0.3s ease,
+    transform 0.3s ease;
 
   &:hover {
     background: white;
@@ -559,27 +518,27 @@ const FullscreenArrow = styled.button`
   }
 
   @media (max-width: 600px) {
-    width: 40px;
-    height: 40px;
+    width: 38px;
+    height: 38px;
 
     ${({ $left }) =>
-      $left ? "left: 10px;" : "right: 10px;"}
+      $left ? "left: 8px;" : "right: 8px;"}
   }
 `;
 
 const FullscreenFooter = styled.div`
   position: absolute;
-  z-index: 5;
   bottom: 25px;
   left: 0;
   width: 100%;
 
   text-align: center;
 
-  color: white;
+  color: rgba(255,255,255,0.65);
   font-size: 11px;
   letter-spacing: 2px;
-  text-shadow: 0 1px 8px rgba(0,0,0,.5);
+
+  animation: ${appear} 0.8s 0.2s both;
 `;
 
 /* ========================================
@@ -592,13 +551,6 @@ export default function ProductImages({ images = [] }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  const [tilt, setTilt] = useState({
-    x: 0,
-    y: 0,
-    lightX: 50,
-    lightY: 50,
-  });
-
   const thumbnailRefs = useRef([]);
   const previousOverflow = useRef("");
 
@@ -607,7 +559,7 @@ export default function ProductImages({ images = [] }) {
   ======================================== */
 
   useEffect(() => {
-    const validImages = (Array.isArray(images) ? images : [])
+    const validImages = images
       .filter((img) => img?.url)
       .map((img) => ({
         url: img.url,
@@ -692,34 +644,7 @@ export default function ProductImages({ images = [] }) {
     );
   };
 
-  /* ========================================
-     3D MOUSE MOVEMENT
-  ======================================== */
-
-  const handleMouseMove = (e) => {
-    if (window.matchMedia("(max-width: 600px)").matches) return;
-
-    const rect = e.currentTarget.getBoundingClientRect();
-
-    const x = (e.clientX - rect.left) / rect.width;
-    const y = (e.clientY - rect.top) / rect.height;
-
-    setTilt({
-      x: (0.5 - y) * 5,
-      y: (x - 0.5) * 5,
-      lightX: x * 100,
-      lightY: y * 100,
-    });
-  };
-
-  const resetTilt = () => {
-    setTilt({
-      x: 0,
-      y: 0,
-      lightX: 50,
-      lightY: 50,
-    });
-  };
+  const openFullscreen = () => setIsFullscreen(true);
 
   /* ========================================
      LOADING
@@ -745,7 +670,7 @@ export default function ProductImages({ images = [] }) {
     <Wrapper>
       <Gallery>
 
-        {/* MINIATURES */}
+        {/* THUMBNAILS */}
 
         {urls.length > 1 && (
           <Thumbnails>
@@ -770,27 +695,19 @@ export default function ProductImages({ images = [] }) {
           </Thumbnails>
         )}
 
-        {/* PHOTO PRINCIPALE */}
+        {/* MAIN IMAGE */}
 
-        <MainImageContainer
-          $rotateX={tilt.x}
-          $rotateY={tilt.y}
-          $lightX={tilt.lightX}
-          $lightY={tilt.lightY}
-          onPointerMove={handleMouseMove}
-          onPointerLeave={resetTilt}
-        >
+        <MainImageContainer key={activeImage.url}>
+          <ImageLabel>
+            Collection NUMA
+          </ImageLabel>
+
           <MainImage
             key={activeImage.url}
             src={activeImage.url}
             alt={activeImage.title || "Photo du produit"}
-            onClick={() => setIsFullscreen(true)}
-            draggable="false"
+            onClick={openFullscreen}
           />
-
-          <ImageLabel>
-            Collection NUMA
-          </ImageLabel>
 
           <Grain />
 
@@ -822,7 +739,7 @@ export default function ProductImages({ images = [] }) {
 
           <ZoomButton
             type="button"
-            onClick={() => setIsFullscreen(true)}
+            onClick={openFullscreen}
             aria-label="Agrandir l'image"
           >
             <FiMaximize2 />
@@ -830,19 +747,12 @@ export default function ProductImages({ images = [] }) {
         </MainImageContainer>
       </Gallery>
 
-      {/* MODE PLEIN ÉCRAN */}
+      {/* FULLSCREEN MODE */}
 
       {isFullscreen && (
         <Fullscreen
           onClick={() => setIsFullscreen(false)}
         >
-          <FullscreenImage
-            key={activeImage.url}
-            src={activeImage.url}
-            alt={activeImage.title || "Photo du produit"}
-            onClick={(e) => e.stopPropagation()}
-          />
-
           <FullscreenClose
             type="button"
             onClick={() => setIsFullscreen(false)}
@@ -864,6 +774,13 @@ export default function ProductImages({ images = [] }) {
               <FiChevronLeft size={23} />
             </FullscreenArrow>
           )}
+
+          <FullscreenImage
+            key={activeImage.url}
+            src={activeImage.url}
+            alt={activeImage.title || "Photo du produit"}
+            onClick={(e) => e.stopPropagation()}
+          />
 
           {urls.length > 1 && (
             <FullscreenArrow
