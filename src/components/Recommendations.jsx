@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
@@ -233,7 +232,7 @@ export default function Recommendations({ currentId }) {
       try {
         const res = await fetch(
           `${import.meta.env.VITE_API_URL}/api/produits/recommandations/${currentId}`,
-          { signal: controller.signal }
+          { signal: controller.signal },
         );
 
         if (!res.ok) {
@@ -243,7 +242,11 @@ export default function Recommendations({ currentId }) {
         const data = await res.json();
 
         if (!controller.signal.aborted) {
-          setProduits(Array.isArray(data) ? data : []);
+          const produitsDisponibles = (Array.isArray(data) ? data : []).filter(
+            (p) => p.status !== "precommande",
+          );
+
+          setProduits(produitsDisponibles);
         }
       } catch (err) {
         if (err.name !== "AbortError") {
@@ -278,9 +281,7 @@ export default function Recommendations({ currentId }) {
 
       if (!firstCard || !lastCard) return 0;
 
-      return lastCard.offsetLeft +
-        lastCard.offsetWidth -
-        firstCard.offsetLeft;
+      return lastCard.offsetLeft + lastCard.offsetWidth - firstCard.offsetLeft;
     };
 
     let loopWidth = getLoopWidth();
@@ -306,8 +307,7 @@ export default function Recommendations({ currentId }) {
           positionRef.current -= loopWidth;
         }
 
-        track.style.transform =
-          `translate3d(-${positionRef.current}px, 0, 0)`;
+        track.style.transform = `translate3d(-${positionRef.current}px, 0, 0)`;
       }
 
       frameId = requestAnimationFrame(animate);
@@ -360,18 +360,15 @@ export default function Recommendations({ currentId }) {
     const loopWidth = Array.from(track.children)
       .slice(0, produits.length)
       .reduce((total, item, index) => {
-        return total + item.offsetWidth +
-          (index === 0 ? 0 : 22);
+        return total + item.offsetWidth + (index === 0 ? 0 : 22);
       }, 0);
 
     if (!loopWidth) return;
 
     positionRef.current =
-      (positionRef.current - direction * distance + loopWidth) %
-      loopWidth;
+      (positionRef.current - direction * distance + loopWidth) % loopWidth;
 
-    track.style.transform =
-      `translate3d(-${positionRef.current}px, 0, 0)`;
+    track.style.transform = `translate3d(-${positionRef.current}px, 0, 0)`;
   };
 
   /* =============================
@@ -386,11 +383,7 @@ export default function Recommendations({ currentId }) {
   if (!produits.length) return null;
 
   // Duplication pour assurer une continuité visuelle
-  const duplicatedProducts = [
-    ...produits,
-    ...produits,
-    ...produits,
-  ];
+  const duplicatedProducts = [...produits, ...produits, ...produits];
 
   return (
     <Section>
@@ -445,9 +438,7 @@ export default function Recommendations({ currentId }) {
                 </ImageWrapper>
 
                 <ProductInfo>
-                  <ProductTitle>
-                    {p.title || "Article NUMA"}
-                  </ProductTitle>
+                  <ProductTitle>{p.title || "Article NUMA"}</ProductTitle>
 
                   <Price>
                     {Number(p.price || 0).toLocaleString("fr-FR")} FCFA
