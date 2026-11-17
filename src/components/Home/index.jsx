@@ -1,4 +1,3 @@
-
 import {
   useState,
   useEffect,
@@ -17,12 +16,7 @@ import {
   Volume2,
   VolumeX,
 } from "lucide-react";
-import {
-  FaWhatsapp,
-  FaTruck,
-  FaShieldAlt,
-  FaUndo,
-} from "react-icons/fa";
+import { FaWhatsapp, FaTruck, FaShieldAlt, FaUndo } from "react-icons/fa";
 
 import { ThemeContext } from "../../Utils/Context";
 
@@ -55,11 +49,12 @@ const media = (url) => {
     : `${API_URL}${url.startsWith("/") ? "" : "/"}${url}`;
 };
 
-const isPreorder = (p) =>
-  p?.precommande === true && p?.disponible === false;
+const isPreorder = (p) => p?.precommande === true && p?.disponible === false;
 
 const genreOf = (g) =>
-  String(g || "").trim().toLowerCase();
+  String(g || "")
+    .trim()
+    .toLowerCase();
 
 /* =====================================================
    ANIMATIONS CSS
@@ -70,32 +65,17 @@ const imageZoom = keyframes`
   to { transform: scale(1.14); }
 `;
 
-const lineReveal = keyframes`
-  from { transform: scaleX(0); }
-  to { transform: scaleX(1); }
-`;
-
 /* =====================================================
    COMPOSANTS ANIMATION
 ===================================================== */
 
-function Reveal({
-  children,
-  delay = 0,
-  y = 65,
-  className,
-  once = true,
-}) {
+function Reveal({ children, delay = 0, y = 65, className, once = true }) {
   const reduceMotion = useReducedMotion();
 
   return (
     <motion.div
       className={className}
-      initial={
-        reduceMotion
-          ? false
-          : { opacity: 0, y, filter: "blur(8px)" }
-      }
+      initial={reduceMotion ? false : { opacity: 0, y, filter: "blur(8px)" }}
       whileInView={{
         opacity: 1,
         y: 0,
@@ -169,7 +149,6 @@ function TiltCard({ children, className, style }) {
 
 function HeroShader({ src }) {
   const texture = useTexture(src);
-
   const materialRef = useRef();
 
   useFrame((state) => {
@@ -177,12 +156,9 @@ function HeroShader({ src }) {
 
     const material = materialRef.current;
 
-    material.uniforms.uTime.value = state.ccdlock.elapsedTime;
+    material.uniforms.uTime.value = state.clock.elapsedTime;
 
-    material.uniforms.uMouse.value.set(
-      state.pointer.x,
-      state.pointer.y
-    );
+    material.uniforms.uMouse.value.set(state.pointer.x, state.pointer.y);
 
     material.uniforms.uViewportAspect.value =
       state.viewport.width / state.viewport.height;
@@ -303,8 +279,10 @@ const Page = styled.main`
   background: var(--paper);
   color: var(--ink);
   width: 100%;
-  overflow: hidden;
-  transition: background 0.35s, color 0.35s;
+  overflow-x: clip;
+  transition:
+    background 0.35s,
+    color 0.35s;
 
   * {
     box-sizing: border-box;
@@ -315,7 +293,7 @@ const Page = styled.main`
   }
 
   @media (prefers-reduced-motion: reduce) {
-    *,
+    * ,
     *::before,
     *::after {
       scroll-behavior: auto !important;
@@ -545,12 +523,58 @@ const Hero = styled.section`
 `;
 
 /* =====================================================
+   EFFET FERMETURE DU HERO AU SCROLL
+===================================================== */
+
+const HeroStage = styled.div`
+  position: relative;
+  width: 100%;
+  height: 140svh;
+  background: var(--paper);
+  z-index: 1;
+
+  @media (max-width: 700px) {
+    height: 125svh;
+  }
+`;
+
+const HeroSticky = styled(motion.div)`
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: 100svh;
+  overflow: hidden;
+  transform-origin: center top;
+  will-change: transform, border-radius;
+  z-index: 2;
+  background: #25231f;
+
+  ${Hero} {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+  }
+
+  @media (max-width: 700px) {
+    height: 100svh;
+
+    ${Hero} {
+      height: 100%;
+      min-height: 0;
+    }
+  }
+`;
+
+/* =====================================================
    INTRODUCTION
 ===================================================== */
 
 const Intro = styled.section`
+  position: relative;
+  z-index: 2;
   padding: 105px 0 115px;
   text-align: center;
+  background: var(--paper);
 
   .number {
     font-size: 10px;
@@ -629,11 +653,7 @@ const UniverseCard = styled(Link)`
   .shade {
     position: absolute;
     inset: 0;
-    background: linear-gradient(
-      0deg,
-      rgba(0, 0, 0, 0.68),
-      transparent 65%
-    );
+    background: linear-gradient(0deg, rgba(0, 0, 0, 0.68), transparent 65%);
   }
 
   .top {
@@ -1219,8 +1239,7 @@ export default function HomePremium() {
   const [products, setProducts] = useState([]);
   const [videos, setVideos] = useState([]);
   const [bestSellers, setBestSellers] = useState([]);
-  const [precommandeDisponible, setPrecommandeDisponible] =
-    useState(false);
+  const [precommandeDisponible, setPrecommandeDisponible] = useState(false);
 
   const [slide, setSlide] = useState(0);
   const [videoGenre, setVideoGenre] = useState("homme");
@@ -1233,23 +1252,35 @@ export default function HomePremium() {
 
   const videoRef = useRef(null);
   const productRailRef = useRef(null);
+  const heroStageRef = useRef(null);
 
   const reduceMotion = useReducedMotion();
 
-  /* PARALLAX GLOBAL DU HERO */
+  /* =====================================================
+     ANIMATION DE FERMETURE DU HERO AU SCROLL
+  ===================================================== */
 
-  const { scrollYProgress } = useScroll();
-
-  const heroY = useTransform(
-    scrollYProgress,
-    [0, 0.35],
-    [0, 170]
-  );
+  const { scrollYProgress: heroProgress } = useScroll({
+    target: heroStageRef,
+    offset: ["start start", "end start"],
+  });
 
   const heroScale = useTransform(
-    scrollYProgress,
-    [0, 0.3],
-    [1.12, 1]
+    heroProgress,
+    [0, 0.45, 1],
+    [1, 0.91, 0.82],
+  );
+
+  const heroRadius = useTransform(
+    heroProgress,
+    [0, 0.45, 1],
+    [0, 20, 34],
+  );
+
+  const heroY = useTransform(
+    heroProgress,
+    [0, 1],
+    [0, -28],
   );
 
   /* FETCH */
@@ -1291,10 +1322,8 @@ export default function HomePremium() {
       if (v.status === "fulfilled") {
         setVideos(
           Array.isArray(v.value?.videos)
-            ? v.value.videos.filter(
-                (x) => x?.url && x?.produitId
-              )
-            : []
+            ? v.value.videos.filter((x) => x?.url && x?.produitId)
+            : [],
         );
       }
 
@@ -1306,9 +1335,9 @@ export default function HomePremium() {
                 x.bestSeller === true &&
                 x.disponible === true &&
                 !isPreorder(x) &&
-                x.images?.[0]?.url
+                x.images?.[0]?.url,
             )
-            .slice(0, 5)
+            .slice(0, 5),
         );
       }
 
@@ -1333,15 +1362,11 @@ export default function HomePremium() {
   /* DONNÉES */
 
   const heroProducts = useMemo(
-    () =>
-      products.filter(
-        (p) => p.hero && p.images?.[0]?.url
-      ),
-    [products]
+    () => products.filter((p) => p.hero && p.images?.[0]?.url),
+    [products],
   );
 
-  const heroProduct =
-    heroProducts[slide] || heroProducts[0];
+  const heroProduct = heroProducts[slide] || heroProducts[0];
 
   const heroImage = media(heroProduct?.images?.[0]?.url);
 
@@ -1349,35 +1374,26 @@ export default function HomePremium() {
     () =>
       products.filter(
         (p) =>
-          genreOf(p.genre) === "homme" &&
-          !isPreorder(p) &&
-          p.images?.[0]?.url
+          genreOf(p.genre) === "homme" && !isPreorder(p) && p.images?.[0]?.url,
       ),
-    [products]
+    [products],
   );
 
   const womenProducts = useMemo(
     () =>
       products.filter(
         (p) =>
-          genreOf(p.genre) === "femme" &&
-          !isPreorder(p) &&
-          p.images?.[0]?.url
+          genreOf(p.genre) === "femme" && !isPreorder(p) && p.images?.[0]?.url,
       ),
-    [products]
+    [products],
   );
 
   const focusProducts = useMemo(() => {
-    const ids = new Set(
-      bestSellers.map((p) => String(p._id))
-    );
+    const ids = new Set(bestSellers.map((p) => String(p._id)));
 
     return products
       .filter(
-        (p) =>
-          !isPreorder(p) &&
-          p.images?.[0]?.url &&
-          !ids.has(String(p._id))
+        (p) => !isPreorder(p) && p.images?.[0]?.url && !ids.has(String(p._id)),
       )
       .slice(0, 8);
   }, [products, bestSellers]);
@@ -1388,16 +1404,10 @@ export default function HomePremium() {
     videos.forEach((video) => {
       const id =
         typeof video.produitId === "object"
-          ? String(
-              video.produitId?._id ||
-                video.produitId?.id ||
-                ""
-            )
+          ? String(video.produitId?._id || video.produitId?.id || "")
           : String(video.produitId || "");
 
-      const product = products.find(
-        (p) => String(p._id) === id
-      );
+      const product = products.find((p) => String(p._id) === id);
 
       const genre = genreOf(product?.genre);
 
@@ -1476,9 +1486,7 @@ export default function HomePremium() {
 
   const nextVideo = () => {
     if (activeVideos.length > 1) {
-      setVideoIndex(
-        (i) => (i + 1) % activeVideos.length
-      );
+      setVideoIndex((i) => (i + 1) % activeVideos.length);
     }
   };
 
@@ -1486,124 +1494,102 @@ export default function HomePremium() {
 
   return (
     <Page $dark={isDark}>
-      {/* HERO CINÉMATIQUE */}
+      {/* HERO CINÉMATIQUE AVEC FERMETURE AU SCROLL */}
 
-      <Hero>
-        <motion.div
-          className="hero-parallax"
+      <HeroStage ref={heroStageRef}>
+        <HeroSticky
           style={{
-            y: reduceMotion ? 0 : heroY,
             scale: reduceMotion ? 1 : heroScale,
+            borderRadius: reduceMotion ? 0 : heroRadius,
+            y: reduceMotion ? 0 : heroY,
           }}
         >
-          <AnimatePresence mode="wait">
+          <Hero>
             <motion.div
-              key={heroImage || "hero-default"}
-              className="hero-image"
+              className="hero-parallax"
               style={{
-                backgroundImage: heroImage
-                  ? `url("${heroImage}")`
-                  : "linear-gradient(120deg,#50483e,#171715)",
+                scale: reduceMotion ? 1 : 1.08,
               }}
-              initial={
-                reduceMotion
-                  ? false
-                  : { opacity: 0, scale: 1.2 }
-              }
-              animate={{
-                opacity: 1,
-                scale: 1,
-              }}
-              exit={
-                reduceMotion
-                  ? undefined
-                  : { opacity: 0, scale: 1.08 }
-              }
+            >
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={heroImage || "hero-default"}
+                  className="hero-image"
+                  style={{
+                    backgroundImage: heroImage
+                      ? `url("${heroImage}")`
+                      : "linear-gradient(120deg,#50483e,#171715)",
+                  }}
+                  initial={reduceMotion ? false : { opacity: 0, scale: 1.2 }}
+                  animate={{
+                    opacity: 1,
+                    scale: 1,
+                  }}
+                  exit={reduceMotion ? undefined : { opacity: 0, scale: 1.08 }}
+                  transition={{
+                    duration: 1.5,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
+                />
+              </AnimatePresence>
+
+              {heroImage && !reduceMotion && <WebGLHero src={heroImage} />}
+            </motion.div>
+
+            <div className="hero-overlay" />
+
+            <motion.div
+              className="hero-content"
+              initial={reduceMotion ? false : { opacity: 0, y: 55 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{
-                duration: 1.5,
+                duration: 1.2,
+                delay: 0.3,
                 ease: [0.22, 1, 0.36, 1],
               }}
+            ></motion.div>
+
+            {heroProducts.length > 1 && (
+              <div className="hero-counter">
+                {String(slide + 1).padStart(2, "0")}
+                <span />
+                {String(heroProducts.length).padStart(2, "0")}
+              </div>
+            )}
+
+            <motion.div
+              className="hero-progress"
+              key={slide}
+              initial={{ width: "0%" }}
+              animate={{ width: "100%" }}
+              transition={{
+                duration: 6.5,
+                ease: "linear",
+              }}
             />
-
-          </AnimatePresence>
-
-          {heroImage && !reduceMotion && (
-            <WebGLHero src={heroImage} />
-          )}
-        </motion.div>
-
-        <div className="hero-overlay" />
-
-        <motion.div
-          className="hero-content"
-          initial={
-            reduceMotion
-              ? false
-              : { opacity: 0, y: 55 }
-          }
-          animate={{ opacity: 1, y: 0 }}
-          transition={{
-            duration: 1.2,
-            delay: 0.3,
-            ease: [0.22, 1, 0.36, 1],
-          }}
-        >
-          <small>NUMA — COLLECTIONS CONTEMPORAINES</small>
-
-          <h1>
-            L'élégance
-            <br />
-            en mouvement.
-          </h1>
-
-          <p>
-            Découvrez une autre vision du style.
-          </p>
-        </motion.div>
-
-        {heroProducts.length > 1 && (
-          <div className="hero-counter">
-            {String(slide + 1).padStart(2, "0")}
-            <span />
-            {String(heroProducts.length).padStart(2, "0")}
-          </div>
-        )}
-
-        <motion.div
-          className="hero-progress"
-          key={slide}
-          initial={{ width: "0%" }}
-          animate={{ width: "100%" }}
-          transition={{
-            duration: 6.5,
-            ease: "linear",
-          }}
-        />
-      </Hero>
+          </Hero>
+        </HeroSticky>
+      </HeroStage>
 
       {/* INTRODUCTION */}
 
       <Intro>
         <Container>
           <Reveal>
-            <div className="number">
-              01 — NOTRE VISION
-            </div>
+            <div className="number">01 — NOTRE VISION</div>
           </Reveal>
 
           <Reveal delay={0.15}>
             <h2>
-              Le style n'est pas une tendance.
-              C'est une <em>signature.</em>
+              Le style n'est pas une tendance. C'est une <em>signature.</em>
             </h2>
           </Reveal>
 
           <Reveal delay={0.3}>
             <p>
-              NUMA célèbre une mode contemporaine,
-              expressive et intemporelle. Des pièces
-              sélectionnées pour celles et ceux qui savent
-              que chaque détail compte.
+              NUMA célèbre une mode contemporaine, expressive et intemporelle.
+              Des pièces sélectionnées pour celles et ceux qui savent que chaque
+              détail compte.
             </p>
           </Reveal>
         </Container>
@@ -1626,16 +1612,11 @@ export default function HomePremium() {
             label: "02 / WOMENSWEAR",
           },
         ].map((item, index) => (
-          <TiltCard
-            key={item.genre}
-            className="universe-tilt"
-          >
+          <TiltCard key={item.genre} className="universe-tilt">
             <UniverseCard to={`/${item.genre}`}>
               {item.items[0]?.images?.[0]?.url && (
                 <motion.img
-                  src={media(
-                    item.items[0].images[0].url
-                  )}
+                  src={media(item.items[0].images[0].url)}
                   alt={`Collection ${item.title}`}
                   loading="lazy"
                   initial={{ scale: 1.12 }}
@@ -1681,8 +1662,8 @@ export default function HomePremium() {
               </div>
 
               <p>
-                Une sélection de créations qui conjuguent
-                silhouette, matière et personnalité.
+                Une sélection de créations qui conjuguent silhouette, matière et
+                personnalité.
               </p>
             </SectionHeading>
           </Reveal>
@@ -1701,11 +1682,7 @@ export default function HomePremium() {
               }}
             >
               {focusProducts.map((product, index) => (
-                <Reveal
-                  key={product._id}
-                  delay={index * 0.07}
-                  y={45}
-                >
+                <Reveal key={product._id} delay={index * 0.07} y={45}>
                   <TiltCard>
                     <ProductCard>
                       <div className="photo">
@@ -1715,18 +1692,12 @@ export default function HomePremium() {
                         />
 
                         <img
-                          src={media(
-                            product.images?.[0]?.url
-                          )}
+                          src={media(product.images?.[0]?.url)}
                           alt={product.title}
                           loading="lazy"
                         />
 
-                        {index === 0 && (
-                          <span className="tag">
-                            Sélection
-                          </span>
-                        )}
+                        {index === 0 && <span className="tag">Sélection</span>}
                       </div>
 
                       <div className="details">
@@ -1741,9 +1712,9 @@ export default function HomePremium() {
                             <h3>{product.title}</h3>
 
                             <span className="price">
-                              {Number(
-                                product.price || 0
-                              ).toLocaleString("fr-FR")}{" "}
+                              {Number(product.price || 0).toLocaleString(
+                                "fr-FR",
+                              )}{" "}
                               FCFA
                             </span>
                           </div>
@@ -1776,8 +1747,7 @@ export default function HomePremium() {
             }}
           >
             <TextLink to="/collections">
-              Voir toute la collection{" "}
-              <ArrowRight size={16} />
+              Voir toute la collection <ArrowRight size={16} />
             </TextLink>
           </div>
         </Container>
@@ -1798,9 +1768,7 @@ export default function HomePremium() {
         >
           {focusProducts[0]?.images?.[0]?.url && (
             <motion.img
-              src={media(
-                focusProducts[0].images[0].url
-              )}
+              src={media(focusProducts[0].images[0].url)}
               alt="Campagne NUMA"
               loading="lazy"
               initial={{ scale: 1.2 }}
@@ -1816,14 +1784,10 @@ export default function HomePremium() {
 
           <h2>Nos promotions</h2>
 
-          <p>
-            Découvrez nos offres et promotions sur une
-            sélection de pièces.
-          </p>
+          <p>Découvrez nos offres et promotions sur une sélection de pièces.</p>
 
           <Link to="/promo">
-            Explorer les promotions{" "}
-            <ArrowRight size={17} />
+            Explorer les promotions <ArrowRight size={17} />
           </Link>
         </Reveal>
       </Campaign>
@@ -1845,8 +1809,8 @@ export default function HomePremium() {
               </div>
 
               <p>
-                Découvrez nos créations autrement,
-                à travers nos vidéos et nos campagnes.
+                Découvrez nos créations autrement, à travers nos vidéos et nos
+                campagnes.
               </p>
             </SectionHeading>
           </Reveal>
@@ -1857,11 +1821,7 @@ export default function HomePremium() {
             <motion.div
               key={activeVideo._id}
               className="video-shell"
-              initial={
-                reduceMotion
-                  ? false
-                  : { opacity: 0, scale: 1.04 }
-              }
+              initial={reduceMotion ? false : { opacity: 0, scale: 1.04 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.98 }}
               transition={{ duration: 0.7 }}
@@ -1886,34 +1846,17 @@ export default function HomePremium() {
                     gap: 10,
                   }}
                 >
-                  <button
-                    onClick={togglePlay}
-                    aria-label="Lecture ou pause"
-                  >
-                    {playing ? (
-                      <Pause size={18} />
-                    ) : (
-                      <Play size={18} />
-                    )}
+                  <button onClick={togglePlay} aria-label="Lecture ou pause">
+                    {playing ? <Pause size={18} /> : <Play size={18} />}
                   </button>
 
-                  <button
-                    onClick={toggleMute}
-                    aria-label="Son"
-                  >
-                    {muted ? (
-                      <VolumeX size={18} />
-                    ) : (
-                      <Volume2 size={18} />
-                    )}
+                  <button onClick={toggleMute} aria-label="Son">
+                    {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
                   </button>
                 </div>
 
                 {activeVideos.length > 1 && (
-                  <button
-                    onClick={nextVideo}
-                    aria-label="Vidéo suivante"
-                  >
+                  <button onClick={nextVideo} aria-label="Vidéo suivante">
                     <ArrowRight size={19} />
                   </button>
                 )}
@@ -1935,23 +1878,16 @@ export default function HomePremium() {
 
         <div className="video-title">
           <div>
-            <Eyebrow>
-              COLLECTION {videoGenre.toUpperCase()}
-            </Eyebrow>
+            <Eyebrow>COLLECTION {videoGenre.toUpperCase()}</Eyebrow>
 
-            <h3>
-              {activeVideo?.produit?.title ||
-                "L'univers NUMA"}
-            </h3>
+            <h3>{activeVideo?.produit?.title || "L'univers NUMA"}</h3>
           </div>
 
           <div className="genres">
             {["homme", "femme"].map((genre) => (
               <button
                 key={genre}
-                className={
-                  videoGenre === genre ? "active" : ""
-                }
+                className={videoGenre === genre ? "active" : ""}
                 onClick={() => setVideoGenre(genre)}
               >
                 {genre}
@@ -1966,14 +1902,9 @@ export default function HomePremium() {
       {bestSellers.length > 0 && (
         <BestsellerSection $dark={isDark}>
           <div className="best-grid">
-            <Link
-              className="best-main"
-              to={`/produit/${bestSellers[0]._id}`}
-            >
+            <Link className="best-main" to={`/produit/${bestSellers[0]._id}`}>
               <motion.img
-                src={media(
-                  bestSellers[0].images?.[0]?.url
-                )}
+                src={media(bestSellers[0].images?.[0]?.url)}
                 alt={bestSellers[0].title}
                 loading="lazy"
                 initial={{ scale: 1.15 }}
@@ -1989,61 +1920,51 @@ export default function HomePremium() {
               <h2>Les incontournables NUMA.</h2>
 
               <p>
-                Les pièces qui séduisent, inspirent et
-                deviennent rapidement indispensables.
+                Les pièces qui séduisent, inspirent et deviennent rapidement
+                indispensables.
               </p>
 
               <TextLink to="/new">
-                Découvrir les nouveautés{" "}
-                <ArrowRight size={16} />
+                Découvrir les nouveautés <ArrowRight size={16} />
               </TextLink>
 
               <div className="mini-list">
-                {bestSellers.slice(0, 4).map(
-                  (product, index) => (
-                    <motion.div
-                      key={product._id}
-                      initial={{
-                        opacity: 0,
-                        x: 35,
-                      }}
-                      whileInView={{
-                        opacity: 1,
-                        x: 0,
-                      }}
-                      viewport={{ once: true }}
-                      transition={{
-                        delay: index * 0.12,
-                      }}
-                    >
-                      <Link
-                        className="mini"
-                        to={`/produit/${product._id}`}
-                      >
-                        <img
-                          src={media(
-                            product.images?.[0]?.url
-                          )}
-                          alt={product.title}
-                          loading="lazy"
-                        />
+                {bestSellers.slice(0, 4).map((product, index) => (
+                  <motion.div
+                    key={product._id}
+                    initial={{
+                      opacity: 0,
+                      x: 35,
+                    }}
+                    whileInView={{
+                      opacity: 1,
+                      x: 0,
+                    }}
+                    viewport={{ once: true }}
+                    transition={{
+                      delay: index * 0.12,
+                    }}
+                  >
+                    <Link className="mini" to={`/produit/${product._id}`}>
+                      <img
+                        src={media(product.images?.[0]?.url)}
+                        alt={product.title}
+                        loading="lazy"
+                      />
 
-                        <div>
-                          <strong>{product.title}</strong>
+                      <div>
+                        <strong>{product.title}</strong>
 
-                          <small>
-                            {Number(
-                              product.price || 0
-                            ).toLocaleString("fr-FR")}{" "}
-                            FCFA
-                          </small>
-                        </div>
+                        <small>
+                          {Number(product.price || 0).toLocaleString("fr-FR")}{" "}
+                          FCFA
+                        </small>
+                      </div>
 
-                        <ArrowUpRight size={18} />
-                      </Link>
-                    </motion.div>
-                  )
-                )}
+                      <ArrowUpRight size={18} />
+                    </Link>
+                  </motion.div>
+                ))}
               </div>
             </Reveal>
           </div>
@@ -2065,9 +1986,7 @@ export default function HomePremium() {
               >
                 {heroProduct?.images?.[0]?.url && (
                   <img
-                    src={media(
-                      heroProduct.images[0].url
-                    )}
+                    src={media(heroProduct.images[0].url)}
                     alt="Précommandes NUMA"
                   />
                 )}
@@ -2076,19 +1995,15 @@ export default function HomePremium() {
               <Reveal className="copy">
                 <small>ÉDITIONS À VENIR</small>
 
-                <h2>
-                  Les prochaines pièces se préparent.
-                </h2>
+                <h2>Les prochaines pièces se préparent.</h2>
 
                 <p>
-                  Accédez à nos modèles disponibles en
-                  précommande et soyez parmi les premiers
-                  à les découvrir.
+                  Accédez à nos modèles disponibles en précommande et soyez
+                  parmi les premiers à les découvrir.
                 </p>
 
                 <Link to="/precommande">
-                  Découvrir les précommandes{" "}
-                  <ArrowRight size={17} />
+                  Découvrir les précommandes <ArrowRight size={17} />
                 </Link>
               </Reveal>
             </Campaign>
@@ -2112,8 +2027,8 @@ export default function HomePremium() {
               </div>
 
               <p>
-                Bien plus qu'une collection, une expérience
-                pensée pour vous accompagner à chaque étape.
+                Bien plus qu'une collection, une expérience pensée pour vous
+                accompagner à chaque étape.
               </p>
             </SectionHeading>
           </Reveal>
@@ -2136,21 +2051,12 @@ export default function HomePremium() {
                 text: "Notre équipe reste disponible pour vous guider avant et après votre commande.",
               },
             ].map((item, index) => (
-              <Reveal
-                key={item.title}
-                delay={index * 0.12}
-              >
+              <Reveal key={item.title} delay={index * 0.12}>
                 <motion.article
-                  whileHover={
-                    reduceMotion
-                      ? undefined
-                      : { y: -8 }
-                  }
+                  whileHover={reduceMotion ? undefined : { y: -8 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <div className="icon">
-                    {item.icon}
-                  </div>
+                  <div className="icon">{item.icon}</div>
 
                   <h3>{item.title}</h3>
 
