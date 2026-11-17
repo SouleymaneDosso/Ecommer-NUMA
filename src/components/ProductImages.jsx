@@ -1,5 +1,6 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
 import styled, { keyframes } from "styled-components";
 import { Canvas } from "@react-three/fiber";
 import {
@@ -89,7 +90,8 @@ const Thumbnail = styled.button`
   overflow: hidden;
   cursor: pointer;
   background: #f0efed;
-  border: 1px solid ${({ $active }) => ($active ? "#171717" : "#e7e5e2")};
+  border: 1px solid ${({ $active }) =>
+    $active ? "#171717" : "#e7e5e2"};
   opacity: ${({ $active }) => ($active ? 1 : 0.68)};
   transition: 0.25s ease;
 
@@ -276,13 +278,12 @@ const Counter = styled.div`
 const Fullscreen = styled.div`
   position: fixed;
   inset: 0;
-  z-index: 999999;
+  z-index: 2147483647;
   width: 100%;
-  height: 100vh;
+  height: 100%;
   height: 100dvh;
   background: #000;
   overflow: hidden;
-  isolation: isolate;
 `;
 
 const FullscreenImage = styled.img`
@@ -293,7 +294,6 @@ const FullscreenImage = styled.img`
   display: block;
   object-fit: cover;
   object-position: center;
-  transform: none;
   margin: 0;
   padding: 0;
 `;
@@ -317,18 +317,12 @@ const CloseButton = styled(IconButton)`
   z-index: 10;
   top: max(20px, env(safe-area-inset-top));
   right: max(20px, env(safe-area-inset-right));
-  background: rgba(255, 255, 255, 0.85);
-  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.9);
 `;
 
 const FullscreenNavigation = styled(Navigation)`
   left: 20px;
   right: 20px;
-
-  ${NavButton} {
-    background: rgba(255, 255, 255, 0.8);
-    border: none;
-  }
 `;
 
 /* ========================================
@@ -472,7 +466,7 @@ export default function ProductImages({ images = [], model3D = null }) {
 
   const activeItem = items[selectedIndex];
 
-  const renderActiveContent = (fullscreen = false) => {
+  const renderActiveContent = () => {
     if (activeItem.type === "3d") {
       return (
         <div
@@ -481,16 +475,6 @@ export default function ProductImages({ images = [], model3D = null }) {
         >
           <ModelViewer url={activeItem.url} />
         </div>
-      );
-    }
-
-    if (fullscreen) {
-      return (
-        <FullscreenImage
-          src={activeItem.url}
-          alt={activeItem.title || "Photo du produit"}
-          onClick={(e) => e.stopPropagation()}
-        />
       );
     }
 
@@ -593,51 +577,60 @@ export default function ProductImages({ images = [], model3D = null }) {
         </Stage>
       </Gallery>
 
-      {isFullscreen && (
-        <Fullscreen onClick={() => setIsFullscreen(false)}>
-          {activeItem.type === "3d" ? (
-            <FullscreenModel>
-              <ModelViewer url={activeItem.url} />
-            </FullscreenModel>
-          ) : (
-            renderActiveContent(true)
-          )}
+      {isFullscreen &&
+        createPortal(
+          <Fullscreen onClick={() => setIsFullscreen(false)}>
+            {activeItem.type === "3d" ? (
+              <FullscreenModel>
+                <ModelViewer
+                  key={`fullscreen-${activeItem.url}`}
+                  url={activeItem.url}
+                />
+              </FullscreenModel>
+            ) : (
+              <FullscreenImage
+                src={activeItem.url}
+                alt={activeItem.title || "Photo du produit"}
+                onClick={(e) => e.stopPropagation()}
+              />
+            )}
 
-          <CloseButton
-            type="button"
-            onClick={() => setIsFullscreen(false)}
-            aria-label="Fermer"
-          >
-            <FiX size={21} />
-          </CloseButton>
+            <CloseButton
+              type="button"
+              onClick={() => setIsFullscreen(false)}
+              aria-label="Fermer"
+            >
+              <FiX size={21} />
+            </CloseButton>
 
-          {items.length > 1 && (
-            <FullscreenNavigation>
-              <NavButton
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  previousItem();
-                }}
-                aria-label="Élément précédent"
-              >
-                <FiChevronLeft size={22} />
-              </NavButton>
+            {items.length > 1 && (
+              <FullscreenNavigation>
+                <NavButton
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    previousItem();
+                  }}
+                  aria-label="Élément précédent"
+                >
+                  <FiChevronLeft size={22} />
+                </NavButton>
 
-              <NavButton
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  nextItem();
-                }}
-                aria-label="Élément suivant"
-              >
-                <FiChevronRight size={22} />
-              </NavButton>
-            </FullscreenNavigation>
-          )}
-        </Fullscreen>
-      )}
+                <NavButton
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    nextItem();
+                  }}
+                  aria-label="Élément suivant"
+                >
+                  <FiChevronRight size={22} />
+                </NavButton>
+              </FullscreenNavigation>
+            )}
+          </Fullscreen>,
+          document.body
+        )}
     </Wrapper>
   );
 }
