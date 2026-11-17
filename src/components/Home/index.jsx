@@ -65,6 +65,11 @@ const imageZoom = keyframes`
   to { transform: scale(1.14); }
 `;
 
+const lineReveal = keyframes`
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+`;
+
 /* =====================================================
    COMPOSANTS ANIMATION
 ===================================================== */
@@ -149,6 +154,7 @@ function TiltCard({ children, className, style }) {
 
 function HeroShader({ src }) {
   const texture = useTexture(src);
+
   const materialRef = useRef();
 
   useFrame((state) => {
@@ -156,7 +162,7 @@ function HeroShader({ src }) {
 
     const material = materialRef.current;
 
-    material.uniforms.uTime.value = state.clock.elapsedTime;
+    material.uniforms.uTime.value = state.ccdlock.elapsedTime;
 
     material.uniforms.uMouse.value.set(state.pointer.x, state.pointer.y);
 
@@ -279,7 +285,7 @@ const Page = styled.main`
   background: var(--paper);
   color: var(--ink);
   width: 100%;
-  overflow-x: clip;
+  overflow: hidden;
   transition:
     background 0.35s,
     color 0.35s;
@@ -293,7 +299,7 @@ const Page = styled.main`
   }
 
   @media (prefers-reduced-motion: reduce) {
-    * ,
+    *,
     *::before,
     *::after {
       scroll-behavior: auto !important;
@@ -523,58 +529,12 @@ const Hero = styled.section`
 `;
 
 /* =====================================================
-   EFFET FERMETURE DU HERO AU SCROLL
-===================================================== */
-
-const HeroStage = styled.div`
-  position: relative;
-  width: 100%;
-  height: 140svh;
-  background: var(--paper);
-  z-index: 1;
-
-  @media (max-width: 700px) {
-    height: 125svh;
-  }
-`;
-
-const HeroSticky = styled(motion.div)`
-  position: sticky;
-  top: 0;
-  width: 100%;
-  height: 100svh;
-  overflow: hidden;
-  transform-origin: center top;
-  will-change: transform, border-radius;
-  z-index: 2;
-  background: #25231f;
-
-  ${Hero} {
-    width: 100%;
-    height: 100%;
-    min-height: 0;
-  }
-
-  @media (max-width: 700px) {
-    height: 100svh;
-
-    ${Hero} {
-      height: 100%;
-      min-height: 0;
-    }
-  }
-`;
-
-/* =====================================================
    INTRODUCTION
 ===================================================== */
 
 const Intro = styled.section`
-  position: relative;
-  z-index: 2;
   padding: 105px 0 115px;
   text-align: center;
-  background: var(--paper);
 
   .number {
     font-size: 10px;
@@ -1252,36 +1212,16 @@ export default function HomePremium() {
 
   const videoRef = useRef(null);
   const productRailRef = useRef(null);
-  const heroStageRef = useRef(null);
 
   const reduceMotion = useReducedMotion();
 
-  /* =====================================================
-     ANIMATION DE FERMETURE DU HERO AU SCROLL
-  ===================================================== */
+  /* PARALLAX GLOBAL DU HERO */
 
-  const { scrollYProgress: heroProgress } = useScroll({
-    target: heroStageRef,
-    offset: ["start start", "end start"],
-  });
+  const { scrollYProgress } = useScroll();
 
-  const heroScale = useTransform(
-    heroProgress,
-    [0, 0.45, 1],
-    [1, 0.91, 0.82],
-  );
+  const heroY = useTransform(scrollYProgress, [0, 0.35], [0, 170]);
 
-  const heroRadius = useTransform(
-    heroProgress,
-    [0, 0.45, 1],
-    [0, 20, 34],
-  );
-
-  const heroY = useTransform(
-    heroProgress,
-    [0, 1],
-    [0, -28],
-  );
+  const heroScale = useTransform(scrollYProgress, [0, 0.3], [1.12, 1]);
 
   /* FETCH */
 
@@ -1494,82 +1434,73 @@ export default function HomePremium() {
 
   return (
     <Page $dark={isDark}>
-      {/* HERO CINÉMATIQUE AVEC FERMETURE AU SCROLL */}
+      {/* HERO CINÉMATIQUE */}
 
-      <HeroStage ref={heroStageRef}>
-        <HeroSticky
+      <Hero>
+        <motion.div
+          className="hero-parallax"
           style={{
-            scale: reduceMotion ? 1 : heroScale,
-            borderRadius: reduceMotion ? 0 : heroRadius,
             y: reduceMotion ? 0 : heroY,
+            scale: reduceMotion ? 1 : heroScale,
           }}
         >
-          <Hero>
+          <AnimatePresence mode="wait">
             <motion.div
-              className="hero-parallax"
+              key={heroImage || "hero-default"}
+              className="hero-image"
               style={{
-                scale: reduceMotion ? 1 : 1.08,
+                backgroundImage: heroImage
+                  ? `url("${heroImage}")`
+                  : "linear-gradient(120deg,#50483e,#171715)",
               }}
-            >
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={heroImage || "hero-default"}
-                  className="hero-image"
-                  style={{
-                    backgroundImage: heroImage
-                      ? `url("${heroImage}")`
-                      : "linear-gradient(120deg,#50483e,#171715)",
-                  }}
-                  initial={reduceMotion ? false : { opacity: 0, scale: 1.2 }}
-                  animate={{
-                    opacity: 1,
-                    scale: 1,
-                  }}
-                  exit={reduceMotion ? undefined : { opacity: 0, scale: 1.08 }}
-                  transition={{
-                    duration: 1.5,
-                    ease: [0.22, 1, 0.36, 1],
-                  }}
-                />
-              </AnimatePresence>
-
-              {heroImage && !reduceMotion && <WebGLHero src={heroImage} />}
-            </motion.div>
-
-            <div className="hero-overlay" />
-
-            <motion.div
-              className="hero-content"
-              initial={reduceMotion ? false : { opacity: 0, y: 55 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={reduceMotion ? false : { opacity: 0, scale: 1.2 }}
+              animate={{
+                opacity: 1,
+                scale: 1,
+              }}
+              exit={reduceMotion ? undefined : { opacity: 0, scale: 1.08 }}
               transition={{
-                duration: 1.2,
-                delay: 0.3,
+                duration: 1.5,
                 ease: [0.22, 1, 0.36, 1],
               }}
-            ></motion.div>
-
-            {heroProducts.length > 1 && (
-              <div className="hero-counter">
-                {String(slide + 1).padStart(2, "0")}
-                <span />
-                {String(heroProducts.length).padStart(2, "0")}
-              </div>
-            )}
-
-            <motion.div
-              className="hero-progress"
-              key={slide}
-              initial={{ width: "0%" }}
-              animate={{ width: "100%" }}
-              transition={{
-                duration: 6.5,
-                ease: "linear",
-              }}
             />
-          </Hero>
-        </HeroSticky>
-      </HeroStage>
+          </AnimatePresence>
+
+          {heroImage && !reduceMotion && <WebGLHero src={heroImage} />}
+        </motion.div>
+
+        <div className="hero-overlay" />
+
+        <motion.div
+          className="hero-content"
+          initial={reduceMotion ? false : { opacity: 0, y: 55 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{
+            duration: 1.2,
+            delay: 0.3,
+            ease: [0.22, 1, 0.36, 1],
+          }}
+        ></motion.div>
+
+        {heroProducts.length > 1 && (
+          <div className="hero-counter">
+            {String(slide + 1).padStart(2, "0")}
+            <span />
+            {String(heroProducts.length).padStart(2, "0")}
+          </div>
+        )}
+
+        <motion.div
+          className="hero-progress"
+          key={slide}
+          initial={{ width: "0%" }}
+          animate={{ width: "100%" }}
+          transition={{
+            duration: 6.5,
+            ease: "linear",
+          }}
+        />
+      </Hero>
 
       {/* INTRODUCTION */}
 
