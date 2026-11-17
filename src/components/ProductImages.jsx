@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo, useRef } from "react";
 import styled, { keyframes } from "styled-components";
 import { Canvas } from "@react-three/fiber";
@@ -268,32 +269,40 @@ const Counter = styled.div`
   pointer-events: none;
 `;
 
+/* ========================================
+   FULLSCREEN MODAL
+======================================== */
+
 const Fullscreen = styled.div`
   position: fixed;
   inset: 0;
-  z-index: 99999;
+  z-index: 999999;
   width: 100%;
-  height: 100%;
-  background: #111;
+  height: 100vh;
+  height: 100dvh;
+  background: #000;
   overflow: hidden;
+  isolation: isolate;
 `;
 
 const FullscreenImage = styled.img`
   position: absolute;
-  top: 50%;
-  left: 50%;
-  width: auto;
-  height: auto;
-  max-width: 90vw;
-  max-height: 82vh;
-  object-fit: contain;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   display: block;
-  transform: translate(-50%, -50%);
+  object-fit: cover;
+  object-position: center;
+  transform: none;
+  margin: 0;
+  padding: 0;
 `;
 
 const FullscreenModel = styled.div`
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
   background: #eae8e4;
 
   canvas {
@@ -306,14 +315,20 @@ const FullscreenModel = styled.div`
 const CloseButton = styled(IconButton)`
   position: absolute;
   z-index: 10;
-  top: 20px;
-  right: 20px;
-  background: rgba(255, 255, 255, 0.9);
+  top: max(20px, env(safe-area-inset-top));
+  right: max(20px, env(safe-area-inset-right));
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.15);
 `;
 
 const FullscreenNavigation = styled(Navigation)`
   left: 20px;
   right: 20px;
+
+  ${NavButton} {
+    background: rgba(255, 255, 255, 0.8);
+    border: none;
+  }
 `;
 
 /* ========================================
@@ -421,11 +436,15 @@ export default function ProductImages({ images = [], model3D = null }) {
       if (e.key === "Escape") setIsFullscreen(false);
 
       if (e.key === "ArrowLeft") {
-        setSelectedIndex((prev) => (prev === 0 ? items.length - 1 : prev - 1));
+        setSelectedIndex((prev) =>
+          prev === 0 ? items.length - 1 : prev - 1
+        );
       }
 
       if (e.key === "ArrowRight") {
-        setSelectedIndex((prev) => (prev === items.length - 1 ? 0 : prev + 1));
+        setSelectedIndex((prev) =>
+          prev === items.length - 1 ? 0 : prev + 1
+        );
       }
     };
 
@@ -438,11 +457,15 @@ export default function ProductImages({ images = [], model3D = null }) {
   }, [isFullscreen, items.length]);
 
   const previousItem = () => {
-    setSelectedIndex((prev) => (prev === 0 ? items.length - 1 : prev - 1));
+    setSelectedIndex((prev) =>
+      prev === 0 ? items.length - 1 : prev - 1
+    );
   };
 
   const nextItem = () => {
-    setSelectedIndex((prev) => (prev === items.length - 1 ? 0 : prev + 1));
+    setSelectedIndex((prev) =>
+      prev === items.length - 1 ? 0 : prev + 1
+    );
   };
 
   if (!items.length) return null;
@@ -453,13 +476,10 @@ export default function ProductImages({ images = [], model3D = null }) {
     if (activeItem.type === "3d") {
       return (
         <div
-          style={{
-            position: "absolute",
-            inset: 0,
-          }}
+          style={{ position: "absolute", inset: 0 }}
           onClick={(e) => e.stopPropagation()}
         >
-          <ModelViewer key={activeItem.url} url={activeItem.url} />
+          <ModelViewer url={activeItem.url} />
         </div>
       );
     }
@@ -529,7 +549,7 @@ export default function ProductImages({ images = [], model3D = null }) {
 
           {activeItem.type === "3d" ? (
             <ModelStage>
-              <ModelViewer key={activeItem.url} url={activeItem.url} />
+              <ModelViewer url={activeItem.url} />
             </ModelStage>
           ) : (
             renderActiveContent()
@@ -577,10 +597,7 @@ export default function ProductImages({ images = [], model3D = null }) {
         <Fullscreen onClick={() => setIsFullscreen(false)}>
           {activeItem.type === "3d" ? (
             <FullscreenModel>
-              <ModelViewer
-                key={`fullscreen-${activeItem.url}`}
-                url={activeItem.url}
-              />
+              <ModelViewer url={activeItem.url} />
             </FullscreenModel>
           ) : (
             renderActiveContent(true)
